@@ -1,0 +1,19 @@
+{
+  "name": "@larokifarm/calendario-vacunas",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Paquete compartido del calendario de vacunación por CCAA: componentes Astro, cliente Sanity, i18n y estilos themables.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./components/*": "./src/components/*.astro",
+    "./lib/sanity": "./src/lib/sanity.ts",
+    "./lib/i18n": "./src/lib/i18n.ts",
+    "./styles/calendario.css": "./src/styles/calendario.css",
+    "./i18n/*": "./src/i18n/*.json"
+  },
+  "peerDependencies": {
+    "@sanity/client": "^6.22.0",
+    "astro": "^5.1.0"
+  }
+}

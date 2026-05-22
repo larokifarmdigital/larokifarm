@@ -1,0 +1,39 @@
+{
+  "index.title": "Vaccination calendars of Spain",
+  "index.description": "Recommended vaccines for each Spanish Autonomous Community, grouped by age.",
+  "index.empty": "No calendars loaded yet. The team is updating the data.",
+
+  "detail.titleBase": "Vaccination calendar",
+  "detail.descriptionTemplate": "Official vaccination calendar of {comunidad}, grouped by age.",
+  "detail.backLink": "← All calendars",
+  "detail.source": "Source:",
+  "detail.sourceLink": "official document",
+  "detail.printButton": "Print calendar",
+
+  "disclaimer": "This information is for general guidance only. Always consult your paediatrician, doctor or trusted pharmacist before making vaccination decisions.",
+
+  "grid.headingCommon": "National common calendar",
+  "grid.headingAutonomies": "Autonomous communities and cities",
+  "grid.headingFeatured": "Your community",
+
+  "groups.lactantes": "Infants",
+  "groups.infancia": "Childhood",
+  "groups.adolescencia": "Adolescence",
+  "groups.adultos": "Adults",
+  "groups.embarazadas": "Pregnancy",
+  "groups.mayores": "Seniors (65+)",
+  "groups.empty": "No vaccines configured for this group.",
+
+  "table.col.vacuna": "Vaccine",
+  "table.col.dosis": "Dose",
+  "table.col.edad": "Age",
+  "table.col.previene": "Prevents",
+
+  "matrix.empty": "The detail of this calendar has not been loaded yet.",
+  "matrix.ariaLabel": "Vaccination calendar",
+  "matrix.legendAriaLabel": "Calendar vaccines",
+  "matrix.tableAriaLabel": "Vaccines by age table",
+  "matrix.col.enfermedad": "Disease",
+  "matrix.tooltip.via": "{via} route",
+  "matrix.tooltip.dosis": "dose {numero}"
+}

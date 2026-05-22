@@ -1,11 +1,13 @@
 ---
-import type { GrupoEdad } from '@/lib/sanity';
+import type { GrupoEdad } from '../lib/sanity';
+import { t, type Lang } from '../lib/i18n';
 
 interface Props {
   grupos: GrupoEdad[];
+  lang?: Lang;
 }
 
-const { grupos } = Astro.props;
+const { grupos, lang = 'es' } = Astro.props;
 
 type CeldaVacuna = {
   vacunaId: string;
@@ -120,8 +122,8 @@ const vacunasUnicas = Array.from(vacunaIdSet).map((id) => {
 function tooltipTexto(c: CeldaVacuna): string {
   const lineas: string[] = [];
   lineas.push(c.vacunaNombre);
-  lineas.push(c.etiqueta + (c.numero ? ` · dosis ${c.numero}` : ''));
-  if (c.via) lineas.push(`Vía ${c.via}`);
+  lineas.push(c.etiqueta + (c.numero ? ` · ${t('matrix.tooltip.dosis', lang, { numero: c.numero })}` : ''));
+  if (c.via) lineas.push(t('matrix.tooltip.via', lang, { via: c.via }));
   if (c.notaEspecifica) lineas.push(c.notaEspecifica);
   else if (c.notaGeneral) lineas.push(c.notaGeneral);
   return lineas.join('\n');
@@ -129,10 +131,10 @@ function tooltipTexto(c: CeldaVacuna): string {
 ---
 
 {enfermedades.length === 0 ? (
-  <p class="muted">Aún no se ha cargado el detalle de este calendario.</p>
+  <p class="cv-muted">{t('matrix.empty', lang)}</p>
 ) : (
-  <section class="matriz-wrap" aria-label="Calendario de vacunación">
-    <div class="leyenda" role="list" aria-label="Vacunas del calendario">
+  <section class="matriz-wrap" aria-label={t('matrix.ariaLabel', lang)}>
+    <div class="leyenda" role="list" aria-label={t('matrix.legendAriaLabel', lang)}>
       {vacunasUnicas.map((v) => {
         const c = colorPorVacuna.get(v.id)!;
         return (
@@ -148,11 +150,11 @@ function tooltipTexto(c: CeldaVacuna): string {
       })}
     </div>
 
-    <div class="matriz-scroll" role="region" aria-label="Tabla de vacunas por edad">
+    <div class="matriz-scroll" role="region" aria-label={t('matrix.tableAriaLabel', lang)}>
       <table class="matriz">
         <thead>
           <tr>
-            <th scope="col" class="col-enf">Enfermedad</th>
+            <th scope="col" class="col-enf">{t('matrix.col.enfermedad', lang)}</th>
             {edades.map((e) => (
               <th scope="col" class="col-edad">{e}</th>
             ))}
@@ -187,7 +189,10 @@ function tooltipTexto(c: CeldaVacuna): string {
                                 {c.vacunaCorto || c.vacunaNombre}
                               </span>
                               {c.numero && (
-                                <span class="pildora-dosis" aria-label={`dosis ${c.numero}`}>
+                                <span
+                                  class="pildora-dosis"
+                                  aria-label={t('matrix.tooltip.dosis', lang, { numero: c.numero })}
+                                >
                                   {c.numero}
                                 </span>
                               )}
@@ -218,8 +223,8 @@ function tooltipTexto(c: CeldaVacuna): string {
     gap: 0.5rem 0.6rem;
     margin-bottom: 1rem;
     padding: 0.85rem 1rem;
-    background: var(--color-row-alt, #fafafa);
-    border: 1px solid var(--color-border, #e5e7eb);
+    background: var(--cv-row-alt);
+    border: 1px solid var(--cv-border);
     border-radius: 12px;
   }
 
@@ -249,9 +254,9 @@ function tooltipTexto(c: CeldaVacuna): string {
     overflow-x: auto;
     overflow-y: visible;
     -webkit-overflow-scrolling: touch;
-    border: 1px solid var(--color-border, #e5e7eb);
+    border: 1px solid var(--cv-border);
     border-radius: 12px;
-    background: var(--color-bg, #fff);
+    background: var(--cv-bg);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   }
 
@@ -265,7 +270,7 @@ function tooltipTexto(c: CeldaVacuna): string {
 
   .matriz th,
   .matriz td {
-    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    border-bottom: 1px solid var(--cv-border);
     vertical-align: middle;
   }
 
@@ -275,19 +280,19 @@ function tooltipTexto(c: CeldaVacuna): string {
   }
 
   .matriz thead th {
-    background: var(--color-row-alt, #fafafa);
+    background: var(--cv-row-alt);
     font-weight: 600;
     font-size: 0.82rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--color-muted, #6b7280);
+    color: var(--cv-muted);
     padding: 0.85rem 0.9rem;
     text-align: center;
     white-space: nowrap;
     position: sticky;
     top: 0;
     z-index: 1;
-    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    border-bottom: 1px solid var(--cv-border);
   }
 
   .matriz tbody td {
@@ -297,7 +302,7 @@ function tooltipTexto(c: CeldaVacuna): string {
 
   .matriz tbody tr.alt th.col-enf,
   .matriz tbody tr.alt td {
-    background: color-mix(in srgb, var(--color-row-alt, #fafafa) 60%, transparent);
+    background: color-mix(in srgb, var(--cv-row-alt) 60%, transparent);
   }
 
   .col-enf {
@@ -308,35 +313,35 @@ function tooltipTexto(c: CeldaVacuna): string {
     min-width: 240px;
     max-width: 280px;
     padding: 0.85rem 1rem !important;
-    background: var(--color-bg, #fff);
-    border-right: 1px solid var(--color-border, #e5e7eb);
+    background: var(--cv-bg);
+    border-right: 1px solid var(--cv-border);
   }
   .matriz thead .col-enf {
     z-index: 3;
-    background: var(--color-row-alt, #fafafa);
+    background: var(--cv-row-alt);
   }
   .matriz tbody tr.alt th.col-enf {
-    background: color-mix(in srgb, var(--color-row-alt, #fafafa) 80%, #fff);
+    background: color-mix(in srgb, var(--cv-row-alt) 80%, #fff);
   }
 
   .enf-nombre {
     display: block;
     font-weight: 600;
-    color: var(--color-fg, #1a1a1a);
+    color: var(--cv-fg);
     line-height: 1.3;
   }
   .enf-desc {
     display: block;
     font-size: 0.78rem;
     font-weight: 400;
-    color: var(--color-muted, #6b7280);
+    color: var(--cv-muted);
     margin-top: 0.15rem;
     line-height: 1.35;
   }
 
   .matriz tbody tr:hover th.col-enf,
   .matriz tbody tr:hover td {
-    background: color-mix(in srgb, var(--color-accent-bg, #e6f4f4) 70%, transparent) !important;
+    background: color-mix(in srgb, var(--cv-accent-bg) 70%, transparent) !important;
   }
 
   .cel {

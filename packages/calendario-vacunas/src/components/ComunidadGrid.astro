@@ -1,0 +1,106 @@
+---
+import type { ComunidadResumen } from '../lib/sanity';
+import { t, type Lang } from '../lib/i18n';
+
+interface Props {
+  comunidades: ComunidadResumen[];
+  comunidadDestacada?: string;
+  lang?: Lang;
+  basePath?: string;
+}
+
+const {
+  comunidades,
+  comunidadDestacada,
+  lang = 'es',
+  basePath = '',
+} = Astro.props;
+
+const destacada = comunidadDestacada
+  ? comunidades.find((c) => c.slug === comunidadDestacada)
+  : undefined;
+
+const estatales = comunidades.filter(
+  (c) => c.tipo === 'comun-estatal' && c.slug !== comunidadDestacada,
+);
+const autonomias = comunidades.filter(
+  (c) => c.tipo !== 'comun-estatal' && c.slug !== comunidadDestacada,
+);
+
+const link = (slug: string) => `${basePath}/${slug}`.replace(/\/{2,}/g, '/');
+---
+
+{destacada && (
+  <section>
+    <h2>{t('grid.headingFeatured', lang)}</h2>
+    <ul class="grid">
+      <li class="destacada">
+        <a href={link(destacada.slug)}>
+          <strong>{destacada.nombre}</strong>
+          {destacada.vigencia && <span class="cv-muted"> · {destacada.vigencia}</span>}
+        </a>
+      </li>
+    </ul>
+  </section>
+)}
+
+{estatales.length > 0 && (
+  <section>
+    <h2>{t('grid.headingCommon', lang)}</h2>
+    <ul class="grid">
+      {estatales.map((c) => (
+        <li>
+          <a href={link(c.slug)}>
+            <strong>{c.nombre}</strong>
+            {c.vigencia && <span class="cv-muted"> · {c.vigencia}</span>}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
+
+<section>
+  <h2>{t('grid.headingAutonomies', lang)}</h2>
+  <ul class="grid">
+    {autonomias.map((c) => (
+      <li>
+        <a href={link(c.slug)}>
+          <strong>{c.nombre}</strong>
+          {c.vigencia && <span class="cv-muted"> · {c.vigencia}</span>}
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<style>
+  .grid {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .grid li a {
+    display: block;
+    padding: 1rem;
+    border: 1px solid var(--cv-border);
+    border-radius: var(--cv-radius);
+    text-decoration: none;
+    color: var(--cv-fg);
+    transition: border-color 0.15s, transform 0.15s;
+  }
+
+  .grid li a:hover {
+    border-color: var(--cv-primary);
+    transform: translateY(-1px);
+  }
+
+  .destacada a {
+    border-color: var(--cv-primary);
+    background: var(--cv-accent-bg);
+  }
+</style>

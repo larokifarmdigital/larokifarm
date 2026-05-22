@@ -1,0 +1,39 @@
+{
+  "index.title": "Calendaris de vacunació d'Espanya",
+  "index.description": "Informació sobre les vacunes recomanades a cada Comunitat Autònoma, agrupades per edat.",
+  "index.empty": "Encara no hi ha calendaris carregats. L'equip està actualitzant les dades.",
+
+  "detail.titleBase": "Calendari de vacunació",
+  "detail.descriptionTemplate": "Calendari oficial de vacunació de {comunidad}, agrupat per edat.",
+  "detail.backLink": "← Tots els calendaris",
+  "detail.source": "Font:",
+  "detail.sourceLink": "document oficial",
+  "detail.printButton": "Imprimir calendari",
+
+  "disclaimer": "Aquesta informació té caràcter divulgatiu. Consulteu sempre amb el vostre pediatre, metge de capçalera o farmacèutic de confiança abans de prendre decisions sobre vacunació.",
+
+  "grid.headingCommon": "Calendari comú estatal",
+  "grid.headingAutonomies": "Comunitats i ciutats autònomes",
+  "grid.headingFeatured": "La teva comunitat",
+
+  "groups.lactantes": "Lactants",
+  "groups.infancia": "Infància",
+  "groups.adolescencia": "Adolescència",
+  "groups.adultos": "Adults",
+  "groups.embarazadas": "Embarassades",
+  "groups.mayores": "Gent gran (65+)",
+  "groups.empty": "Sense vacunes configurades per a aquest grup.",
+
+  "table.col.vacuna": "Vacuna",
+  "table.col.dosis": "Dosi",
+  "table.col.edad": "Edat",
+  "table.col.previene": "Prevé",
+
+  "matrix.empty": "Encara no s'ha carregat el detall d'aquest calendari.",
+  "matrix.ariaLabel": "Calendari de vacunació",
+  "matrix.legendAriaLabel": "Vacunes del calendari",
+  "matrix.tableAriaLabel": "Taula de vacunes per edat",
+  "matrix.col.enfermedad": "Malaltia",
+  "matrix.tooltip.via": "Via {via}",
+  "matrix.tooltip.dosis": "dosi {numero}"
+}

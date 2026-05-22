@@ -1,0 +1,80 @@
+/*
+ * Calendario de vacunación — estilos scoped bajo .cv-root.
+ * Los tokens --cv-* heredan del host (var --primary, --accent, etc.) con
+ * fallback al tema teal por defecto. Para personalizar desde una landing
+ * basta con definir --primary, --accent en :root o en .cv-root.
+ */
+
+.cv-root {
+  --cv-primary: var(--primary, #0d6e6e);
+  --cv-accent: var(--accent, #36a0da);
+  --cv-bg: var(--cv-bg-color, #ffffff);
+  --cv-fg: var(--cv-fg-color, #1a1a1a);
+  --cv-muted: var(--cv-muted-color, #6b7280);
+  --cv-border: var(--cv-border-color, #e5e7eb);
+  --cv-accent-bg: var(--cv-accent-bg-color, color-mix(in srgb, var(--cv-primary) 12%, white));
+  --cv-row-alt: var(--cv-row-alt-color, #fafafa);
+  --cv-radius: 0.5rem;
+  color: var(--cv-fg);
+}
+
+.cv-root *,
+.cv-root *::before,
+.cv-root *::after {
+  box-sizing: border-box;
+}
+
+.cv-root h1 {
+  font-size: 1.875rem;
+  margin: 0 0 0.5rem;
+}
+
+.cv-root h2 {
+  font-size: 1.5rem;
+  margin: 2rem 0 0.75rem;
+  border-bottom: 1px solid var(--cv-border);
+  padding-bottom: 0.25rem;
+}
+
+.cv-root h3 {
+  font-size: 1.125rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.cv-root a {
+  color: var(--cv-primary);
+}
+
+.cv-muted {
+  color: var(--cv-muted);
+  font-size: 0.875rem;
+}
+
+.cv-disclaimer {
+  background: var(--cv-accent-bg);
+  border-left: 4px solid var(--cv-primary);
+  padding: 0.75rem 1rem;
+  border-radius: var(--cv-radius);
+  font-size: 0.875rem;
+  margin: 1rem 0 2rem;
+}
+
+.cv-print-btn {
+  background: var(--cv-primary);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--cv-radius);
+  cursor: pointer;
+  font: inherit;
+}
+
+.cv-print-btn:hover {
+  filter: brightness(1.1);
+}
+
+@media print {
+  .cv-no-print {
+    display: none !important;
+  }
+}

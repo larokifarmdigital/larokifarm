@@ -1,7 +1,10 @@
 ---
-import '@/styles/global.css';
-import MatrizCalendario from '@/components/MatrizCalendario.astro';
-import { listarComunidades, obtenerComunidad } from '@/lib/sanity';
+import {
+  CalendarioVacunas,
+  listarComunidades,
+  obtenerComunidad,
+  t,
+} from '@larokifarm/calendario-vacunas';
 
 export async function getStaticPaths() {
   const comunidades = await listarComunidades();
@@ -15,15 +18,13 @@ if (!comunidad) {
   return Astro.redirect('/404');
 }
 
-const titulo = `Calendario de vacunación · ${comunidad.nombre}${
+const lang = 'es';
+const titulo = `${t('detail.titleBase', lang)} · ${comunidad.nombre}${
   comunidad.vigencia ? ` ${comunidad.vigencia}` : ''
 }`;
-
-const descripcion = `Calendario oficial de vacunación de ${comunidad.nombre}${
-  comunidad.vigencia ? ` (${comunidad.vigencia})` : ''
-}, agrupado por edad.`;
-
-const grupos = comunidad.gruposEdad ?? [];
+const descripcion = t('detail.descriptionTemplate', lang, {
+  comunidad: `${comunidad.nombre}${comunidad.vigencia ? ` (${comunidad.vigencia})` : ''}`,
+});
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -34,12 +35,12 @@ const jsonLd = {
     name: 'Vacunación',
   },
   evidenceOrigin: comunidad.fuenteOficial,
-  inLanguage: 'es',
+  inLanguage: lang,
   about: comunidad.nombre,
 };
 ---
 
-<html lang="es">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -50,32 +51,27 @@ const jsonLd = {
   </head>
   <body>
     <main>
-      <p class="no-print">
-        <a href="/">← Todos los calendarios</a>
-      </p>
-
-      <h1>{titulo}</h1>
-
-      {comunidad.fuenteOficial && (
-        <p class="muted">
-          Fuente: <a href={comunidad.fuenteOficial} target="_blank" rel="noopener noreferrer">documento oficial</a>
-        </p>
-      )}
-
-      {comunidad.notaCabecera && (
-        <p class="disclaimer">{comunidad.notaCabecera}</p>
-      )}
-
-      <p class="disclaimer">
-        Esta información tiene carácter divulgativo. Consulte siempre con su pediatra,
-        médico de cabecera o farmacéutico de confianza antes de tomar decisiones sobre vacunación.
-      </p>
-
-      <p class="no-print">
-        <button class="print-btn" onclick="window.print()">Imprimir calendario</button>
-      </p>
-
-      <MatrizCalendario grupos={grupos} />
+      <CalendarioVacunas comunidad={comunidad} lang={lang} backHref="/" />
     </main>
+
+    <style is:global>
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.5;
+      }
+      main {
+        max-width: 64rem;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 4rem;
+      }
+      @media print {
+        main {
+          max-width: 100%;
+          padding: 0;
+        }
+      }
+    </style>
   </body>
 </html>

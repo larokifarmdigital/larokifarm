@@ -1,0 +1,52 @@
+---
+import type { Comunidad } from '../lib/sanity';
+import { t, type Lang } from '../lib/i18n';
+import MatrizCalendario from './MatrizCalendario.astro';
+import '../styles/calendario.css';
+
+interface Props {
+  comunidad: Comunidad;
+  lang?: Lang;
+  backHref?: string | false;
+}
+
+const { comunidad, lang = 'es', backHref = '/' } = Astro.props;
+
+const grupos = comunidad.gruposEdad ?? [];
+const titulo = `${t('detail.titleBase', lang)} · ${comunidad.nombre}${
+  comunidad.vigencia ? ` ${comunidad.vigencia}` : ''
+}`;
+---
+
+<div class="cv-root">
+  {backHref !== false && (
+    <p class="cv-no-print">
+      <a href={backHref}>{t('detail.backLink', lang)}</a>
+    </p>
+  )}
+
+  <h1>{titulo}</h1>
+
+  {comunidad.fuenteOficial && (
+    <p class="cv-muted">
+      {t('detail.source', lang)}{' '}
+      <a href={comunidad.fuenteOficial} target="_blank" rel="noopener noreferrer">
+        {t('detail.sourceLink', lang)}
+      </a>
+    </p>
+  )}
+
+  {comunidad.notaCabecera && (
+    <p class="cv-disclaimer">{comunidad.notaCabecera}</p>
+  )}
+
+  <p class="cv-disclaimer">{t('disclaimer', lang)}</p>
+
+  <p class="cv-no-print">
+    <button class="cv-print-btn" onclick="window.print()">
+      {t('detail.printButton', lang)}
+    </button>
+  </p>
+
+  <MatrizCalendario grupos={grupos} lang={lang} />
+</div>

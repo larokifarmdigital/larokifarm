@@ -1,0 +1,24 @@
+---
+import type { GrupoEdad } from '../lib/sanity';
+import { t, type Lang } from '../lib/i18n';
+import TablaCalendario from './TablaCalendario.astro';
+
+interface Props {
+  grupo: GrupoEdad;
+  lang?: Lang;
+}
+
+const { grupo, lang = 'es' } = Astro.props;
+
+const titulo = t(`groups.${grupo.nombre}`, lang);
+const entradas = grupo.entradas ?? [];
+---
+
+<section id={grupo.nombre}>
+  <h2>{titulo}{grupo.descripcion && <span class="cv-muted"> · {grupo.descripcion}</span>}</h2>
+  {entradas.length === 0 ? (
+    <p class="cv-muted">{t('groups.empty', lang)}</p>
+  ) : (
+    <TablaCalendario entradas={entradas} lang={lang} />
+  )}
+</section>

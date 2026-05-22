@@ -1,0 +1,45 @@
+---
+import type { ComunidadResumen } from '../lib/sanity';
+import { t, type Lang } from '../lib/i18n';
+import ComunidadGrid from './ComunidadGrid.astro';
+import '../styles/calendario.css';
+
+interface Props {
+  comunidades: ComunidadResumen[];
+  comunidadDestacada?: string;
+  lang?: Lang;
+  basePath?: string;
+  heading?: string;
+  intro?: string;
+}
+
+const {
+  comunidades,
+  comunidadDestacada,
+  lang = 'es',
+  basePath = '',
+  heading,
+  intro,
+} = Astro.props;
+
+const titulo = heading ?? t('index.title', lang);
+const subtitulo = intro ?? t('index.description', lang);
+---
+
+<div class="cv-root">
+  <h1>{titulo}</h1>
+  <p class="cv-muted">{subtitulo}</p>
+
+  <p class="cv-disclaimer">{t('disclaimer', lang)}</p>
+
+  {comunidades.length === 0 ? (
+    <p class="cv-muted">{t('index.empty', lang)}</p>
+  ) : (
+    <ComunidadGrid
+      comunidades={comunidades}
+      comunidadDestacada={comunidadDestacada}
+      lang={lang}
+      basePath={basePath}
+    />
+  )}
+</div>

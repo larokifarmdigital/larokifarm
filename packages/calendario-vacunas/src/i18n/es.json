@@ -1,0 +1,39 @@
+{
+  "index.title": "Calendarios de vacunación de España",
+  "index.description": "Información sobre las vacunas recomendadas en cada Comunidad Autónoma, agrupadas por edad.",
+  "index.empty": "Aún no hay calendarios cargados. El equipo está actualizando los datos.",
+
+  "detail.titleBase": "Calendario de vacunación",
+  "detail.descriptionTemplate": "Calendario oficial de vacunación de {comunidad}, agrupado por edad.",
+  "detail.backLink": "← Todos los calendarios",
+  "detail.source": "Fuente:",
+  "detail.sourceLink": "documento oficial",
+  "detail.printButton": "Imprimir calendario",
+
+  "disclaimer": "Esta información tiene carácter divulgativo. Consulte siempre con su pediatra, médico de cabecera o farmacéutico de confianza antes de tomar decisiones sobre vacunación.",
+
+  "grid.headingCommon": "Calendario común estatal",
+  "grid.headingAutonomies": "Comunidades y ciudades autónomas",
+  "grid.headingFeatured": "Tu comunidad",
+
+  "groups.lactantes": "Lactantes",
+  "groups.infancia": "Infancia",
+  "groups.adolescencia": "Adolescencia",
+  "groups.adultos": "Adultos",
+  "groups.embarazadas": "Embarazadas",
+  "groups.mayores": "Mayores (65+)",
+  "groups.empty": "Sin vacunas configuradas para este grupo.",
+
+  "table.col.vacuna": "Vacuna",
+  "table.col.dosis": "Dosis",
+  "table.col.edad": "Edad",
+  "table.col.previene": "Previene",
+
+  "matrix.empty": "Aún no se ha cargado el detalle de este calendario.",
+  "matrix.ariaLabel": "Calendario de vacunación",
+  "matrix.legendAriaLabel": "Vacunas del calendario",
+  "matrix.tableAriaLabel": "Tabla de vacunas por edad",
+  "matrix.col.enfermedad": "Enfermedad",
+  "matrix.tooltip.via": "Vía {via}",
+  "matrix.tooltip.dosis": "dosis {numero}"
+}
