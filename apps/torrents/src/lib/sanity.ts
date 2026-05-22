@@ -156,6 +156,8 @@ export type Farmacia = {
   servicios?: Servicio[];
   redesSociales?: RedesSociales;
   seo?: SeoCampos;
+  /** Slug de la CCAA cuyo calendario de vacunación destaca esta farmacia. */
+  comunidadPredeterminadaSlug?: string;
 };
 
 const FARMACIA_PROJECTION = `
@@ -181,7 +183,8 @@ const FARMACIA_PROJECTION = `
   seo {
     titulo,
     imagenOg { asset->{ url } }
-  }
+  },
+  "comunidadPredeterminadaSlug": comunidadPredeterminada->slug.current
 `;
 
 export async function obtenerFarmaciaPorSlug(slug: string): Promise<Farmacia | null> {

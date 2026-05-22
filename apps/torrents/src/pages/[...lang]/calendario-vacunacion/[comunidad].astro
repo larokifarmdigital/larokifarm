@@ -1,0 +1,159 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import CtaFlotante from '@/components/CtaFlotante.astro';
+import {
+  obtenerFarmaciaPorSlug,
+  agruparHorarios,
+  localizar,
+  SLUG_FARMACIA,
+  type Farmacia,
+  type DiasI18n,
+} from '@/lib/sanity';
+import { construirMetaSeo } from '@/lib/seo';
+import {
+  esLocaleValido,
+  rutaConLocale,
+  t,
+  type Locale,
+  LOCALE_DEFECTO,
+} from '@/lib/i18n';
+import diasEs from '@/i18n/es.json';
+import diasEn from '@/i18n/en.json';
+import diasCa from '@/i18n/ca.json';
+import {
+  CalendarioVacunas,
+  listarComunidades,
+  obtenerComunidad,
+  t as tCv,
+} from '@larokifarm/calendario-vacunas';
+
+export async function getStaticPaths() {
+  const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
+  const comunidades = await listarComunidades();
+  const codigos = (farmacia?.idiomasActivos ?? [{ codigo: 'es', nombre: 'Español' }])
+    .map((i) => i.codigo)
+    .filter(esLocaleValido);
+  const lista = codigos.length > 0 ? codigos : (['es'] as Locale[]);
+
+  return lista.flatMap((c) =>
+    comunidades.map((com) => ({
+      params: { lang: c === LOCALE_DEFECTO ? undefined : c, comunidad: com.slug },
+      props: { farmacia, lang: c },
+    })),
+  );
+}
+
+interface Props {
+  farmacia: Farmacia | null;
+  lang: Locale;
+}
+
+const { farmacia: farmaciaCargada, lang } = Astro.props as Props;
+const slug = Astro.params.comunidad!;
+const farmacia: Farmacia = farmaciaCargada ?? {
+  _id: 'placeholder',
+  nombre: 'Farmacia Torrents',
+  slug: SLUG_FARMACIA,
+};
+
+const comunidad = await obtenerComunidad(slug);
+if (!comunidad) {
+  return Astro.redirect(rutaConLocale('/calendario-vacunacion', lang));
+}
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const rutaActual = `/calendario-vacunacion/${slug}`;
+const meta = construirMetaSeo(farmacia, siteUrl, lang, rutaConLocale(rutaActual, lang));
+
+const tituloCalendario = `${tCv('detail.titleBase', lang)} · ${comunidad.nombre}${
+  comunidad.vigencia ? ` ${comunidad.vigencia}` : ''
+}`;
+meta.titulo = `${tituloCalendario} · ${farmacia.nombre}`;
+meta.descripcion = tCv('detail.descriptionTemplate', lang, {
+  comunidad: `${comunidad.nombre}${comunidad.vigencia ? ` (${comunidad.vigencia})` : ''}`,
+});
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'MedicalGuideline',
+  name: tituloCalendario,
+  guidelineSubject: {
+    '@type': 'MedicalCondition',
+    name: 'Vacunación',
+  },
+  evidenceOrigin: comunidad.fuenteOficial,
+  inLanguage: lang,
+  about: comunidad.nombre,
+};
+
+const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
+  es: diasEs.dias as DiasI18n,
+  en: diasEn.dias as DiasI18n,
+  ca: diasCa.dias as DiasI18n,
+};
+const CERRADO: Record<Locale, string> = { es: 'Cerrado', en: 'Closed', ca: 'Tancat' };
+
+const mostrarFaqs = (farmacia.faqs ?? []).some(
+  (f) => localizar(f.pregunta, lang) && localizar(f.respuesta, lang),
+);
+const horariosAgrupados = agruparHorarios(farmacia.horarios, DIAS_POR_LANG[lang], CERRADO[lang]);
+const volverHref = rutaConLocale('/calendario-vacunacion', lang);
+---
+
+<BaseLayout
+  titulo={meta.titulo}
+  descripcion={meta.descripcion}
+  canonical={meta.canonical}
+  imagenOg={meta.imagenOg}
+  jsonLd={jsonLd}
+  lang={lang}
+  rutaActual={rutaActual}
+>
+  <Header
+    nombre={farmacia.nombre}
+    whatsapp={farmacia.contacto?.whatsapp}
+    telefono={farmacia.contacto?.telefono}
+    logo={farmacia.logo}
+    mostrarFaqs={mostrarFaqs}
+    lang={lang}
+    rutaActual={rutaActual}
+    idiomasActivos={farmacia.idiomasActivos}
+  />
+
+  <main id='contenido' class='cv-page'>
+    <CalendarioVacunas
+      comunidad={comunidad}
+      lang={lang}
+      backHref={volverHref}
+    />
+  </main>
+
+  <Footer
+    nombre={farmacia.nombre}
+    titular={farmacia.titular}
+    numeroColegiado={farmacia.numeroColegiado}
+    logo={farmacia.logo}
+    contacto={farmacia.contacto}
+    redes={farmacia.redesSociales}
+    direccion={farmacia.direccion}
+    horarios={farmacia.horarios}
+    horariosAgrupados={horariosAgrupados}
+    servicios={farmacia.servicios}
+    descripcionCorta={farmacia.descripcionCorta}
+    mostrarFaqs={mostrarFaqs}
+    lang={lang}
+    rutaActual={rutaActual}
+  />
+
+  <CtaFlotante whatsapp={farmacia.contacto?.whatsapp} lang={lang} />
+</BaseLayout>
+
+<style is:global>
+  .cv-page {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+</style>

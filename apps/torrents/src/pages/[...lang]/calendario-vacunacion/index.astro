@@ -1,0 +1,127 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import CtaFlotante from '@/components/CtaFlotante.astro';
+import {
+  obtenerFarmaciaPorSlug,
+  agruparHorarios,
+  localizar,
+  SLUG_FARMACIA,
+  type Farmacia,
+  type DiasI18n,
+} from '@/lib/sanity';
+import { construirMetaSeo } from '@/lib/seo';
+import {
+  esLocaleValido,
+  rutaConLocale,
+  t,
+  type Locale,
+} from '@/lib/i18n';
+import diasEs from '@/i18n/es.json';
+import diasEn from '@/i18n/en.json';
+import diasCa from '@/i18n/ca.json';
+import {
+  IndiceComunidades,
+  listarComunidades,
+} from '@larokifarm/calendario-vacunas';
+
+export async function getStaticPaths() {
+  const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
+  const codigos = (farmacia?.idiomasActivos ?? [{ codigo: 'es', nombre: 'Español' }])
+    .map((i) => i.codigo)
+    .filter(esLocaleValido);
+  const lista = codigos.length > 0 ? codigos : (['es'] as Locale[]);
+  return lista.map((c) => ({
+    params: { lang: c === 'es' ? undefined : c },
+    props: { farmacia, lang: c },
+  }));
+}
+
+interface Props {
+  farmacia: Farmacia | null;
+  lang: Locale;
+}
+
+const { farmacia: farmaciaCargada, lang } = Astro.props as Props;
+const farmacia: Farmacia = farmaciaCargada ?? {
+  _id: 'placeholder',
+  nombre: 'Farmacia Torrents',
+  slug: SLUG_FARMACIA,
+};
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const rutaActual = '/calendario-vacunacion';
+const meta = construirMetaSeo(farmacia, siteUrl, lang, rutaConLocale(rutaActual, lang));
+meta.titulo = `${t('header.nav.calendario', lang)} · ${farmacia.nombre}`;
+
+const comunidades = await listarComunidades();
+
+const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
+  es: diasEs.dias as DiasI18n,
+  en: diasEn.dias as DiasI18n,
+  ca: diasCa.dias as DiasI18n,
+};
+const CERRADO: Record<Locale, string> = { es: 'Cerrado', en: 'Closed', ca: 'Tancat' };
+
+const mostrarFaqs = (farmacia.faqs ?? []).some(
+  (f) => localizar(f.pregunta, lang) && localizar(f.respuesta, lang),
+);
+const horariosAgrupados = agruparHorarios(farmacia.horarios, DIAS_POR_LANG[lang], CERRADO[lang]);
+---
+
+<BaseLayout
+  titulo={meta.titulo}
+  descripcion={meta.descripcion}
+  canonical={meta.canonical}
+  imagenOg={meta.imagenOg}
+  lang={lang}
+  rutaActual={rutaActual}
+>
+  <Header
+    nombre={farmacia.nombre}
+    whatsapp={farmacia.contacto?.whatsapp}
+    telefono={farmacia.contacto?.telefono}
+    logo={farmacia.logo}
+    mostrarFaqs={mostrarFaqs}
+    lang={lang}
+    rutaActual={rutaActual}
+    idiomasActivos={farmacia.idiomasActivos}
+  />
+
+  <main id='contenido' class='cv-page'>
+    <IndiceComunidades
+      comunidades={comunidades}
+      comunidadDestacada={farmacia.comunidadPredeterminadaSlug}
+      lang={lang}
+      basePath={rutaConLocale(rutaActual, lang)}
+    />
+  </main>
+
+  <Footer
+    nombre={farmacia.nombre}
+    titular={farmacia.titular}
+    numeroColegiado={farmacia.numeroColegiado}
+    logo={farmacia.logo}
+    contacto={farmacia.contacto}
+    redes={farmacia.redesSociales}
+    direccion={farmacia.direccion}
+    horarios={farmacia.horarios}
+    horariosAgrupados={horariosAgrupados}
+    servicios={farmacia.servicios}
+    descripcionCorta={farmacia.descripcionCorta}
+    mostrarFaqs={mostrarFaqs}
+    lang={lang}
+    rutaActual={rutaActual}
+  />
+
+  <CtaFlotante whatsapp={farmacia.contacto?.whatsapp} lang={lang} />
+</BaseLayout>
+
+<style is:global>
+  .cv-page {
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+</style>
