@@ -1,0 +1,4 @@
+AZURE_TENANT_ID=73a2959a-f4d7-4ddb-a9d9-108c0d232707
+AZURE_CLIENT_ID=9eb2e975-6e30-41f9-91a2-8c9faf5a503c
+AZURE_CLIENT_SECRET=paste-secret-here-for-local-dev-only
+SHAREPOINT_SHARE_URL=https://aramersa.sharepoint.com/:x:/s/DIGITAL_FARMACIA/IQB...

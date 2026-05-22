@@ -1,0 +1,23 @@
+name = "cima-inventory-sync"
+main = "src/index.ts"
+compatibility_date = "2025-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+AZURE_TENANT_ID = ""
+AZURE_CLIENT_ID = ""
+
+# Secrets configured via wrangler secret put:
+#   - AZURE_CLIENT_SECRET     (Azure App Registration client secret)
+#   - SHAREPOINT_SHARE_URL    (link contains a sharing token, keep secret)
+
+[triggers]
+crons = ["0 */6 * * *"]
+
+[[kv_namespaces]]
+binding = "INVENTORY_KV"
+id = "REPLACE_WITH_KV_ID"
+preview_id = "REPLACE_WITH_PREVIEW_KV_ID"
+
+[observability]
+enabled = true

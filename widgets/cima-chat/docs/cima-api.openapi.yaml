@@ -1,0 +1,677 @@
+openapi: 3.0.3
+info:
+  title: API CIMA (AEMPS) — utilizada por el widget cima-chat
+  version: "1.0.0"
+  description: |
+    Documentación interactiva de los endpoints públicos del **Centro de Información online de Medicamentos (CIMA)** de la **AEMPS** que utiliza el widget `cima-chat`.
+
+    - **No requiere autenticación.**
+    - **CORS habilitado** → puedes pulsar "Try it out" y lanzar la petición directamente desde el navegador.
+    - Todas las respuestas son JSON, excepto `/docSegmentado/contenido/*` que devuelve **texto plano**.
+
+    Fuente oficial: <https://cima.aemps.es/cima/dochtml/api/restapi.html>
+
+    ---
+
+    ## Cómo está organizada esta documentación
+
+    Los endpoints están agrupados de dos formas distintas (cada operación aparece bajo el tag de **feature** y bajo el tag del **flujo** en el que participa, para que puedas navegar como prefieras):
+
+    - **Por feature** (`Búsqueda`, `Medicamento`, `Alertas`, `Documentos`) → utilidad técnica de cada endpoint.
+    - **Por flujo de usuario** (`Flujo 1 …` a `Flujo 5 …`) → orden exacto en el que el widget llama a la API según la acción del usuario.
+
+    ## Flujos del widget — resumen visual
+
+    ```text
+    ┌─────────────────────────────────────────────────────────────┐
+    │  USUARIO ABRE EL CHAT                                       │
+    └─────────────────────────────────────────────────────────────┘
+              │
+              ├──► Pulsa "Buscar un medicamento"          → Flujo 1
+              │
+              └──► Pulsa "Encuentra por síntoma" (wizard) → Flujos 2 / 3
+                       │
+                       ├─ Elige síntoma  (fiebre, tos, etc.)
+                       ├─ Elige perfil   (adulto, bebé, embarazada, …)
+                       │
+                       ├─ Si perfil = adulto/adolescente/mayor/...  → Flujo 2
+                       └─ Si perfil = bebé / niño                   → Flujo 3 (estricto)
+
+    Una vez se selecciona un medicamento concreto desde cualquier flujo:
+              ├──► Carga detalle + secciones + alertas             → Flujo 4
+              └──► (Opcional) "Ver alternativas con X"             → Flujo 5
+    ```
+
+    > Cada flujo está descrito paso a paso en su tag correspondiente (debajo). Pulsa el tag para expandirlo y verás las llamadas en el orden real.
+  contact:
+    name: Soporte cima-chat
+    url: https://cima.aemps.es/cima/publico/home.html
+  license:
+    name: Datos públicos AEMPS
+
+servers:
+  - url: https://cima.aemps.es/cima/rest
+    description: API CIMA — producción (pública)
+
+tags:
+  - name: "Flujo 1 — Buscar medicamento por nombre o CN"
+    description: |
+      **Disparador**: el usuario pulsa "🔍 Buscar un medicamento" en el chat y escribe un texto.
+
+      ### Secuencia
+      ```
+      1. (debounce 300 ms tras cada tecla)
+
+         Si el texto es 4–7 dígitos seguidos → modo Código Nacional:
+            GET /medicamentos?cn={texto}&pagesize=10
+
+         En cualquier otro caso → modo nombre:
+            GET /medicamentos?nombre={texto}&pagesize=10[&receta=0&comerc=1 si "Solo sin receta" está activo]
+
+      2. El widget pinta la lista de resultados (10 max).
+
+      3. El usuario pulsa una tarjeta → continúa con el Flujo 4 (detalle).
+      ```
+
+      Endpoints involucrados:
+      - `GET /medicamentos` (con `nombre` o `cn`)
+  - name: "Flujo 2 — Wizard de síntomas (perfil no pediátrico)"
+    description: |
+      **Disparador**: el usuario pulsa "💬 Encuentra por síntoma", elige un síntoma y un perfil que **NO** es `bebé` ni `niño`.
+
+      ### Secuencia
+      ```
+      1. El widget cruza:
+           SYMPTOM.activos  ∩  PROFILE.safe   = activos_seguros
+
+         Ejemplo: fiebre (paracetamol, ibuprofeno) ∩ adulto (todos) =
+                  [paracetamol, ibuprofeno]
+
+      2. Resolución activo → código ATC (vía atcMap.ts), por ejemplo:
+            paracetamol → N02BE01
+            ibuprofeno  → M01AE01
+
+         (si un activo no tiene ATC en el mapa, se usa `nombre=` como fallback.)
+
+      3. Por cada activo, paginación PARALELA (pagesize=25, hasta 8 páginas
+         o 120 resultados, lo que pase antes):
+            GET /medicamentos?atc=N02BE01&receta=0&comerc=1&pagesize=25&pagina=1
+            GET /medicamentos?atc=N02BE01&receta=0&comerc=1&pagesize=25&pagina=2 …
+            GET /medicamentos?atc=N02BE01&receta=1&comerc=1&pagesize=25&pagina=1 …
+            GET /medicamentos?atc=M01AE01&receta=0&comerc=1&pagesize=25&pagina=1 …
+            (idem para receta=1)
+
+         NOTA: la búsqueda por `nombre=paracetamol` se queda corta porque
+         marcas como APIRETAL, GELOCATIL PEDIATRICO, DALSY o NUROFEN
+         no contienen el nombre del principio activo. Por eso se busca
+         por código ATC.
+
+      4. Cliente: dedup por nregistro + filtros locales (sin red):
+           - excluye combinaciones (pactivos con coma o principiosActivos.length > 1)
+         Después corta a 40 candidatos y luego a 25 resultados finales.
+
+      5. Muestra dos listas: "Sin receta" + "Con receta" (colapsable).
+
+      6. El usuario pulsa una tarjeta → Flujo 4.
+      ```
+
+      Endpoints involucrados:
+      - `GET /medicamentos` (con `atc` = código del principio activo, con paginación)
+  - name: "Flujo 3 — Wizard de síntomas pediátrico (bebé / niño) con verificación FT"
+    description: |
+      **Disparador**: igual que el Flujo 2, pero el perfil es `bebé (<2 años)` o `niño (2-11)`. Aquí se aplica un filtro de **seguridad estricto** que verifica cada candidato contra la **ficha técnica oficial AEMPS**.
+
+      ### Secuencia
+      ```
+      1. Búsquedas iniciales por ATC y paginadas (igual que Flujo 2 paso 3):
+            GET /medicamentos?atc={CÓDIGO}&receta=0&comerc=1&pagesize=25&pagina={N}
+            GET /medicamentos?atc={CÓDIGO}&receta=1&comerc=1&pagesize=25&pagina={N}
+
+      2. Filtros LOCALES (sin red) — descartan ~70% de candidatos peligrosos:
+           a) Forma farmacéutica: solo se aceptan
+              - bebé:  suspensión oral, jarabe, solución oral, gotas orales,
+                       supositorio, polvo para suspensión/solución, granulado
+                       para suspensión
+              - niño:  todo lo anterior + sobres, sachets, granulados,
+                       comprimidos masticables/bucodispersables
+           b) Nombre: regex bloquea "600 mg", "800 mg", "1 g", "RAPID",
+              "RETARD", "FORTE", "MIGRA", "FLAS"
+           c) Combinación: si pactivos contiene coma → fuera
+
+      3. Verificación contra la FICHA TÉCNICA por cada superviviente
+         (3 llamadas EN PARALELO por candidato):
+            GET /medicamento?nregistro={X}                                      ← detalle (principios activos)
+            GET /docSegmentado/contenido/1?nregistro={X}&seccion=4.2           ← Posología
+            GET /docSegmentado/contenido/1?nregistro={X}&seccion=4.3           ← Contraindicaciones
+
+         Reglas de aceptación:
+           - principiosActivos.length === 1  (monoprincipio)
+           - FT 4.3 NO menciona "contraindicado en niños/lactantes/menores"
+           - FT 4.2 SÍ menciona "lactante" / "bebé" / "< 2 años" / "mg/kg" /
+                                "peso corporal" / "posología pediátrica"
+
+         Mientras se ejecuta, el chat muestra el progreso:
+            "Verificando idoneidad pediátrica con la ficha técnica oficial… 3/8"
+
+      4. Solo los supervivientes verificados se muestran al usuario, con un
+         check verde "✅ Verificado contra la ficha técnica oficial AEMPS".
+
+      5. El usuario pulsa una tarjeta → Flujo 4.
+      ```
+
+      ### Por qué este flujo existe
+      El parámetro `nombre=ibuprofeno` en `/medicamentos` trae **cualquier** medicamento que contenga "ibuprofeno" en el nombre, incluyendo dosis adultas (600/800 mg), combinaciones con codeína/pseudoefedrina, y formas no aptas para bebés. La verificación contra la FT es la red de seguridad final.
+
+      Endpoints involucrados:
+      - `GET /medicamentos` (búsqueda inicial)
+      - `GET /medicamento` (detalle por candidato)
+      - `GET /docSegmentado/contenido/1` (FT secciones 4.2 y 4.3)
+  - name: "Flujo 4 — Cargar detalle de un medicamento"
+    description: |
+      **Disparador**: el usuario selecciona un medicamento desde cualquier lista (búsqueda o wizard).
+
+      ### Secuencia
+      ```
+      Lanza 5 llamadas EN PARALELO:
+
+         GET /medicamento?nregistro={X}                                ← detalle completo
+         GET /docSegmentado/secciones/1?nregistro={X}                  ← secciones FT disponibles
+         GET /docSegmentado/secciones/2?nregistro={X}                  ← secciones del prospecto
+         GET /notas?nregistro={X}                  (si el item tenía .notas=true)
+         GET /psuministro?nombre={2_primeras_palabras}&pagesize=20
+                                                    (si el item tenía .psum=true)
+
+      Después, cuando el usuario pulsa un chip ("¿Para qué sirve?",
+      "Dosis", "Efectos adversos"…) se lanza UNA llamada bajo demanda:
+
+         GET /docSegmentado/contenido/{tipo}?nregistro={X}&seccion={N}
+      ```
+
+      Endpoints involucrados:
+      - `GET /medicamento`
+      - `GET /docSegmentado/secciones/{tipo}`
+      - `GET /docSegmentado/contenido/{tipo}`
+      - `GET /notas`
+      - `GET /psuministro`
+  - name: "Flujo 5 — Ver alternativas con el mismo principio activo"
+    description: |
+      **Disparador**: en el detalle, el usuario pulsa "Alternativas con &lt;principio activo&gt;".
+
+      ### Secuencia
+      ```
+      1. El widget extrae el ATC más específico (nivel 5) del detalle.
+
+      2. Lanza:
+            GET /medicamentos?atc={CODIGO}&comerc=1&pagesize=20
+
+      3. Filtra el nregistro actual (para no listar el mismo medicamento)
+         y muestra hasta 10 alternativas comercializadas.
+      ```
+
+      Endpoints involucrados:
+      - `GET /medicamentos` (con `atc`)
+
+  - name: Búsqueda
+    description: Buscador principal por nombre, CN, ATC o principio activo.
+  - name: Medicamento
+    description: Detalle, presentaciones y metadatos del medicamento.
+  - name: Alertas
+    description: Notas de seguridad y problemas de suministro.
+  - name: Documentos
+    description: Ficha técnica y prospecto segmentados.
+
+paths:
+  /medicamentos:
+    get:
+      tags:
+        - Búsqueda
+        - "Flujo 1 — Buscar medicamento por nombre o CN"
+        - "Flujo 2 — Wizard de síntomas (perfil no pediátrico)"
+        - "Flujo 3 — Wizard de síntomas pediátrico (bebé / niño) con verificación FT"
+        - "Flujo 5 — Ver alternativas con el mismo principio activo"
+      summary: Buscar medicamentos
+      description: |
+        Endpoint multipropósito de búsqueda. Combina parámetros según el caso de uso:
+
+        - **Por nombre** → `nombre=ibuprofeno`
+        - **Por Código Nacional** → `cn=653980`
+        - **Alternativas por ATC** → `atc=M01AE01&comerc=1`
+        - **Por principio activo** → `practiv=PARACETAMOL` (o reutilizar `nombre`)
+        - **Sólo sin receta y comercializados** → añadir `receta=0&comerc=1`
+      operationId: searchMedicamentos
+      parameters:
+        - $ref: "#/components/parameters/Nombre"
+        - $ref: "#/components/parameters/CN"
+        - $ref: "#/components/parameters/ATC"
+        - $ref: "#/components/parameters/Practiv"
+        - $ref: "#/components/parameters/Receta"
+        - $ref: "#/components/parameters/Comerc"
+        - $ref: "#/components/parameters/Triangulo"
+        - $ref: "#/components/parameters/Generico"
+        - $ref: "#/components/parameters/Pagina"
+        - $ref: "#/components/parameters/Pagesize"
+      responses:
+        "200":
+          description: Lista paginada de medicamentos.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponseMedicamento"
+              examples:
+                ibuprofeno_sin_receta:
+                  summary: ibuprofeno sin receta comercializado
+                  value:
+                    totalFilas: 18
+                    pagina: 1
+                    tamanioPagina: 10
+                    resultados:
+                      - nregistro: "65726"
+                        nombre: "IBUPROFENO CINFA 400 mg COMPRIMIDOS RECUBIERTOS CON PELICULA EFG"
+                        labtitular: "LABORATORIOS CINFA, S.A."
+                        cpresc: "DH"
+                        comerc: true
+                        receta: false
+                        generico: true
+                        notas: false
+                        psum: false
+                paracetamol_sin_receta:
+                  summary: paracetamol sin receta
+                  value:
+                    totalFilas: 24
+                    pagina: 1
+                    tamanioPagina: 3
+                    resultados:
+                      - nregistro: "78739"
+                        nombre: "PARACETAMOL CINFA 1 g COMPRIMIDOS EFG"
+                        labtitular: "LABORATORIOS CINFA, S.A."
+                        comerc: true
+                        receta: false
+                        generico: true
+
+  /medicamento:
+    get:
+      tags:
+        - Medicamento
+        - "Flujo 3 — Wizard de síntomas pediátrico (bebé / niño) con verificación FT"
+        - "Flujo 4 — Cargar detalle de un medicamento"
+      summary: Detalle de un medicamento por nregistro
+      operationId: getMedicamento
+      parameters:
+        - $ref: "#/components/parameters/Nregistro"
+      responses:
+        "200":
+          description: Detalle completo con principios activos y ATC.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicamentoDetalle"
+              examples:
+                ibuprofeno_cinfa_400:
+                  summary: Ibuprofeno Cinfa 400 mg (nregistro 65726)
+                  value:
+                    nregistro: "65726"
+                    nombre: "IBUPROFENO CINFA 400 mg COMPRIMIDOS RECUBIERTOS CON PELICULA EFG"
+                    pactivos: "IBUPROFENO"
+                    labtitular: "LABORATORIOS CINFA, S.A."
+                    comerc: true
+                    receta: false
+                    generico: true
+                    atcs:
+                      - { codigo: "M01AE01", nombre: "Ibuprofeno", nivel: 5 }
+                      - { codigo: "M",       nombre: "Sistema musculoesquelético", nivel: 1 }
+                    principiosActivos:
+                      - { id: 21, codigo: "M01AE01", nombre: "IBUPROFENO", cantidad: "400", unidad: "mg", orden: 1 }
+
+  /presentaciones:
+    get:
+      tags:
+        - Medicamento
+      summary: Presentaciones (CN, formato, etc.)
+      operationId: getPresentaciones
+      parameters:
+        - $ref: "#/components/parameters/Nregistro"
+      responses:
+        "200":
+          description: Listado de presentaciones del medicamento.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponsePresentacion"
+
+  /notas:
+    get:
+      tags:
+        - Alertas
+        - "Flujo 4 — Cargar detalle de un medicamento"
+      summary: Notas de seguridad AEMPS para un medicamento
+      operationId: getNotas
+      parameters:
+        - $ref: "#/components/parameters/Nregistro"
+      responses:
+        "200":
+          description: Lista de notas de seguridad asociadas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Nota"
+
+  /psuministro:
+    get:
+      tags:
+        - Alertas
+        - "Flujo 4 — Cargar detalle de un medicamento"
+      summary: Problemas de suministro por nombre
+      operationId: getPsuministro
+      parameters:
+        - in: query
+          name: nombre
+          required: true
+          description: Nombre comercial (el widget usa las 2 primeras palabras del nombre).
+          schema: { type: string, example: "NOLOTIL" }
+        - $ref: "#/components/parameters/Pagesize"
+      responses:
+        "200":
+          description: Listado de problemas de suministro (activos e históricos).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponsePsuministro"
+
+  /docSegmentado/secciones/{tipo}:
+    get:
+      tags:
+        - Documentos
+        - "Flujo 4 — Cargar detalle de un medicamento"
+      summary: Listar secciones del documento segmentado
+      description: |
+        - `tipo=1` → Ficha Técnica (FT, orientada a profesionales)
+        - `tipo=2` → Prospecto (P, orientado al paciente)
+      operationId: listSecciones
+      parameters:
+        - $ref: "#/components/parameters/TipoDoc"
+        - $ref: "#/components/parameters/Nregistro"
+      responses:
+        "200":
+          description: Lista de secciones disponibles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Seccion"
+              examples:
+                prospecto_secciones:
+                  summary: Secciones del prospecto (tipo=2)
+                  value:
+                    - { seccion: "1", titulo: "Qué es y para qué se utiliza", orden: 1 }
+                    - { seccion: "2", titulo: "Antes de tomar",               orden: 2 }
+                    - { seccion: "3", titulo: "Cómo tomar",                   orden: 3 }
+                    - { seccion: "4", titulo: "Posibles efectos adversos",    orden: 4 }
+                    - { seccion: "5", titulo: "Conservación",                 orden: 5 }
+
+  /docSegmentado/contenido/{tipo}:
+    get:
+      tags:
+        - Documentos
+        - "Flujo 3 — Wizard de síntomas pediátrico (bebé / niño) con verificación FT"
+        - "Flujo 4 — Cargar detalle de un medicamento"
+      summary: Contenido de una sección (texto plano)
+      description: |
+        Devuelve el contenido de la sección como **texto** (a veces con HTML básico).
+        El widget muestra esto como respuesta del chat.
+      operationId: getSeccionContenido
+      parameters:
+        - $ref: "#/components/parameters/TipoDoc"
+        - $ref: "#/components/parameters/Nregistro"
+        - in: query
+          name: seccion
+          required: true
+          description: |
+            Identificador de la sección (obtenido del endpoint anterior).
+
+            Valores típicos del **prospecto** (`tipo=2`): `1`, `2`, `3`, `4`, `5`.
+
+            Valores típicos de la **ficha técnica** (`tipo=1`): `4.1`, `4.2`, `4.3`, `4.4`, `4.5`, `4.6`, `4.7`, `4.8`.
+
+            En el **Flujo 3** (verificación pediátrica) el widget llama específicamente a `4.2` (Posología) y `4.3` (Contraindicaciones).
+          schema: { type: string, example: "1" }
+      responses:
+        "200":
+          description: Texto plano de la sección.
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                ibuprofeno_para_que_sirve:
+                  summary: ¿Para qué sirve el ibuprofeno? (prospecto, seccion=1)
+                  value: |
+                    Este medicamento contiene ibuprofeno. Pertenece al grupo de medicamentos
+                    llamados antiinflamatorios no esteroideos (AINE). Se utiliza para el
+                    tratamiento sintomático del dolor de intensidad leve o moderada y de los
+                    estados febriles.
+                ft_42_posologia_pediatrica:
+                  summary: FT 4.2 — Posología (clave en Flujo 3 pediátrico)
+                  value: |
+                    Posología:
+                    Adultos y adolescentes a partir de 12 años: 200-400 mg cada 4-6 horas.
+                    Niños de 6 meses a 12 años: la dosis se ajustará al peso corporal,
+                    siendo la dosis diaria recomendada de 20-30 mg/kg de peso corporal.
+                    No se recomienda en lactantes menores de 6 meses sin supervisión médica.
+                ft_43_contraindicaciones:
+                  summary: FT 4.3 — Contraindicaciones (clave en Flujo 3 pediátrico)
+                  value: |
+                    Hipersensibilidad al principio activo o a alguno de los excipientes.
+                    Pacientes que hayan experimentado broncoespasmo, asma...
+                    Contraindicado en niños menores de 6 meses.
+
+components:
+  parameters:
+    Nombre:
+      in: query
+      name: nombre
+      description: Texto a buscar en el nombre del medicamento. Coincidencia parcial.
+      schema: { type: string, example: "ibuprofeno" }
+    CN:
+      in: query
+      name: cn
+      description: Código Nacional (numérico).
+      schema: { type: string, example: "653980" }
+    ATC:
+      in: query
+      name: atc
+      description: Código ATC (p. ej. `M01AE01` para ibuprofeno).
+      schema: { type: string, example: "M01AE01" }
+    Practiv:
+      in: query
+      name: practiv
+      description: Búsqueda por principio activo normalizado.
+      schema: { type: string, example: "PARACETAMOL" }
+    Receta:
+      in: query
+      name: receta
+      description: "`0` = sin receta · `1` = con receta"
+      schema: { type: integer, enum: [0, 1], example: 0 }
+    Comerc:
+      in: query
+      name: comerc
+      description: "`1` para mostrar sólo medicamentos comercializados."
+      schema: { type: integer, enum: [0, 1], example: 1 }
+    Triangulo:
+      in: query
+      name: triangulo
+      description: "`1` para medicamentos en seguimiento adicional."
+      schema: { type: integer, enum: [0, 1] }
+    Generico:
+      in: query
+      name: generico
+      description: "`1` para sólo genéricos (EFG)."
+      schema: { type: integer, enum: [0, 1] }
+    Pagina:
+      in: query
+      name: pagina
+      description: Página (1-N).
+      schema: { type: integer, minimum: 1, example: 1 }
+    Pagesize:
+      in: query
+      name: pagesize
+      description: Tamaño de página (máximo recomendado 25).
+      schema: { type: integer, minimum: 1, maximum: 25, example: 10 }
+    Nregistro:
+      in: query
+      name: nregistro
+      required: true
+      description: Número de registro AEMPS (id único del medicamento autorizado).
+      schema: { type: string, example: "65726" }
+    TipoDoc:
+      in: path
+      name: tipo
+      required: true
+      description: "`1` = Ficha Técnica (FT) · `2` = Prospecto (P)"
+      schema: { type: integer, enum: [1, 2], example: 2 }
+
+  schemas:
+    SearchResponseMedicamento:
+      type: object
+      properties:
+        totalFilas: { type: integer, example: 18 }
+        pagina: { type: integer, example: 1 }
+        tamanioPagina: { type: integer, example: 10 }
+        resultados:
+          type: array
+          items: { $ref: "#/components/schemas/MedicamentoListItem" }
+    SearchResponsePresentacion:
+      type: object
+      properties:
+        totalFilas: { type: integer }
+        pagina: { type: integer }
+        tamanioPagina: { type: integer }
+        resultados:
+          type: array
+          items: { $ref: "#/components/schemas/Presentacion" }
+    SearchResponsePsuministro:
+      type: object
+      properties:
+        totalFilas: { type: integer }
+        pagina: { type: integer }
+        tamanioPagina: { type: integer }
+        resultados:
+          type: array
+          items: { $ref: "#/components/schemas/ProblemaSuministro" }
+
+    MedicamentoListItem:
+      type: object
+      properties:
+        nregistro: { type: string, example: "65726" }
+        nombre: { type: string, example: "IBUPROFENO CINFA 400 mg COMPRIMIDOS RECUBIERTOS CON PELICULA EFG" }
+        labtitular: { type: string }
+        labcomercializador: { type: string }
+        cpresc: { type: string, description: "Condiciones de prescripción/dispensación" }
+        estado:
+          type: object
+          properties:
+            aut:  { type: integer, description: "Fecha autorización (epoch ms)" }
+            rev:  { type: integer }
+            susp: { type: integer }
+        comerc: { type: boolean }
+        receta: { type: boolean }
+        generico: { type: boolean }
+        triangulo: { type: boolean }
+        huerfano: { type: boolean }
+        biosimilar: { type: boolean }
+        conduc: { type: boolean }
+        psum: { type: boolean, description: "Indica problema de suministro asociado" }
+        notas: { type: boolean, description: "Indica notas de seguridad asociadas" }
+        docs:
+          type: array
+          items: { $ref: "#/components/schemas/Doc" }
+        fotos:
+          type: array
+          items: { $ref: "#/components/schemas/Foto" }
+
+    MedicamentoDetalle:
+      allOf:
+        - $ref: "#/components/schemas/MedicamentoListItem"
+        - type: object
+          properties:
+            pactivos: { type: string, example: "IBUPROFENO" }
+            atcs:
+              type: array
+              items: { $ref: "#/components/schemas/Atc" }
+            principiosActivos:
+              type: array
+              items: { $ref: "#/components/schemas/PrincipioActivo" }
+
+    Doc:
+      type: object
+      properties:
+        tipo: { type: integer, enum: [1, 2], description: "1=Ficha técnica · 2=Prospecto" }
+        url:  { type: string, format: uri }
+        urlHtml: { type: string, format: uri }
+        secc: { type: boolean }
+        fecha: { type: integer, description: "epoch ms" }
+
+    Foto:
+      type: object
+      properties:
+        tipo: { type: string, example: "formafarmac" }
+        url:  { type: string, format: uri }
+        fecha: { type: integer }
+
+    Atc:
+      type: object
+      properties:
+        codigo: { type: string, example: "M01AE01" }
+        nombre: { type: string, example: "Ibuprofeno" }
+        nivel:  { type: integer, example: 5 }
+
+    PrincipioActivo:
+      type: object
+      properties:
+        id:       { type: integer }
+        codigo:   { type: string }
+        nombre:   { type: string }
+        cantidad: { type: string }
+        unidad:   { type: string }
+        orden:    { type: integer }
+
+    Presentacion:
+      type: object
+      properties:
+        nregistro: { type: string }
+        cn:        { type: string }
+        nombre:    { type: string }
+        pactivos:  { type: string }
+        labtitular:{ type: string }
+        comerc:    { type: boolean }
+        receta:    { type: boolean }
+
+    Nota:
+      type: object
+      properties:
+        tipo:       { type: integer }
+        num:        { type: string }
+        referencia: { type: string }
+        asunto:     { type: string }
+        fecha:      { type: integer, description: "epoch ms" }
+        url:        { type: string, format: uri }
+
+    ProblemaSuministro:
+      type: object
+      properties:
+        cn:                     { type: string }
+        nombre:                 { type: string }
+        tipoProblemaSuministro: { type: integer }
+        fini:                   { type: integer, description: "epoch ms" }
+        ffin:                   { type: integer, description: "epoch ms" }
+        activo:                 { type: boolean }
+        observ:                 { type: string }
+
+    Seccion:
+      type: object
+      properties:
+        seccion: { type: string }
+        titulo:  { type: string }
+        orden:   { type: integer }
