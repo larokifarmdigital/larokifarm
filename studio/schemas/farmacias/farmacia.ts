@@ -76,6 +76,14 @@ export const farmacia = defineType({
       title: 'Nº de colegiado',
       type: 'string',
     }),
+    defineField({
+      name: 'comunidadPredeterminada',
+      title: 'Comunidad autónoma del calendario',
+      type: 'reference',
+      to: [{ type: 'comunidad' }],
+      description:
+        'CCAA cuyo calendario de vacunación se destaca por defecto en /calendario-vacunacion de esta farmacia. Si se deja vacío, se muestra solo el índice.',
+    }),
 
     // ── Hero (traducible) ────────────────────────────────────────────
     defineField({

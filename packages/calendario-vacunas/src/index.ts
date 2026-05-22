@@ -10,6 +10,7 @@ export {
   sanity,
   listarComunidades,
   obtenerComunidad,
+  listarFarmaciasPartner,
   type Enfermedad,
   type Vacuna,
   type Dosis,
@@ -19,6 +20,7 @@ export {
   type ComunidadTipo,
   type ComunidadResumen,
   type Comunidad,
+  type FarmaciaPartner,
 } from './lib/sanity';
 
 export { t, isLang, resolveLang, type Lang } from './lib/i18n';

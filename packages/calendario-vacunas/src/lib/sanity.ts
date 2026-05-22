@@ -117,3 +117,23 @@ export async function obtenerComunidad(slug: string): Promise<Comunidad | null> 
     { slug },
   );
 }
+
+export type FarmaciaPartner = {
+  _id: string;
+  nombre: string;
+  url: string;
+  ciudad?: string;
+  logoUrl?: string;
+};
+
+export async function listarFarmaciasPartner(): Promise<FarmaciaPartner[]> {
+  return sanity.fetch(`
+    *[_type == "farmaciaPartner"] | order(orden asc, nombre asc) {
+      _id,
+      nombre,
+      url,
+      ciudad,
+      "logoUrl": logo.asset->url
+    }
+  `);
+}

@@ -20,4 +20,6 @@ export const calendarioStructure: StructureResolver = (S) =>
             ]),
         ),
       S.documentTypeListItem('farmacia').title('Farmacia'),
+      S.divider(),
+      S.documentTypeListItem('farmaciaPartner').title('🏷️  Farmacias partner (footer hub)'),
     ]);
