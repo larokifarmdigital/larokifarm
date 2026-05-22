@@ -5,4 +5,7 @@ export default defineCliConfig({
     projectId: process.env.SANITY_STUDIO_PROJECT_ID || 'yovi040n',
     dataset: 'cima',
   },
+  deployment: {
+    appId: 'g4768nrlunghf8gmmuqgnlwq',
+  },
 });
