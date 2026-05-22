@@ -3,4 +3,5 @@ packages:
   - "!apps/pharmacy-landing-page"
   - "packages/*"
   - "widgets/*"
+  - "workers/*"
   - "studio"

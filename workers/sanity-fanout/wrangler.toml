@@ -1,0 +1,10 @@
+name = "larokifarm-sanity-fanout"
+main = "src/index.ts"
+compatibility_date = "2026-01-15"
+
+# Las variables sensibles (DEPLOY_HOOKS, SANITY_WEBHOOK_SECRET) se cargan como
+# secrets con `wrangler secret put <NAME>`. NO ponerlas aquí en git.
+
+# Logs accesibles desde Cloudflare dashboard cuando estén activados.
+[observability]
+enabled = true
