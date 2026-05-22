@@ -1,0 +1,478 @@
+---
+import type { GrupoEdad } from '@/lib/sanity';
+
+interface Props {
+  grupos: GrupoEdad[];
+}
+
+const { grupos } = Astro.props;
+
+type CeldaVacuna = {
+  vacunaId: string;
+  vacunaNombre: string;
+  vacunaCorto?: string;
+  via?: string;
+  notaGeneral?: string;
+  numero?: string;
+  etiqueta: string;
+  notaEspecifica?: string;
+};
+
+type EnfermedadFila = {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  celdas: Map<string, CeldaVacuna[]>;
+  orden: number;
+};
+
+const todasEntradas = (grupos ?? []).flatMap((g) => g.entradas ?? []);
+
+const enfermedadesMap = new Map<string, EnfermedadFila>();
+const edadesSet = new Set<string>();
+const vacunaIdSet = new Set<string>();
+let ordenEnf = 0;
+
+for (const entrada of todasEntradas) {
+  if (!entrada.vacuna || !entrada.dosis) continue;
+  const enfermedades = entrada.vacuna.enfermedadesPrevenidas ?? [];
+  const edad = entrada.dosis.edadAplicacion;
+  edadesSet.add(edad);
+  vacunaIdSet.add(entrada.vacuna._id);
+
+  for (const enf of enfermedades) {
+    if (!enfermedadesMap.has(enf._id)) {
+      enfermedadesMap.set(enf._id, {
+        id: enf._id,
+        nombre: enf.nombre,
+        descripcion: enf.descripcion,
+        celdas: new Map(),
+        orden: ordenEnf++,
+      });
+    }
+    const fila = enfermedadesMap.get(enf._id)!;
+    if (!fila.celdas.has(edad)) fila.celdas.set(edad, []);
+    fila.celdas.get(edad)!.push({
+      vacunaId: entrada.vacuna._id,
+      vacunaNombre: entrada.vacuna.nombre,
+      vacunaCorto: entrada.vacuna.nombreCorto,
+      via: entrada.vacuna.via,
+      notaGeneral: entrada.vacuna.notaGeneral,
+      numero: entrada.dosis.numero,
+      etiqueta: entrada.dosis.etiqueta,
+      notaEspecifica: entrada.notaEspecifica,
+    });
+  }
+}
+
+const enfermedades = Array.from(enfermedadesMap.values()).sort(
+  (a, b) => a.orden - b.orden,
+);
+
+function edadAMeses(edad: string): number {
+  const limpia = edad.toLowerCase().trim();
+  const match = limpia.match(/(\d+)(?:\s*[-–]\s*\d+)?\s*(mes|año|ano|year|month)/);
+  if (!match) return 9999;
+  const inicio = parseInt(match[1], 10);
+  const unidad = match[2];
+  if (
+    unidad.startsWith('año') ||
+    unidad.startsWith('ano') ||
+    unidad.startsWith('year')
+  ) {
+    return inicio * 12;
+  }
+  return inicio;
+}
+
+const edades = Array.from(edadesSet).sort(
+  (a, b) => edadAMeses(a) - edadAMeses(b),
+);
+
+const PALETA = [
+  { bg: '#e6f4f4', fg: '#0d6e6e', border: '#0d6e6e' },
+  { bg: '#e8eef8', fg: '#2c4a8a', border: '#2c4a8a' },
+  { bg: '#f3ecf6', fg: '#6b4a8b', border: '#6b4a8b' },
+  { bg: '#fbeee4', fg: '#a05a2c', border: '#a05a2c' },
+  { bg: '#eaf2e6', fg: '#456b3a', border: '#456b3a' },
+  { bg: '#f8e8ee', fg: '#9c4567', border: '#9c4567' },
+  { bg: '#f4eedb', fg: '#7a5d1f', border: '#7a5d1f' },
+  { bg: '#e6f0f4', fg: '#1e5a7a', border: '#1e5a7a' },
+];
+
+const colorPorVacuna = new Map<string, (typeof PALETA)[number]>();
+let i = 0;
+for (const id of vacunaIdSet) {
+  colorPorVacuna.set(id, PALETA[i % PALETA.length]);
+  i++;
+}
+
+const vacunasUnicas = Array.from(vacunaIdSet).map((id) => {
+  for (const fila of enfermedades) {
+    for (const celdas of fila.celdas.values()) {
+      const c = celdas.find((c) => c.vacunaId === id);
+      if (c) return { id, nombre: c.vacunaNombre, corto: c.vacunaCorto };
+    }
+  }
+  return { id, nombre: id, corto: undefined as string | undefined };
+});
+
+function tooltipTexto(c: CeldaVacuna): string {
+  const lineas: string[] = [];
+  lineas.push(c.vacunaNombre);
+  lineas.push(c.etiqueta + (c.numero ? ` · dosis ${c.numero}` : ''));
+  if (c.via) lineas.push(`Vía ${c.via}`);
+  if (c.notaEspecifica) lineas.push(c.notaEspecifica);
+  else if (c.notaGeneral) lineas.push(c.notaGeneral);
+  return lineas.join('\n');
+}
+---
+
+{enfermedades.length === 0 ? (
+  <p class="muted">Aún no se ha cargado el detalle de este calendario.</p>
+) : (
+  <section class="matriz-wrap" aria-label="Calendario de vacunación">
+    <div class="leyenda" role="list" aria-label="Vacunas del calendario">
+      {vacunasUnicas.map((v) => {
+        const c = colorPorVacuna.get(v.id)!;
+        return (
+          <span
+            class="leyenda-item"
+            role="listitem"
+            style={`--bg:${c.bg};--fg:${c.fg};--bd:${c.border};`}
+          >
+            <span class="leyenda-punto" aria-hidden="true" />
+            <span class="leyenda-nombre">{v.corto || v.nombre}</span>
+          </span>
+        );
+      })}
+    </div>
+
+    <div class="matriz-scroll" role="region" aria-label="Tabla de vacunas por edad">
+      <table class="matriz">
+        <thead>
+          <tr>
+            <th scope="col" class="col-enf">Enfermedad</th>
+            {edades.map((e) => (
+              <th scope="col" class="col-edad">{e}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {enfermedades.map((enf, idx) => (
+            <tr class={idx % 2 === 1 ? 'alt' : ''}>
+              <th scope="row" class="col-enf">
+                <span class="enf-nombre">{enf.nombre}</span>
+                {enf.descripcion && (
+                  <span class="enf-desc">{enf.descripcion}</span>
+                )}
+              </th>
+              {edades.map((edad) => {
+                const celdas = enf.celdas.get(edad);
+                return (
+                  <td>
+                    {celdas && (
+                      <div class="cel">
+                        {celdas.map((c) => {
+                          const col = colorPorVacuna.get(c.vacunaId)!;
+                          return (
+                            <span
+                              class="pildora"
+                              style={`--bg:${col.bg};--fg:${col.fg};--bd:${col.border};`}
+                              tabindex="0"
+                              data-tip={tooltipTexto(c)}
+                              title={tooltipTexto(c)}
+                            >
+                              <span class="pildora-nombre">
+                                {c.vacunaCorto || c.vacunaNombre}
+                              </span>
+                              {c.numero && (
+                                <span class="pildora-dosis" aria-label={`dosis ${c.numero}`}>
+                                  {c.numero}
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+)}
+
+<style>
+  .matriz-wrap {
+    margin: 1.5rem 0 2rem;
+  }
+
+  .leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.6rem;
+    margin-bottom: 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--color-row-alt, #fafafa);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 12px;
+  }
+
+  .leyenda-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.7rem;
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px solid var(--bd);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .leyenda-punto {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--bd);
+    flex-shrink: 0;
+  }
+
+  .matriz-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 12px;
+    background: var(--color-bg, #fff);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  .matriz {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 820px;
+    font-size: 0.95rem;
+  }
+
+  .matriz th,
+  .matriz td {
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    vertical-align: middle;
+  }
+
+  .matriz tbody tr:last-child th,
+  .matriz tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .matriz thead th {
+    background: var(--color-row-alt, #fafafa);
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-muted, #6b7280);
+    padding: 0.85rem 0.9rem;
+    text-align: center;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+  }
+
+  .matriz tbody td {
+    padding: 0.65rem 0.85rem;
+    text-align: center;
+  }
+
+  .matriz tbody tr.alt th.col-enf,
+  .matriz tbody tr.alt td {
+    background: color-mix(in srgb, var(--color-row-alt, #fafafa) 60%, transparent);
+  }
+
+  .col-enf {
+    text-align: left !important;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    min-width: 240px;
+    max-width: 280px;
+    padding: 0.85rem 1rem !important;
+    background: var(--color-bg, #fff);
+    border-right: 1px solid var(--color-border, #e5e7eb);
+  }
+  .matriz thead .col-enf {
+    z-index: 3;
+    background: var(--color-row-alt, #fafafa);
+  }
+  .matriz tbody tr.alt th.col-enf {
+    background: color-mix(in srgb, var(--color-row-alt, #fafafa) 80%, #fff);
+  }
+
+  .enf-nombre {
+    display: block;
+    font-weight: 600;
+    color: var(--color-fg, #1a1a1a);
+    line-height: 1.3;
+  }
+  .enf-desc {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--color-muted, #6b7280);
+    margin-top: 0.15rem;
+    line-height: 1.35;
+  }
+
+  .matriz tbody tr:hover th.col-enf,
+  .matriz tbody tr:hover td {
+    background: color-mix(in srgb, var(--color-accent-bg, #e6f4f4) 70%, transparent) !important;
+  }
+
+  .cel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    align-items: center;
+  }
+
+  .pildora {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.32rem 0.55rem 0.32rem 0.7rem;
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px solid color-mix(in srgb, var(--bd) 30%, transparent);
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.78rem;
+    line-height: 1.1;
+    white-space: nowrap;
+    outline: none;
+    cursor: help;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+  .pildora:hover,
+  .pildora:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px color-mix(in srgb, var(--bd) 25%, transparent);
+  }
+  .pildora:focus-visible {
+    outline: 2px solid var(--bd);
+    outline-offset: 2px;
+  }
+
+  .pildora-nombre {
+    letter-spacing: 0.01em;
+  }
+
+  .pildora-dosis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.3rem;
+    background: var(--bd);
+    color: white;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .pildora::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: #0f172a;
+    color: white;
+    padding: 0.6rem 0.85rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    white-space: pre-line;
+    text-align: left;
+    line-height: 1.45;
+    max-width: 280px;
+    width: max-content;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease, transform 150ms ease;
+    z-index: 20;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  }
+  .pildora::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    border: 6px solid transparent;
+    border-top-color: #0f172a;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease, transform 150ms ease;
+    z-index: 20;
+  }
+  .pildora:hover::after,
+  .pildora:focus-visible::after,
+  .pildora:hover::before,
+  .pildora:focus-visible::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 768px) {
+    .leyenda {
+      padding: 0.7rem 0.85rem;
+    }
+    .matriz {
+      font-size: 0.88rem;
+    }
+    .col-enf {
+      min-width: 180px;
+      max-width: 200px;
+    }
+  }
+
+  @media print {
+    .matriz-scroll {
+      overflow: visible;
+      box-shadow: none;
+    }
+    .matriz {
+      min-width: 0;
+      font-size: 0.72rem;
+    }
+    .matriz th,
+    .matriz td {
+      padding: 0.3rem 0.4rem !important;
+    }
+    .matriz .col-enf,
+    .matriz thead th {
+      position: static;
+    }
+    .pildora::after,
+    .pildora::before {
+      display: none;
+    }
+    .pildora {
+      box-shadow: none !important;
+      transform: none !important;
+    }
+  }
+</style>

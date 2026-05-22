@@ -1,0 +1,70 @@
+---
+import type { Entrada } from '@/lib/sanity';
+import NotaVacuna from './NotaVacuna.astro';
+
+interface Props {
+  entradas: Entrada[];
+}
+
+const { entradas } = Astro.props;
+---
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Vacuna</th>
+      <th scope="col">Dosis</th>
+      <th scope="col">Edad</th>
+      <th scope="col">Previene</th>
+    </tr>
+  </thead>
+  <tbody>
+    {entradas.map((e) => {
+      const enfermedades = e.vacuna.enfermedadesPrevenidas?.map((x) => x.nombre).join(', ');
+      return (
+        <tr>
+          <td>
+            <strong>{e.vacuna.nombre}</strong>
+            {e.vacuna.nombreCorto && <div class="muted">{e.vacuna.nombreCorto}</div>}
+          </td>
+          <td>{e.dosis.etiqueta}{e.dosis.numero && ` (${e.dosis.numero})`}</td>
+          <td>{e.dosis.edadAplicacion}</td>
+          <td>
+            {enfermedades || <span class="muted">—</span>}
+            <NotaVacuna texto={e.notaEspecifica} />
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+
+<style>
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0 1rem;
+    font-size: 0.95rem;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: top;
+  }
+
+  th {
+    background: var(--color-row-alt);
+    font-weight: 600;
+  }
+
+  tbody tr:nth-child(even) {
+    background: var(--color-row-alt);
+  }
+
+  .muted {
+    color: var(--color-muted);
+    font-size: 0.8rem;
+  }
+</style>

@@ -1,0 +1,23 @@
+{
+  "name": "calendario-vacunas",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "packageManager": "pnpm@10.33.4",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "studio": "pnpm -C ../../studio dev",
+    "studio:deploy": "pnpm -C ../../studio deploy"
+  },
+  "dependencies": {
+    "@sanity/client": "^6.22.0",
+    "astro": "^5.1.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.0",
+    "typescript": "^5.6.0"
+  }
+}

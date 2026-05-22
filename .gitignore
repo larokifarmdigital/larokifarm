@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.astro/
+.vercel/
+.next/
+.output/
+
+# Turbo
+.turbo/
+
+# Cloudflare
+.wrangler/
+
+# Sanity
+.sanity/
+
+# Env files (no incluir credenciales en git)
+.env
+.env.local
+.env.*.local
+.env.production
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Sanity studio dist
+studio/dist/
+
+# Archivos sueltos en la raíz (notas, capturas) que no deben entrar al repo
+/MULTI_TENANT_LANDING.md
+/WhatsApp Image*.jpeg
+/WhatsApp Image*.jpg
+/WhatsApp Image*.png
+
+# apps/pharmacy-landing-page no forma parte del monorepo larokifarm
+apps/pharmacy-landing-page/

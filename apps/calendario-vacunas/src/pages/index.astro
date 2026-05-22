@@ -1,0 +1,40 @@
+---
+import '@/styles/global.css';
+import ComunidadGrid from '@/components/ComunidadGrid.astro';
+import { listarComunidades } from '@/lib/sanity';
+
+const comunidades = await listarComunidades();
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calendarios de vacunación de España</title>
+    <meta
+      name="description"
+      content="Calendarios oficiales de vacunación de cada Comunidad Autónoma de España, actualizados y agrupados por edad."
+    />
+  </head>
+  <body>
+    <main>
+      <h1>Calendarios de vacunación de España</h1>
+      <p class="muted">
+        Información sobre las vacunas recomendadas en cada Comunidad Autónoma, agrupadas por edad.
+      </p>
+
+      <p class="disclaimer">
+        Esta información tiene carácter divulgativo. Consulte siempre con su pediatra,
+        médico de cabecera o farmacéutico de confianza antes de tomar decisiones sobre vacunación.
+      </p>
+
+      {comunidades.length === 0 ? (
+        <p class="muted">
+          Aún no hay calendarios cargados. El equipo está actualizando los datos.
+        </p>
+      ) : (
+        <ComunidadGrid comunidades={comunidades} />
+      )}
+    </main>
+  </body>
+</html>

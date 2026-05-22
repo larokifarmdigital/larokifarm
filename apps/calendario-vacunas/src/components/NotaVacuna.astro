@@ -1,0 +1,19 @@
+---
+interface Props {
+  texto?: string;
+}
+const { texto } = Astro.props;
+---
+
+{texto && (
+  <p class="nota">{texto}</p>
+)}
+
+<style>
+  .nota {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    font-style: italic;
+  }
+</style>

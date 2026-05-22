@@ -1,0 +1,81 @@
+---
+import '@/styles/global.css';
+import MatrizCalendario from '@/components/MatrizCalendario.astro';
+import { listarComunidades, obtenerComunidad } from '@/lib/sanity';
+
+export async function getStaticPaths() {
+  const comunidades = await listarComunidades();
+  return comunidades.map((c) => ({ params: { comunidad: c.slug } }));
+}
+
+const { comunidad: slug } = Astro.params;
+const comunidad = await obtenerComunidad(slug!);
+
+if (!comunidad) {
+  return Astro.redirect('/404');
+}
+
+const titulo = `Calendario de vacunación · ${comunidad.nombre}${
+  comunidad.vigencia ? ` ${comunidad.vigencia}` : ''
+}`;
+
+const descripcion = `Calendario oficial de vacunación de ${comunidad.nombre}${
+  comunidad.vigencia ? ` (${comunidad.vigencia})` : ''
+}, agrupado por edad.`;
+
+const grupos = comunidad.gruposEdad ?? [];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'MedicalGuideline',
+  name: titulo,
+  guidelineSubject: {
+    '@type': 'MedicalCondition',
+    name: 'Vacunación',
+  },
+  evidenceOrigin: comunidad.fuenteOficial,
+  inLanguage: 'es',
+  about: comunidad.nombre,
+};
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo}</title>
+    <meta name="description" content={descripcion} />
+    <link rel="canonical" href={`/${slug}`} />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body>
+    <main>
+      <p class="no-print">
+        <a href="/">← Todos los calendarios</a>
+      </p>
+
+      <h1>{titulo}</h1>
+
+      {comunidad.fuenteOficial && (
+        <p class="muted">
+          Fuente: <a href={comunidad.fuenteOficial} target="_blank" rel="noopener noreferrer">documento oficial</a>
+        </p>
+      )}
+
+      {comunidad.notaCabecera && (
+        <p class="disclaimer">{comunidad.notaCabecera}</p>
+      )}
+
+      <p class="disclaimer">
+        Esta información tiene carácter divulgativo. Consulte siempre con su pediatra,
+        médico de cabecera o farmacéutico de confianza antes de tomar decisiones sobre vacunación.
+      </p>
+
+      <p class="no-print">
+        <button class="print-btn" onclick="window.print()">Imprimir calendario</button>
+      </p>
+
+      <MatrizCalendario grupos={grupos} />
+    </main>
+  </body>
+</html>
