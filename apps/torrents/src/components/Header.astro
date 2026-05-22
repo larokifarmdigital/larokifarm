@@ -46,6 +46,10 @@ const enlaces = [
   ...(mostrarFaqs
     ? [{ href: `${inicioUrl}#faqs`, label: t('header.nav.faqs', lang) }]
     : []),
+  {
+    href: rutaConLocale('/calendario-vacunacion', lang),
+    label: t('header.nav.calendario', lang),
+  },
   { href: `${inicioUrl}#contacto`, label: t('header.nav.contacto', lang) }
 ];
 

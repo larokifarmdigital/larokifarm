@@ -11,9 +11,9 @@ const anyo = new Date().getFullYear();
       <section class="partners">
         <h2>Farmacias que ofrecen este servicio</h2>
         <ul>
-          {partners.map((p) => (
-            <li>
-              <a href={p.url} target="_blank" rel="noopener noreferrer">
+          {partners.map((p) => {
+            const Inner = (
+              <>
                 {p.logoUrl ? (
                   <img
                     src={`${p.logoUrl}?auto=format&q=80&w=200`}
@@ -26,9 +26,20 @@ const anyo = new Date().getFullYear();
                   <span class="partner-name">{p.nombre}</span>
                 )}
                 {p.ciudad && <span class="partner-ciudad">{p.ciudad}</span>}
-              </a>
-            </li>
-          ))}
+              </>
+            );
+            return (
+              <li>
+                {p.url ? (
+                  <a href={p.url} target="_blank" rel="noopener noreferrer">
+                    {Inner}
+                  </a>
+                ) : (
+                  <div class="partner-static">{Inner}</div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </section>
     )}
@@ -80,7 +91,8 @@ const anyo = new Date().getFullYear();
     gap: 1rem;
   }
 
-  .partners li a {
+  .partners li a,
+  .partners li .partner-static {
     display: flex;
     flex-direction: column;
     align-items: center;

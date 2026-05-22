@@ -121,19 +121,20 @@ export async function obtenerComunidad(slug: string): Promise<Comunidad | null> 
 export type FarmaciaPartner = {
   _id: string;
   nombre: string;
-  url: string;
+  url?: string;
   ciudad?: string;
   logoUrl?: string;
 };
 
 export async function listarFarmaciasPartner(): Promise<FarmaciaPartner[]> {
   return sanity.fetch(`
-    *[_type == "farmaciaPartner"] | order(orden asc, nombre asc) {
+    *[_type == "farmaciaPartner" && defined(farmacia)]
+      | order(orden asc, farmacia->nombre asc) {
       _id,
-      nombre,
-      url,
-      ciudad,
-      "logoUrl": logo.asset->url
+      "nombre": farmacia->nombre,
+      "url": farmacia->contacto.web,
+      "ciudad": farmacia->direccion.ciudad,
+      "logoUrl": farmacia->logo.asset->url
     }
   `);
 }

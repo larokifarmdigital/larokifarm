@@ -5,32 +5,16 @@ export const farmaciaPartner = defineType({
   title: 'Farmacia partner (footer del hub)',
   type: 'document',
   description:
-    'Farmacias que ofrecen el servicio del calendario y aparecen en el footer del sitio standalone.',
+    'Selecciona una farmacia ya registrada para listarla en el footer del sitio standalone del calendario. Los datos (nombre, logo, ciudad, web) se sincronizan automáticamente desde la ficha de la farmacia.',
   fields: [
     defineField({
-      name: 'nombre',
-      title: 'Nombre',
-      type: 'string',
+      name: 'farmacia',
+      title: 'Farmacia',
+      type: 'reference',
+      to: [{ type: 'farmacia' }],
+      description:
+        'Elige una farmacia del catálogo. Asegúrate de que tenga logo, ciudad y contacto.web rellenos para que aparezca completa en el footer.',
       validation: (r) => r.required(),
-    }),
-    defineField({
-      name: 'logo',
-      title: 'Logo',
-      type: 'image',
-      options: { hotspot: true },
-    }),
-    defineField({
-      name: 'url',
-      title: 'URL de la landing',
-      type: 'url',
-      description: 'URL completa con https://',
-      validation: (r) =>
-        r.required().uri({ scheme: ['http', 'https'], allowRelative: false }),
-    }),
-    defineField({
-      name: 'ciudad',
-      title: 'Ciudad',
-      type: 'string',
     }),
     defineField({
       name: 'orden',
@@ -41,7 +25,18 @@ export const farmaciaPartner = defineType({
     }),
   ],
   preview: {
-    select: { title: 'nombre', subtitle: 'ciudad', media: 'logo' },
+    select: {
+      title: 'farmacia.nombre',
+      subtitle: 'farmacia.direccion.ciudad',
+      media: 'farmacia.logo',
+    },
+    prepare({ title, subtitle, media }) {
+      return {
+        title: title ?? '(farmacia sin nombre)',
+        subtitle: subtitle ?? '—',
+        media,
+      };
+    },
   },
   orderings: [
     {
@@ -50,9 +45,9 @@ export const farmaciaPartner = defineType({
       by: [{ field: 'orden', direction: 'asc' }],
     },
     {
-      title: 'Nombre',
+      title: 'Nombre de la farmacia',
       name: 'nombreAsc',
-      by: [{ field: 'nombre', direction: 'asc' }],
+      by: [{ field: 'farmacia.nombre', direction: 'asc' }],
     },
   ],
 });
