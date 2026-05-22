@@ -1,0 +1,588 @@
+---
+import type { Servicio } from '@/lib/sanity';
+import { localizar } from '@/lib/sanity';
+import { t, rutaConLocale, type Locale } from '@/lib/i18n';
+import IconoServicio from './IconoServicio.astro';
+import MarcaAgua from '@/components/MarcaAgua.astro';
+
+export interface Props {
+  servicios?: Servicio[];
+  logo?: string;
+  lang: Locale;
+}
+
+const { servicios = [], logo, lang } = Astro.props;
+
+const serviciosLocalizados = servicios.map(s => ({
+  ...s,
+  nombreTxt: localizar(s.nombre, lang) ?? '',
+  descripcionTxt: localizar(s.descripcion, lang)
+}));
+
+const COLORES = [
+  { bg: 'var(--primary)', alpha: 0.15, fg: 'var(--primary)' },
+  { bg: 'var(--accent)', alpha: 0.15, fg: 'var(--accent)' },
+  { bg: 'var(--kids-green)', alpha: 0.15, fg: 'var(--kids-green)' },
+  { bg: 'var(--kids-yellow)', alpha: 0.2, fg: 'var(--kids-orange)' },
+  { bg: 'var(--kids-purple)', alpha: 0.15, fg: 'var(--kids-purple)' },
+  { bg: 'var(--kids-orange)', alpha: 0.2, fg: 'var(--kids-orange)' }
+];
+
+function color(i: number) {
+  return COLORES[i % COLORES.length];
+}
+
+type EnlaceResuelto = { href: string; target?: '_blank'; rel?: string };
+
+function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): EnlaceResuelto | null {
+  const url = enlace?.url?.trim();
+  if (!url) return null;
+  const esExterno = /^https?:\/\//i.test(url);
+  const esEsquema = /^(mailto:|tel:|#)/i.test(url);
+  const abrirNueva = enlace?.nuevaPestana ?? esExterno;
+  const href = esExterno || esEsquema ? url : rutaConLocale(url, lang);
+  if (abrirNueva) {
+    return { href, target: '_blank', rel: 'noopener noreferrer' };
+  }
+  return { href };
+}
+---
+
+<section id='servicios' class='relative overflow-hidden py-24'>
+  <div class='dot-pattern absolute inset-0 opacity-50' aria-hidden='true'></div>
+
+  <MarcaAgua
+    logo={logo}
+    class='top-20 left-4 md:left-12'
+    tamano={70}
+    opacidad={0.05}
+    rotacion={-14}
+  />
+  <MarcaAgua
+    logo={logo}
+    class='bottom-16 right-4 md:right-12'
+    tamano={64}
+    opacidad={0.05}
+    rotacion={12}
+  />
+  <MarcaAgua
+    logo={logo}
+    class='top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
+    tamano={120}
+    opacidad={0.04}
+    rotacion={-6}
+  />
+  <MarcaAgua logo={logo} class='top-1/3 right-1/4' tamano={50} opacidad={0.05} rotacion={18} />
+
+  <div class='container-app relative'>
+    <div class='mb-12 text-start md:mb-16 md:text-center'>
+      <div class='chip mb-6'>
+        <span>{t('servicios.chip', lang)}</span>
+      </div>
+      <h2 class='mb-6 text-4xl font-extrabold tracking-tight md:text-balance md:text-5xl'>
+        {t('servicios.tituloParte1', lang)}
+        <span class='text-[var(--primary)]'>{t('servicios.tituloParte2', lang)}</span>
+      </h2>
+      <p class='max-w-2xl text-lg text-[var(--muted-foreground)] md:mx-auto'>
+        {t('servicios.subtitulo', lang)}
+      </p>
+    </div>
+
+    {
+      serviciosLocalizados.length === 0 ? (
+        <p class='text-center text-[var(--muted-foreground)]'>{t('servicios.placeholder', lang)}</p>
+      ) : (
+        <>
+          <div class='md:hidden' data-servicios-mobile data-total={serviciosLocalizados.length}>
+            <div class='overflow-hidden'>
+              <div
+                class='flex select-none items-stretch'
+                data-track-mobile
+                style='will-change: transform; cursor: grab; touch-action: pan-y;'
+              >
+                {serviciosLocalizados.map((s, i) => {
+                  const c = color(i);
+                  const enlace = resolverEnlace(s.enlace);
+                  const Tag = enlace ? 'a' : 'article';
+                  return (
+                    <div class='w-full flex-none px-1.5'>
+                      <Tag
+                        href={enlace?.href}
+                        target={enlace?.target}
+                        rel={enlace?.rel}
+                        data-card-link={enlace ? '' : undefined}
+                        class:list={[
+                          'relative block h-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] p-7 shadow-sm text-inherit no-underline',
+                          enlace && 'transition-transform active:scale-[0.98]'
+                        ]}
+                      >
+                        <div
+                          class='mb-5 flex h-14 w-14 items-center justify-center rounded-2xl'
+                          style={`background: color-mix(in oklch, ${c.bg}, transparent ${(1 - c.alpha) * 100}%); color: ${c.fg};`}
+                        >
+                          <IconoServicio nombre={s.icono ?? 'heart'} size={28} />
+                        </div>
+                        <h3 class='mb-2 text-xl font-extrabold'>{s.nombreTxt}</h3>
+                        {s.descripcionTxt && (
+                          <p class='m-0 leading-relaxed text-[var(--muted-foreground)]'>
+                            {s.descripcionTxt}
+                          </p>
+                        )}
+                        {enlace && (
+                          <span
+                            class='absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-full border'
+                            style={`color: ${c.fg}; border-color: color-mix(in oklch, ${c.bg}, transparent 70%); background: color-mix(in oklch, ${c.bg}, transparent 88%);`}
+                            aria-hidden='true'
+                          >
+                            <svg
+                              width='14'
+                              height='14'
+                              viewBox='0 0 24 24'
+                              fill='none'
+                              stroke='currentColor'
+                              stroke-width='2.5'
+                              stroke-linecap='round'
+                              stroke-linejoin='round'
+                            >
+                              <path d='M7 17 17 7M7 7h10v10' />
+                            </svg>
+                          </span>
+                        )}
+                      </Tag>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div class='mt-6 flex justify-center gap-2'>
+              {serviciosLocalizados.map((_, i) => (
+                <button
+                  type='button'
+                  data-dot-mobile={i}
+                  aria-label={t('servicios.btnSlide', lang, { n: i + 1 })}
+                  class='h-2 rounded-full transition-all'
+                  style='width: 0.5rem; background: var(--border);'
+                />
+              ))}
+            </div>
+          </div>
+
+          <div
+            class='relative hidden md:block'
+            data-servicios-desktop
+            data-total={serviciosLocalizados.length}
+          >
+            <div class='overflow-hidden md:px-2'>
+              <div
+                class='flex select-none items-stretch'
+                data-track-desktop
+                style='will-change: transform; cursor: grab; touch-action: pan-y;'
+              >
+                {serviciosLocalizados.map((s, i) => {
+                  const c = color(i);
+                  const enlace = resolverEnlace(s.enlace);
+                  const Tag = enlace ? 'a' : 'article';
+                  return (
+                    <div class='flex-none basis-1/2 px-3 lg:basis-1/3'>
+                      <Tag
+                        href={enlace?.href}
+                        target={enlace?.target}
+                        rel={enlace?.rel}
+                        data-card-link={enlace ? '' : undefined}
+                        class='group relative block h-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] p-7 text-inherit no-underline transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl'
+                      >
+                        <div
+                          class='pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100'
+                          style={`background: linear-gradient(135deg, color-mix(in oklch, ${c.bg}, transparent 92%) 0%, transparent 70%);`}
+                        />
+
+                        <div
+                          class='mb-5 flex h-14 w-14 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-110'
+                          style={`background: color-mix(in oklch, ${c.bg}, transparent ${(1 - c.alpha) * 100}%); color: ${c.fg};`}
+                        >
+                          <IconoServicio nombre={s.icono ?? 'heart'} size={28} />
+                        </div>
+
+                        <h3 class='relative z-10 mb-2 text-xl font-extrabold'>{s.nombreTxt}</h3>
+                        {s.descripcionTxt && (
+                          <p class='relative z-10 m-0 leading-relaxed text-[var(--muted-foreground)]'>
+                            {s.descripcionTxt}
+                          </p>
+                        )}
+
+                        <span
+                          class:list={[
+                            'absolute top-6 right-6 flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-300',
+                            enlace ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                          ]}
+                          style={`color: ${c.fg}; border-color: color-mix(in oklch, ${c.bg}, transparent 70%); background: color-mix(in oklch, ${c.bg}, transparent 88%);`}
+                        >
+                          <svg
+                            width='16'
+                            height='16'
+                            viewBox='0 0 24 24'
+                            fill='none'
+                            stroke='currentColor'
+                            stroke-width='2.5'
+                            stroke-linecap='round'
+                            stroke-linejoin='round'
+                            aria-hidden='true'
+                          >
+                            <path d='M7 17 17 7M7 7h10v10' />
+                          </svg>
+                        </span>
+                      </Tag>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button
+              type='button'
+              data-prev-desktop
+              aria-label={t('servicios.btnAnterior', lang)}
+              class='absolute top-1/2 -left-3 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-lg transition-all hover:bg-[var(--primary)] hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-[var(--card)] disabled:hover:text-[var(--foreground)]'
+            >
+              <svg
+                width='20'
+                height='20'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                stroke-width='2.5'
+                stroke-linecap='round'
+                stroke-linejoin='round'
+                aria-hidden='true'
+              >
+                <path d='m15 18-6-6 6-6' />
+              </svg>
+            </button>
+
+            <button
+              type='button'
+              data-next-desktop
+              aria-label={t('servicios.btnSiguiente', lang)}
+              class='absolute top-1/2 -right-3 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-lg transition-all hover:bg-[var(--primary)] hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-[var(--card)] disabled:hover:text-[var(--foreground)]'
+            >
+              <svg
+                width='20'
+                height='20'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                stroke-width='2.5'
+                stroke-linecap='round'
+                stroke-linejoin='round'
+                aria-hidden='true'
+              >
+                <path d='m9 18 6-6-6-6' />
+              </svg>
+            </button>
+          </div>
+        </>
+      )
+    }
+  </div>
+</section>
+
+<script>
+  function initMobileSlider() {
+    const slider = document.querySelector<HTMLElement>('[data-servicios-mobile]');
+    if (!slider) return;
+    const track = slider.querySelector<HTMLElement>('[data-track-mobile]');
+    const total = Number(slider.dataset.total ?? '0');
+    const dots = Array.from(slider.querySelectorAll<HTMLButtonElement>('[data-dot-mobile]'));
+    if (!track || total < 2) return;
+
+    const primero = track.children[0];
+    if (primero) track.appendChild(primero.cloneNode(true));
+
+    let actual = 0;
+    let animando = false;
+    let intervalo: number | undefined;
+    let dragStartX: number | null = null;
+    let dragDelta = 0;
+    let arrastrando = false;
+    const UMBRAL_DRAG = 10;
+
+    const PRIMARY = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+    const BORDER = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+
+    function pintarDots() {
+      const real = actual % total;
+      dots.forEach((d, i) => {
+        d.style.width = i === real ? '1.75rem' : '0.5rem';
+        d.style.background = i === real ? PRIMARY : BORDER;
+      });
+    }
+
+    function irA(idx: number, animar = true) {
+      if (!track) return;
+      track.style.transition = animar
+        ? 'transform 420ms cubic-bezier(0.22, 0.61, 0.36, 1)'
+        : 'none';
+      track.style.transform = `translateX(-${idx * 100}%)`;
+      actual = idx;
+      pintarDots();
+    }
+
+    function siguiente() {
+      if (animando || dragStartX !== null) return;
+      animando = true;
+      actual++;
+      irA(actual);
+      if (actual === total) {
+        window.setTimeout(() => {
+          irA(0, false);
+          animando = false;
+        }, 440);
+      } else {
+        window.setTimeout(() => {
+          animando = false;
+        }, 440);
+      }
+    }
+
+    function arrancar() {
+      pausar();
+      intervalo = window.setInterval(siguiente, 4500);
+    }
+
+    function pausar() {
+      if (intervalo) {
+        window.clearInterval(intervalo);
+        intervalo = undefined;
+      }
+    }
+
+    function anchoTrack(): number {
+      return track?.parentElement?.clientWidth ?? 1;
+    }
+
+    function onDown(e: PointerEvent) {
+      if (animando || !track) return;
+      dragStartX = e.clientX;
+      dragDelta = 0;
+      arrastrando = false;
+      track.style.transition = 'none';
+      pausar();
+    }
+
+    function onMove(e: PointerEvent) {
+      if (dragStartX === null || !track) return;
+      dragDelta = e.clientX - dragStartX;
+      if (!arrastrando) {
+        if (Math.abs(dragDelta) < UMBRAL_DRAG) return;
+        arrastrando = true;
+        track.style.cursor = 'grabbing';
+        try {
+          track.setPointerCapture(e.pointerId);
+        } catch {}
+      }
+      const pct = (dragDelta / anchoTrack()) * 100;
+      track.style.transform = `translateX(calc(-${actual * 100}% + ${pct}%))`;
+    }
+
+    function onUp() {
+      if (dragStartX === null || !track) return;
+      const umbral = anchoTrack() * 0.18;
+      track.style.cursor = 'grab';
+      if (!arrastrando) {
+        dragStartX = null;
+        dragDelta = 0;
+        arrancar();
+        return;
+      }
+      track.addEventListener(
+        'click',
+        e => {
+          e.preventDefault();
+          e.stopPropagation();
+        },
+        { capture: true, once: true }
+      );
+      if (Math.abs(dragDelta) > umbral) {
+        if (dragDelta < 0) {
+          animando = true;
+          actual++;
+          irA(actual);
+          if (actual === total) {
+            window.setTimeout(() => {
+              irA(0, false);
+              animando = false;
+            }, 440);
+          } else {
+            window.setTimeout(() => {
+              animando = false;
+            }, 440);
+          }
+        } else {
+          animando = true;
+          if (actual === 0) {
+            irA(total, false);
+            window.requestAnimationFrame(() => {
+              irA(total - 1);
+              window.setTimeout(() => {
+                animando = false;
+              }, 440);
+            });
+          } else {
+            actual--;
+            irA(actual);
+            window.setTimeout(() => {
+              animando = false;
+            }, 440);
+          }
+        }
+      } else {
+        irA(actual);
+      }
+      dragStartX = null;
+      dragDelta = 0;
+      arrastrando = false;
+      arrancar();
+    }
+
+    track.addEventListener('pointerdown', onDown);
+    track.addEventListener('pointermove', onMove);
+    track.addEventListener('pointerup', onUp);
+    track.addEventListener('pointercancel', onUp);
+
+    dots.forEach((dot, i) => {
+      dot.addEventListener('click', () => {
+        if (animando) return;
+        irA(i);
+        arrancar();
+      });
+    });
+
+    pintarDots();
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      arrancar();
+    }
+  }
+
+  function initDesktopSlider() {
+    const slider = document.querySelector<HTMLElement>('[data-servicios-desktop]');
+    if (!slider) return;
+    const track = slider.querySelector<HTMLElement>('[data-track-desktop]');
+    const total = Number(slider.dataset.total ?? '0');
+    const btnPrev = slider.querySelector<HTMLButtonElement>('[data-prev-desktop]');
+    const btnNext = slider.querySelector<HTMLButtonElement>('[data-next-desktop]');
+    if (!track || total < 1) return;
+
+    let actual = 0;
+    let dragStartX: number | null = null;
+    let dragDelta = 0;
+    let arrastrando = false;
+    const UMBRAL_DRAG = 10;
+
+    function visibles(): number {
+      return window.innerWidth >= 1024 ? 3 : 2;
+    }
+
+    function maxIdx(): number {
+      return Math.max(0, total - visibles());
+    }
+
+    function irA(idx: number, animar = true) {
+      if (!track) return;
+      actual = Math.min(Math.max(0, idx), maxIdx());
+      const pct = (100 / visibles()) * actual;
+      track.style.transition = animar
+        ? 'transform 420ms cubic-bezier(0.22, 0.61, 0.36, 1)'
+        : 'none';
+      track.style.transform = `translateX(-${pct}%)`;
+      pintarBotones();
+    }
+
+    function pintarBotones() {
+      if (btnPrev) {
+        if (actual === 0) btnPrev.setAttribute('disabled', '');
+        else btnPrev.removeAttribute('disabled');
+      }
+      if (btnNext) {
+        if (actual >= maxIdx()) btnNext.setAttribute('disabled', '');
+        else btnNext.removeAttribute('disabled');
+      }
+    }
+
+    btnPrev?.addEventListener('click', () => irA(actual - 1));
+    btnNext?.addEventListener('click', () => irA(actual + 1));
+
+    function anchoTrack(): number {
+      return track?.parentElement?.clientWidth ?? 1;
+    }
+
+    function onDown(e: PointerEvent) {
+      if (!track) return;
+      dragStartX = e.clientX;
+      dragDelta = 0;
+      arrastrando = false;
+      track.style.transition = 'none';
+    }
+
+    function onMove(e: PointerEvent) {
+      if (dragStartX === null || !track) return;
+      dragDelta = e.clientX - dragStartX;
+      if (!arrastrando) {
+        if (Math.abs(dragDelta) < UMBRAL_DRAG) return;
+        arrastrando = true;
+        track.style.cursor = 'grabbing';
+        try {
+          track.setPointerCapture(e.pointerId);
+        } catch {}
+      }
+      const stepPct = 100 / visibles();
+      const dragPct = (dragDelta / anchoTrack()) * 100;
+      track.style.transform = `translateX(calc(-${actual * stepPct}% + ${dragPct}%))`;
+    }
+
+    function onUp() {
+      if (dragStartX === null || !track) return;
+      track.style.cursor = 'grab';
+      if (!arrastrando) {
+        dragStartX = null;
+        dragDelta = 0;
+        return;
+      }
+      track.addEventListener(
+        'click',
+        e => {
+          e.preventDefault();
+          e.stopPropagation();
+        },
+        { capture: true, once: true }
+      );
+      const cardAncho = anchoTrack() / visibles();
+      const umbral = cardAncho * 0.3;
+      if (Math.abs(dragDelta) > umbral) {
+        if (dragDelta < 0) irA(actual + 1);
+        else irA(actual - 1);
+      } else {
+        irA(actual);
+      }
+      dragStartX = null;
+      dragDelta = 0;
+      arrastrando = false;
+    }
+
+    track.addEventListener('pointerdown', onDown);
+    track.addEventListener('pointermove', onMove);
+    track.addEventListener('pointerup', onUp);
+    track.addEventListener('pointercancel', onUp);
+
+    let resizeTimeout: number | undefined;
+    window.addEventListener('resize', () => {
+      if (resizeTimeout) window.clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(() => irA(Math.min(actual, maxIdx()), false), 100);
+    });
+
+    pintarBotones();
+  }
+
+  initMobileSlider();
+  initDesktopSlider();
+</script>

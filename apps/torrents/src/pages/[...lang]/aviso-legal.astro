@@ -1,0 +1,237 @@
+---
+// TODO i18n legal: el texto legal de aviso-legal está en español en todas las locales.
+// Cuando un abogado revise las versiones EN/CA, sustituir el contenido por locale.
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import {
+  obtenerFarmaciaPorSlug,
+  agruparHorarios,
+  localizar,
+  SLUG_FARMACIA,
+  type Farmacia,
+  type DiasI18n,
+} from '@/lib/sanity';
+import {
+  esLocaleValido,
+  rutaConLocale,
+  t,
+  type Locale,
+} from '@/lib/i18n';
+import diasEs from '@/i18n/es.json';
+import diasEn from '@/i18n/en.json';
+import diasCa from '@/i18n/ca.json';
+
+export async function getStaticPaths() {
+  const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
+  const codigos = (farmacia?.idiomasActivos ?? [{ codigo: 'es', nombre: 'Español' }])
+    .map((i) => i.codigo)
+    .filter(esLocaleValido);
+  const lista = codigos.length > 0 ? codigos : (['es'] as Locale[]);
+  return lista.map((c) => ({
+    params: { lang: c === 'es' ? undefined : c },
+    props: { farmacia, lang: c },
+  }));
+}
+
+interface Props { farmacia: Farmacia | null; lang: Locale; }
+const { farmacia: farmaciaCargada, lang } = Astro.props as Props;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const farmacia: Farmacia = farmaciaCargada ?? {
+  _id: 'placeholder',
+  nombre: 'Farmacia Torrents',
+  slug: SLUG_FARMACIA,
+};
+
+const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
+  es: diasEs.dias as DiasI18n,
+  en: diasEn.dias as DiasI18n,
+  ca: diasCa.dias as DiasI18n,
+};
+const CERRADO_LABEL: Record<Locale, string> = {
+  es: 'Cerrado', en: 'Closed', ca: 'Tancat',
+};
+const horariosAgrupados = agruparHorarios(
+  farmacia.horarios,
+  DIAS_POR_LANG[lang],
+  CERRADO_LABEL[lang],
+);
+const mostrarFaqs = (farmacia.faqs ?? []).some(
+  (f) => localizar(f.pregunta, lang) && localizar(f.respuesta, lang),
+);
+
+const direccionCompleta = [
+  farmacia.direccion?.calle,
+  farmacia.direccion?.codigoPostal,
+  farmacia.direccion?.ciudad,
+  farmacia.direccion?.provincia,
+]
+  .filter(Boolean)
+  .join(', ');
+
+const anyo = new Date().getFullYear();
+const canonical = `${siteUrl}${rutaConLocale('/aviso-legal', lang)}`;
+const home = rutaConLocale('/', lang);
+---
+
+<BaseLayout
+  titulo={`Aviso legal · ${farmacia.nombre}`}
+  descripcion={`Aviso legal e información del titular de ${farmacia.nombre}.`}
+  canonical={canonical}
+  lang={lang}
+  rutaActual='/aviso-legal'
+>
+  <Header
+    nombre={farmacia.nombre}
+    whatsapp={farmacia.contacto?.whatsapp}
+    telefono={farmacia.contacto?.telefono}
+    logo={farmacia.logo}
+    mostrarFaqs={mostrarFaqs}
+    lang={lang}
+    rutaActual='/aviso-legal'
+    idiomasActivos={farmacia.idiomasActivos}
+  />
+
+  <main id='contenido' class='container-app py-16 md:py-24'>
+    <article class='prose-legal mx-auto max-w-3xl space-y-6'>
+      <a href={home} class='inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--primary)]'>
+        <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+          <path d='m15 18-6-6 6-6' />
+        </svg>
+        {t('legal.volver', lang)}
+      </a>
+
+      <h1 class='text-4xl font-extrabold tracking-tight md:text-5xl'>Aviso legal</h1>
+
+      <p class='text-sm text-[var(--muted-foreground)]'>
+        Última actualización: {anyo}
+      </p>
+
+      <section class='space-y-3'>
+        <h2 class='text-2xl font-extrabold'>1. Datos identificativos del titular</h2>
+        <p>
+          En cumplimiento del artículo 10 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad
+          de la Información y de Comercio Electrónico (LSSI-CE), se informa de los datos del titular de
+          este sitio web:
+        </p>
+        <ul class='ml-5 list-disc space-y-1'>
+          <li><strong>Denominación:</strong> {farmacia.nombre}</li>
+          {farmacia.titular && <li><strong>Farmacéutico/a titular:</strong> {farmacia.titular}</li>}
+          {farmacia.numeroColegiado && <li><strong>Nº de colegiado:</strong> {farmacia.numeroColegiado}</li>}
+          {direccionCompleta && <li><strong>Dirección:</strong> {direccionCompleta}</li>}
+          {farmacia.contacto?.telefono && <li><strong>Teléfono:</strong> {farmacia.contacto.telefono}</li>}
+          {farmacia.contacto?.email && <li><strong>Email:</strong> {farmacia.contacto.email}</li>}
+        </ul>
+        <p class='text-sm text-[var(--muted-foreground)]'>
+          <em>
+            Si dispones de NIF/CIF, número de registro mercantil u otros datos identificativos
+            relevantes, añádelos también aquí (campo a completar por el titular).
+          </em>
+        </p>
+      </section>
+
+      <section class='space-y-3'>
+        <h2 class='text-2xl font-extrabold'>2. Objeto</h2>
+        <p>
+          El presente aviso legal regula el uso del sitio web accesible desde
+          <a href={siteUrl} class='text-[var(--primary)] underline'>{siteUrl || 'este sitio'}</a> (en
+          adelante, el "Sitio"), que {farmacia.nombre} pone a disposición de los usuarios de Internet con
+          el fin de proporcionar información sobre la farmacia, sus servicios, horarios y datos de
+          contacto.
+        </p>
+      </section>
+
+      <section class='space-y-3'>
+        <h2 class='text-2xl font-extrabold'>3. Condiciones de uso</h2>
+        <p>
+          El acceso al Sitio es gratuito y no exige registro previo. El usuario se compromete a hacer un
+          uso adecuado de los contenidos y a no emplearlos para realizar actividades ilícitas o
+          contrarias a la buena fe.
+        </p>
+        <p>
+          El titular se reserva el derecho a modificar, suspender o interrumpir, total o parcialmente,
+          el acceso al Sitio sin necesidad de previo aviso.
+        </p>
+      </section>
+
+      <section class='space-y-3'>
+        <h2 class='text-2xl font-extrabold'>4. Propiedad intelectual e industrial</h2>
+        <p>
+          Todos los contenidos del Sitio (textos, imágenes, logotipos, diseño gráfico, código fuente,
+          etc.) son propiedad de {farmacia.nombre} o de terceros que han autorizado su uso. Queda
+          prohibida su reproducción, distribución o comunicación pública sin la autorización expresa
+          del titular.
+        </p>
+      </section>
+
+      <section class='space-y-3'>
+        <h2 class='text-2xl font-extrabold'>5. Responsabilidad</h2>
+        <p>
+          {farmacia.nombre} no se hace responsable de los daños y perjuicios derivados de errores u
+          omisiones en los contenidos, ni de los problemas derivados del uso del Sitio por parte de los
+          usuarios. La información sanitaria publicada tiene carácter divulgativo y nunca sustituye el
+          consejo profesional individualizado.
+        </p>
+      </section>
+
+      <section class='space-y-3'>
+        <h2 class='text-2xl font-extrabold'>6. Enlaces a terceros</h2>
+        <p>
+          El Sitio puede contener enlaces a páginas web de terceros (Google Maps, WhatsApp, redes
+          sociales, etc.). {farmacia.nombre} no se responsabiliza del contenido ni de las políticas de
+          privacidad de dichos sitios.
+        </p>
+      </section>
+
+      <section class='space-y-3'>
+        <h2 class='text-2xl font-extrabold'>7. Protección de datos</h2>
+        <p>
+          El tratamiento de los datos personales que pudieran recabarse a través del Sitio se rige por
+          nuestra <a href={rutaConLocale('/politica-privacidad', lang)} class='text-[var(--primary)] underline'>Política de
+          privacidad</a>.
+        </p>
+      </section>
+
+      <section class='space-y-3'>
+        <h2 class='text-2xl font-extrabold'>8. Legislación y jurisdicción aplicables</h2>
+        <p>
+          Las presentes condiciones se rigen por la legislación española. Para la resolución de
+          cualquier controversia, las partes se someten a los Juzgados y Tribunales del domicilio del
+          titular, salvo que la normativa aplicable disponga otra cosa.
+        </p>
+      </section>
+    </article>
+  </main>
+
+  <Footer
+    nombre={farmacia.nombre}
+    titular={farmacia.titular}
+    numeroColegiado={farmacia.numeroColegiado}
+    logo={farmacia.logo}
+    contacto={farmacia.contacto}
+    redes={farmacia.redesSociales}
+    direccion={farmacia.direccion}
+    horarios={farmacia.horarios}
+    horariosAgrupados={horariosAgrupados}
+    servicios={farmacia.servicios}
+    descripcionCorta={farmacia.descripcionCorta}
+    mostrarFaqs={mostrarFaqs}
+    lang={lang}
+    rutaActual='/aviso-legal'
+  />
+</BaseLayout>
+
+<style>
+  .prose-legal h2 {
+    margin-top: 1.5rem;
+  }
+  .prose-legal p,
+  .prose-legal li {
+    line-height: 1.7;
+    color: color-mix(in oklch, var(--foreground), transparent 15%);
+  }
+  .prose-legal a {
+    word-break: break-word;
+  }
+</style>

@@ -1,0 +1,175 @@
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'Gilroy';
+  src: url('../assets/fonts/Gilroy-Regular.ttf') format('truetype');
+  font-weight: 100 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Gilroy';
+  src: url('../assets/fonts/Gilroy-Black.ttf') format('truetype');
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --background: oklch(0.98 0.01 230);
+  --foreground: oklch(0.25 0.03 230);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.03 230);
+
+  /* Marca corporativa Farmacia Torrents */
+  --primary: #1265b5;
+  --primary-foreground: oklch(1 0 0);
+  --accent: #36a0da;
+  --accent-foreground: oklch(1 0 0);
+  --brand-light: #5bc2eb;
+  --brand-light-foreground: oklch(0.25 0.03 230);
+
+  --secondary: oklch(0.94 0.02 230);
+  --secondary-foreground: oklch(0.25 0.03 230);
+  --muted: oklch(0.92 0.02 230);
+  --muted-foreground: oklch(0.50 0.03 230);
+  --border: oklch(0.90 0.02 230);
+  --ring: var(--primary);
+
+  /* Acentos decorativos (variedad cromática en cards de servicios y badges). */
+  --kids-yellow: oklch(0.85 0.18 90);
+  --kids-green: oklch(0.70 0.18 145);
+  --kids-purple: oklch(0.70 0.18 300);
+  --kids-orange: oklch(0.75 0.18 50);
+
+  --color-wa: #25d366;
+  --color-wa-dark: #128c7e;
+
+  --radius: 1rem;
+}
+
+@theme inline {
+  --font-sans: 'Gilroy', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-brand-light: var(--brand-light);
+  --color-brand-light-foreground: var(--brand-light-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-kids-yellow: var(--kids-yellow);
+  --color-kids-green: var(--kids-green);
+  --color-kids-purple: var(--kids-purple);
+  --color-kids-orange: var(--kids-orange);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: 'Gilroy', system-ui, sans-serif;
+    min-width: 320px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-synthesis-weight: auto;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--foreground);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
+  a {
+    transition: color 150ms ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .container-app {
+    @apply mx-auto w-full max-w-7xl px-4;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-base font-bold transition-all duration-200;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: 0 12px 24px -8px color-mix(in oklch, var(--primary), transparent 75%);
+  }
+  .btn-primary:hover {
+    background: color-mix(in oklch, var(--primary), black 8%);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border px-6 py-3.5 text-base font-bold transition-all duration-200;
+    background: var(--card);
+    color: var(--foreground);
+    border-color: var(--border);
+  }
+  .btn-secondary:hover {
+    background: var(--secondary);
+  }
+
+  .btn-wa {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-base font-bold transition-all duration-200;
+    background: var(--color-wa);
+    color: white;
+    box-shadow: 0 12px 24px -8px color-mix(in srgb, var(--color-wa), transparent 60%);
+  }
+  .btn-wa:hover {
+    background: var(--color-wa-dark);
+    transform: translateY(-1px);
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold;
+    background: color-mix(in oklch, var(--primary), transparent 90%);
+    border-color: color-mix(in oklch, var(--primary), transparent 70%);
+    color: var(--primary);
+  }
+
+  .dot-pattern {
+    background-image: radial-gradient(
+      circle,
+      color-mix(in oklch, var(--primary), transparent 80%) 1px,
+      transparent 1px
+    );
+    background-size: 2rem 2rem;
+  }
+}

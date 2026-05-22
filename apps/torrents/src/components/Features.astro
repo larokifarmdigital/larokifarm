@@ -1,0 +1,238 @@
+---
+import MarcaAgua from '@/components/MarcaAgua.astro';
+
+import { t, type Locale } from '@/lib/i18n';
+
+type Feature = {
+  titulo: string;
+  descripcion: string;
+  icono: 'heart' | 'award' | 'users' | 'clock';
+};
+
+export interface Props {
+  features?: Feature[];
+  horarioTexto?: string;
+  logo?: string;
+  lang: Locale;
+}
+
+const { horarioTexto, logo, lang } = Astro.props;
+
+const features: Feature[] = Astro.props.features ?? [
+  {
+    icono: 'heart',
+    titulo: t('features.atencionTitulo', lang),
+    descripcion: t('features.atencionDesc', lang)
+  },
+  {
+    icono: 'award',
+    titulo: t('features.calidadTitulo', lang),
+    descripcion: t('features.calidadDesc', lang)
+  },
+  {
+    icono: 'users',
+    titulo: t('features.equipoTitulo', lang),
+    descripcion: t('features.equipoDesc', lang)
+  },
+  {
+    icono: 'clock',
+    titulo: t('features.horarioTitulo', lang),
+    descripcion: horarioTexto ?? t('features.horarioDescFallback', lang)
+  }
+];
+---
+
+<section
+  class='relative overflow-hidden border-y border-[var(--border)] bg-[var(--card)] py-12 md:py-16'
+>
+  <MarcaAgua
+    logo={logo}
+    class='top-4 right-6 md:right-12'
+    tamano={56}
+    opacidad={0.05}
+    rotacion={10}
+  />
+  <MarcaAgua
+    logo={logo}
+    class='bottom-4 left-6 md:left-12'
+    tamano={52}
+    opacidad={0.05}
+    rotacion={-8}
+  />
+  <MarcaAgua
+    logo={logo}
+    class='top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
+    tamano={68}
+    opacidad={0.04}
+    rotacion={0}
+  />
+  <div class='container-app relative'>
+    <div class='hidden gap-8 md:grid md:grid-cols-4'>
+      {
+        features.map(f => (
+          <div class='flex items-center gap-4'>
+            <div class='flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_oklch,var(--primary),transparent_90%)]'>
+              <svg
+                width='28'
+                height='28'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                stroke-width='2.2'
+                stroke-linecap='round'
+                stroke-linejoin='round'
+                class='text-[var(--primary)]'
+                aria-hidden='true'
+              >
+                {f.icono === 'heart' && (
+                  <path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' />
+                )}
+                {f.icono === 'award' && (
+                  <>
+                    <circle cx='12' cy='8' r='6' />
+                    <path d='M15.477 12.89 17 22l-5-3-5 3 1.523-9.11' />
+                  </>
+                )}
+                {f.icono === 'users' && (
+                  <>
+                    <path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' />
+                    <circle cx='9' cy='7' r='4' />
+                    <path d='M23 21v-2a4 4 0 0 0-3-3.87' />
+                    <path d='M16 3.13a4 4 0 0 1 0 7.75' />
+                  </>
+                )}
+                {f.icono === 'clock' && (
+                  <>
+                    <circle cx='12' cy='12' r='10' />
+                    <path d='M12 6v6l4 2' />
+                  </>
+                )}
+              </svg>
+            </div>
+            <div>
+              <h3 class='font-extrabold'>{f.titulo}</h3>
+              <p class='m-0 text-sm text-[var(--muted-foreground)]'>{f.descripcion}</p>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class='md:hidden' data-features-slider data-total={features.length}>
+      <div class='overflow-hidden'>
+        <div class='flex' data-features-track>
+          {
+            features.map(f => (
+              <div class='w-full flex-none px-2'>
+                <div class='mx-auto flex max-w-sm items-center gap-4'>
+                  <div class='flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_oklch,var(--primary),transparent_90%)]'>
+                    <svg
+                      width='28'
+                      height='28'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke='currentColor'
+                      stroke-width='2.2'
+                      stroke-linecap='round'
+                      stroke-linejoin='round'
+                      class='text-[var(--primary)]'
+                      aria-hidden='true'
+                    >
+                      {f.icono === 'heart' && (
+                        <path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' />
+                      )}
+                      {f.icono === 'award' && (
+                        <>
+                          <circle cx='12' cy='8' r='6' />
+                          <path d='M15.477 12.89 17 22l-5-3-5 3 1.523-9.11' />
+                        </>
+                      )}
+                      {f.icono === 'users' && (
+                        <>
+                          <path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' />
+                          <circle cx='9' cy='7' r='4' />
+                          <path d='M23 21v-2a4 4 0 0 0-3-3.87' />
+                          <path d='M16 3.13a4 4 0 0 1 0 7.75' />
+                        </>
+                      )}
+                      {f.icono === 'clock' && (
+                        <>
+                          <circle cx='12' cy='12' r='10' />
+                          <path d='M12 6v6l4 2' />
+                        </>
+                      )}
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class='font-extrabold'>{f.titulo}</h3>
+                    <p class='m-0 text-sm text-[var(--muted-foreground)]'>{f.descripcion}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const slider = document.querySelector<HTMLElement>('[data-features-slider]');
+  if (slider) {
+    const track = slider.querySelector<HTMLElement>('[data-features-track]');
+    const total = Number(slider.dataset.total ?? '0');
+
+    if (track && total > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const primero = track.children[0];
+      if (primero) {
+        track.appendChild(primero.cloneNode(true));
+      }
+
+      let actual = 0;
+      let animando = false;
+      let intervalo: number | undefined;
+
+      function irA(indice: number, animar = true) {
+        if (!track) return;
+        track.style.transition = animar ? 'transform 500ms ease-out' : 'none';
+        track.style.transform = `translateX(-${indice * 100}%)`;
+        actual = indice;
+      }
+
+      function siguiente() {
+        if (animando) return;
+        animando = true;
+        actual++;
+        irA(actual);
+
+        if (actual === total) {
+          window.setTimeout(() => {
+            irA(0, false);
+            animando = false;
+          }, 520);
+        } else {
+          window.setTimeout(() => {
+            animando = false;
+          }, 520);
+        }
+      }
+
+      function arrancar() {
+        intervalo = window.setInterval(siguiente, 4000);
+      }
+
+      function pausar() {
+        if (intervalo) {
+          window.clearInterval(intervalo);
+          intervalo = undefined;
+        }
+      }
+
+      slider.addEventListener('pointerenter', pausar);
+      slider.addEventListener('pointerleave', arrancar);
+
+      arrancar();
+    }
+  }
+</script>

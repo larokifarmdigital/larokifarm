@@ -1,0 +1,228 @@
+---
+import Slider from '@/components/Slider.astro';
+import MarcaAgua from '@/components/MarcaAgua.astro';
+import { portableTextAHtml, localizar } from '@/lib/sanity';
+import type { LocalizedString, LocalizedPortableText, ImagenConAlt } from '@/lib/sanity';
+import { t, tArray, type Locale } from '@/lib/i18n';
+
+export interface Props {
+  titulo?: LocalizedString;
+  descripcionLarga?: LocalizedPortableText;
+  imagenes?: ImagenConAlt[];
+  logo?: string;
+  puntos?: LocalizedString[];
+  anyosExperiencia?: number;
+  lang: Locale;
+}
+
+const {
+  titulo,
+  descripcionLarga,
+  imagenes = [],
+  logo,
+  puntos,
+  anyosExperiencia,
+  lang
+} = Astro.props;
+
+const tituloTexto = localizar(titulo, lang) || t('about.tituloDefecto', lang);
+const tieneImagenes = imagenes.length > 0;
+const cuerpoHtml = portableTextAHtml(localizar(descripcionLarga, lang));
+
+const puntosLocalizados = (puntos ?? [])
+  .map(p => localizar(p, lang))
+  .filter((p): p is string => Boolean(p && p.trim()));
+const puntosFinales =
+  puntosLocalizados.length > 0 ? puntosLocalizados : tArray('about.puntosDefecto', lang);
+
+const palabras = tituloTexto.split(' ');
+const tituloInicio = palabras.slice(0, Math.max(palabras.length - 2, 1)).join(' ');
+const tituloResaltado = palabras.slice(Math.max(palabras.length - 2, 1)).join(' ');
+
+const imagenesParaSlider = imagenes.map(img => ({
+  url: img.url,
+  alt: localizar(img.alt, lang)
+}));
+---
+
+<section id='sobre' class='relative overflow-hidden pt-24 pb-24'>
+  <div
+    class='absolute top-0 right-0 h-96 w-96 rounded-full bg-[color-mix(in_oklch,var(--primary),transparent_95%)] blur-3xl'
+    aria-hidden='true'
+  >
+  </div>
+  <div
+    class='absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[color-mix(in_oklch,var(--accent),transparent_95%)] blur-3xl'
+    aria-hidden='true'
+  >
+  </div>
+
+  <MarcaAgua
+    logo={logo}
+    class='top-16 right-6 md:right-20'
+    tamano={80}
+    opacidad={0.06}
+    rotacion={8}
+  />
+  <MarcaAgua
+    logo={logo}
+    class='bottom-12 left-6 md:left-16'
+    tamano={64}
+    opacidad={0.05}
+    rotacion={-15}
+  />
+  <MarcaAgua
+    logo={logo}
+    class='top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
+    tamano={140}
+    opacidad={0.04}
+    rotacion={-4}
+  />
+  <MarcaAgua logo={logo} class='bottom-1/3 right-1/4' tamano={48} opacidad={0.05} rotacion={20} />
+
+  <div class='container-app relative'>
+    <div class='grid items-center gap-16 lg:grid-cols-2'>
+      <div class='relative order-2 lg:order-1'>
+        <div class='relative mx-auto aspect-square max-w-xl'>
+          {
+            tieneImagenes ? (
+              <div class='absolute inset-0'>
+                <Slider
+                  imagenes={imagenesParaSlider}
+                  alt=''
+                  ancho={800}
+                  marcaAgua={logo}
+                  marcaAguaAlt=''
+                />
+              </div>
+            ) : (
+              <div
+                class='absolute inset-0 overflow-hidden rounded-[2rem] border bg-[var(--card)] shadow-2xl'
+                style='box-shadow: 0 25px 50px -12px color-mix(in oklch, var(--primary), transparent 85%);'
+              >
+                <div class='absolute top-8 left-8 h-32 w-32 rounded-3xl bg-[var(--primary)]' />
+                <div class='absolute right-8 bottom-8 h-40 w-40 rounded-full bg-[color-mix(in_oklch,var(--accent),transparent_60%)]' />
+                <div class='absolute top-1/2 left-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-[var(--primary)]' />
+
+                <div class='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
+                  <div class='h-4 w-16 rounded-full bg-[var(--primary)]' />
+                  <div class='absolute top-1/2 left-1/2 h-16 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--primary)]' />
+                </div>
+
+                <div
+                  class='absolute top-6 right-6 h-6 w-6 rounded-full'
+                  style='background: var(--kids-yellow);'
+                />
+                <div
+                  class='absolute bottom-12 left-12 h-8 w-8 rotate-12 rounded-lg'
+                  style='background: var(--kids-green);'
+                />
+              </div>
+            )
+          }
+
+          {
+            typeof anyosExperiencia === 'number' && anyosExperiencia > 0 && (
+              <div
+                class='absolute -top-3 -right-3 z-20 flex items-center gap-3 rounded-2xl bg-white/95 px-4 py-3 ring-1 ring-black/5 backdrop-blur-md transition-transform duration-300 hover:-translate-y-0.5 md:-top-4 md:-right-4 md:gap-3.5 md:px-5 md:py-3.5'
+                style='box-shadow: 0 14px 30px -8px color-mix(in oklch, var(--primary), transparent 70%);'
+              >
+                <div
+                  class='flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white md:h-11 md:w-11'
+                  style='background: var(--primary);'
+                >
+                  <svg
+                    width='18'
+                    height='18'
+                    viewBox='0 0 24 24'
+                    fill='currentColor'
+                    aria-hidden='true'
+                  >
+                    <path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' />
+                  </svg>
+                </div>
+                <p class='m-0 text-sm font-semibold whitespace-nowrap text-[var(--foreground)] md:text-base'>
+                  <span class='font-black tabular-nums text-[var(--primary)]'>
+                    {anyosExperiencia}+
+                  </span>{' '}
+                  {t('about.badge.anyos', lang)} {t('about.badge.experiencia', lang)}
+                </p>
+              </div>
+            )
+          }
+        </div>
+      </div>
+
+      <div class='order-1 space-y-7 lg:order-2'>
+        <div class='chip'>
+          <span>{t('about.chip', lang)}</span>
+        </div>
+
+        <h2 class='text-4xl font-extrabold tracking-tight md:text-5xl'>
+          {tituloInicio}
+          {tituloInicio && <br />}
+          <span class='text-[var(--primary)]'>{tituloResaltado}</span>
+        </h2>
+
+        {
+          cuerpoHtml ? (
+            <div
+              class='about-cuerpo text-lg leading-relaxed text-[var(--muted-foreground)]'
+              set:html={cuerpoHtml}
+            />
+          ) : (
+            <p class='text-lg leading-relaxed text-[var(--muted-foreground)]'>
+              {t('about.cuerpoFallback', lang)}
+            </p>
+          )
+        }
+
+        <div class='grid gap-4 sm:grid-cols-2'>
+          {
+            puntosFinales.map(p => (
+              <div class='flex items-center gap-3'>
+                <svg
+                  width='22'
+                  height='22'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  stroke-width='2.2'
+                  stroke-linecap='round'
+                  stroke-linejoin='round'
+                  aria-hidden='true'
+                  class='shrink-0 text-[var(--primary)]'
+                >
+                  <circle cx='12' cy='12' r='10' />
+                  <path d='m8 12 3 3 5-6' />
+                </svg>
+                <span class='text-sm'>{p}</span>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about-cuerpo :global(p + p),
+  .about-cuerpo :global(h2),
+  .about-cuerpo :global(h3) {
+    margin-top: 1rem;
+  }
+  .about-cuerpo :global(h2) {
+    color: var(--foreground);
+    font-size: 1.5rem;
+    font-weight: 800;
+  }
+  .about-cuerpo :global(h3) {
+    color: var(--foreground);
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .about-cuerpo :global(strong) {
+    color: var(--foreground);
+  }
+</style>

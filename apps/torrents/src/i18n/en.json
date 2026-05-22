@@ -1,0 +1,129 @@
+{
+  "html": {
+    "lang": "en"
+  },
+  "dias": {
+    "Mo": "Monday",
+    "Tu": "Tuesday",
+    "We": "Wednesday",
+    "Th": "Thursday",
+    "Fr": "Friday",
+    "Sa": "Saturday",
+    "Su": "Sunday",
+    "a": "to"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Home",
+      "servicios": "Services",
+      "sobreNosotros": "About us",
+      "faqs": "FAQs",
+      "contacto": "Contact",
+      "aria": "Main"
+    },
+    "cta": {
+      "llamanos": "Call us",
+      "llamarA": "Call {telefono}"
+    },
+    "menu": {
+      "abrir": "Open menu",
+      "cerrar": "Close menu"
+    },
+    "idioma": {
+      "aria": "Change language"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Pharmacy in {ciudad}",
+      "sinCiudad": "Your trusted pharmacy"
+    },
+    "ciudad": "Pharmacy in {ciudad}",
+    "btnLlamar": "Call now",
+    "altInterior": "Interior of {nombre}"
+  },
+  "about": {
+    "chip": "About us",
+    "tituloDefecto": "A pharmacy for families",
+    "cuerpoFallback": "At this pharmacy we are dedicated to caring for family health. Our team is committed to your children's wellbeing, offering close attention, quality products and the advice you need as a parent.",
+    "puntosDefecto": [
+      "Close and professional service",
+      "Top quality products",
+      "Free advice",
+      "Friendly atmosphere"
+    ],
+    "badge": {
+      "anyos": "years",
+      "experiencia": "of experience"
+    }
+  },
+  "servicios": {
+    "chip": "Our services",
+    "tituloParte1": "Our",
+    "tituloParte2": "services",
+    "subtitulo": "We offer a wide range of pharmaceutical services and carefully selected products for the whole family.",
+    "placeholder": "We'll be adding our services soon.",
+    "btnAnterior": "Previous",
+    "btnSiguiente": "Next",
+    "btnSlide": "Go to slide {n}"
+  },
+  "faqs": {
+    "chip": "Frequently asked questions",
+    "tituloParte1": "We answer your",
+    "tituloParte2": "questions",
+    "subtitulo": "The most common questions our customers ask us. If you have any other questions, get in touch and we'll get back to you right away."
+  },
+  "cta": {
+    "chip": "Get in touch",
+    "tituloConCiudad": "Find us in {ciudad}",
+    "tituloSinCiudad": "We are here to help",
+    "subtitulo": "Visit {nombre} or give us a call for personalised pharmaceutical advice.",
+    "labelTelefono": "Phone",
+    "labelDireccion": "Address",
+    "labelHorario": "Opening hours",
+    "btnEscribenos": "Write to us",
+    "btnLlamar": "Call now",
+    "ariaMapa": "Map of {nombre}"
+  },
+  "footer": {
+    "servicios": "Services",
+    "informacion": "Information",
+    "contactanos": "Get in touch",
+    "sobreNosotros": "About us",
+    "preguntasFrecuentes": "FAQs",
+    "contacto": "Contact",
+    "avisoLegal": "Legal notice",
+    "politicaPrivacidad": "Privacy policy",
+    "copyright": "© {anyo} {nombre}. All rights reserved.",
+    "nCol": "Reg. no.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok"
+  },
+  "features": {
+    "atencionTitulo": "Personalised care",
+    "atencionDesc": "Every family is unique",
+    "calidadTitulo": "Certified products",
+    "calidadDesc": "Guaranteed quality",
+    "equipoTitulo": "Specialised team",
+    "equipoDesc": "Paediatric pharmacists",
+    "horarioTitulo": "Wide opening hours",
+    "horarioDescFallback": "Monday to Saturday"
+  },
+  "flotante": {
+    "ariaWhatsApp": "Contact via WhatsApp"
+  },
+  "legal": {
+    "volver": "Back to home"
+  },
+  "p404": {
+    "tituloMeta": "Page not found · {nombre}",
+    "descMeta": "The page you are looking for doesn't exist or has been moved.",
+    "chip": "Error 404",
+    "subtitulo1": "This page",
+    "subtitulo2": "doesn't exist",
+    "texto": "The link may be broken, the page may have been moved, or the URL might be incorrect.",
+    "btnInicio": "Back to home",
+    "buscas": "Looking for something specific?"
+  }
+}

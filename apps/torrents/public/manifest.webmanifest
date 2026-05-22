@@ -1,0 +1,24 @@
+{
+  "name": "Farmacia Torrents",
+  "short_name": "F. Torrents",
+  "description": "Farmacia Torrents en el Eixample (Barcelona). Productos infantiles, dermocosmética, fórmulas magistrales y atención farmacéutica personalizada.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "minimal-ui",
+  "background_color": "#ffffff",
+  "theme_color": "#1265b5",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

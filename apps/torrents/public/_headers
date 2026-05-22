@@ -1,0 +1,43 @@
+# Security headers globales
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: https://cdn.sanity.io; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://larokifarm-widget-chat.pages.dev; frame-src https://www.google.com https://maps.google.com; font-src 'self'; connect-src 'self' https://cdn.sanity.io; manifest-src 'self'; base-uri 'self'; form-action 'self'
+
+# Assets con hash en el nombre: cache inmutable por 1 año
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Fuentes (también con hash si Astro las procesa, pero ruta estable también)
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Iconos, manifest, robots, sitemap: cache moderado (1 día)
+/favicon.svg
+  Cache-Control: public, max-age=86400
+
+/logo.png
+  Cache-Control: public, max-age=86400
+
+/manifest.webmanifest
+  Cache-Control: public, max-age=86400
+  Content-Type: application/manifest+json
+
+/robots.txt
+  Cache-Control: public, max-age=86400
+
+/sitemap-index.xml
+  Cache-Control: public, max-age=86400
+
+/sitemap-0.xml
+  Cache-Control: public, max-age=86400
+
+# HTML: revalidar siempre (importante para deploys frescos)
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/
+  Cache-Control: public, max-age=0, must-revalidate

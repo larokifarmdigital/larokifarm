@@ -1,0 +1,33 @@
+---
+import { imagenSanity } from '@/lib/sanity';
+
+export interface Props {
+  logo?: string;
+  class?: string;
+  tamano?: number;
+  opacidad?: number;
+  rotacion?: number;
+}
+
+const {
+  logo,
+  class: clase = 'top-10 right-10',
+  tamano = 72,
+  opacidad = 0.06,
+  rotacion = 0,
+} = Astro.props;
+
+const logoOpt = imagenSanity(logo, { w: tamano * 2, fit: 'max' });
+---
+
+{
+  logoOpt && (
+    <img
+      src={logoOpt}
+      alt=''
+      aria-hidden='true'
+      class={`pointer-events-none absolute -z-0 select-none ${clase}`}
+      style={`width: ${tamano}px; height: auto; opacity: ${opacidad}; transform: rotate(${rotacion}deg);`}
+    />
+  )
+}
