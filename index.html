@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CIMA Chat — playground</title>
+  <style>
+    /* Estilos agresivos del host para verificar el aislamiento del Shadow DOM */
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Comic Sans MS", cursive;
+      background: linear-gradient(135deg, #ff7eb3, #ff758c, #ffb86c);
+      min-height: 100vh;
+      padding: 40px 20px 200px;
+      color: #2b1e3a;
+    }
+    button {
+      background: red !important;
+      color: yellow !important;
+      border: 4px dashed lime !important;
+      padding: 20px !important;
+      font-size: 30px !important;
+    }
+    input { all: revert; background: cyan !important; }
+    h1 { font-size: 48px; text-shadow: 2px 2px 0 #fff; }
+    .card {
+      max-width: 720px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.85);
+      border: 6px ridge magenta;
+      padding: 24px;
+      border-radius: 16px;
+    }
+    .demo-inline {
+      margin-top: 24px;
+      max-width: 420px;
+    }
+
+    /* Controles del playground (no son parte del widget): aislados de los estilos agresivos */
+    .controls {
+      max-width: 720px;
+      margin: 0 auto 24px;
+      background: #fff;
+      border: 1px solid #e3e3ea;
+      border-radius: 12px;
+      padding: 16px 18px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .controls, .controls * { all: revert; }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px 22px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      color: #1f2330;
+    }
+    .controls h2 {
+      margin: 0 12px 0 0;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #5a6478;
+    }
+    .controls label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+    .controls input[type="color"] {
+      width: 36px;
+      height: 28px;
+      border: 1px solid #c4ccd9;
+      border-radius: 6px;
+      padding: 2px;
+      background: #fff !important;
+      cursor: pointer;
+    }
+    .controls select {
+      font: inherit;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #c4ccd9;
+      background: #fff;
+    }
+    .controls code {
+      background: #f4f6fa;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .controls button.reset {
+      font: inherit !important;
+      padding: 6px 12px !important;
+      background: #f4f6fa !important;
+      color: #15203a !important;
+      border: 1px solid #c4ccd9 !important;
+      border-radius: 6px !important;
+      cursor: pointer;
+    }
+    .controls button.reset:hover {
+      background: #e8ecf3 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <h2>Customize</h2>
+    <label>Primary (light) <input type="color" id="primary-light" value="#1b7f5a"></label>
+    <label>Primary (dark) <input type="color" id="primary-dark" value="#4cc995"></label>
+    <label>Tema
+      <select id="theme">
+        <option value="light">light</option>
+        <option value="dark">dark</option>
+      </select>
+    </label>
+    <button class="reset" type="button" id="reset">Reset</button>
+  </div>
+
+  <div class="card">
+    <h1>Demo: widget CIMA</h1>
+    <p>Esta página tiene estilos agresivos para verificar que el Shadow DOM aísla bien el widget. Pulsa la burbuja en la esquina inferior derecha.</p>
+    <button>Botón del host (debería verse horrible, el widget NO)</button>
+    <p>También puedes ver el modo embebido en línea:</p>
+    <div class="demo-inline">
+      <div id="cima-inline"></div>
+    </div>
+  </div>
+
+  <!-- Burbuja flotante -->
+  <div id="cima-float"></div>
+
+  <script type="module" src="/src/main.tsx"></script>
+  <script type="module">
+    const DEFAULTS = { light: '#1b7f5a', dark: '#4cc995' };
+
+    function waitForApi() {
+      return new Promise((resolve) => {
+        const check = () => window.CimaChat?.mount ? resolve(window.CimaChat) : setTimeout(check, 20);
+        check();
+      });
+    }
+
+    const api = await waitForApi();
+    const inlineHandle = api.mount(document.getElementById('cima-inline'), { position: 'inline', theme: 'light' });
+    const floatHandle = api.mount(document.getElementById('cima-float'), { position: 'bottom-right', theme: 'light' });
+
+    const $light = document.getElementById('primary-light');
+    const $dark = document.getElementById('primary-dark');
+    const $theme = document.getElementById('theme');
+    const $reset = document.getElementById('reset');
+
+    function apply() {
+      const opts = {
+        theme: $theme.value,
+        primaryLight: $light.value,
+        primaryDark: $dark.value,
+      };
+      inlineHandle.update(opts);
+      floatHandle.update(opts);
+    }
+
+    $light.addEventListener('input', apply);
+    $dark.addEventListener('input', apply);
+    $theme.addEventListener('change', apply);
+    $reset.addEventListener('click', () => {
+      $light.value = DEFAULTS.light;
+      $dark.value = DEFAULTS.dark;
+      $theme.value = 'light';
+      apply();
+    });
+
+    apply();
+  </script>
+</body>
+</html>

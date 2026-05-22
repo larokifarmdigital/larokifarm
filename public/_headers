@@ -1,0 +1,15 @@
+# Headers para Cloudflare Pages
+# Más info: https://developers.cloudflare.com/pages/configuration/headers/
+
+/*.js
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300, must-revalidate
+  X-Content-Type-Options: nosniff
+
+/*.iife.js
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300, must-revalidate
+
+/*.es.js
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300, must-revalidate

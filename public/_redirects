@@ -1,0 +1,3 @@
+# Alias estables versionados para que las landings puedan fijar versión
+/v1/cima-chat.iife.js  /cima-chat.iife.js  200
+/latest/cima-chat.iife.js  /cima-chat.iife.js  200
