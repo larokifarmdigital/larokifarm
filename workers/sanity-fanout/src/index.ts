@@ -80,14 +80,39 @@ interface FanoutResult {
 }
 
 async function fanout(hooks: string[]): Promise<FanoutResult[]> {
+  console.log(`[fanout] triggering ${hooks.length} deploy hook(s)`);
+  for (const h of hooks) console.log(`[fanout] hook → ${mask(h)} (full host: ${safeHost(h)})`);
+
   const results = await Promise.allSettled(
     hooks.map((url) => fetch(url, { method: 'POST' })),
   );
-  return results.map((r, i) => {
+  const out: FanoutResult[] = [];
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
     const hook = mask(hooks[i]);
-    if (r.status === 'fulfilled') return { hook, status: r.value.status };
-    return { hook, status: 'error', error: String(r.reason) };
-  });
+    if (r.status === 'fulfilled') {
+      const status = r.value.status;
+      const bodyPreview = await r.value
+        .text()
+        .then((t) => t.slice(0, 200))
+        .catch(() => '');
+      console.log(`[fanout] response ${status} from ${hook} :: ${bodyPreview}`);
+      out.push({ hook, status });
+    } else {
+      const err = String(r.reason);
+      console.log(`[fanout] error from ${hook} :: ${err}`);
+      out.push({ hook, status: 'error', error: err });
+    }
+  }
+  return out;
+}
+
+function safeHost(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return '(invalid url)';
+  }
 }
 
 function mask(url: string): string {
@@ -105,6 +130,11 @@ function mask(url: string): string {
 
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
+    console.log(`[entry] ${req.method} ${new URL(req.url).pathname}`);
+    console.log(
+      `[entry] env: secret=${env.SANITY_WEBHOOK_SECRET ? `set(${env.SANITY_WEBHOOK_SECRET.length} chars)` : 'MISSING'}, hooks=${env.DEPLOY_HOOKS ? `set(${env.DEPLOY_HOOKS.split(',').length} urls)` : 'MISSING'}`,
+    );
+
     if (req.method === 'GET') {
       return new Response('larokifarm-sanity-fanout · POST a webhook here', {
         status: 200,
@@ -115,22 +145,26 @@ export default {
     }
 
     if (!env.SANITY_WEBHOOK_SECRET || !env.DEPLOY_HOOKS) {
+      console.log('[entry] returning 500 — secrets missing');
       return new Response('Worker not configured', { status: 500 });
     }
 
     const body = await req.text();
-    const verify = await verifySanitySignature(
-      req.headers.get(SIGNATURE_HEADER),
-      body,
-      env.SANITY_WEBHOOK_SECRET,
+    const sigHeader = req.headers.get(SIGNATURE_HEADER);
+    console.log(
+      `[entry] body length=${body.length}, sig header=${sigHeader ? `present(${sigHeader.slice(0, 40)}…)` : 'MISSING'}`,
     );
+    const verify = await verifySanitySignature(sigHeader, body, env.SANITY_WEBHOOK_SECRET);
     if (!verify.ok) {
+      console.log(`[entry] returning 401 — ${verify.reason}`);
       return new Response(`Unauthorized: ${verify.reason}`, { status: 401 });
     }
 
     const hooks = env.DEPLOY_HOOKS.split(',')
       .map((s) => s.trim())
       .filter(Boolean);
+
+    console.log(`[sanity-fanout] received valid webhook, ${hooks.length} hook(s) configured`);
 
     if (hooks.length === 0) {
       return new Response('No deploy hooks configured', { status: 500 });
