@@ -1,0 +1,139 @@
+---
+import { listarFarmaciasPartner } from '@larokifarm/calendario-vacunas';
+
+const partners = await listarFarmaciasPartner();
+const anyo = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container">
+    {partners.length > 0 && (
+      <section class="partners">
+        <h2>Farmacias que ofrecen este servicio</h2>
+        <ul>
+          {partners.map((p) => (
+            <li>
+              <a href={p.url} target="_blank" rel="noopener noreferrer">
+                {p.logoUrl ? (
+                  <img
+                    src={`${p.logoUrl}?auto=format&q=80&w=200`}
+                    alt={p.nombre}
+                    width="120"
+                    height="60"
+                    loading="lazy"
+                  />
+                ) : (
+                  <span class="partner-name">{p.nombre}</span>
+                )}
+                {p.ciudad && <span class="partner-ciudad">{p.ciudad}</span>}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <section class="legal">
+      <p>
+        © {anyo} Calendario de Vacunación · Contenido divulgativo basado en
+        fuentes oficiales de cada Consejería de Salud y del Ministerio de
+        Sanidad (CISNS).
+      </p>
+      <p class="muted">
+        Esta web no sustituye al consejo de un profesional sanitario. Consulta
+        siempre con tu pediatra, médico de cabecera o farmacéutico/a de
+        confianza.
+      </p>
+    </section>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+    margin-top: 3rem;
+    padding: 2.5rem 0 1.5rem;
+  }
+
+  .container {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .partners h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .partners ul {
+    list-style: none;
+    margin: 0 0 2rem;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+
+  .partners li a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 1rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: #1a1a1a;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+
+  .partners li a:hover {
+    border-color: var(--primary, #0d6e6e);
+    transform: translateY(-1px);
+  }
+
+  .partners img {
+    max-width: 120px;
+    height: auto;
+    max-height: 60px;
+    object-fit: contain;
+  }
+
+  .partner-name {
+    font-weight: 600;
+  }
+
+  .partner-ciudad {
+    font-size: 0.78rem;
+    color: #6b7280;
+  }
+
+  .legal {
+    font-size: 0.85rem;
+    color: #4b5563;
+    line-height: 1.6;
+  }
+
+  .legal p {
+    margin: 0 0 0.5rem;
+  }
+
+  .muted {
+    color: #6b7280;
+    font-size: 0.78rem;
+  }
+
+  @media print {
+    .site-footer {
+      display: none;
+    }
+  }
+</style>

@@ -1,32 +1,13 @@
 ---
-const title = 'Calendario no encontrado';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const titulo = 'Calendario no encontrado';
 ---
 
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-  </head>
-  <body>
-    <main>
-      <h1>{title}</h1>
-      <p>No hemos podido encontrar ese calendario.</p>
-      <p><a href="/">Ver todos los calendarios</a></p>
-    </main>
-
-    <style is:global>
-      body {
-        margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-          'Helvetica Neue', Arial, sans-serif;
-        line-height: 1.5;
-      }
-      main {
-        max-width: 64rem;
-        margin: 0 auto;
-        padding: 1.5rem 1rem 4rem;
-      }
-    </style>
-  </body>
-</html>
+<BaseLayout titulo={titulo} rutaActual="/404">
+  <div class="page-container">
+    <h1>{titulo}</h1>
+    <p>No hemos podido encontrar ese calendario.</p>
+    <p><a href="/">Ver todos los calendarios</a></p>
+  </div>
+</BaseLayout>

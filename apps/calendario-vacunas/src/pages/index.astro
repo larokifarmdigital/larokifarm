@@ -1,4 +1,5 @@
 ---
+import BaseLayout from '@/layouts/BaseLayout.astro';
 import {
   IndiceComunidades,
   listarComunidades,
@@ -7,38 +8,12 @@ import {
 
 const lang = 'es';
 const comunidades = await listarComunidades();
-const title = t('index.title', lang);
-const description = t('index.description', lang);
+const titulo = t('index.title', lang);
+const descripcion = t('index.description', lang);
 ---
 
-<html lang={lang}>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
-  </head>
-  <body>
-    <main>
-      <IndiceComunidades
-        comunidades={comunidades}
-        lang={lang}
-        basePath=""
-      />
-    </main>
-
-    <style is:global>
-      body {
-        margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-          'Helvetica Neue', Arial, sans-serif;
-        line-height: 1.5;
-      }
-      main {
-        max-width: 64rem;
-        margin: 0 auto;
-        padding: 1.5rem 1rem 4rem;
-      }
-    </style>
-  </body>
-</html>
+<BaseLayout titulo={titulo} descripcion={descripcion} rutaActual="/">
+  <div class="page-container">
+    <IndiceComunidades comunidades={comunidades} lang={lang} basePath="" />
+  </div>
+</BaseLayout>

@@ -1,0 +1,101 @@
+---
+interface Props {
+  rutaActual?: string;
+}
+
+const { rutaActual = '/' } = Astro.props;
+
+const navItems = [
+  { href: '/', label: 'Inicio' },
+  { href: '/#comunidades', label: 'Comunidades' },
+  { href: '/#sobre', label: 'Sobre el calendario' },
+];
+---
+
+<header class="site-header">
+  <div class="container">
+    <a href="/" class="brand" aria-label="Calendario de Vacunación · Inicio">
+      <span class="brand-mark" aria-hidden="true">💉</span>
+      <span class="brand-text">Calendario de Vacunación</span>
+    </a>
+
+    <nav aria-label="Principal">
+      <ul>
+        {navItems.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              aria-current={rutaActual === item.href ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid #e5e7eb;
+    background: #ffffff;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+
+  .container {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: var(--primary, #0d6e6e);
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .brand-mark {
+    font-size: 1.25rem;
+  }
+
+  nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.95rem;
+  }
+
+  nav a {
+    color: #1a1a1a;
+    text-decoration: none;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.375rem;
+  }
+
+  nav a:hover,
+  nav a[aria-current='page'] {
+    color: var(--primary, #0d6e6e);
+    background: color-mix(in srgb, var(--primary, #0d6e6e) 8%, transparent);
+  }
+
+  @media print {
+    .site-header {
+      display: none;
+    }
+  }
+</style>

@@ -1,4 +1,5 @@
 ---
+import BaseLayout from '@/layouts/BaseLayout.astro';
 import {
   CalendarioVacunas,
   listarComunidades,
@@ -25,6 +26,7 @@ const titulo = `${t('detail.titleBase', lang)} · ${comunidad.nombre}${
 const descripcion = t('detail.descriptionTemplate', lang, {
   comunidad: `${comunidad.nombre}${comunidad.vigencia ? ` (${comunidad.vigencia})` : ''}`,
 });
+const canonical = `/${slug}`;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -40,38 +42,14 @@ const jsonLd = {
 };
 ---
 
-<html lang={lang}>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{titulo}</title>
-    <meta name="description" content={descripcion} />
-    <link rel="canonical" href={`/${slug}`} />
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-  </head>
-  <body>
-    <main>
-      <CalendarioVacunas comunidad={comunidad} lang={lang} backHref="/" />
-    </main>
-
-    <style is:global>
-      body {
-        margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-          'Helvetica Neue', Arial, sans-serif;
-        line-height: 1.5;
-      }
-      main {
-        max-width: 64rem;
-        margin: 0 auto;
-        padding: 1.5rem 1rem 4rem;
-      }
-      @media print {
-        main {
-          max-width: 100%;
-          padding: 0;
-        }
-      }
-    </style>
-  </body>
-</html>
+<BaseLayout
+  titulo={titulo}
+  descripcion={descripcion}
+  canonical={canonical}
+  jsonLd={jsonLd}
+  rutaActual={canonical}
+>
+  <div class="page-container">
+    <CalendarioVacunas comunidad={comunidad} lang={lang} backHref="/" />
+  </div>
+</BaseLayout>

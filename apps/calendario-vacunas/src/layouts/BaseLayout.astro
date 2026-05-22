@@ -1,0 +1,100 @@
+---
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+
+interface Props {
+  titulo: string;
+  descripcion?: string;
+  canonical?: string;
+  jsonLd?: unknown;
+  rutaActual?: string;
+}
+
+const {
+  titulo,
+  descripcion,
+  canonical,
+  jsonLd,
+  rutaActual = '/',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo}</title>
+    {descripcion && <meta name="description" content={descripcion} />}
+    {canonical && <link rel="canonical" href={canonical} />}
+    <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={titulo} />
+    {descripcion && <meta property="og:description" content={descripcion} />}
+
+    {jsonLd && (
+      <script
+        is:inline
+        type="application/ld+json"
+        set:html={JSON.stringify(jsonLd, null, 0)}
+      />
+    )}
+
+    <style is:global>
+      :root {
+        --primary: #0d6e6e;
+        --accent: #36a0da;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, sans-serif;
+        color: #1a1a1a;
+        line-height: 1.5;
+      }
+
+      body {
+        margin: 0;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      main {
+        flex: 1;
+        width: 100%;
+      }
+
+      .page-container {
+        max-width: 72rem;
+        margin: 0 auto;
+        padding: 2rem 1rem 4rem;
+      }
+
+      @media print {
+        main {
+          padding: 0 !important;
+        }
+        .page-container {
+          padding: 0 !important;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <Header rutaActual={rutaActual} />
+
+    <main>
+      <slot />
+    </main>
+
+    <Footer />
+  </body>
+</html>
