@@ -1,0 +1,157 @@
+---
+import { imagenSanity } from '@/lib/sanity';
+
+export type SliderImagen = { url: string; alt?: string };
+
+export interface Props {
+  imagenes: SliderImagen[];
+  alt?: string;
+  ancho?: number;
+  autoplayMs?: number;
+  prioridad?: boolean;
+  marcaAgua?: string;
+  marcaAguaAlt?: string;
+}
+
+const {
+  imagenes,
+  alt = '',
+  ancho = 800,
+  autoplayMs = 3500,
+  prioridad = false,
+  marcaAgua,
+  marcaAguaAlt = ''
+} = Astro.props;
+
+const items = (imagenes ?? [])
+  .map((i) => ({
+    src: imagenSanity(i.url, { w: ancho, fit: 'crop' }),
+    alt: i.alt && i.alt.trim() ? i.alt : alt,
+  }))
+  .filter((i): i is { src: string; alt: string } => Boolean(i.src));
+
+const esGaleria = items.length > 1;
+const marcaAguaUrl = imagenSanity(marcaAgua, { w: 160, fit: 'max' });
+---
+
+<div
+  class='relative h-full w-full'
+  data-galeria={esGaleria ? 'true' : 'false'}
+  data-autoplay-ms={String(autoplayMs)}
+>
+  <div
+    class='absolute inset-0 overflow-hidden rounded-[2rem] border bg-[var(--card)] shadow-2xl'
+    style='box-shadow: 0 25px 50px -12px color-mix(in oklch, var(--primary), transparent 85%);'
+  >
+    {
+      items.map((item, i) => (
+        <img
+          src={item.src}
+          alt={item.alt}
+          width={ancho}
+          height={ancho}
+          loading={i === 0 && prioridad ? 'eager' : 'lazy'}
+          fetchpriority={i === 0 && prioridad ? 'high' : undefined}
+          class={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out ${i === 0 ? 'opacity-100' : 'opacity-0'}`}
+          style={`z-index: ${i === 0 ? 2 : 0};`}
+          data-slide={String(i)}
+        />
+      ))
+    }
+
+    {
+      marcaAguaUrl && (
+        <div class='pointer-events-none absolute top-4 left-4 z-10 flex items-center gap-2 rounded-2xl bg-white/85 px-2.5 py-1.5 shadow-lg ring-1 ring-black/5 backdrop-blur-md'>
+          <img src={marcaAguaUrl} alt={marcaAguaAlt} class='h-7 w-auto object-contain' />
+        </div>
+      )
+    }
+  </div>
+
+  {
+    esGaleria && (
+      <div class='absolute -bottom-4 right-4 z-20 flex items-center gap-2.5 rounded-full bg-[var(--card)]/95 px-3.5 py-2 shadow-lg ring-1 ring-black/5 backdrop-blur-md md:right-auto md:left-1/2 md:-translate-x-1/2'>
+        {items.map((_, i) => (
+          <button
+            type='button'
+            aria-label={`Ir a la imagen ${i + 1}`}
+            aria-current={i === 0 ? 'true' : 'false'}
+            class='h-2 w-2 rounded-full bg-[color-mix(in_oklch,var(--primary),transparent_75%)] transition-all duration-300 hover:bg-[color-mix(in_oklch,var(--primary),transparent_50%)] aria-[current=true]:w-7 aria-[current=true]:bg-[var(--primary)] aria-[current=true]:shadow-[0_0_10px_color-mix(in_oklch,var(--primary),transparent_55%)] aria-[current=true]:hover:bg-[var(--primary)]'
+            data-dot={String(i)}
+          />
+        ))}
+      </div>
+    )
+  }
+</div>
+
+<script>
+  function inicializarGalerias() {
+    const galerias = document.querySelectorAll<HTMLElement>('[data-galeria="true"]');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    galerias.forEach(root => {
+      if (root.dataset.galeriaInicializada === '1') return;
+      root.dataset.galeriaInicializada = '1';
+
+      const slides = Array.from(root.querySelectorAll<HTMLImageElement>('[data-slide]'));
+      const dots = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dot]'));
+      const autoplayMs = Number(root.dataset.autoplayMs || 3500);
+      let idx = 0;
+      let timer: number | undefined;
+
+      function mostrar(n: number) {
+        const anterior = idx;
+        idx = ((n % slides.length) + slides.length) % slides.length;
+        if (anterior === idx) return;
+
+        slides.forEach((s, i) => {
+          if (i === idx) s.style.zIndex = '2';
+          else if (i === anterior) s.style.zIndex = '1';
+          else s.style.zIndex = '0';
+        });
+
+        slides[anterior].classList.remove('opacity-100');
+        slides[anterior].classList.add('opacity-0');
+        slides[idx].classList.remove('opacity-0');
+        slides[idx].classList.add('opacity-100');
+
+        dots[anterior]?.setAttribute('aria-current', 'false');
+        dots[idx]?.setAttribute('aria-current', 'true');
+      }
+
+      function iniciar() {
+        if (reduceMotion) return;
+        detener();
+        timer = window.setInterval(() => mostrar(idx + 1), autoplayMs);
+      }
+
+      function detener() {
+        if (timer !== undefined) {
+          window.clearInterval(timer);
+          timer = undefined;
+        }
+      }
+
+      dots.forEach((d, i) =>
+        d.addEventListener('click', () => {
+          mostrar(i);
+          iniciar();
+        })
+      );
+
+      root.addEventListener('mouseenter', detener);
+      root.addEventListener('mouseleave', iniciar);
+      root.addEventListener('focusin', detener);
+      root.addEventListener('focusout', iniciar);
+
+      iniciar();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarGalerias);
+  } else {
+    inicializarGalerias();
+  }
+</script>

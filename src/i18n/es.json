@@ -1,0 +1,129 @@
+{
+  "html": {
+    "lang": "es"
+  },
+  "dias": {
+    "Mo": "lunes",
+    "Tu": "martes",
+    "We": "miércoles",
+    "Th": "jueves",
+    "Fr": "viernes",
+    "Sa": "sábado",
+    "Su": "domingo",
+    "a": "a"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Inicio",
+      "servicios": "Servicios",
+      "sobreNosotros": "Sobre nosotros",
+      "faqs": "FAQs",
+      "contacto": "Contacto",
+      "aria": "Principal"
+    },
+    "cta": {
+      "llamanos": "Llámanos",
+      "llamarA": "Llamar al {telefono}"
+    },
+    "menu": {
+      "abrir": "Abrir menú",
+      "cerrar": "Cerrar menú"
+    },
+    "idioma": {
+      "aria": "Cambiar idioma"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Farmacia en {ciudad}",
+      "sinCiudad": "Tu farmacia de confianza"
+    },
+    "ciudad": "Farmacia en {ciudad}",
+    "btnLlamar": "Llamar ahora",
+    "altInterior": "Interior de {nombre}"
+  },
+  "about": {
+    "chip": "Sobre nosotros",
+    "tituloDefecto": "Una farmacia para familias",
+    "cuerpoFallback": "En esta farmacia nos dedicamos al cuidado de la salud familiar. Nuestro equipo está comprometido con el bienestar de tus hijos, ofreciendo atención cercana, productos de calidad y el asesoramiento que necesitas como padre.",
+    "puntosDefecto": [
+      "Atención cercana y profesional",
+      "Productos de máxima calidad",
+      "Asesoramiento gratuito",
+      "Ambiente amigable"
+    ],
+    "badge": {
+      "anyos": "años",
+      "experiencia": "de experiencia"
+    }
+  },
+  "servicios": {
+    "chip": "Nuestros servicios",
+    "tituloParte1": "Nuestros",
+    "tituloParte2": "servicios",
+    "subtitulo": "Ofrecemos una amplia gama de servicios farmacéuticos y productos seleccionados para el cuidado de toda la familia.",
+    "placeholder": "Pronto añadiremos el detalle de servicios.",
+    "btnAnterior": "Anterior",
+    "btnSiguiente": "Siguiente",
+    "btnSlide": "Ir a slide {n}"
+  },
+  "faqs": {
+    "chip": "Preguntas frecuentes",
+    "tituloParte1": "Resolvemos tus",
+    "tituloParte2": "dudas",
+    "subtitulo": "Las preguntas más habituales que nos hacen nuestros clientes. Si tienes alguna duda más, escríbenos y te contestamos enseguida."
+  },
+  "cta": {
+    "chip": "Contáctanos",
+    "tituloConCiudad": "Encuéntranos en {ciudad}",
+    "tituloSinCiudad": "Estamos aquí para ayudarte",
+    "subtitulo": "Visítanos en {nombre} o llámanos para recibir asesoramiento farmacéutico personalizado.",
+    "labelTelefono": "Teléfono",
+    "labelDireccion": "Dirección",
+    "labelHorario": "Horario",
+    "btnEscribenos": "Escríbenos",
+    "btnLlamar": "Llamar ahora",
+    "ariaMapa": "Mapa de {nombre}"
+  },
+  "footer": {
+    "servicios": "Servicios",
+    "informacion": "Información",
+    "contactanos": "Contáctanos",
+    "sobreNosotros": "Sobre nosotros",
+    "preguntasFrecuentes": "Preguntas frecuentes",
+    "contacto": "Contacto",
+    "avisoLegal": "Aviso legal",
+    "politicaPrivacidad": "Política de privacidad",
+    "copyright": "© {anyo} {nombre}. Todos los derechos reservados.",
+    "nCol": "Nº col.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok"
+  },
+  "features": {
+    "atencionTitulo": "Atención personalizada",
+    "atencionDesc": "Cada familia es única",
+    "calidadTitulo": "Productos certificados",
+    "calidadDesc": "Calidad garantizada",
+    "equipoTitulo": "Equipo especializado",
+    "equipoDesc": "Farmacéuticos pediátricos",
+    "horarioTitulo": "Horario amplio",
+    "horarioDescFallback": "Lunes a sábado"
+  },
+  "flotante": {
+    "ariaWhatsApp": "Contactar por WhatsApp"
+  },
+  "legal": {
+    "volver": "Volver al inicio"
+  },
+  "p404": {
+    "tituloMeta": "Página no encontrada · {nombre}",
+    "descMeta": "La página que buscas no existe o se ha movido.",
+    "chip": "Error 404",
+    "subtitulo1": "Esta página",
+    "subtitulo2": "no existe",
+    "texto": "Es posible que el enlace esté roto, la página se haya movido o que la URL no sea correcta.",
+    "btnInicio": "Volver al inicio",
+    "buscas": "¿Buscas algo en concreto?"
+  }
+}

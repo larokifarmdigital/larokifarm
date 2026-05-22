@@ -1,0 +1,114 @@
+---
+import '@/styles/global.css';
+import gilroyRegular from '@/assets/fonts/Gilroy-Regular.ttf?url';
+import gilroyBlack from '@/assets/fonts/Gilroy-Black.ttf?url';
+import { LOCALES_DISPONIBLES, LOCALE_DEFECTO, rutaConLocale, type Locale } from '@/lib/i18n';
+
+export interface Props {
+  titulo: string;
+  descripcion?: string;
+  canonical: string;
+  imagenOg?: string;
+  jsonLd?: unknown;
+  lang: Locale;
+  /** Ruta lógica (sin prefijo de idioma). Ej.: "/", "/aviso-legal". Para los hreflangs. */
+  rutaActual?: string;
+}
+
+const { titulo, descripcion, canonical, imagenOg, jsonLd, lang, rutaActual = '/' } = Astro.props;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const ogImageAbsoluta = imagenOg?.startsWith('http')
+  ? imagenOg
+  : imagenOg
+    ? `${siteUrl}${imagenOg}`
+    : undefined;
+
+const OG_LOCALES: Record<Locale, string> = {
+  es: 'es_ES',
+  en: 'en_US',
+  ca: 'ca_ES'
+};
+
+const hreflangs = LOCALES_DISPONIBLES.map(codigo => ({
+  hreflang: codigo,
+  href: `${siteUrl}${rutaConLocale(rutaActual, codigo)}`.replace(/\/$/, '') || `${siteUrl}/`
+}));
+const hrefDefault =
+  `${siteUrl}${rutaConLocale(rutaActual, LOCALE_DEFECTO)}`.replace(/\/$/, '') || `${siteUrl}/`;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1' />
+    <meta name='generator' content={Astro.generator} />
+
+    <link rel='preconnect' href='https://cdn.sanity.io' crossorigin />
+    <link rel='preconnect' href='https://www.google.com' />
+    <link rel='dns-prefetch' href='https://larokifarm-widget-chat.pages.dev' />
+
+    <title>{titulo}</title>
+    {descripcion && <meta name='description' content={descripcion} />}
+    <link rel='canonical' href={canonical} />
+
+    {hreflangs.map(h => <link rel='alternate' hreflang={h.hreflang} href={h.href} />)}
+    <link rel='alternate' hreflang='x-default' href={hrefDefault} />
+
+    <meta name='robots' content='index,follow,max-snippet:-1,max-image-preview:large' />
+
+    <meta property='og:type' content='website' />
+    <meta property='og:locale' content={OG_LOCALES[lang]} />
+    {
+      LOCALES_DISPONIBLES.filter(l => l !== lang).map(l => (
+        <meta property='og:locale:alternate' content={OG_LOCALES[l]} />
+      ))
+    }
+    <meta property='og:title' content={titulo} />
+    {descripcion && <meta property='og:description' content={descripcion} />}
+    <meta property='og:url' content={canonical} />
+    {ogImageAbsoluta && <meta property='og:image' content={ogImageAbsoluta} />}
+
+    <meta name='twitter:card' content='summary_large_image' />
+    <meta name='twitter:title' content={titulo} />
+    {descripcion && <meta name='twitter:description' content={descripcion} />}
+    {ogImageAbsoluta && <meta name='twitter:image' content={ogImageAbsoluta} />}
+
+    <link rel='icon' type='image/svg+xml' href='/favicon.svg' />
+    <link rel='apple-touch-icon' href='/logo.png' />
+    <link rel='manifest' href='/manifest.webmanifest' />
+    <meta name='theme-color' content='#1265b5' />
+
+    <link rel='preload' href={gilroyRegular} as='font' type='font/ttf' crossorigin />
+    <link rel='preload' href={gilroyBlack} as='font' type='font/ttf' crossorigin />
+
+    {
+      jsonLd && (
+        <script is:inline type='application/ld+json' set:html={JSON.stringify(jsonLd, null, 0)} />
+      )
+    }
+
+    <slot name='head' />
+  </head>
+  <body>
+    <a
+      href='#contenido'
+      class='sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-lg focus:bg-[var(--primary)] focus:px-4 focus:py-2 focus:font-semibold focus:text-white focus:shadow-lg focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary)]'
+    >
+      Saltar al contenido
+    </a>
+    <slot />
+
+    <div
+      data-cima-chat
+      data-theme='light'
+      data-primary-light='#1265b5'
+      data-primary-dark='#ff6b9d'
+      data-position='bottom-right'
+    >
+    </div>
+    <script is:inline async src='https://larokifarm-widget-chat.pages.dev/cima-chat.iife.js'>
+    </script>
+  </body>
+</html>

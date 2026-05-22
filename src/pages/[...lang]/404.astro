@@ -1,0 +1,26 @@
+---
+import Pagina404 from '@/components/Pagina404.astro';
+import {
+  obtenerFarmaciaPorSlug,
+  SLUG_FARMACIA,
+  type Farmacia,
+} from '@/lib/sanity';
+import { esLocaleValido, LOCALE_DEFECTO, type Locale } from '@/lib/i18n';
+
+export async function getStaticPaths() {
+  const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
+  const codigos = (farmacia?.idiomasActivos ?? [])
+    .map((i) => i.codigo)
+    .filter(esLocaleValido)
+    .filter((c) => c !== LOCALE_DEFECTO);
+  return codigos.map((c) => ({
+    params: { lang: c },
+    props: { farmacia, lang: c },
+  }));
+}
+
+interface Props { farmacia: Farmacia | null; lang: Locale; }
+const { farmacia, lang } = Astro.props as Props;
+---
+
+<Pagina404 farmacia={farmacia} lang={lang} />

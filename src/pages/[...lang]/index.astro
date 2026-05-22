@@ -1,0 +1,155 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Hero from '@/components/Hero.astro';
+import Features from '@/components/Features.astro';
+import Servicios from '@/components/Servicios.astro';
+import About from '@/components/About.astro';
+import Faqs from '@/components/Faqs.astro';
+import CtaCard from '@/components/CtaCard.astro';
+import CtaFlotante from '@/components/CtaFlotante.astro';
+import Footer from '@/components/Footer.astro';
+import {
+  obtenerFarmaciaPorSlug,
+  rangoDiasAbiertos,
+  agruparHorarios,
+  localizar,
+  SLUG_FARMACIA,
+  type Farmacia,
+  type DiasI18n,
+} from '@/lib/sanity';
+import { construirMetaSeo, farmaciaAJsonLd } from '@/lib/seo';
+import {
+  esLocaleValido,
+  rutaConLocale,
+  type Locale,
+} from '@/lib/i18n';
+import diasEs from '@/i18n/es.json';
+import diasEn from '@/i18n/en.json';
+import diasCa from '@/i18n/ca.json';
+
+export async function getStaticPaths() {
+  const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
+  const codigos = (farmacia?.idiomasActivos ?? [{ codigo: 'es', nombre: 'Español' }])
+    .map((i) => i.codigo)
+    .filter(esLocaleValido);
+  const lista = codigos.length > 0 ? codigos : (['es'] as Locale[]);
+  return lista.map((c) => ({
+    params: { lang: c === 'es' ? undefined : c },
+    props: { farmacia, lang: c },
+  }));
+}
+
+interface Props {
+  farmacia: Farmacia | null;
+  lang: Locale;
+}
+
+const { farmacia: farmaciaCargada, lang } = Astro.props as Props;
+const farmacia: Farmacia = farmaciaCargada ?? {
+  _id: 'placeholder',
+  nombre: 'Farmacia Torrents',
+  slug: SLUG_FARMACIA,
+};
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+
+const meta = construirMetaSeo(farmacia, siteUrl, lang, rutaConLocale('/', lang));
+const jsonLd = farmaciaAJsonLd(farmacia, siteUrl, lang);
+
+const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
+  es: diasEs.dias as DiasI18n,
+  en: diasEn.dias as DiasI18n,
+  ca: diasCa.dias as DiasI18n,
+};
+const CERRADO: Record<Locale, string> = { es: 'Cerrado', en: 'Closed', ca: 'Tancat' };
+
+const horarioTexto = rangoDiasAbiertos(farmacia.horarios, DIAS_POR_LANG[lang]);
+const horariosAgrupados = agruparHorarios(farmacia.horarios, DIAS_POR_LANG[lang], CERRADO[lang]);
+const mostrarFaqs = (farmacia.faqs ?? []).some(
+  (f) => localizar(f.pregunta, lang) && localizar(f.respuesta, lang),
+);
+
+const claim = localizar(farmacia.descripcionCorta, lang);
+---
+
+<BaseLayout
+  titulo={meta.titulo}
+  descripcion={meta.descripcion}
+  canonical={meta.canonical}
+  imagenOg={meta.imagenOg}
+  jsonLd={jsonLd}
+  lang={lang}
+  rutaActual='/'
+>
+  <Header
+    nombre={farmacia.nombre}
+    whatsapp={farmacia.contacto?.whatsapp}
+    telefono={farmacia.contacto?.telefono}
+    logo={farmacia.logo}
+    mostrarFaqs={mostrarFaqs}
+    lang={lang}
+    rutaActual='/'
+    idiomasActivos={farmacia.idiomasActivos}
+  />
+
+  <main id='contenido'>
+    <Hero
+      nombre={farmacia.nombre}
+      claim={claim}
+      ciudad={farmacia.direccion?.ciudad}
+      telefono={farmacia.contacto?.telefono}
+      whatsapp={farmacia.contacto?.whatsapp}
+      imagenes={farmacia.imagenes}
+      logo={farmacia.logo}
+      direccion={farmacia.direccion}
+      lang={lang}
+    />
+
+    <Features horarioTexto={horarioTexto} logo={farmacia.logo} lang={lang} />
+
+    <Servicios servicios={farmacia.servicios} logo={farmacia.logo} lang={lang} />
+
+    <About
+      imagenes={farmacia.imagenesSobre}
+      logo={farmacia.logo}
+      titulo={farmacia.sobreNosotros?.titulo}
+      descripcionLarga={farmacia.descripcionLarga}
+      puntos={farmacia.sobreNosotros?.puntos}
+      anyosExperiencia={farmacia.sobreNosotros?.anyosExperiencia}
+      lang={lang}
+    />
+
+    <Faqs faqs={farmacia.faqs} logo={farmacia.logo} lang={lang} />
+
+    <CtaCard
+      nombre={farmacia.nombre}
+      telefono={farmacia.contacto?.telefono}
+      whatsapp={farmacia.contacto?.whatsapp}
+      direccion={farmacia.direccion}
+      mapaUrl={farmacia.mapaUrl}
+      horarios={horariosAgrupados}
+      logo={farmacia.logo}
+      lang={lang}
+    />
+  </main>
+
+  <Footer
+    nombre={farmacia.nombre}
+    titular={farmacia.titular}
+    numeroColegiado={farmacia.numeroColegiado}
+    logo={farmacia.logo}
+    contacto={farmacia.contacto}
+    redes={farmacia.redesSociales}
+    direccion={farmacia.direccion}
+    horarios={farmacia.horarios}
+    horariosAgrupados={horariosAgrupados}
+    servicios={farmacia.servicios}
+    descripcionCorta={farmacia.descripcionCorta}
+    mostrarFaqs={mostrarFaqs}
+    lang={lang}
+    rutaActual='/'
+  />
+
+  <CtaFlotante whatsapp={farmacia.contacto?.whatsapp} lang={lang} />
+</BaseLayout>

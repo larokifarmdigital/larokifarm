@@ -1,0 +1,129 @@
+{
+  "html": {
+    "lang": "ca"
+  },
+  "dias": {
+    "Mo": "dilluns",
+    "Tu": "dimarts",
+    "We": "dimecres",
+    "Th": "dijous",
+    "Fr": "divendres",
+    "Sa": "dissabte",
+    "Su": "diumenge",
+    "a": "a"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Inici",
+      "servicios": "Serveis",
+      "sobreNosotros": "Sobre nosaltres",
+      "faqs": "FAQs",
+      "contacto": "Contacte",
+      "aria": "Principal"
+    },
+    "cta": {
+      "llamanos": "Truca'ns",
+      "llamarA": "Truca al {telefono}"
+    },
+    "menu": {
+      "abrir": "Obrir menú",
+      "cerrar": "Tancar menú"
+    },
+    "idioma": {
+      "aria": "Canviar idioma"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Farmàcia a {ciudad}",
+      "sinCiudad": "La teva farmàcia de confiança"
+    },
+    "ciudad": "Farmàcia a {ciudad}",
+    "btnLlamar": "Truca ara",
+    "altInterior": "Interior de {nombre}"
+  },
+  "about": {
+    "chip": "Sobre nosaltres",
+    "tituloDefecto": "Una farmàcia per a les famílies",
+    "cuerpoFallback": "En aquesta farmàcia ens dediquem a la cura de la salut familiar. El nostre equip està compromès amb el benestar dels teus fills, oferint atenció propera, productes de qualitat i l'assessorament que necessites com a pare o mare.",
+    "puntosDefecto": [
+      "Atenció propera i professional",
+      "Productes de màxima qualitat",
+      "Assessorament gratuït",
+      "Ambient amigable"
+    ],
+    "badge": {
+      "anyos": "anys",
+      "experiencia": "d'experiència"
+    }
+  },
+  "servicios": {
+    "chip": "Els nostres serveis",
+    "tituloParte1": "Els nostres",
+    "tituloParte2": "serveis",
+    "subtitulo": "Oferim una àmplia gamma de serveis farmacèutics i productes seleccionats per a la cura de tota la família.",
+    "placeholder": "Aviat afegirem el detall de serveis.",
+    "btnAnterior": "Anterior",
+    "btnSiguiente": "Següent",
+    "btnSlide": "Anar a la diapositiva {n}"
+  },
+  "faqs": {
+    "chip": "Preguntes freqüents",
+    "tituloParte1": "Resolem els teus",
+    "tituloParte2": "dubtes",
+    "subtitulo": "Les preguntes més habituals que ens fan els nostres clients. Si tens algun dubte més, escriu-nos i et contestarem de seguida."
+  },
+  "cta": {
+    "chip": "Contacta'ns",
+    "tituloConCiudad": "Ens trobaràs a {ciudad}",
+    "tituloSinCiudad": "Som aquí per ajudar-te",
+    "subtitulo": "Visita'ns a {nombre} o truca'ns per rebre assessorament farmacèutic personalitzat.",
+    "labelTelefono": "Telèfon",
+    "labelDireccion": "Adreça",
+    "labelHorario": "Horari",
+    "btnEscribenos": "Escriu-nos",
+    "btnLlamar": "Truca ara",
+    "ariaMapa": "Mapa de {nombre}"
+  },
+  "footer": {
+    "servicios": "Serveis",
+    "informacion": "Informació",
+    "contactanos": "Contacta'ns",
+    "sobreNosotros": "Sobre nosaltres",
+    "preguntasFrecuentes": "Preguntes freqüents",
+    "contacto": "Contacte",
+    "avisoLegal": "Avís legal",
+    "politicaPrivacidad": "Política de privacitat",
+    "copyright": "© {anyo} {nombre}. Tots els drets reservats.",
+    "nCol": "Nº col.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok"
+  },
+  "features": {
+    "atencionTitulo": "Atenció personalitzada",
+    "atencionDesc": "Cada família és única",
+    "calidadTitulo": "Productes certificats",
+    "calidadDesc": "Qualitat garantida",
+    "equipoTitulo": "Equip especialitzat",
+    "equipoDesc": "Farmacèutics pediàtrics",
+    "horarioTitulo": "Horari ampli",
+    "horarioDescFallback": "De dilluns a dissabte"
+  },
+  "flotante": {
+    "ariaWhatsApp": "Contactar per WhatsApp"
+  },
+  "legal": {
+    "volver": "Tornar a l'inici"
+  },
+  "p404": {
+    "tituloMeta": "Pàgina no trobada · {nombre}",
+    "descMeta": "La pàgina que cerques no existeix o s'ha mogut.",
+    "chip": "Error 404",
+    "subtitulo1": "Aquesta pàgina",
+    "subtitulo2": "no existeix",
+    "texto": "És possible que l'enllaç estigui trencat, que la pàgina s'hagi mogut o que l'URL no sigui correcta.",
+    "btnInicio": "Tornar a l'inici",
+    "buscas": "Cerques alguna cosa concreta?"
+  }
+}
