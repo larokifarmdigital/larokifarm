@@ -8,7 +8,7 @@
     "build": "sanity build",
     "deploy": "sanity deploy",
     "seed:cima": "sanity dataset import seed/cima-initial.ndjson cima --replace",
-    "seed:calendario": "sanity dataset import seed/comun-estatal-2026.ndjson calendario --replace && sanity dataset import seed/cataluna-2026.ndjson calendario && sanity dataset import seed/esqueletos-ccaa.ndjson calendario",
+    "seed:calendario": "sanity dataset import seed/comun-estatal-2026.ndjson calendario --replace && sanity dataset import seed/cataluna-2026.ndjson calendario --replace && sanity dataset import seed/esqueletos-ccaa.ndjson calendario --replace",
     "datasets:setup": "sanity dataset list && echo '\\nSi no existe \"cima\":  npx sanity dataset create cima --visibility public\\nSi production sigue ahí: npx sanity dataset rename production calendario && npx sanity dataset visibility calendario public'"
   },
   "dependencies": {

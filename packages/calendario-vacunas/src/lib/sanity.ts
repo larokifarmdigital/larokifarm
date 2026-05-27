@@ -1,4 +1,5 @@
 import { createClient, type ClientConfig } from '@sanity/client';
+import type { Lang } from './i18n';
 
 const projectId = import.meta.env.PUBLIC_SANITY_PROJECT_ID || 'TU_PROJECT_ID';
 const dataset = import.meta.env.PUBLIC_SANITY_DATASET || 'production';
@@ -73,9 +74,16 @@ export type Comunidad = ComunidadResumen & {
   gruposEdad?: GrupoEdad[];
 };
 
+/**
+ * Resuelve un campo i18n (array v5 del plugin sanity-plugin-internationalized-array)
+ * a string plano, con fallback al castellano y luego al primer valor disponible.
+ */
+const i18n = (campo: string) =>
+  `coalesce(${campo}[language==$lang][0].value, ${campo}[language=="es"][0].value, ${campo}[0].value)`;
+
 const COMUNIDAD_RESUMEN_PROJECTION = `
   _id,
-  nombre,
+  "nombre": ${i18n('nombre')},
   "slug": slug.current,
   tipo,
   vigencia
@@ -84,37 +92,50 @@ const COMUNIDAD_RESUMEN_PROJECTION = `
 const COMUNIDAD_DETALLE_PROJECTION = `
   ${COMUNIDAD_RESUMEN_PROJECTION},
   fuenteOficial,
-  notaCabecera,
+  "notaCabecera": ${i18n('notaCabecera')},
   gruposEdad[]{
     _key,
     nombre,
-    descripcion,
+    "descripcion": ${i18n('descripcion')},
     entradas[]{
       _key,
-      notaEspecifica,
+      "notaEspecifica": ${i18n('notaEspecifica')},
       vacuna->{
         _id,
-        nombre,
+        "nombre": ${i18n('nombre')},
         nombreCorto,
         via,
-        notaGeneral,
-        enfermedadesPrevenidas[]->{ _id, nombre, descripcion }
+        "notaGeneral": ${i18n('notaGeneral')},
+        enfermedadesPrevenidas[]->{
+          _id,
+          "nombre": ${i18n('nombre')},
+          "descripcion": ${i18n('descripcion')}
+        }
       },
-      dosis->{ _id, etiqueta, numero, edadAplicacion }
+      dosis->{
+        _id,
+        "etiqueta": ${i18n('etiqueta')},
+        numero,
+        "edadAplicacion": ${i18n('edadAplicacion')}
+      }
     }
   }
 `;
 
-export async function listarComunidades(): Promise<ComunidadResumen[]> {
+export async function listarComunidades(lang: Lang = 'es'): Promise<ComunidadResumen[]> {
   return sanity.fetch(
-    `*[_type == "comunidad"] | order(tipo asc, nombre asc) { ${COMUNIDAD_RESUMEN_PROJECTION} }`,
+    `*[_type == "comunidad"] | order(tipo asc, nombre[language=="es"][0].value asc) { ${COMUNIDAD_RESUMEN_PROJECTION} }`,
+    { lang },
   );
 }
 
-export async function obtenerComunidad(slug: string): Promise<Comunidad | null> {
+export async function obtenerComunidad(
+  slug: string,
+  lang: Lang = 'es',
+): Promise<Comunidad | null> {
   return sanity.fetch(
     `*[_type == "comunidad" && slug.current == $slug][0] { ${COMUNIDAD_DETALLE_PROJECTION} }`,
-    { slug },
+    { slug, lang },
   );
 }
 
@@ -124,6 +145,7 @@ export type FarmaciaPartner = {
   url?: string;
   ciudad?: string;
   logoUrl?: string;
+  descripcionCorta?: string;
 };
 
 export async function listarFarmaciasPartner(): Promise<FarmaciaPartner[]> {
@@ -134,7 +156,86 @@ export async function listarFarmaciasPartner(): Promise<FarmaciaPartner[]> {
       "nombre": farmacia->nombre,
       "url": farmacia->contacto.web,
       "ciudad": farmacia->direccion.ciudad,
-      "logoUrl": farmacia->logo.asset->url
+      "logoUrl": farmacia->logo.asset->url,
+      "descripcionCorta": farmacia->descripcionCorta.es
     }
   `);
+}
+
+export type FuenteCategoria =
+  | 'estatal'
+  | 'autonomica'
+  | 'internacional'
+  | 'sociedad';
+
+export type FuenteOficial = {
+  _id: string;
+  nombre: string;
+  url: string;
+  descripcion?: string;
+  categoria: FuenteCategoria;
+  comunidadNombre?: string;
+  comunidadSlug?: string;
+};
+
+export async function listarFuentesOficiales(lang: Lang = 'es'): Promise<FuenteOficial[]> {
+  return sanity.fetch(
+    `
+    *[_type == "fuenteOficial"]
+      | order(categoria asc, orden asc, nombre asc) {
+      _id,
+      nombre,
+      url,
+      descripcion,
+      categoria,
+      "comunidadNombre": coalesce(comunidad->nombre[language==$lang][0].value, comunidad->nombre[language=="es"][0].value, comunidad->nombre[0].value),
+      "comunidadSlug": comunidad->slug.current
+    }
+  `,
+    { lang },
+  );
+}
+
+export type PaginaLegalSlug = 'aviso-legal' | 'politica-privacidad';
+
+export type PortableTextMark = {
+  _key: string;
+  _type: string;
+  [k: string]: unknown;
+};
+
+export type PortableTextSpan = {
+  _key?: string;
+  _type: 'span';
+  text: string;
+  marks?: string[];
+};
+
+export type PortableTextBlock = {
+  _key?: string;
+  _type: 'block';
+  style?: 'normal' | 'h2' | 'h3' | 'h4' | 'blockquote';
+  listItem?: 'bullet' | 'number';
+  level?: number;
+  children: PortableTextSpan[];
+  markDefs?: PortableTextMark[];
+};
+
+export type PaginaLegal = {
+  _id: string;
+  slug: PaginaLegalSlug;
+  titulo: string;
+  actualizadoEl?: string;
+  contenido: PortableTextBlock[];
+};
+
+export async function obtenerPaginaLegal(
+  slug: PaginaLegalSlug,
+): Promise<PaginaLegal | null> {
+  return sanity.fetch(
+    `*[_type == "paginaLegal" && slug == $slug][0] {
+      _id, slug, titulo, actualizadoEl, contenido
+    }`,
+    { slug },
+  );
 }

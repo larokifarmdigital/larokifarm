@@ -1,0 +1,55 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import {
+  IndiceComunidades,
+  listarComunidades,
+  t as tCv,
+} from '@larokifarm/calendario-vacunas';
+import {
+  LOCALE_DEFECTO,
+  LOCALES_DISPONIBLES,
+  rutaConLocale,
+  t,
+  type Locale,
+} from '@/lib/i18n';
+
+export async function getStaticPaths() {
+  return LOCALES_DISPONIBLES.map((c) => ({
+    params: { lang: c === LOCALE_DEFECTO ? undefined : c },
+    props: { lang: c },
+  }));
+}
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props as Props;
+const comunidades = await listarComunidades(lang);
+
+const titulo = tCv('index.title', lang);
+const descripcion = tCv('index.description', lang);
+const rutaActual = '/';
+const canonical = rutaConLocale(rutaActual, lang);
+
+const COMUNIDAD_DESTACADA =
+  import.meta.env.PUBLIC_COMUNIDAD_DESTACADA_SLUG ?? 'cataluna';
+---
+
+<BaseLayout
+  titulo={titulo}
+  descripcion={descripcion}
+  canonical={canonical}
+  rutaActual={rutaActual}
+  lang={lang}
+>
+  <div class="page-container">
+    <IndiceComunidades
+      comunidades={comunidades}
+      comunidadDestacada={COMUNIDAD_DESTACADA}
+      lang={lang}
+      basePath={canonical === '/' ? '' : canonical}
+      eyebrow={t('hero.eyebrow', lang)}
+    />
+  </div>
+</BaseLayout>

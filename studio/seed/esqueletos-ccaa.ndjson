@@ -1,18 +1,18 @@
-{"_id":"comunidad-andalucia","_type":"comunidad","nombre":"Andalucía","slug":{"_type":"slug","current":"andalucia"},"tipo":"autonomica"}
-{"_id":"comunidad-aragon","_type":"comunidad","nombre":"Aragón","slug":{"_type":"slug","current":"aragon"},"tipo":"autonomica"}
-{"_id":"comunidad-asturias","_type":"comunidad","nombre":"Asturias","slug":{"_type":"slug","current":"asturias"},"tipo":"autonomica"}
-{"_id":"comunidad-baleares","_type":"comunidad","nombre":"Islas Baleares","slug":{"_type":"slug","current":"baleares"},"tipo":"autonomica"}
-{"_id":"comunidad-canarias","_type":"comunidad","nombre":"Canarias","slug":{"_type":"slug","current":"canarias"},"tipo":"autonomica"}
-{"_id":"comunidad-cantabria","_type":"comunidad","nombre":"Cantabria","slug":{"_type":"slug","current":"cantabria"},"tipo":"autonomica"}
-{"_id":"comunidad-castilla-la-mancha","_type":"comunidad","nombre":"Castilla-La Mancha","slug":{"_type":"slug","current":"castilla-la-mancha"},"tipo":"autonomica"}
-{"_id":"comunidad-castilla-y-leon","_type":"comunidad","nombre":"Castilla y León","slug":{"_type":"slug","current":"castilla-y-leon"},"tipo":"autonomica"}
-{"_id":"comunidad-extremadura","_type":"comunidad","nombre":"Extremadura","slug":{"_type":"slug","current":"extremadura"},"tipo":"autonomica"}
-{"_id":"comunidad-galicia","_type":"comunidad","nombre":"Galicia","slug":{"_type":"slug","current":"galicia"},"tipo":"autonomica"}
-{"_id":"comunidad-larioja","_type":"comunidad","nombre":"La Rioja","slug":{"_type":"slug","current":"la-rioja"},"tipo":"autonomica"}
-{"_id":"comunidad-madrid","_type":"comunidad","nombre":"Madrid","slug":{"_type":"slug","current":"madrid"},"tipo":"autonomica"}
-{"_id":"comunidad-murcia","_type":"comunidad","nombre":"Murcia","slug":{"_type":"slug","current":"murcia"},"tipo":"autonomica"}
-{"_id":"comunidad-navarra","_type":"comunidad","nombre":"Navarra","slug":{"_type":"slug","current":"navarra"},"tipo":"autonomica"}
-{"_id":"comunidad-paisvasco","_type":"comunidad","nombre":"País Vasco","slug":{"_type":"slug","current":"pais-vasco"},"tipo":"autonomica"}
-{"_id":"comunidad-valencia","_type":"comunidad","nombre":"Comunidad Valenciana","slug":{"_type":"slug","current":"comunidad-valenciana"},"tipo":"autonomica"}
-{"_id":"comunidad-ceuta","_type":"comunidad","nombre":"Ceuta","slug":{"_type":"slug","current":"ceuta"},"tipo":"ciudad-autonoma"}
-{"_id":"comunidad-melilla","_type":"comunidad","nombre":"Melilla","slug":{"_type":"slug","current":"melilla"},"tipo":"ciudad-autonoma"}
+{"_id":"comunidad-andalucia","_type":"comunidad","nombre":[{"_key":"cbb91383d61d","language":"es","value":"Andalucía"}],"slug":{"_type":"slug","current":"andalucia"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-aragon","_type":"comunidad","nombre":[{"_key":"43bf7234ae5b","language":"es","value":"Aragón"}],"slug":{"_type":"slug","current":"aragon"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-asturias","_type":"comunidad","nombre":[{"_key":"8749229dc2a5","language":"es","value":"Asturias"}],"slug":{"_type":"slug","current":"asturias"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-baleares","_type":"comunidad","nombre":[{"_key":"6de3470466c7","language":"es","value":"Islas Baleares"}],"slug":{"_type":"slug","current":"baleares"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-canarias","_type":"comunidad","nombre":[{"_key":"9d550038cf0c","language":"es","value":"Canarias"}],"slug":{"_type":"slug","current":"canarias"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-cantabria","_type":"comunidad","nombre":[{"_key":"b0853056e0b8","language":"es","value":"Cantabria"}],"slug":{"_type":"slug","current":"cantabria"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-castilla-la-mancha","_type":"comunidad","nombre":[{"_key":"b8021199d218","language":"es","value":"Castilla-La Mancha"}],"slug":{"_type":"slug","current":"castilla-la-mancha"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-castilla-y-leon","_type":"comunidad","nombre":[{"_key":"324592305f83","language":"es","value":"Castilla y León"}],"slug":{"_type":"slug","current":"castilla-y-leon"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-extremadura","_type":"comunidad","nombre":[{"_key":"399f1b27a04b","language":"es","value":"Extremadura"}],"slug":{"_type":"slug","current":"extremadura"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-galicia","_type":"comunidad","nombre":[{"_key":"4cb8ecb1ca23","language":"es","value":"Galicia"}],"slug":{"_type":"slug","current":"galicia"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-larioja","_type":"comunidad","nombre":[{"_key":"b98a9a5154d5","language":"es","value":"La Rioja"}],"slug":{"_type":"slug","current":"la-rioja"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-madrid","_type":"comunidad","nombre":[{"_key":"05914ef8f8d1","language":"es","value":"Madrid"}],"slug":{"_type":"slug","current":"madrid"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-murcia","_type":"comunidad","nombre":[{"_key":"c4cd2bf96f07","language":"es","value":"Murcia"}],"slug":{"_type":"slug","current":"murcia"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-navarra","_type":"comunidad","nombre":[{"_key":"c7bb98fd1b7d","language":"es","value":"Navarra"}],"slug":{"_type":"slug","current":"navarra"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-paisvasco","_type":"comunidad","nombre":[{"_key":"639216404aac","language":"es","value":"País Vasco"}],"slug":{"_type":"slug","current":"pais-vasco"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-valencia","_type":"comunidad","nombre":[{"_key":"79c9c0645ecd","language":"es","value":"Comunidad Valenciana"}],"slug":{"_type":"slug","current":"comunidad-valenciana"},"tipo":"autonomica","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-ceuta","_type":"comunidad","nombre":[{"_key":"8dc6b9d90799","language":"es","value":"Ceuta"}],"slug":{"_type":"slug","current":"ceuta"},"tipo":"ciudad-autonoma","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}
+{"_id":"comunidad-melilla","_type":"comunidad","nombre":[{"_key":"7b875b4825e0","language":"es","value":"Melilla"}],"slug":{"_type":"slug","current":"melilla"},"tipo":"ciudad-autonoma","idiomasActivos":[{"_key":"lang-es","_type":"reference","_ref":"idioma-es"}]}

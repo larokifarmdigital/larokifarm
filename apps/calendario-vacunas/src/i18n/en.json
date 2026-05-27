@@ -1,0 +1,57 @@
+{
+  "html": { "lang": "en" },
+  "brand": "Vaccination Calendar",
+  "nav": {
+    "calendarios": "Calendars",
+    "fuentes": "Sources",
+    "farmacias": "Pharmacies",
+    "aria": "Main"
+  },
+  "idioma": {
+    "selector": "Change language"
+  },
+  "hero": {
+    "eyebrow": "Official vaccination calendars of Spain"
+  },
+  "footer": {
+    "tag": "Informational content about the official vaccination calendars of Spain, based on public sources.",
+    "recursos": "Resources",
+    "legal": "Legal",
+    "calendariosCcaa": "Calendars by region",
+    "fuentesOficiales": "Official sources",
+    "farmaciasAsociadas": "Associated pharmacies",
+    "avisoLegal": "Legal notice",
+    "politicaPrivacidad": "Privacy policy",
+    "copyright": "© {anyo} Vaccination Calendar",
+    "disclaimer": "Informational content · Does not replace professional medical advice."
+  },
+  "fuentes": {
+    "titulo": "Official sources",
+    "descripcion": "Documents and official bodies on which the vaccination calendars compiled on this site are based.",
+    "vacio": "No sources published yet. Add «fuenteOficial» documents in Sanity.",
+    "categorias": {
+      "estatal": "Ministry and state bodies",
+      "estatalDesc": "Documents published by the Ministry of Health and national bodies.",
+      "autonomica": "Regional Health Departments",
+      "autonomicaDesc": "Official source of each Autonomous Community for its own calendar.",
+      "sociedad": "Scientific societies",
+      "sociedadDesc": "Recommendations from medical and pediatric societies.",
+      "internacional": "International bodies",
+      "internacionalDesc": "References from WHO, ECDC and others."
+    }
+  },
+  "farmacias": {
+    "titulo": "Associated pharmacies",
+    "descripcion": "Pharmacies that offer this vaccination calendar information service to their patients.",
+    "vacio": "No associated pharmacies yet. Add «farmaciaPartner» documents in Sanity."
+  },
+  "legal": {
+    "vacioPrefijo": "The content of this page has not been published in Sanity yet. Create a document",
+    "vacioSlug": "with slug",
+    "actualizado": "Last updated",
+    "tituloAvisoLegal": "Legal notice",
+    "tituloPoliticaPrivacidad": "Privacy policy",
+    "descAvisoLegal": "Legal information of the owner of the Vaccination Calendar site.",
+    "descPoliticaPrivacidad": "Privacy policy and data processing of the Vaccination Calendar site."
+  }
+}

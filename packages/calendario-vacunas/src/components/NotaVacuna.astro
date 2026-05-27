@@ -5,9 +5,7 @@ interface Props {
 const { texto } = Astro.props;
 ---
 
-{texto && (
-  <p class="nota">{texto}</p>
-)}
+{texto && <p class='nota'>{texto}</p>}
 
 <style>
   .nota {

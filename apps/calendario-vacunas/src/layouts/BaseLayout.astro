@@ -1,6 +1,7 @@
 ---
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
+import { LOCALE_DEFECTO, type Locale } from '@/lib/i18n';
 
 interface Props {
   titulo: string;
@@ -8,6 +9,7 @@ interface Props {
   canonical?: string;
   jsonLd?: unknown;
   rutaActual?: string;
+  lang?: Locale;
 }
 
 const {
@@ -16,11 +18,12 @@ const {
   canonical,
   jsonLd,
   rutaActual = '/',
+  lang = LOCALE_DEFECTO,
 } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -43,7 +46,7 @@ const {
     <style is:global>
       :root {
         --primary: #0d6e6e;
-        --accent: #36a0da;
+        --secondary: #36a0da;
       }
 
       * {
@@ -89,12 +92,12 @@ const {
     </style>
   </head>
   <body>
-    <Header rutaActual={rutaActual} />
+    <Header rutaActual={rutaActual} lang={lang} />
 
     <main>
       <slot />
     </main>
 
-    <Footer />
+    <Footer lang={lang} rutaActual={rutaActual} />
   </body>
 </html>

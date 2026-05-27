@@ -85,6 +85,29 @@ export const farmacia = defineType({
         'CCAA cuyo calendario de vacunación se destaca por defecto en /calendario-vacunacion de esta farmacia. Si se deja vacío, se muestra solo el índice.',
     }),
 
+    // ── Google Business Profile (reseñas) ────────────────────────────
+    defineField({
+      name: 'googleLocationName',
+      title: 'Google Business Profile · Resource name',
+      type: 'string',
+      description:
+        'Identificador del negocio en Google Business Profile, formato "accounts/{accountId}/locations/{locationId}". El Worker de sincronización lo usa para traer las reseñas. Se rellena cuando Google aprueba el acceso a la API.',
+      validation: (r) =>
+        r.regex(/^accounts\/\d+\/locations\/\d+$/, {
+          name: 'business profile resource name',
+          invert: false,
+        }).warning(
+          'Formato esperado: accounts/<accountId>/locations/<locationId>',
+        ),
+    }),
+    defineField({
+      name: 'googleMapsUrl',
+      title: 'Google Maps · URL pública',
+      type: 'url',
+      description:
+        'URL completa de la ficha pública en Google Maps. La usa la web para el botón "Ver en Google". Cópiala desde maps.google.com → buscar la farmacia → "Compartir" → "Copiar enlace".',
+    }),
+
     // ── Hero (traducible) ────────────────────────────────────────────
     defineField({
       name: 'descripcionCorta',

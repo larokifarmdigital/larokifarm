@@ -1,5 +1,5 @@
 ---
-import type { ComunidadResumen } from '../lib/sanity';
+import type { ComunidadResumen, ComunidadTipo } from '../lib/sanity';
 import { t, type Lang } from '../lib/i18n';
 
 interface Props {
@@ -28,16 +28,28 @@ const autonomias = comunidades.filter(
 );
 
 const link = (slug: string) => `${basePath}/${slug}`.replace(/\/{2,}/g, '/');
+
+const BADGES: Record<ComunidadTipo, Record<Lang, string>> = {
+  'comun-estatal': { es: 'España', ca: 'Espanya', en: 'Spain' },
+  'autonomica': { es: 'CCAA', ca: 'CCAA', en: 'Region' },
+  'ciudad-autonoma': { es: 'Ciudad autónoma', ca: 'Ciutat autònoma', en: 'Autonomous city' },
+};
+
+const badge = (tipo: ComunidadTipo) => BADGES[tipo][lang] ?? BADGES[tipo].es;
 ---
 
 {destacada && (
-  <section>
-    <h2>{t('grid.headingFeatured', lang)}</h2>
-    <ul class="grid">
-      <li class="destacada">
+  <section class="cv-section">
+    <header class="cv-section-head">
+      <h2>{t('grid.headingFeatured', lang)}</h2>
+    </header>
+    <ul class="cv-grid">
+      <li class="cv-card cv-card-destacada">
         <a href={link(destacada.slug)}>
-          <strong>{destacada.nombre}</strong>
-          {destacada.vigencia && <span class="cv-muted"> · {destacada.vigencia}</span>}
+          <span class="cv-badge cv-badge-destacada">{badge(destacada.tipo)}</span>
+          <span class="cv-card-title">{destacada.nombre}</span>
+          {destacada.vigencia && <span class="cv-card-vigencia">{destacada.vigencia}</span>}
+          <span class="cv-card-arrow" aria-hidden="true">→</span>
         </a>
       </li>
     </ul>
@@ -45,14 +57,19 @@ const link = (slug: string) => `${basePath}/${slug}`.replace(/\/{2,}/g, '/');
 )}
 
 {estatales.length > 0 && (
-  <section>
-    <h2>{t('grid.headingCommon', lang)}</h2>
-    <ul class="grid">
+  <section class="cv-section">
+    <header class="cv-section-head">
+      <h2>{t('grid.headingCommon', lang)}</h2>
+      <span class="cv-count">{estatales.length}</span>
+    </header>
+    <ul class="cv-grid">
       {estatales.map((c) => (
-        <li>
+        <li class="cv-card">
           <a href={link(c.slug)}>
-            <strong>{c.nombre}</strong>
-            {c.vigencia && <span class="cv-muted"> · {c.vigencia}</span>}
+            <span class="cv-badge">{badge(c.tipo)}</span>
+            <span class="cv-card-title">{c.nombre}</span>
+            {c.vigencia && <span class="cv-card-vigencia">{c.vigencia}</span>}
+            <span class="cv-card-arrow" aria-hidden="true">→</span>
           </a>
         </li>
       ))}
@@ -60,47 +77,23 @@ const link = (slug: string) => `${basePath}/${slug}`.replace(/\/{2,}/g, '/');
   </section>
 )}
 
-<section>
-  <h2>{t('grid.headingAutonomies', lang)}</h2>
-  <ul class="grid">
-    {autonomias.map((c) => (
-      <li>
-        <a href={link(c.slug)}>
-          <strong>{c.nombre}</strong>
-          {c.vigencia && <span class="cv-muted"> · {c.vigencia}</span>}
-        </a>
-      </li>
-    ))}
-  </ul>
-</section>
-
-<style>
-  .grid {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 0.75rem;
-  }
-
-  .grid li a {
-    display: block;
-    padding: 1rem;
-    border: 1px solid var(--cv-border);
-    border-radius: var(--cv-radius);
-    text-decoration: none;
-    color: var(--cv-fg);
-    transition: border-color 0.15s, transform 0.15s;
-  }
-
-  .grid li a:hover {
-    border-color: var(--cv-primary);
-    transform: translateY(-1px);
-  }
-
-  .destacada a {
-    border-color: var(--cv-primary);
-    background: var(--cv-accent-bg);
-  }
-</style>
+{autonomias.length > 0 && (
+  <section class="cv-section">
+    <header class="cv-section-head">
+      <h2>{t('grid.headingAutonomies', lang)}</h2>
+      <span class="cv-count">{autonomias.length}</span>
+    </header>
+    <ul class="cv-grid">
+      {autonomias.map((c) => (
+        <li class="cv-card">
+          <a href={link(c.slug)}>
+            <span class="cv-badge">{badge(c.tipo)}</span>
+            <span class="cv-card-title">{c.nombre}</span>
+            {c.vigencia && <span class="cv-card-vigencia">{c.vigencia}</span>}
+            <span class="cv-card-arrow" aria-hidden="true">→</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}

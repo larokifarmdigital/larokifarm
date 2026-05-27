@@ -1,4 +1,5 @@
 import { defineType, defineField } from 'sanity';
+import { validarTodosIdiomasOninguno } from '../lib/validacionI18nSync';
 
 export const grupoEdad = defineType({
   name: 'grupoEdad',
@@ -24,8 +25,9 @@ export const grupoEdad = defineType({
     defineField({
       name: 'descripcion',
       title: 'Descripción del rango',
-      type: 'string',
+      type: 'internationalizedArrayString',
       description: 'Ej. "0-15 meses", "6-14 años", "65 años y más"',
+      validation: (r) => validarTodosIdiomasOninguno(r),
     }),
     defineField({
       name: 'entradas',
@@ -35,7 +37,7 @@ export const grupoEdad = defineType({
     }),
   ],
   preview: {
-    select: { nombre: 'nombre', descripcion: 'descripcion', entradas: 'entradas' },
+    select: { nombre: 'nombre', descripcion: 'descripcion.0.value', entradas: 'entradas' },
     prepare({ nombre, descripcion, entradas }) {
       const count = Array.isArray(entradas) ? entradas.length : 0;
       return {

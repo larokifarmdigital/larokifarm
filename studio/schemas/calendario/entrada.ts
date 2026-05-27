@@ -1,4 +1,5 @@
 import { defineType, defineField } from 'sanity';
+import { validarTodosIdiomasOninguno } from '../lib/validacionI18nSync';
 
 export const entrada = defineType({
   name: 'entrada',
@@ -22,17 +23,17 @@ export const entrada = defineType({
     defineField({
       name: 'notaEspecifica',
       title: 'Nota específica',
-      type: 'text',
-      rows: 2,
+      type: 'internationalizedArrayText',
       description: 'Opcional. Aclaración solo aplicable a esta vacuna en este grupo de edad.',
+      validation: (r) => validarTodosIdiomasOninguno(r),
     }),
   ],
   preview: {
     select: {
       vacunaNombre: 'vacuna.nombreCorto',
-      vacunaNombreLargo: 'vacuna.nombre',
-      dosisEdad: 'dosis.edadAplicacion',
-      dosisEtiqueta: 'dosis.etiqueta',
+      vacunaNombreLargo: 'vacuna.nombre.0.value',
+      dosisEdad: 'dosis.edadAplicacion.0.value',
+      dosisEtiqueta: 'dosis.etiqueta.0.value',
     },
     prepare({ vacunaNombre, vacunaNombreLargo, dosisEdad, dosisEtiqueta }) {
       return {

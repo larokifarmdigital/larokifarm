@@ -1,0 +1,57 @@
+{
+  "html": { "lang": "es" },
+  "brand": "Calendario de Vacunación",
+  "nav": {
+    "calendarios": "Calendarios",
+    "fuentes": "Fuentes",
+    "farmacias": "Farmacias",
+    "aria": "Principal"
+  },
+  "idioma": {
+    "selector": "Cambiar idioma"
+  },
+  "hero": {
+    "eyebrow": "Calendarios oficiales de España"
+  },
+  "footer": {
+    "tag": "Información divulgativa sobre los calendarios oficiales de vacunación en España, basada en fuentes públicas.",
+    "recursos": "Recursos",
+    "legal": "Legal",
+    "calendariosCcaa": "Calendarios por CCAA",
+    "fuentesOficiales": "Fuentes oficiales",
+    "farmaciasAsociadas": "Farmacias asociadas",
+    "avisoLegal": "Aviso legal",
+    "politicaPrivacidad": "Política de privacidad",
+    "copyright": "© {anyo} Calendario de Vacunación",
+    "disclaimer": "Contenido divulgativo · No sustituye al consejo de un profesional sanitario."
+  },
+  "fuentes": {
+    "titulo": "Fuentes oficiales",
+    "descripcion": "Documentos y organismos oficiales en los que se basan los calendarios de vacunación recogidos en este sitio.",
+    "vacio": "Aún no se han publicado fuentes. Añade documentos «fuenteOficial» en Sanity.",
+    "categorias": {
+      "estatal": "Ministerio y organismos estatales",
+      "estatalDesc": "Documentos publicados por el Ministerio de Sanidad y organismos nacionales.",
+      "autonomica": "Consejerías de Salud autonómicas",
+      "autonomicaDesc": "Fuente oficial de cada Comunidad Autónoma para su propio calendario.",
+      "sociedad": "Sociedades científicas",
+      "sociedadDesc": "Recomendaciones de sociedades médicas y pediátricas.",
+      "internacional": "Organismos internacionales",
+      "internacionalDesc": "Referencias de OMS, ECDC y otros."
+    }
+  },
+  "farmacias": {
+    "titulo": "Farmacias asociadas",
+    "descripcion": "Farmacias que ofrecen este servicio de información sobre calendarios de vacunación a sus pacientes.",
+    "vacio": "Aún no hay farmacias asociadas. Añade documentos «farmaciaPartner» en Sanity."
+  },
+  "legal": {
+    "vacioPrefijo": "Aún no se ha publicado el contenido de esta página en Sanity. Crea un documento",
+    "vacioSlug": "con slug",
+    "actualizado": "Última actualización",
+    "tituloAvisoLegal": "Aviso legal",
+    "tituloPoliticaPrivacidad": "Política de privacidad",
+    "descAvisoLegal": "Información legal del titular del sitio Calendario de Vacunación.",
+    "descPoliticaPrivacidad": "Política de privacidad y tratamiento de datos del sitio Calendario de Vacunación."
+  }
+}

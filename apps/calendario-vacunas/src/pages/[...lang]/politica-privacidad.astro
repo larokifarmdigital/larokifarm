@@ -1,0 +1,70 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { obtenerPaginaLegal } from '@larokifarm/calendario-vacunas';
+import { renderPortableText } from '@/lib/portableText.ts';
+import {
+  LOCALE_DEFECTO,
+  LOCALES_DISPONIBLES,
+  rutaConLocale,
+  t,
+  type Locale,
+} from '@/lib/i18n';
+
+export async function getStaticPaths() {
+  return LOCALES_DISPONIBLES.map((c) => ({
+    params: { lang: c === LOCALE_DEFECTO ? undefined : c },
+    props: { lang: c },
+  }));
+}
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props as Props;
+const pagina = await obtenerPaginaLegal('politica-privacidad');
+
+const tituloDefault = t('legal.tituloPoliticaPrivacidad', lang);
+const titulo = pagina?.titulo ?? tituloDefault;
+const descripcion = t('legal.descPoliticaPrivacidad', lang);
+const html = pagina ? renderPortableText(pagina.contenido) : '';
+
+const localeMap: Record<Locale, string> = { es: 'es-ES', en: 'en-US', ca: 'ca-ES' };
+const actualizado = pagina?.actualizadoEl
+  ? new Date(pagina.actualizadoEl).toLocaleDateString(localeMap[lang], {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  : null;
+
+const rutaActual = '/politica-privacidad';
+---
+
+<BaseLayout
+  titulo={`${titulo} · ${t('brand', lang)}`}
+  descripcion={descripcion}
+  canonical={rutaConLocale(rutaActual, lang)}
+  rutaActual={rutaActual}
+  lang={lang}
+>
+  <div class="page-container">
+    <article class="prose">
+      <header class="prose-head">
+        <h1>{titulo}</h1>
+        {actualizado && (
+          <p class="updated">{t('legal.actualizado', lang)}: {actualizado}</p>
+        )}
+      </header>
+
+      {pagina ? (
+        <div set:html={html} />
+      ) : (
+        <p class="empty">
+          {t('legal.vacioPrefijo', lang)} <code>paginaLegal</code>{' '}
+          {t('legal.vacioSlug', lang)} <code>politica-privacidad</code>.
+        </p>
+      )}
+    </article>
+  </div>
+</BaseLayout>

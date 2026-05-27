@@ -11,6 +11,7 @@ interface Props {
   basePath?: string;
   heading?: string;
   intro?: string;
+  eyebrow?: string;
 }
 
 const {
@@ -20,6 +21,7 @@ const {
   basePath = '',
   heading,
   intro,
+  eyebrow,
 } = Astro.props;
 
 const titulo = heading ?? t('index.title', lang);
@@ -27,13 +29,31 @@ const subtitulo = intro ?? t('index.description', lang);
 ---
 
 <div class="cv-root">
-  <h1>{titulo}</h1>
-  <p class="cv-muted">{subtitulo}</p>
+  <header class="cv-hero">
+    {eyebrow && (
+      <span class="cv-eyebrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        {eyebrow}
+      </span>
+    )}
+    <h1>{titulo}</h1>
+    <p class="cv-lead">{subtitulo}</p>
 
-  <p class="cv-disclaimer">{t('disclaimer', lang)}</p>
+    <div class="cv-disclaimer" role="note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <span>{t('disclaimer', lang)}</span>
+    </div>
+  </header>
 
   {comunidades.length === 0 ? (
-    <p class="cv-muted">{t('index.empty', lang)}</p>
+    <p class="cv-empty">{t('index.empty', lang)}</p>
   ) : (
     <ComunidadGrid
       comunidades={comunidades}

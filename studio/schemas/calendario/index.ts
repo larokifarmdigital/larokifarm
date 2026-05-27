@@ -5,6 +5,8 @@ import { vacuna } from './vacuna';
 import { dosis } from './dosis';
 import { enfermedad } from './enfermedad';
 import { farmaciaPartner } from './farmaciaPartner';
+import { paginaLegal } from './paginaLegal';
+import { fuenteOficial } from './fuenteOficial';
 
 export const calendarioSchemaTypes = [
   comunidad,
@@ -14,4 +16,6 @@ export const calendarioSchemaTypes = [
   dosis,
   enfermedad,
   farmaciaPartner,
+  paginaLegal,
+  fuenteOficial,
 ];

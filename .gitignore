@@ -25,6 +25,12 @@ build/
 .env.*.local
 .env.production
 
+# OAuth / credenciales descargadas de Google Cloud, AWS, etc.
+client_secret*.json
+*credentials*.json
+*.pem
+*.key
+
 # OS / editor
 .DS_Store
 Thumbs.db

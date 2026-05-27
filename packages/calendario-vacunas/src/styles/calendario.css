@@ -1,21 +1,36 @@
 /*
  * Calendario de vacunación — estilos scoped bajo .cv-root.
- * Los tokens --cv-* heredan del host (var --primary, --accent, etc.) con
- * fallback al tema teal por defecto. Para personalizar desde una landing
- * basta con definir --primary, --accent en :root o en .cv-root.
+ *
+ * Contrato público de theming (lo que el host debe setear):
+ *   --primary    Color principal del calendario. Default: #0d6e6e (teal).
+ *   --secondary  Color secundario. Default: #36a0da (azul). Acepta --accent como legacy.
+ *
+ * El host solo debería tocar esos dos tokens (en :root o en .cv-root).
+ * Todo el resto de tokens --cv-* es derivado y no debería sobrescribirse.
  */
 
 .cv-root {
+  max-width: 72rem;
+  margin-inline: auto;
   --cv-primary: var(--primary, #0d6e6e);
-  --cv-accent: var(--accent, #36a0da);
+  --cv-secondary: var(--secondary, var(--accent, #36a0da));
   --cv-bg: var(--cv-bg-color, #ffffff);
-  --cv-fg: var(--cv-fg-color, #1a1a1a);
-  --cv-muted: var(--cv-muted-color, #6b7280);
-  --cv-border: var(--cv-border-color, #e5e7eb);
-  --cv-accent-bg: var(--cv-accent-bg-color, color-mix(in srgb, var(--cv-primary) 12%, white));
+  --cv-fg: var(--cv-fg-color, #0f172a);
+  --cv-muted: var(--cv-muted-color, #64748b);
+  --cv-border: var(--cv-border-color, #e2e8f0);
+  --cv-surface: var(--cv-surface-color, #ffffff);
+  --cv-surface-soft: var(--cv-surface-soft-color, #f8fafc);
+  --cv-accent-bg: var(--cv-accent-bg-color, color-mix(in srgb, var(--cv-primary) 10%, white));
   --cv-row-alt: var(--cv-row-alt-color, #fafafa);
-  --cv-radius: 0.5rem;
+  --cv-radius-sm: 0.375rem;
+  --cv-radius: 0.75rem;
+  --cv-radius-lg: 1rem;
+  --cv-shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --cv-shadow: 0 4px 14px -4px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.04);
+  --cv-shadow-hover: 0 10px 30px -10px rgb(15 23 42 / 0.18), 0 4px 8px -4px rgb(15 23 42 / 0.08);
+  --cv-ring: 0 0 0 3px color-mix(in srgb, var(--cv-primary) 25%, transparent);
   color: var(--cv-fg);
+  font-feature-settings: 'cv11', 'ss01';
 }
 
 .cv-root *,
@@ -24,40 +39,256 @@
   box-sizing: border-box;
 }
 
+/* ──────────────────────────  Tipografía  ────────────────────────── */
+
 .cv-root h1 {
-  font-size: 1.875rem;
-  margin: 0 0 0.5rem;
+  font-size: clamp(1.875rem, 2.5vw + 1rem, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin: 0 0 0.75rem;
+  color: var(--cv-fg);
 }
 
 .cv-root h2 {
-  font-size: 1.5rem;
-  margin: 2rem 0 0.75rem;
-  border-bottom: 1px solid var(--cv-border);
-  padding-bottom: 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0;
+  color: var(--cv-fg);
 }
 
 .cv-root h3 {
-  font-size: 1.125rem;
-  margin: 1.5rem 0 0.5rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  margin: 1.25rem 0 0.5rem;
 }
 
 .cv-root a {
   color: var(--cv-primary);
 }
 
-.cv-muted {
-  color: var(--cv-muted);
-  font-size: 0.875rem;
+.cv-root a:focus-visible {
+  outline: none;
+  box-shadow: var(--cv-ring);
+  border-radius: var(--cv-radius-sm);
 }
 
-.cv-disclaimer {
+.cv-muted {
+  color: var(--cv-muted);
+  font-size: 0.9375rem;
+}
+
+.cv-lead {
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: var(--cv-muted);
+  max-width: 56ch;
+  margin: 0 0 1.5rem;
+}
+
+/* ──────────────────────────  Hero / cabecera  ────────────────────────── */
+
+.cv-hero {
+  padding: 1rem 0 2rem;
+}
+
+.cv-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cv-primary);
   background: var(--cv-accent-bg);
-  border-left: 4px solid var(--cv-primary);
-  padding: 0.75rem 1rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+}
+
+.cv-eyebrow svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* ──────────────────────────  Disclaimer  ────────────────────────── */
+
+.cv-disclaimer {
+  display: flex;
+  gap: 0.75rem;
+  background: var(--cv-accent-bg);
+  border: 1px solid color-mix(in srgb, var(--cv-primary) 18%, transparent);
+  padding: 0.875rem 1rem;
   border-radius: var(--cv-radius);
   font-size: 0.875rem;
-  margin: 1rem 0 2rem;
+  line-height: 1.5;
+  margin: 0 0 2.5rem;
+  color: color-mix(in srgb, var(--cv-fg) 90%, var(--cv-primary));
 }
+
+.cv-disclaimer svg {
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--cv-primary);
+  margin-top: 0.0625rem;
+}
+
+/* ──────────────────────────  Secciones  ────────────────────────── */
+
+.cv-section {
+  margin: 0 0 2.5rem;
+}
+
+.cv-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  margin: 0 0 1rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--cv-border);
+}
+
+.cv-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--cv-muted);
+  background: var(--cv-surface-soft);
+  border: 1px solid var(--cv-border);
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ──────────────────────────  Grid de comunidades  ────────────────────────── */
+
+.cv-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.cv-card a {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.125rem;
+  background: var(--cv-surface);
+  border: 1px solid var(--cv-border);
+  border-radius: var(--cv-radius);
+  box-shadow: var(--cv-shadow-sm);
+  text-decoration: none;
+  color: var(--cv-fg);
+  transition:
+    border-color 180ms ease,
+    box-shadow 220ms ease,
+    transform 180ms ease,
+    background 180ms ease;
+  overflow: hidden;
+}
+
+.cv-card a:hover {
+  border-color: color-mix(in srgb, var(--cv-primary) 55%, var(--cv-border));
+  box-shadow: var(--cv-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.cv-card a:focus-visible {
+  outline: none;
+  border-color: var(--cv-primary);
+  box-shadow: var(--cv-ring);
+}
+
+.cv-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--cv-fg);
+  padding-right: 1.5rem;
+}
+
+.cv-card-vigencia {
+  font-size: 0.8125rem;
+  color: var(--cv-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cv-card-arrow {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--cv-muted);
+  transition:
+    transform 220ms ease,
+    color 180ms ease;
+}
+
+.cv-card a:hover .cv-card-arrow {
+  color: var(--cv-primary);
+  transform: translateX(3px);
+}
+
+.cv-badge {
+  align-self: flex-start;
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cv-muted);
+  background: var(--cv-surface-soft);
+  border: 1px solid var(--cv-border);
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  margin-bottom: 0.25rem;
+}
+
+/* Variantes destacada / España */
+
+.cv-card-destacada a {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cv-primary) 8%, var(--cv-surface)),
+    var(--cv-surface)
+  );
+  border-color: color-mix(in srgb, var(--cv-primary) 35%, var(--cv-border));
+}
+
+.cv-card-destacada a:hover {
+  border-color: var(--cv-primary);
+}
+
+.cv-badge-destacada {
+  color: white;
+  background: var(--cv-primary);
+  border-color: transparent;
+}
+
+/* ──────────────────────────  Empty state  ────────────────────────── */
+
+.cv-empty {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  background: var(--cv-surface-soft);
+  border: 1px dashed var(--cv-border);
+  border-radius: var(--cv-radius);
+  color: var(--cv-muted);
+}
+
+/* ──────────────────────────  Print  ────────────────────────── */
 
 .cv-print-btn {
   background: var(--cv-primary);
@@ -76,5 +307,15 @@
 @media print {
   .cv-no-print {
     display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-card a,
+  .cv-card-arrow {
+    transition: none;
+  }
+  .cv-card a:hover {
+    transform: none;
   }
 }

@@ -14,30 +14,35 @@ const { entradas, lang = 'es' } = Astro.props;
 <table>
   <thead>
     <tr>
-      <th scope="col">{t('table.col.vacuna', lang)}</th>
-      <th scope="col">{t('table.col.dosis', lang)}</th>
-      <th scope="col">{t('table.col.edad', lang)}</th>
-      <th scope="col">{t('table.col.previene', lang)}</th>
+      <th scope='col'>{t('table.col.vacuna', lang)}</th>
+      <th scope='col'>{t('table.col.dosis', lang)}</th>
+      <th scope='col'>{t('table.col.edad', lang)}</th>
+      <th scope='col'>{t('table.col.previene', lang)}</th>
     </tr>
   </thead>
   <tbody>
-    {entradas.map((e) => {
-      const enfermedades = e.vacuna.enfermedadesPrevenidas?.map((x) => x.nombre).join(', ');
-      return (
-        <tr>
-          <td>
-            <strong>{e.vacuna.nombre}</strong>
-            {e.vacuna.nombreCorto && <div class="cv-muted">{e.vacuna.nombreCorto}</div>}
-          </td>
-          <td>{e.dosis.etiqueta}{e.dosis.numero && ` (${e.dosis.numero})`}</td>
-          <td>{e.dosis.edadAplicacion}</td>
-          <td>
-            {enfermedades || <span class="cv-muted">—</span>}
-            <NotaVacuna texto={e.notaEspecifica} />
-          </td>
-        </tr>
-      );
-    })}
+    {
+      entradas.map(e => {
+        const enfermedades = e.vacuna.enfermedadesPrevenidas?.map(x => x.nombre).join(', ');
+        return (
+          <tr>
+            <td>
+              <strong>{e.vacuna.nombre}</strong>
+              {e.vacuna.nombreCorto && <div class='cv-muted'>{e.vacuna.nombreCorto}</div>}
+            </td>
+            <td>
+              {e.dosis.etiqueta}
+              {e.dosis.numero && ` (${e.dosis.numero})`}
+            </td>
+            <td>{e.dosis.edadAplicacion}</td>
+            <td>
+              {enfermedades || <span class='cv-muted'>—</span>}
+              <NotaVacuna texto={e.notaEspecifica} />
+            </td>
+          </tr>
+        );
+      })
+    }
   </tbody>
 </table>
 
@@ -49,7 +54,8 @@ const { entradas, lang = 'es' } = Astro.props;
     font-size: 0.95rem;
   }
 
-  th, td {
+  th,
+  td {
     text-align: left;
     padding: 0.6rem 0.75rem;
     border-bottom: 1px solid var(--cv-border);

@@ -1,151 +1,195 @@
 ---
 import { listarFarmaciasPartner } from '@larokifarm/calendario-vacunas';
+import { LOCALE_DEFECTO, rutaConLocale, t, type Locale } from '@/lib/i18n';
+
+interface Props {
+  lang?: Locale;
+  rutaActual?: string;
+}
+
+const { lang = LOCALE_DEFECTO } = Astro.props;
 
 const partners = await listarFarmaciasPartner();
+const totalPartners = partners.length;
 const anyo = new Date().getFullYear();
 ---
 
 <footer class="site-footer">
   <div class="container">
-    {partners.length > 0 && (
-      <section class="partners">
-        <h2>Farmacias que ofrecen este servicio</h2>
+    <div class="grid">
+      <section class="about">
+        <a href={rutaConLocale('/', lang)} class="brand">{t('brand', lang)}</a>
+        <p class="tag">{t('footer.tag', lang)}</p>
+      </section>
+
+      <section>
+        <h3>{t('footer.recursos', lang)}</h3>
         <ul>
-          {partners.map((p) => {
-            const Inner = (
-              <>
-                {p.logoUrl ? (
-                  <img
-                    src={`${p.logoUrl}?auto=format&q=80&w=200`}
-                    alt={p.nombre}
-                    width="120"
-                    height="60"
-                    loading="lazy"
-                  />
-                ) : (
-                  <span class="partner-name">{p.nombre}</span>
-                )}
-                {p.ciudad && <span class="partner-ciudad">{p.ciudad}</span>}
-              </>
-            );
-            return (
-              <li>
-                {p.url ? (
-                  <a href={p.url} target="_blank" rel="noopener noreferrer">
-                    {Inner}
-                  </a>
-                ) : (
-                  <div class="partner-static">{Inner}</div>
-                )}
-              </li>
-            );
-          })}
+          <li><a href={rutaConLocale('/', lang)}>{t('footer.calendariosCcaa', lang)}</a></li>
+          <li><a href={rutaConLocale('/fuentes', lang)}>{t('footer.fuentesOficiales', lang)}</a></li>
+          <li>
+            <a href={rutaConLocale('/farmacias', lang)}>
+              {t('footer.farmaciasAsociadas', lang)}
+              {totalPartners > 0 && <span class="count">{totalPartners}</span>}
+            </a>
+          </li>
         </ul>
       </section>
-    )}
 
-    <section class="legal">
-      <p>
-        © {anyo} Calendario de Vacunación · Contenido divulgativo basado en
-        fuentes oficiales de cada Consejería de Salud y del Ministerio de
-        Sanidad (CISNS).
-      </p>
-      <p class="muted">
-        Esta web no sustituye al consejo de un profesional sanitario. Consulta
-        siempre con tu pediatra, médico de cabecera o farmacéutico/a de
-        confianza.
-      </p>
-    </section>
+      <section>
+        <h3>{t('footer.legal', lang)}</h3>
+        <ul>
+          <li><a href={rutaConLocale('/aviso-legal', lang)}>{t('footer.avisoLegal', lang)}</a></li>
+          <li><a href={rutaConLocale('/politica-privacidad', lang)}>{t('footer.politicaPrivacidad', lang)}</a></li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="bottom">
+      <p>{t('footer.copyright', lang, { anyo })}</p>
+      <p class="muted">{t('footer.disclaimer', lang)}</p>
+    </div>
   </div>
 </footer>
 
 <style>
   .site-footer {
-    border-top: 1px solid #e5e7eb;
-    background: #fafafa;
-    margin-top: 3rem;
-    padding: 2.5rem 0 1.5rem;
+    margin-top: 5rem;
+    background: #0f172a;
+    color: #cbd5e1;
   }
 
   .container {
     max-width: 72rem;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 3.5rem 1.25rem 1.5rem;
   }
 
-  .partners h2 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin: 0 0 1rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  .partners ul {
-    list-style: none;
-    margin: 0 0 2rem;
-    padding: 0;
+  .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 1rem;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: 3rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.08);
   }
 
-  .partners li a,
-  .partners li .partner-static {
+  .brand {
+    display: inline-block;
+    text-decoration: none;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: -0.015em;
+    margin-bottom: 0.875rem;
+  }
+
+  .brand:hover {
+    opacity: 0.85;
+  }
+
+  .tag {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: #94a3b8;
+    max-width: 34ch;
+  }
+
+  .site-footer h3 {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .site-footer ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .site-footer ul a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 160ms ease;
+  }
+
+  .site-footer ul a:hover {
+    color: #ffffff;
+  }
+
+  .count {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.35rem;
-    padding: 1rem;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    color: #1a1a1a;
-    transition: border-color 0.15s, transform 0.15s;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.4375rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--primary, #0d6e6e);
+    background: color-mix(in srgb, var(--primary, #0d6e6e) 22%, transparent);
+    border-radius: 999px;
+    font-variant-numeric: tabular-nums;
   }
 
-  .partners li a:hover {
-    border-color: var(--primary, #0d6e6e);
-    transform: translateY(-1px);
+  .bottom {
+    padding-top: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    font-size: 0.8125rem;
+    color: #94a3b8;
   }
 
-  .partners img {
-    max-width: 120px;
-    height: auto;
-    max-height: 60px;
-    object-fit: contain;
+  .bottom p {
+    margin: 0;
   }
 
-  .partner-name {
-    font-weight: 600;
+  .bottom .muted {
+    color: #64748b;
   }
 
-  .partner-ciudad {
-    font-size: 0.78rem;
-    color: #6b7280;
+  @media (max-width: 760px) {
+    .grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    .about {
+      grid-column: 1 / -1;
+    }
   }
 
-  .legal {
-    font-size: 0.85rem;
-    color: #4b5563;
-    line-height: 1.6;
-  }
-
-  .legal p {
-    margin: 0 0 0.5rem;
-  }
-
-  .muted {
-    color: #6b7280;
-    font-size: 0.78rem;
+  @media (max-width: 420px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 1.75rem;
+    }
+    .container {
+      padding: 2.5rem 1rem 1.25rem;
+    }
   }
 
   @media print {
     .site-footer {
       display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-footer ul a {
+      transition: none;
     }
   }
 </style>

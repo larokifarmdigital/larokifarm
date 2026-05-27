@@ -1,0 +1,77 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import {
+  CalendarioVacunas,
+  listarComunidades,
+  obtenerComunidad,
+  t as tCv,
+} from '@larokifarm/calendario-vacunas';
+import {
+  LOCALE_DEFECTO,
+  LOCALES_DISPONIBLES,
+  rutaConLocale,
+  type Locale,
+} from '@/lib/i18n';
+
+export async function getStaticPaths() {
+  const comunidades = await listarComunidades();
+  return LOCALES_DISPONIBLES.flatMap((c) =>
+    comunidades.map((com) => ({
+      params: {
+        lang: c === LOCALE_DEFECTO ? undefined : c,
+        comunidad: com.slug,
+      },
+      props: { lang: c },
+    })),
+  );
+}
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props as Props;
+const slug = Astro.params.comunidad!;
+const comunidad = await obtenerComunidad(slug, lang);
+
+if (!comunidad) {
+  return Astro.redirect(rutaConLocale('/', lang));
+}
+
+const titulo = `${tCv('detail.titleBase', lang)} · ${comunidad.nombre}${
+  comunidad.vigencia ? ` ${comunidad.vigencia}` : ''
+}`;
+const descripcion = tCv('detail.descriptionTemplate', lang, {
+  comunidad: `${comunidad.nombre}${comunidad.vigencia ? ` (${comunidad.vigencia})` : ''}`,
+});
+
+const rutaActual = `/${slug}`;
+const canonical = rutaConLocale(rutaActual, lang);
+const homeUrl = rutaConLocale('/', lang);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'MedicalGuideline',
+  name: titulo,
+  guidelineSubject: {
+    '@type': 'MedicalCondition',
+    name: 'Vacunación',
+  },
+  evidenceOrigin: comunidad.fuenteOficial,
+  inLanguage: lang,
+  about: comunidad.nombre,
+};
+---
+
+<BaseLayout
+  titulo={titulo}
+  descripcion={descripcion}
+  canonical={canonical}
+  jsonLd={jsonLd}
+  rutaActual={rutaActual}
+  lang={lang}
+>
+  <div class="page-container">
+    <CalendarioVacunas comunidad={comunidad} lang={lang} backHref={homeUrl} />
+  </div>
+</BaseLayout>

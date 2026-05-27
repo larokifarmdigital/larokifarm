@@ -1,0 +1,57 @@
+{
+  "html": { "lang": "ca" },
+  "brand": "Calendari de Vacunació",
+  "nav": {
+    "calendarios": "Calendaris",
+    "fuentes": "Fonts",
+    "farmacias": "Farmàcies",
+    "aria": "Principal"
+  },
+  "idioma": {
+    "selector": "Canviar idioma"
+  },
+  "hero": {
+    "eyebrow": "Calendaris oficials de vacunació d'Espanya"
+  },
+  "footer": {
+    "tag": "Informació divulgativa sobre els calendaris oficials de vacunació a Espanya, basada en fonts públiques.",
+    "recursos": "Recursos",
+    "legal": "Legal",
+    "calendariosCcaa": "Calendaris per CCAA",
+    "fuentesOficiales": "Fonts oficials",
+    "farmaciasAsociadas": "Farmàcies associades",
+    "avisoLegal": "Avís legal",
+    "politicaPrivacidad": "Política de privacitat",
+    "copyright": "© {anyo} Calendari de Vacunació",
+    "disclaimer": "Contingut divulgatiu · No substitueix el consell d'un professional sanitari."
+  },
+  "fuentes": {
+    "titulo": "Fonts oficials",
+    "descripcion": "Documents i organismes oficials en què es basen els calendaris de vacunació recollits en aquest lloc.",
+    "vacio": "Encara no s'han publicat fonts. Afegeix documents «fuenteOficial» a Sanity.",
+    "categorias": {
+      "estatal": "Ministeri i organismes estatals",
+      "estatalDesc": "Documents publicats pel Ministeri de Sanitat i organismes nacionals.",
+      "autonomica": "Conselleries de Salut autonòmiques",
+      "autonomicaDesc": "Font oficial de cada Comunitat Autònoma per al seu propi calendari.",
+      "sociedad": "Societats científiques",
+      "sociedadDesc": "Recomanacions de societats mèdiques i pediàtriques.",
+      "internacional": "Organismes internacionals",
+      "internacionalDesc": "Referències d'OMS, ECDC i altres."
+    }
+  },
+  "farmacias": {
+    "titulo": "Farmàcies associades",
+    "descripcion": "Farmàcies que ofereixen aquest servei d'informació sobre calendaris de vacunació als seus pacients.",
+    "vacio": "Encara no hi ha farmàcies associades. Afegeix documents «farmaciaPartner» a Sanity."
+  },
+  "legal": {
+    "vacioPrefijo": "Encara no s'ha publicat el contingut d'aquesta pàgina a Sanity. Crea un document",
+    "vacioSlug": "amb slug",
+    "actualizado": "Última actualització",
+    "tituloAvisoLegal": "Avís legal",
+    "tituloPoliticaPrivacidad": "Política de privacitat",
+    "descAvisoLegal": "Informació legal del titular del lloc Calendari de Vacunació.",
+    "descPoliticaPrivacidad": "Política de privacitat i tractament de dades del lloc Calendari de Vacunació."
+  }
+}

@@ -11,6 +11,8 @@ export {
   listarComunidades,
   obtenerComunidad,
   listarFarmaciasPartner,
+  listarFuentesOficiales,
+  obtenerPaginaLegal,
   type Enfermedad,
   type Vacuna,
   type Dosis,
@@ -21,6 +23,13 @@ export {
   type ComunidadResumen,
   type Comunidad,
   type FarmaciaPartner,
+  type FuenteCategoria,
+  type FuenteOficial,
+  type PaginaLegalSlug,
+  type PaginaLegal,
+  type PortableTextBlock,
+  type PortableTextSpan,
+  type PortableTextMark,
 } from './lib/sanity';
 
 export { t, isLang, resolveLang, type Lang } from './lib/i18n';
