@@ -15,7 +15,6 @@ import { construirMetaSeo } from '@/lib/seo';
 import {
   esLocaleValido,
   rutaConLocale,
-  t,
   type Locale,
 } from '@/lib/i18n';
 import diasEs from '@/i18n/es.json';
@@ -24,6 +23,7 @@ import diasCa from '@/i18n/ca.json';
 import {
   IndiceComunidades,
   listarComunidades,
+  t as tCv,
 } from '@larokifarm/calendario-vacunas';
 
 export async function getStaticPaths() {
@@ -53,9 +53,9 @@ const farmacia: Farmacia = farmaciaCargada ?? {
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
 const rutaActual = '/calendario-vacunacion';
 const meta = construirMetaSeo(farmacia, siteUrl, lang, rutaConLocale(rutaActual, lang));
-meta.titulo = `${t('header.nav.calendario', lang)} · ${farmacia.nombre}`;
+meta.titulo = `${tCv('index.title', lang)} · ${farmacia.nombre}`;
 
-const comunidades = await listarComunidades();
+const comunidades = await listarComunidades(lang);
 
 const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
   es: diasEs.dias as DiasI18n,
@@ -95,6 +95,7 @@ const horariosAgrupados = agruparHorarios(farmacia.horarios, DIAS_POR_LANG[lang]
       comunidadDestacada={farmacia.comunidadPredeterminadaSlug}
       lang={lang}
       basePath={rutaConLocale(rutaActual, lang)}
+      eyebrow={farmacia.nombre}
     />
   </main>
 
@@ -120,8 +121,6 @@ const horariosAgrupados = agruparHorarios(farmacia.horarios, DIAS_POR_LANG[lang]
 
 <style is:global>
   .cv-page {
-    max-width: 64rem;
-    margin: 0 auto;
     padding: 2rem 1rem 4rem;
   }
 </style>

@@ -18,9 +18,12 @@
       "servicios": "Services",
       "sobreNosotros": "About us",
       "faqs": "FAQs",
+      "resenas": "Reviews",
       "contacto": "Contact",
-      "calendario": "Vaccination calendar",
       "aria": "Main"
+    },
+    "breadcrumb": {
+      "aria": "Breadcrumb"
     },
     "cta": {
       "llamanos": "Call us",
@@ -92,6 +95,7 @@
     "contactanos": "Get in touch",
     "sobreNosotros": "About us",
     "preguntasFrecuentes": "FAQs",
+    "resenas": "Reviews",
     "contacto": "Contact",
     "avisoLegal": "Legal notice",
     "politicaPrivacidad": "Privacy policy",
@@ -116,6 +120,39 @@
   },
   "legal": {
     "volver": "Back to home"
+  },
+  "resenas": {
+    "chip": "Google Reviews",
+    "tituloParte1": "What our",
+    "tituloParte2": "customers say",
+    "subtitulo": "{total} Google reviews with an average rating of {media} / 5.",
+    "subtituloSinNumero": "Real opinions from people who have visited the pharmacy.",
+    "destacada": "Featured review",
+    "verEnGoogle": "See on Google",
+    "respuestaFarmacia": "Pharmacy reply",
+    "anonimo": "Customer",
+    "hace": {
+      "diasUno": "{n} day ago",
+      "diasN": "{n} days ago",
+      "semanasUno": "{n} week ago",
+      "semanasN": "{n} weeks ago",
+      "mesesUno": "{n} month ago",
+      "mesesN": "{n} months ago",
+      "anyosUno": "{n} year ago",
+      "anyosN": "{n} years ago",
+      "ahora": "just now"
+    },
+    "ariaEstrellas": "{rating} out of 5 stars",
+    "verTodas": "See all reviews",
+    "anterior": "Previous review",
+    "siguiente": "Next review",
+    "ariaSlider": "Reviews carousel",
+    "irA": "Go to review {n}",
+    "tituloPagina": "Reviews of {nombre}",
+    "metaDescripcion": "All verified Google reviews of {nombre}. Real opinions from customers.",
+    "rangoNota": "{media} out of 5 · {total} reviews",
+    "filtroTodas": "All",
+    "filtroEstrellas": "{n} stars"
   },
   "p404": {
     "tituloMeta": "Page not found · {nombre}",

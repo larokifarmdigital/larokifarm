@@ -18,9 +18,12 @@
       "servicios": "Servicios",
       "sobreNosotros": "Sobre nosotros",
       "faqs": "FAQs",
+      "resenas": "Reseñas",
       "contacto": "Contacto",
-      "calendario": "Calendario de vacunación",
       "aria": "Principal"
+    },
+    "breadcrumb": {
+      "aria": "Ruta de navegación"
     },
     "cta": {
       "llamanos": "Llámanos",
@@ -92,6 +95,7 @@
     "contactanos": "Contáctanos",
     "sobreNosotros": "Sobre nosotros",
     "preguntasFrecuentes": "Preguntas frecuentes",
+    "resenas": "Reseñas",
     "contacto": "Contacto",
     "avisoLegal": "Aviso legal",
     "politicaPrivacidad": "Política de privacidad",
@@ -116,6 +120,39 @@
   },
   "legal": {
     "volver": "Volver al inicio"
+  },
+  "resenas": {
+    "chip": "Reseñas Google",
+    "tituloParte1": "Lo que dicen",
+    "tituloParte2": "nuestros clientes",
+    "subtitulo": "{total} reseñas en Google con una valoración media de {media} / 5.",
+    "subtituloSinNumero": "Opiniones reales de personas que han pasado por la farmacia.",
+    "destacada": "Reseña destacada",
+    "verEnGoogle": "Ver en Google",
+    "respuestaFarmacia": "Respuesta de la farmacia",
+    "anonimo": "Cliente",
+    "hace": {
+      "diasUno": "hace {n} día",
+      "diasN": "hace {n} días",
+      "semanasUno": "hace {n} semana",
+      "semanasN": "hace {n} semanas",
+      "mesesUno": "hace {n} mes",
+      "mesesN": "hace {n} meses",
+      "anyosUno": "hace {n} año",
+      "anyosN": "hace {n} años",
+      "ahora": "hace un momento"
+    },
+    "ariaEstrellas": "{rating} de 5 estrellas",
+    "verTodas": "Ver todas las reseñas",
+    "anterior": "Reseña anterior",
+    "siguiente": "Reseña siguiente",
+    "ariaSlider": "Reseñas en rotación",
+    "irA": "Ir a la reseña {n}",
+    "tituloPagina": "Reseñas de {nombre}",
+    "metaDescripcion": "Todas las reseñas verificadas de Google de {nombre}. Opiniones reales de clientes.",
+    "rangoNota": "{media} de 5 · {total} reseñas",
+    "filtroTodas": "Todas",
+    "filtroEstrellas": "{n} estrellas"
   },
   "p404": {
     "tituloMeta": "Página no encontrada · {nombre}",

@@ -1,0 +1,435 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import CtaFlotante from '@/components/CtaFlotante.astro';
+import {
+  obtenerFarmaciaPorSlug,
+  obtenerResenasGoogle,
+  listarResenasGoogle,
+  agruparHorarios,
+  localizar,
+  SLUG_FARMACIA,
+  type Farmacia,
+  type DiasI18n,
+} from '@/lib/sanity';
+import {
+  esLocaleValido,
+  rutaConLocale,
+  t,
+  type Locale,
+} from '@/lib/i18n';
+import diasEs from '@/i18n/es.json';
+import diasEn from '@/i18n/en.json';
+import diasCa from '@/i18n/ca.json';
+
+export async function getStaticPaths() {
+  const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
+  const codigos = (farmacia?.idiomasActivos ?? [{ codigo: 'es', nombre: 'Español' }])
+    .map((i) => i.codigo)
+    .filter(esLocaleValido);
+  const lista = codigos.length > 0 ? codigos : (['es'] as Locale[]);
+  return lista.map((c) => ({
+    params: { lang: c === 'es' ? undefined : c },
+    props: { farmacia, lang: c },
+  }));
+}
+
+interface Props { farmacia: Farmacia | null; lang: Locale; }
+const { farmacia: farmaciaCargada, lang } = Astro.props as Props;
+
+const farmacia: Farmacia = farmaciaCargada ?? {
+  _id: 'placeholder',
+  nombre: 'Farmacia Torrents',
+  slug: SLUG_FARMACIA,
+};
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const canonical = `${siteUrl}${rutaConLocale('/resenas', lang)}`;
+
+const [resumen, todas] = await Promise.all([
+  obtenerResenasGoogle(SLUG_FARMACIA, 0),
+  listarResenasGoogle(SLUG_FARMACIA),
+]);
+
+const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
+  es: diasEs.dias as DiasI18n,
+  en: diasEn.dias as DiasI18n,
+  ca: diasCa.dias as DiasI18n,
+};
+const CERRADO_LABEL: Record<Locale, string> = {
+  es: 'Cerrado', en: 'Closed', ca: 'Tancat',
+};
+const horariosAgrupados = agruparHorarios(
+  farmacia.horarios,
+  DIAS_POR_LANG[lang],
+  CERRADO_LABEL[lang],
+);
+const mostrarFaqs = (farmacia.faqs ?? []).some(
+  (f) => localizar(f.pregunta, lang) && localizar(f.respuesta, lang),
+);
+
+const tituloPagina = t('resenas.tituloPagina', lang, { nombre: farmacia.nombre });
+const descripcion = t('resenas.metaDescripcion', lang, { nombre: farmacia.nombre });
+const mediaFormateada = resumen.media > 0 ? resumen.media.toFixed(1) : '—';
+const home = rutaConLocale('/', lang);
+
+function relativo(fechaIso: string): string {
+  const ahora = Date.now();
+  const fecha = new Date(fechaIso).getTime();
+  const diff = Math.max(0, ahora - fecha);
+  const dia = 1000 * 60 * 60 * 24;
+  const dias = Math.round(diff / dia);
+  if (dias < 1) return t('resenas.hace.ahora', lang);
+  if (dias < 14) return t(dias === 1 ? 'resenas.hace.diasUno' : 'resenas.hace.diasN', lang, { n: dias });
+  const semanas = Math.round(dias / 7);
+  if (dias < 60) return t(semanas === 1 ? 'resenas.hace.semanasUno' : 'resenas.hace.semanasN', lang, { n: semanas });
+  const meses = Math.round(dias / 30);
+  if (dias < 365) return t(meses === 1 ? 'resenas.hace.mesesUno' : 'resenas.hace.mesesN', lang, { n: meses });
+  const anyos = Math.round(dias / 365);
+  return t(anyos === 1 ? 'resenas.hace.anyosUno' : 'resenas.hace.anyosN', lang, { n: anyos });
+}
+
+function inicial(nombre?: string): string {
+  if (!nombre) return '?';
+  const c = nombre.trim()[0];
+  return c ? c.toUpperCase() : '?';
+}
+
+const filtros = [5, 4, 3, 2, 1];
+---
+
+<BaseLayout
+  titulo={`${tituloPagina} · ${farmacia.nombre}`}
+  descripcion={descripcion}
+  canonical={canonical}
+  lang={lang}
+  rutaActual='/resenas'
+>
+  <Header
+    nombre={farmacia.nombre}
+    whatsapp={farmacia.contacto?.whatsapp}
+    telefono={farmacia.contacto?.telefono}
+    logo={farmacia.logo}
+    mostrarFaqs={mostrarFaqs}
+    lang={lang}
+    rutaActual='/resenas'
+    idiomasActivos={farmacia.idiomasActivos}
+  />
+
+  <main id='contenido' class='container-app py-16 md:py-24'>
+    <a
+      href={home}
+      class='inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--primary)]'
+    >
+      <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+        <path d='m15 18-6-6 6-6' />
+      </svg>
+      {t('legal.volver', lang)}
+    </a>
+
+    <header class='mt-6 mb-12 max-w-3xl'>
+      <div class='chip mb-6'>
+        <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
+          <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
+        </svg>
+        {t('resenas.chip', lang)}
+      </div>
+      <h1 class='text-4xl font-extrabold tracking-tight md:text-5xl'>{tituloPagina}</h1>
+      {resumen.total > 0 && (
+        <p class='mt-3 inline-flex items-center gap-2 text-lg text-[var(--muted-foreground)]'>
+          <span class='inline-flex text-amber-500'>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <svg
+                width='18'
+                height='18'
+                viewBox='0 0 24 24'
+                fill={i < Math.round(resumen.media) ? 'currentColor' : 'none'}
+                stroke='currentColor'
+                stroke-width='2'
+                stroke-linejoin='round'
+                aria-hidden='true'
+              >
+                <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
+              </svg>
+            ))}
+          </span>
+          <strong>{t('resenas.rangoNota', lang, { media: mediaFormateada, total: resumen.total })}</strong>
+        </p>
+      )}
+    </header>
+
+    {todas.length === 0 ? (
+      <p class='rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] p-8 text-center text-[var(--muted-foreground)]'>
+        {t('resenas.subtituloSinNumero', lang)}
+      </p>
+    ) : (
+      <>
+        <div class='filtros mb-8 flex flex-wrap gap-2' role='tablist'>
+          <button
+            type='button'
+            class='filtro filtro--activo'
+            role='tab'
+            data-filtro='todas'
+            aria-selected='true'
+          >
+            {t('resenas.filtroTodas', lang)} · {todas.length}
+          </button>
+          {filtros.map((n) => {
+            const cuenta = todas.filter((r) => r.rating === n).length;
+            if (cuenta === 0) return null;
+            return (
+              <button
+                type='button'
+                class='filtro'
+                role='tab'
+                data-filtro={String(n)}
+                aria-selected='false'
+              >
+                {t('resenas.filtroEstrellas', lang, { n })} · {cuenta}
+              </button>
+            );
+          })}
+        </div>
+
+        <ul class='grid gap-5 sm:grid-cols-2 lg:grid-cols-3'>
+          {todas.map((r) => {
+            const estrellas = Math.max(0, Math.min(5, r.rating ?? 0));
+            return (
+              <li class='resena-card' data-rating={String(estrellas)}>
+                <header class='resena-card__head'>
+                  {r.autorFotoUrl ? (
+                    <img
+                      src={r.autorFotoUrl}
+                      alt=''
+                      loading='lazy'
+                      referrerpolicy='no-referrer'
+                      class='resena-card__avatar'
+                    />
+                  ) : (
+                    <span class='resena-card__avatar resena-card__avatar--inicial' aria-hidden='true'>
+                      {inicial(r.autorNombre)}
+                    </span>
+                  )}
+                  <div class='resena-card__meta'>
+                    <p class='resena-card__autor'>{r.autorNombre ?? t('resenas.anonimo', lang)}</p>
+                    <time datetime={r.fechaPublicacion} class='resena-card__fecha'>
+                      {relativo(r.fechaPublicacion)}
+                    </time>
+                  </div>
+                  <div
+                    class='resena-card__estrellas'
+                    role='img'
+                    aria-label={t('resenas.ariaEstrellas', lang, { rating: estrellas })}
+                  >
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <svg
+                        width='14'
+                        height='14'
+                        viewBox='0 0 24 24'
+                        fill={j < estrellas ? 'currentColor' : 'none'}
+                        stroke='currentColor'
+                        stroke-width='2'
+                        stroke-linejoin='round'
+                        aria-hidden='true'
+                      >
+                        <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
+                      </svg>
+                    ))}
+                  </div>
+                </header>
+
+                {r.comentario && <p class='resena-card__texto'>{r.comentario}</p>}
+
+                {r.respuestaOwner && (
+                  <div class='resena-card__respuesta'>
+                    <p class='resena-card__respuesta-label'>{t('resenas.respuestaFarmacia', lang)}</p>
+                    <p>{r.respuestaOwner}</p>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+
+        {farmacia.googleMapsUrl && (
+          <p class='mt-12 text-center'>
+            <a
+              href={farmacia.googleMapsUrl}
+              target='_blank'
+              rel='noopener noreferrer'
+              class='inline-flex items-center gap-2 text-sm font-medium text-[var(--primary)] hover:underline'
+            >
+              {t('resenas.verEnGoogle', lang)}
+              <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                <path d='M7 17L17 7M9 7h8v8' />
+              </svg>
+            </a>
+          </p>
+        )}
+      </>
+    )}
+  </main>
+
+  <Footer
+    nombre={farmacia.nombre}
+    titular={farmacia.titular}
+    numeroColegiado={farmacia.numeroColegiado}
+    logo={farmacia.logo}
+    contacto={farmacia.contacto}
+    redes={farmacia.redesSociales}
+    direccion={farmacia.direccion}
+    horarios={farmacia.horarios}
+    horariosAgrupados={horariosAgrupados}
+    servicios={farmacia.servicios}
+    descripcionCorta={farmacia.descripcionCorta}
+    mostrarFaqs={mostrarFaqs}
+    lang={lang}
+    rutaActual='/resenas'
+  />
+
+  <CtaFlotante whatsapp={farmacia.contacto?.whatsapp} lang={lang} />
+</BaseLayout>
+
+<style>
+  .filtros {
+    align-items: center;
+  }
+  .filtro {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--foreground);
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+  }
+  .filtro:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .filtro--activo {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--primary-foreground, white);
+  }
+
+  .resena-card {
+    list-style: none;
+    background: var(--card, #fff);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 14px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 180ms ease, box-shadow 220ms ease, transform 180ms ease;
+  }
+  .resena-card:hover {
+    border-color: var(--primary, #0d6e6e);
+    box-shadow: 0 6px 18px -8px rgb(15 23 42 / 0.12);
+    transform: translateY(-1px);
+  }
+  .resena-card[hidden] { display: none; }
+
+  .resena-card__head {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    gap: 0.6rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .resena-card__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: #f1f5f9;
+  }
+  .resena-card__avatar--inicial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary, #0d6e6e);
+    color: white;
+    font-weight: 700;
+  }
+  .resena-card__meta { min-width: 0; }
+  .resena-card__autor {
+    margin: 0;
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 0.92rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .resena-card__fecha {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+  .resena-card__estrellas {
+    color: #f59e0b;
+    display: inline-flex;
+    gap: 1px;
+  }
+  .resena-card__texto {
+    margin: 0;
+    color: #334155;
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+  .resena-card__respuesta {
+    margin-top: 0.85rem;
+    padding: 0.7rem 0.85rem;
+    background: #f8fafc;
+    border-left: 3px solid var(--primary, #0d6e6e);
+    border-radius: 0 8px 8px 0;
+  }
+  .resena-card__respuesta-label {
+    margin: 0 0 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary, #0d6e6e);
+  }
+  .resena-card__respuesta p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.5;
+  }
+</style>
+
+<script>
+  function inicializarFiltros() {
+    const filtros = Array.from(document.querySelectorAll<HTMLButtonElement>('.filtro'));
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('.resena-card'));
+    if (filtros.length === 0) return;
+
+    filtros.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const valor = btn.dataset.filtro;
+        filtros.forEach((b) => {
+          b.classList.toggle('filtro--activo', b === btn);
+          b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+        });
+        cards.forEach((c) => {
+          if (valor === 'todas' || c.dataset.rating === valor) {
+            c.hidden = false;
+          } else {
+            c.hidden = true;
+          }
+        });
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarFiltros);
+  } else {
+    inicializarFiltros();
+  }
+</script>

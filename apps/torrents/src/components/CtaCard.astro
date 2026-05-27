@@ -45,7 +45,7 @@ function extraerCoordenadas(url: string): { lat: number; lng: number } | null {
 function aplicarIdiomaMaps(url: string, hl: string): string {
   let modificada = url.replace(
     /(!\dm2!1s)[a-z]{2}(!2s)[a-z]{2}/g,
-    (_m, p1: string, p2: string) => `${p1}${hl}${p2}${hl}`,
+    (_m, p1: string, p2: string) => `${p1}${hl}${p2}${hl}`
   );
   if (/[?&]hl=[^&]*/.test(modificada)) {
     modificada = modificada.replace(/([?&])hl=[^&]*/, `$1hl=${hl}`);

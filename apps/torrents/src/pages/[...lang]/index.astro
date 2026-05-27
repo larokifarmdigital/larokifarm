@@ -6,11 +6,13 @@ import Features from '@/components/Features.astro';
 import Servicios from '@/components/Servicios.astro';
 import About from '@/components/About.astro';
 import Faqs from '@/components/Faqs.astro';
+import ResenasGoogle from '@/components/ResenasGoogle.astro';
 import CtaCard from '@/components/CtaCard.astro';
 import CtaFlotante from '@/components/CtaFlotante.astro';
 import Footer from '@/components/Footer.astro';
 import {
   obtenerFarmaciaPorSlug,
+  obtenerResenasGoogle,
   rangoDiasAbiertos,
   agruparHorarios,
   localizar,
@@ -55,7 +57,8 @@ const farmacia: Farmacia = farmaciaCargada ?? {
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
 
 const meta = construirMetaSeo(farmacia, siteUrl, lang, rutaConLocale('/', lang));
-const jsonLd = farmaciaAJsonLd(farmacia, siteUrl, lang);
+const resenas = await obtenerResenasGoogle(SLUG_FARMACIA, 10);
+const jsonLd = farmaciaAJsonLd(farmacia, siteUrl, lang, resenas);
 
 const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
   es: diasEs.dias as DiasI18n,
@@ -118,6 +121,13 @@ const claim = localizar(farmacia.descripcionCorta, lang);
       puntos={farmacia.sobreNosotros?.puntos}
       anyosExperiencia={farmacia.sobreNosotros?.anyosExperiencia}
       lang={lang}
+    />
+
+    <ResenasGoogle
+      resumen={resenas}
+      logo={farmacia.logo}
+      lang={lang}
+      urlGoogleMaps={farmacia.googleMapsUrl}
     />
 
     <Faqs faqs={farmacia.faqs} logo={farmacia.logo} lang={lang} />

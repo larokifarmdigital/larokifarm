@@ -1,4 +1,4 @@
-import type { Farmacia, HorarioDia } from './sanity';
+import type { Farmacia, HorarioDia, ResumenResenas } from './sanity';
 import { localizar } from './sanity';
 import { LOCALE_DEFECTO, type Locale } from './i18n';
 
@@ -28,6 +28,7 @@ export function farmaciaAJsonLd(
   farmacia: Farmacia,
   siteUrl: string,
   locale: Locale = LOCALE_DEFECTO,
+  resumenResenas?: ResumenResenas,
 ) {
   const direccion = farmacia.direccion;
   const contacto = farmacia.contacto;
@@ -53,6 +54,36 @@ export function farmaciaAJsonLd(
     .filter((f): f is { pregunta: string; respuesta: string } =>
       Boolean(f.pregunta && f.respuesta),
     );
+
+  const aggregateRating =
+    resumenResenas && resumenResenas.total > 0 && resumenResenas.media > 0
+      ? {
+          '@type': 'AggregateRating',
+          ratingValue: Number(resumenResenas.media.toFixed(1)),
+          reviewCount: resumenResenas.total,
+          bestRating: 5,
+          worstRating: 1,
+        }
+      : undefined;
+
+  const reviews = [
+    ...(resumenResenas?.destacadas ?? []),
+    ...(resumenResenas?.recientes ?? []),
+  ]
+    .slice(0, 10)
+    .map((r) => ({
+      '@type': 'Review',
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: r.rating,
+        bestRating: 5,
+        worstRating: 1,
+      },
+      author: { '@type': 'Person', name: r.autorNombre || 'Anónimo' },
+      datePublished: r.fechaPublicacion,
+      reviewBody: r.comentario,
+      inLanguage: r.comentarioIdioma,
+    }));
 
   const pharmacy = {
     '@context': 'https://schema.org',
@@ -80,6 +111,8 @@ export function farmaciaAJsonLd(
     hasMap: farmacia.mapaUrl,
     areaServed: areaServed.length > 0 ? areaServed : undefined,
     openingHoursSpecification: horariosAJsonLd(farmacia.horarios),
+    aggregateRating,
+    review: reviews.length > 0 ? reviews : undefined,
     sameAs: [
       farmacia.redesSociales?.instagram,
       farmacia.redesSociales?.facebook,

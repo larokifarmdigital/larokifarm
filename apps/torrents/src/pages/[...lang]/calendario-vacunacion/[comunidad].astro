@@ -15,7 +15,6 @@ import { construirMetaSeo } from '@/lib/seo';
 import {
   esLocaleValido,
   rutaConLocale,
-  t,
   type Locale,
   LOCALE_DEFECTO,
 } from '@/lib/i18n';
@@ -58,7 +57,7 @@ const farmacia: Farmacia = farmaciaCargada ?? {
   slug: SLUG_FARMACIA,
 };
 
-const comunidad = await obtenerComunidad(slug);
+const comunidad = await obtenerComunidad(slug, lang);
 if (!comunidad) {
   return Astro.redirect(rutaConLocale('/calendario-vacunacion', lang));
 }
@@ -152,8 +151,6 @@ const volverHref = rutaConLocale('/calendario-vacunacion', lang);
 
 <style is:global>
   .cv-page {
-    max-width: 72rem;
-    margin: 0 auto;
     padding: 2rem 1rem 4rem;
   }
 </style>

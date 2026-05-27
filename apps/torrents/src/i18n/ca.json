@@ -18,9 +18,12 @@
       "servicios": "Serveis",
       "sobreNosotros": "Sobre nosaltres",
       "faqs": "FAQs",
+      "resenas": "Ressenyes",
       "contacto": "Contacte",
-      "calendario": "Calendari de vacunació",
       "aria": "Principal"
+    },
+    "breadcrumb": {
+      "aria": "Ruta de navegació"
     },
     "cta": {
       "llamanos": "Truca'ns",
@@ -92,6 +95,7 @@
     "contactanos": "Contacta'ns",
     "sobreNosotros": "Sobre nosaltres",
     "preguntasFrecuentes": "Preguntes freqüents",
+    "resenas": "Ressenyes",
     "contacto": "Contacte",
     "avisoLegal": "Avís legal",
     "politicaPrivacidad": "Política de privacitat",
@@ -116,6 +120,39 @@
   },
   "legal": {
     "volver": "Tornar a l'inici"
+  },
+  "resenas": {
+    "chip": "Ressenyes Google",
+    "tituloParte1": "El que diuen",
+    "tituloParte2": "els nostres clients",
+    "subtitulo": "{total} ressenyes a Google amb una valoració mitjana de {media} / 5.",
+    "subtituloSinNumero": "Opinions reals de persones que han passat per la farmàcia.",
+    "destacada": "Ressenya destacada",
+    "verEnGoogle": "Veure a Google",
+    "respuestaFarmacia": "Resposta de la farmàcia",
+    "anonimo": "Client",
+    "hace": {
+      "diasUno": "fa {n} dia",
+      "diasN": "fa {n} dies",
+      "semanasUno": "fa {n} setmana",
+      "semanasN": "fa {n} setmanes",
+      "mesesUno": "fa {n} mes",
+      "mesesN": "fa {n} mesos",
+      "anyosUno": "fa {n} any",
+      "anyosN": "fa {n} anys",
+      "ahora": "ara mateix"
+    },
+    "ariaEstrellas": "{rating} de 5 estrelles",
+    "verTodas": "Veure totes les ressenyes",
+    "anterior": "Ressenya anterior",
+    "siguiente": "Ressenya següent",
+    "ariaSlider": "Ressenyes en rotació",
+    "irA": "Anar a la ressenya {n}",
+    "tituloPagina": "Ressenyes de {nombre}",
+    "metaDescripcion": "Totes les ressenyes verificades de Google de {nombre}. Opinions reals de clients.",
+    "rangoNota": "{media} de 5 · {total} ressenyes",
+    "filtroTodas": "Totes",
+    "filtroEstrellas": "{n} estrelles"
   },
   "p404": {
     "tituloMeta": "Pàgina no trobada · {nombre}",

@@ -1,0 +1,547 @@
+---
+import MarcaAgua from '@/components/MarcaAgua.astro';
+import type { ResenaGoogle, ResumenResenas } from '@/lib/sanity';
+import { t, rutaConLocale, type Locale } from '@/lib/i18n';
+
+export interface Props {
+  resumen: ResumenResenas;
+  logo?: string;
+  lang: Locale;
+  urlGoogleMaps?: string;
+}
+
+const { resumen, logo, lang, urlGoogleMaps } = Astro.props;
+
+// Hasta 10: primero las destacadas, luego las recientes, deduplicado por _id.
+const vistas = new Set<string>();
+const slides: ResenaGoogle[] = [];
+for (const r of [...resumen.destacadas, ...resumen.recientes]) {
+  if (vistas.has(r._id)) continue;
+  vistas.add(r._id);
+  slides.push(r);
+  if (slides.length >= 10) break;
+}
+
+const mostrar = slides.length > 0;
+const mediaFormateada = resumen.media > 0 ? resumen.media.toFixed(1) : '—';
+
+function relativo(fechaIso: string): string {
+  const ahora = Date.now();
+  const fecha = new Date(fechaIso).getTime();
+  const diff = Math.max(0, ahora - fecha);
+  const dia = 1000 * 60 * 60 * 24;
+  const dias = Math.round(diff / dia);
+  if (dias < 1) return t('resenas.hace.ahora', lang);
+  if (dias < 14) return t(dias === 1 ? 'resenas.hace.diasUno' : 'resenas.hace.diasN', lang, { n: dias });
+  const semanas = Math.round(dias / 7);
+  if (dias < 60) return t(semanas === 1 ? 'resenas.hace.semanasUno' : 'resenas.hace.semanasN', lang, { n: semanas });
+  const meses = Math.round(dias / 30);
+  if (dias < 365) return t(meses === 1 ? 'resenas.hace.mesesUno' : 'resenas.hace.mesesN', lang, { n: meses });
+  const anyos = Math.round(dias / 365);
+  return t(anyos === 1 ? 'resenas.hace.anyosUno' : 'resenas.hace.anyosN', lang, { n: anyos });
+}
+
+function inicial(nombre?: string): string {
+  if (!nombre) return '?';
+  const c = nombre.trim()[0];
+  return c ? c.toUpperCase() : '?';
+}
+
+const subtitulo =
+  resumen.total > 0
+    ? t('resenas.subtitulo', lang, { total: resumen.total, media: mediaFormateada })
+    : t('resenas.subtituloSinNumero', lang);
+
+const verTodasHref = rutaConLocale('/resenas', lang);
+const esGaleria = slides.length > 1;
+---
+
+{
+  mostrar && (
+    <section id='resenas' class='relative overflow-hidden py-24'>
+      <MarcaAgua
+        logo={logo}
+        class='top-20 right-6 md:right-16'
+        tamano={68}
+        opacidad={0.05}
+        rotacion={-12}
+      />
+      <MarcaAgua
+        logo={logo}
+        class='bottom-16 left-6 md:left-16'
+        tamano={60}
+        opacidad={0.05}
+        rotacion={14}
+      />
+
+      <div class='container-app relative'>
+        <div class='mb-10 text-start md:mb-14 md:text-center'>
+          <div class='chip mb-6'>
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
+              <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
+            </svg>
+            {t('resenas.chip', lang)}
+          </div>
+          <h2 class='mb-4 text-3xl font-bold tracking-tight md:text-4xl'>
+            {t('resenas.tituloParte1', lang)}{' '}
+            <span class='text-primary'>{t('resenas.tituloParte2', lang)}</span>
+          </h2>
+          <p class='text-muted-foreground mx-auto max-w-2xl'>{subtitulo}</p>
+        </div>
+
+        <div
+          class='resena-slider'
+          data-slider={esGaleria ? 'true' : 'false'}
+          data-autoplay-ms='6000'
+          data-total={slides.length}
+          role='region'
+          aria-roledescription='carousel'
+          aria-label={t('resenas.ariaSlider', lang)}
+        >
+          {esGaleria && (
+            <>
+              <button
+                type='button'
+                class='resena-slider__flecha resena-slider__flecha--prev'
+                aria-label={t('resenas.anterior', lang)}
+                data-prev
+              >
+                <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                  <path d='M15 18l-6-6 6-6' />
+                </svg>
+              </button>
+              <button
+                type='button'
+                class='resena-slider__flecha resena-slider__flecha--next'
+                aria-label={t('resenas.siguiente', lang)}
+                data-next
+              >
+                <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                  <path d='M9 6l6 6-6 6' />
+                </svg>
+              </button>
+            </>
+          )}
+          <div class='resena-slider__viewport'>
+            <ul class='resena-slider__pista'>
+              {slides.map((r, i) => {
+                const estrellas = Math.max(0, Math.min(5, r.rating ?? 0));
+                return (
+                  <li
+                    class='resena-slider__slide'
+                    data-slide={String(i)}
+                  >
+                    <article class={`resena ${r.destacada ? 'resena--destacada' : ''}`}>
+                    <header class='resena__head'>
+                      {r.autorFotoUrl ? (
+                        <img
+                          src={r.autorFotoUrl}
+                          alt=''
+                          loading='lazy'
+                          referrerpolicy='no-referrer'
+                          class='resena__avatar'
+                        />
+                      ) : (
+                        <span class='resena__avatar resena__avatar--inicial' aria-hidden='true'>
+                          {inicial(r.autorNombre)}
+                        </span>
+                      )}
+                      <div class='resena__meta'>
+                        <p class='resena__autor'>{r.autorNombre ?? t('resenas.anonimo', lang)}</p>
+                        <time datetime={r.fechaPublicacion} class='resena__fecha'>
+                          {relativo(r.fechaPublicacion)}
+                        </time>
+                      </div>
+                      <div
+                        class='resena__estrellas'
+                        role='img'
+                        aria-label={t('resenas.ariaEstrellas', lang, { rating: estrellas })}
+                      >
+                        {Array.from({ length: 5 }).map((_, j) => (
+                          <svg
+                            width='16'
+                            height='16'
+                            viewBox='0 0 24 24'
+                            fill={j < estrellas ? 'currentColor' : 'none'}
+                            stroke='currentColor'
+                            stroke-width='2'
+                            stroke-linejoin='round'
+                            aria-hidden='true'
+                          >
+                            <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
+                          </svg>
+                        ))}
+                      </div>
+                    </header>
+
+                    {r.comentario && <p class='resena__texto'>{r.comentario}</p>}
+
+                    {r.respuestaOwner && (
+                      <div class='resena__respuesta'>
+                        <p class='resena__respuesta-label'>{t('resenas.respuestaFarmacia', lang)}</p>
+                        <p>{r.respuestaOwner}</p>
+                      </div>
+                    )}
+                  </article>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          {esGaleria && (
+            <div class='resena-slider__dots' role='tablist'>
+              {slides.map((_, i) => (
+                <button
+                  type='button'
+                  class='resena-slider__dot'
+                  role='tab'
+                  aria-label={t('resenas.irA', lang, { n: i + 1 })}
+                  aria-selected={i === 0 ? 'true' : 'false'}
+                  data-dot={String(i)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div class='mt-12 flex flex-wrap items-center justify-center gap-4'>
+          <a
+            href={verTodasHref}
+            class='inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:shadow-md hover:-translate-y-0.5'
+          >
+            {t('resenas.verTodas', lang)}
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+              <path d='M5 12h14M13 5l7 7-7 7' />
+            </svg>
+          </a>
+          {urlGoogleMaps && (
+            <a
+              href={urlGoogleMaps}
+              target='_blank'
+              rel='noopener noreferrer'
+              class='inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline'
+            >
+              {t('resenas.verEnGoogle', lang)}
+              <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                <path d='M7 17L17 7M9 7h8v8' />
+              </svg>
+            </a>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .resena-slider {
+    --per-page: 1;
+    --gap: 0px;
+    position: relative;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  @media (min-width: 768px) {
+    .resena-slider {
+      --per-page: 3;
+      --gap: 1.25rem;
+      max-width: 1200px;
+      padding-inline: 3rem;
+    }
+  }
+
+  .resena-slider__viewport {
+    overflow: hidden;
+  }
+
+  .resena-slider__pista {
+    display: flex;
+    gap: var(--gap);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: transform;
+    align-items: stretch;
+  }
+
+  .resena-slider__slide {
+    flex: 0 0 calc((100% - (var(--per-page) - 1) * var(--gap)) / var(--per-page));
+    min-width: 0;
+    display: flex;
+  }
+  .resena-slider__slide > .resena {
+    width: 100%;
+  }
+
+  .resena-slider__flecha {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid var(--border, #e5e7eb);
+    background: var(--card, #fff);
+    color: var(--foreground, #0f172a);
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    transition: background 200ms ease, color 200ms ease, transform 200ms ease, opacity 200ms ease;
+  }
+  .resena-slider__flecha--prev { left: 0; }
+  .resena-slider__flecha--next { right: 0; }
+  .resena-slider__flecha:hover:not(:disabled) {
+    background: var(--primary, #0d6e6e);
+    color: #fff;
+    border-color: var(--primary, #0d6e6e);
+  }
+  .resena-slider__flecha:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  @media (min-width: 768px) {
+    .resena-slider__flecha {
+      display: inline-flex;
+    }
+  }
+
+  .resena-slider__dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+  }
+  .resena-slider__dot {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--primary, #0d6e6e), transparent 70%);
+    cursor: pointer;
+    transition: background 200ms ease, width 200ms ease, box-shadow 200ms ease;
+  }
+  .resena-slider__dot:hover {
+    background: color-mix(in oklch, var(--primary, #0d6e6e), transparent 40%);
+  }
+  .resena-slider__dot[aria-selected='true'] {
+    width: 24px;
+    background: var(--primary, #0d6e6e);
+    box-shadow: 0 0 8px color-mix(in oklch, var(--primary, #0d6e6e), transparent 60%);
+  }
+
+  .resena {
+    background: var(--card, #fff);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 16px;
+    padding: 1.75rem;
+  }
+  .resena--destacada {
+    border-color: color-mix(in srgb, var(--primary, #0d6e6e) 45%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--primary, #0d6e6e) 6%, transparent), transparent 70%);
+  }
+
+  .resena__head {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .resena__avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: #f1f5f9;
+  }
+  .resena__avatar--inicial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary, #0d6e6e);
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .resena__meta { min-width: 0; }
+  .resena__autor {
+    margin: 0;
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .resena__fecha {
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+  .resena__estrellas {
+    color: #f59e0b;
+    display: inline-flex;
+    gap: 1px;
+  }
+  .resena__texto {
+    margin: 0;
+    color: #334155;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  .resena__respuesta {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    background: #f8fafc;
+    border-left: 3px solid var(--primary, #0d6e6e);
+    border-radius: 0 8px 8px 0;
+  }
+  .resena__respuesta-label {
+    margin: 0 0 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary, #0d6e6e);
+  }
+  .resena__respuesta p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #475569;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 640px) {
+    .resena { padding: 1.25rem; }
+    .resena__head { grid-template-columns: 40px 1fr; }
+    .resena__estrellas { grid-column: 1 / -1; margin-top: 0.25rem; }
+  }
+</style>
+
+<script>
+  function inicializarResenas() {
+    const sliders = document.querySelectorAll<HTMLElement>('.resena-slider[data-slider="true"]');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    sliders.forEach((root) => {
+      if (root.dataset.iniciado === '1') return;
+      root.dataset.iniciado = '1';
+
+      const pista = root.querySelector<HTMLElement>('.resena-slider__pista');
+      const slides = Array.from(root.querySelectorAll<HTMLElement>('[data-slide]'));
+      const dots = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dot]'));
+      const btnPrev = root.querySelector<HTMLButtonElement>('[data-prev]');
+      const btnNext = root.querySelector<HTMLButtonElement>('[data-next]');
+      const autoplayMs = Number(root.dataset.autoplayMs || 6000);
+      if (!pista || slides.length === 0) return;
+
+      let idx = 0;
+      let timer: number | undefined;
+
+      function perPage(): number {
+        const valor = getComputedStyle(root).getPropertyValue('--per-page').trim();
+        const n = parseInt(valor, 10);
+        return Number.isFinite(n) && n > 0 ? n : 1;
+      }
+
+      function maxIdx(): number {
+        return Math.max(0, slides.length - perPage());
+      }
+
+      function aplicarTransform() {
+        const slideRect = slides[0]!.getBoundingClientRect();
+        const gap = parseFloat(getComputedStyle(pista!).gap || '0') || 0;
+        const offset = (slideRect.width + gap) * idx;
+        pista!.style.transform = `translateX(-${offset}px)`;
+      }
+
+      function actualizarDots() {
+        const max = maxIdx();
+        dots.forEach((d, i) => {
+          d.hidden = i > max;
+          d.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+        });
+      }
+
+      function actualizarFlechas() {
+        const max = maxIdx();
+        if (btnPrev) btnPrev.disabled = idx <= 0;
+        if (btnNext) btnNext.disabled = idx >= max;
+      }
+
+      function mostrar(n: number, opts: { ciclar?: boolean } = {}) {
+        const max = maxIdx();
+        if (opts.ciclar) {
+          idx = n > max ? 0 : n < 0 ? max : n;
+        } else {
+          idx = Math.max(0, Math.min(max, n));
+        }
+        aplicarTransform();
+        actualizarDots();
+        actualizarFlechas();
+      }
+
+      function iniciar() {
+        if (reduceMotion) return;
+        detener();
+        timer = window.setInterval(() => mostrar(idx + 1, { ciclar: true }), autoplayMs);
+      }
+
+      function detener() {
+        if (timer !== undefined) {
+          window.clearInterval(timer);
+          timer = undefined;
+        }
+      }
+
+      dots.forEach((d, i) =>
+        d.addEventListener('click', () => {
+          mostrar(i);
+          iniciar();
+        }),
+      );
+
+      btnPrev?.addEventListener('click', () => {
+        mostrar(idx - 1);
+        iniciar();
+      });
+      btnNext?.addEventListener('click', () => {
+        mostrar(idx + 1);
+        iniciar();
+      });
+
+      root.addEventListener('mouseenter', detener);
+      root.addEventListener('mouseleave', iniciar);
+      root.addEventListener('focusin', detener);
+      root.addEventListener('focusout', iniciar);
+
+      let resizeRaf = 0;
+      window.addEventListener('resize', () => {
+        if (resizeRaf) cancelAnimationFrame(resizeRaf);
+        resizeRaf = requestAnimationFrame(() => {
+          const max = maxIdx();
+          if (idx > max) idx = max;
+          aplicarTransform();
+          actualizarDots();
+          actualizarFlechas();
+        });
+      });
+
+      aplicarTransform();
+      actualizarDots();
+      actualizarFlechas();
+      iniciar();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarResenas);
+  } else {
+    inicializarResenas();
+  }
+</script>

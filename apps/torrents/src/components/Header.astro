@@ -3,6 +3,11 @@ import { imagenSanity } from '@/lib/sanity';
 import type { IdiomaActivo } from '@/lib/sanity';
 import { t, rutaConLocale, LOCALES_DISPONIBLES, esLocaleValido, type Locale } from '@/lib/i18n';
 
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
 export interface Props {
   nombre: string;
   whatsapp?: string;
@@ -14,6 +19,10 @@ export interface Props {
   rutaActual?: string;
   /** Idiomas activos de ESTA farmacia (subset del global). Si no se pasa, usa todos los locales globales. */
   idiomasActivos?: IdiomaActivo[];
+  /** Versión compacta sin nav de secciones (para páginas internas). */
+  compacto?: boolean;
+  /** Migas de pan opcionales; si está presente, se renderiza una barra debajo del header. */
+  breadcrumb?: BreadcrumbItem[];
 }
 
 const {
@@ -24,7 +33,9 @@ const {
   mostrarFaqs = false,
   lang,
   rutaActual = '/',
-  idiomasActivos
+  idiomasActivos,
+  compacto = false,
+  breadcrumb
 } = Astro.props;
 
 const idiomasSelector: Locale[] =
@@ -39,19 +50,20 @@ const waUrl = whatsapp ? `https://wa.me/${limpiarTel(whatsapp)?.replace(/^\+/, '
 
 const inicioUrl = rutaConLocale('/', lang);
 
-const enlaces = [
-  { href: `${inicioUrl}#inicio`, label: t('header.nav.inicio', lang) },
-  { href: `${inicioUrl}#servicios`, label: t('header.nav.servicios', lang) },
-  { href: `${inicioUrl}#sobre`, label: t('header.nav.sobreNosotros', lang) },
-  ...(mostrarFaqs
-    ? [{ href: `${inicioUrl}#faqs`, label: t('header.nav.faqs', lang) }]
-    : []),
-  {
-    href: rutaConLocale('/calendario-vacunacion', lang),
-    label: t('header.nav.calendario', lang),
-  },
-  { href: `${inicioUrl}#contacto`, label: t('header.nav.contacto', lang) }
-];
+const enlaces = compacto
+  ? []
+  : [
+      { href: `${inicioUrl}#inicio`, label: t('header.nav.inicio', lang) },
+      { href: `${inicioUrl}#servicios`, label: t('header.nav.servicios', lang) },
+      { href: `${inicioUrl}#sobre`, label: t('header.nav.sobreNosotros', lang) },
+      { href: `${inicioUrl}#resenas`, label: t('header.nav.resenas', lang) },
+      ...(mostrarFaqs
+        ? [{ href: `${inicioUrl}#faqs`, label: t('header.nav.faqs', lang) }]
+        : []),
+      { href: `${inicioUrl}#contacto`, label: t('header.nav.contacto', lang) }
+    ];
+
+const tieneBreadcrumb = !!(breadcrumb && breadcrumb.length > 0);
 
 const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
 ---
@@ -69,18 +81,23 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
       <span class='text-xl font-extrabold tracking-tight text-[var(--primary)]'>{nombre}</span>
     </a>
 
-    <nav class='hidden items-center gap-8 md:flex' aria-label={t('header.nav.aria', lang)}>
-      {
-        enlaces.map(l => (
-          <a
-            href={l.href}
-            class='text-[color-mix(in_oklch,var(--foreground),transparent_30%)] font-bold transition-colors hover:text-[var(--primary)]'
-          >
-            {l.label}
-          </a>
-        ))
-      }
-    </nav>
+    {
+      enlaces.length > 0 && (
+        <nav
+          class='hidden items-center gap-8 md:flex'
+          aria-label={t('header.nav.aria', lang)}
+        >
+          {enlaces.map(l => (
+            <a
+              href={l.href}
+              class='nav-link text-[color-mix(in_oklch,var(--foreground),transparent_30%)] font-bold transition-colors hover:text-[var(--primary)]'
+            >
+              {l.label}
+            </a>
+          ))}
+        </nav>
+      )
+    }
 
     <div class='flex items-center gap-2'>
       <div class='relative hidden md:block'>
@@ -301,6 +318,41 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
 
 <div class='h-16' aria-hidden='true'></div>
 
+{
+  tieneBreadcrumb && (
+    <nav
+      class='border-b border-[var(--border)] bg-[color-mix(in_oklch,var(--card),transparent_15%)] backdrop-blur'
+      aria-label={t('header.breadcrumb.aria', lang)}
+    >
+      <div class='container-app'>
+        <ol class='flex flex-wrap items-center gap-x-2 gap-y-1 py-2.5 text-sm text-[var(--muted-foreground)]'>
+          {breadcrumb!.map((item, i) => (
+            <li class='flex items-center gap-2'>
+              {i > 0 && (
+                <span class='select-none text-[var(--border)]' aria-hidden='true'>
+                  /
+                </span>
+              )}
+              {i === breadcrumb!.length - 1 || !item.href ? (
+                <span class='font-semibold text-[var(--foreground)]' aria-current='page'>
+                  {item.label}
+                </span>
+              ) : (
+                <a
+                  href={item.href}
+                  class='transition-colors hover:text-[var(--primary)] hover:underline underline-offset-4'
+                >
+                  {item.label}
+                </a>
+              )}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </nav>
+  )
+}
+
 <style>
   .menu-mobile {
     overflow: hidden;
@@ -319,8 +371,28 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
   [data-lang-menu]:not(.hidden) {
     display: block;
   }
+  .nav-link {
+    position: relative;
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.375rem;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 1px;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  .nav-link:hover::after {
+    transform: scaleX(1);
+  }
   @media (prefers-reduced-motion: reduce) {
-    .menu-mobile {
+    .menu-mobile,
+    .nav-link::after {
       transition: none;
     }
   }
@@ -418,7 +490,7 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
   }
 
   const langLinks = document.querySelectorAll<HTMLAnchorElement>('[data-lang-link]');
-  const SECCIONES = ['inicio', 'servicios', 'sobre', 'faqs', 'contacto'];
+  const SECCIONES = ['inicio', 'servicios', 'sobre', 'resenas', 'faqs', 'contacto'];
   let seccionActiva = '';
 
   function aplicarHashEnLangLinks(hash: string) {

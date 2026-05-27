@@ -158,6 +158,10 @@ export type Farmacia = {
   seo?: SeoCampos;
   /** Slug de la CCAA cuyo calendario de vacunación destaca esta farmacia. */
   comunidadPredeterminadaSlug?: string;
+  /** Resource name de Google Business Profile (accounts/X/locations/Y). */
+  googleLocationName?: string;
+  /** URL pública del negocio en Google Maps. */
+  googleMapsUrl?: string;
 };
 
 const FARMACIA_PROJECTION = `
@@ -184,7 +188,9 @@ const FARMACIA_PROJECTION = `
     titulo,
     imagenOg { asset->{ url } }
   },
-  "comunidadPredeterminadaSlug": comunidadPredeterminada->slug.current
+  "comunidadPredeterminadaSlug": comunidadPredeterminada->slug.current,
+  googleLocationName,
+  googleMapsUrl
 `;
 
 export async function obtenerFarmaciaPorSlug(slug: string): Promise<Farmacia | null> {
@@ -204,6 +210,114 @@ export const SLUG_FARMACIA: string = requerirEnv(
   'PUBLIC_FARMACIA_SLUG',
   import.meta.env.PUBLIC_FARMACIA_SLUG,
 );
+
+export type ResenaGoogle = {
+  _id: string;
+  googleReviewId: string;
+  autorNombre?: string;
+  autorFotoUrl?: string;
+  rating: number;
+  comentario?: string;
+  comentarioIdioma?: string;
+  respuestaOwner?: string;
+  respuestaOwnerFecha?: string;
+  fechaPublicacion: string;
+  destacada?: boolean;
+};
+
+export type ResumenResenas = {
+  total: number;
+  media: number;
+  destacadas: ResenaGoogle[];
+  recientes: ResenaGoogle[];
+};
+
+const RESENA_PROJECTION = `
+  _id,
+  googleReviewId,
+  autorNombre,
+  autorFotoUrl,
+  rating,
+  comentario,
+  comentarioIdioma,
+  respuestaOwner,
+  respuestaOwnerFecha,
+  fechaPublicacion,
+  destacada
+`;
+
+/**
+ * Trae las reseñas visibles de una farmacia (no ocultas, no eliminadas en Google),
+ * más un resumen con el total y la nota media calculados sobre el mismo subset.
+ *
+ * `limite` controla cuántas reseñas RECIENTES se devuelven (las destacadas vienen aparte
+ * y no cuentan contra ese límite). Por defecto 6.
+ */
+/** Lista TODAS las reseñas visibles de una farmacia, ordenadas por fecha desc. */
+export async function listarResenasGoogle(farmaciaSlug: string): Promise<ResenaGoogle[]> {
+  try {
+    return await sanity.fetch<ResenaGoogle[]>(
+      `*[_type == "resenaGoogle"
+        && farmacia->slug.current == $slug
+        && oculta != true
+        && eliminadaEnGoogle != true]
+        | order(fechaPublicacion desc) { ${RESENA_PROJECTION} }`,
+      { slug: farmaciaSlug },
+    );
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.warn(`[sanity] no se pudieron listar reseñas de "${farmaciaSlug}": ${msg}`);
+    return [];
+  }
+}
+
+export async function obtenerResenasGoogle(
+  farmaciaSlug: string,
+  limite = 6,
+): Promise<ResumenResenas> {
+  try {
+    const data = await sanity.fetch<{
+      total: number;
+      media: number;
+      destacadas: ResenaGoogle[];
+      recientes: ResenaGoogle[];
+    }>(
+      `{
+        "total": count(*[_type == "resenaGoogle"
+          && farmacia->slug.current == $slug
+          && oculta != true
+          && eliminadaEnGoogle != true]),
+        "media": math::avg(*[_type == "resenaGoogle"
+          && farmacia->slug.current == $slug
+          && oculta != true
+          && eliminadaEnGoogle != true].rating),
+        "destacadas": *[_type == "resenaGoogle"
+          && farmacia->slug.current == $slug
+          && destacada == true
+          && oculta != true
+          && eliminadaEnGoogle != true]
+          | order(fechaPublicacion desc) { ${RESENA_PROJECTION} },
+        "recientes": *[_type == "resenaGoogle"
+          && farmacia->slug.current == $slug
+          && destacada != true
+          && oculta != true
+          && eliminadaEnGoogle != true]
+          | order(fechaPublicacion desc)[0...$limite] { ${RESENA_PROJECTION} }
+      }`,
+      { slug: farmaciaSlug, limite },
+    );
+    return {
+      total: data?.total ?? 0,
+      media: typeof data?.media === 'number' ? data.media : 0,
+      destacadas: data?.destacadas ?? [],
+      recientes: data?.recientes ?? [],
+    };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.warn(`[sanity] no se pudieron cargar reseñas de "${farmaciaSlug}": ${msg}`);
+    return { total: 0, media: 0, destacadas: [], recientes: [] };
+  }
+}
 
 type ImagenOpciones = { w?: number; h?: number; q?: number; fit?: 'crop' | 'max' };
 
