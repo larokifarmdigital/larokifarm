@@ -244,10 +244,16 @@ const esGaleria = slides.length > 1;
   }
   @media (min-width: 768px) {
     .resena-slider {
-      --per-page: 3;
+      --per-page: 2;
       --gap: 1.25rem;
-      max-width: 1200px;
+      max-width: 960px;
       padding-inline: 3rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .resena-slider {
+      --per-page: 3;
+      max-width: 1200px;
     }
   }
 

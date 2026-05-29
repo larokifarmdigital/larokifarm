@@ -1,7 +1,18 @@
 import { defineConfig } from 'astro/config';
+import { loadEnv } from 'vite';
+
+const env = loadEnv(process.env.NODE_ENV ?? '', process.cwd(), '');
+const SITE_URL = process.env.SITE_URL ?? env.SITE_URL;
+
+if (!SITE_URL) {
+  throw new Error(
+    '[env] Falta la variable de entorno requerida: SITE_URL. ' +
+      'Defínela en .env (local) o en las Environment variables del hosting.',
+  );
+}
 
 export default defineConfig({
-  site: 'https://calendarios.farmacia.example',
+  site: SITE_URL,
   output: 'static',
   trailingSlash: 'never',
   build: {

@@ -57,9 +57,7 @@ const enlaces = compacto
       { href: `${inicioUrl}#servicios`, label: t('header.nav.servicios', lang) },
       { href: `${inicioUrl}#sobre`, label: t('header.nav.sobreNosotros', lang) },
       { href: `${inicioUrl}#resenas`, label: t('header.nav.resenas', lang) },
-      ...(mostrarFaqs
-        ? [{ href: `${inicioUrl}#faqs`, label: t('header.nav.faqs', lang) }]
-        : []),
+      ...(mostrarFaqs ? [{ href: `${inicioUrl}#faqs`, label: t('header.nav.faqs', lang) }] : []),
       { href: `${inicioUrl}#contacto`, label: t('header.nav.contacto', lang) }
     ];
 
@@ -83,10 +81,7 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
 
     {
       enlaces.length > 0 && (
-        <nav
-          class='hidden items-center gap-8 md:flex'
-          aria-label={t('header.nav.aria', lang)}
-        >
+        <nav class='hidden items-center gap-8 lg:flex' aria-label={t('header.nav.aria', lang)}>
           {enlaces.map(l => (
             <a
               href={l.href}
@@ -100,7 +95,7 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
     }
 
     <div class='flex items-center gap-2'>
-      <div class='relative hidden md:block'>
+      <div class='relative hidden lg:block'>
         <button
           type='button'
           class='flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-sm font-bold uppercase tracking-wider text-foreground transition-colors hover:border-primary hover:text-primary'
@@ -130,7 +125,7 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
           <span class='tabular-nums'>{lang}</span>
         </button>
         <ul
-          class='absolute right-0 z-50 mt-2 hidden min-w-32 rounded-xl border border-border bg-card py-1 shadow-lg'
+          class='absolute right-0 z-50 mt-2 hidden min-w-32 overflow-hidden rounded-xl border border-border bg-card shadow-lg'
           data-lang-menu
         >
           {
@@ -158,7 +153,7 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
             <a
               href={`tel:${telLimpio}`}
               aria-label={llamarLabel}
-              class='btn-primary !px-4 !py-2.5 !text-sm max-md:hidden'
+              class='btn-primary !px-4 !py-2.5 !text-sm hidden md:inline-flex'
             >
               <svg
                 width='16'
@@ -174,7 +169,7 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
                 <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
               </svg>
               <span class='font-extrabold'>{t('header.cta.llamanos', lang)}</span>
-              <span class='hidden tabular-nums lg:inline'>{telefono}</span>
+              <span class='hidden tabular-nums md:inline lg:hidden xl:inline'>{telefono}</span>
             </a>
             <a
               href={`tel:${telLimpio}`}
@@ -200,7 +195,7 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
       }
       <button
         type='button'
-        class='inline-flex h-10 w-10 items-center justify-center rounded-xl bg-transparent text-[var(--foreground)] md:hidden'
+        class='inline-flex h-10 w-10 items-center justify-center rounded-xl bg-transparent text-[var(--foreground)] lg:hidden'
         aria-label={t('header.menu.abrir', lang)}
         aria-expanded='false'
         data-menu-toggle
@@ -241,7 +236,7 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
     </div>
   </div>
 
-  <div class='hidden border-t border-[var(--border)] bg-[var(--card)] md:hidden' data-mobile-menu>
+  <div class='hidden border-t border-[var(--border)] bg-[var(--card)] lg:hidden' data-mobile-menu>
     <div class='container-app space-y-1 py-4'>
       {
         enlaces.map(l => (

@@ -39,7 +39,7 @@ Produce dos formatos en `dist/`:
 ## Embeber en una landing
 
 ```html
-<script src="https://tu-cdn.com/cima-chat.iife.js" defer></script>
+<script src="https://larokifarm-cima-chat.zpjstudio.com/cima-chat.iife.js" defer></script>
 
 <!-- Burbuja flotante (auto-mount) -->
 <div data-cima-chat data-theme="light" data-position="bottom-right"></div>
