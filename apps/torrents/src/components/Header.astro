@@ -14,6 +14,8 @@ export interface Props {
   telefono?: string;
   logo?: string;
   mostrarFaqs?: boolean;
+  /** Si false, omite el enlace de Reseñas del nav y de la hamburguesa. */
+  mostrarResenas?: boolean;
   lang: Locale;
   /** Ruta lógica (sin prefijo de idioma) usada para construir enlaces de cambio de idioma. */
   rutaActual?: string;
@@ -31,6 +33,7 @@ const {
   telefono,
   logo,
   mostrarFaqs = false,
+  mostrarResenas = true,
   lang,
   rutaActual = '/',
   idiomasActivos,
@@ -56,7 +59,9 @@ const enlaces = compacto
       { href: `${inicioUrl}#inicio`, label: t('header.nav.inicio', lang) },
       { href: `${inicioUrl}#servicios`, label: t('header.nav.servicios', lang) },
       { href: `${inicioUrl}#sobre`, label: t('header.nav.sobreNosotros', lang) },
-      { href: `${inicioUrl}#resenas`, label: t('header.nav.resenas', lang) },
+      ...(mostrarResenas
+        ? [{ href: `${inicioUrl}#resenas`, label: t('header.nav.resenas', lang) }]
+        : []),
       ...(mostrarFaqs ? [{ href: `${inicioUrl}#faqs`, label: t('header.nav.faqs', lang) }] : []),
       { href: `${inicioUrl}#contacto`, label: t('header.nav.contacto', lang) }
     ];

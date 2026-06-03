@@ -29,6 +29,8 @@ export interface Props {
   servicios?: Servicio[];
   descripcionCorta?: LocalizedText;
   mostrarFaqs?: boolean;
+  /** Si false, omite el enlace "Reseñas" de la columna de información. */
+  mostrarResenas?: boolean;
   lang: Locale;
   rutaActual?: string;
   /** Footer reducido (sin columnas de servicios/info/contacto extendido) para páginas internas. */
@@ -47,6 +49,7 @@ const {
   horariosAgrupados,
   descripcionCorta,
   mostrarFaqs = false,
+  mostrarResenas = true,
   lang,
   compacto = false
 } = Astro.props;
@@ -85,7 +88,9 @@ const home = rutaConLocale('/', lang);
 const enlacesInfo = [
   { label: t('footer.sobreNosotros', lang), href: `${home}#sobre` },
   { label: t('footer.servicios', lang), href: `${home}#servicios` },
-  { label: t('footer.resenas', lang), href: `${home}#resenas` },
+  ...(mostrarResenas
+    ? [{ label: t('footer.resenas', lang), href: `${home}#resenas` }]
+    : []),
   ...(mostrarFaqs
     ? [{ label: t('footer.preguntasFrecuentes', lang), href: `${home}#faqs` }]
     : []),

@@ -1,16 +1,18 @@
 ---
 import MarcaAgua from '@/components/MarcaAgua.astro';
-import type { Faq } from '@/lib/sanity';
+import type { Faq, TextosCabecera } from '@/lib/sanity';
 import { localizar } from '@/lib/sanity';
-import { t, type Locale } from '@/lib/i18n';
+import { t, resaltarTitulo, type Locale } from '@/lib/i18n';
 
 export interface Props {
   faqs?: Faq[];
   logo?: string;
   lang: Locale;
+  /** Textos editables de la cabecera. Si están vacíos, cae a i18n. */
+  textos?: TextosCabecera;
 }
 
-const { faqs = [], logo, lang } = Astro.props;
+const { faqs = [], logo, lang, textos } = Astro.props;
 
 const lista = faqs
   .map(f => ({
@@ -18,6 +20,11 @@ const lista = faqs
     respuesta: localizar(f.respuesta, lang)
   }))
   .filter((f): f is { pregunta: string; respuesta: string } => Boolean(f.pregunta && f.respuesta));
+
+const chip = localizar(textos?.chip, lang) ?? t('faqs.chip', lang);
+const tituloTexto = localizar(textos?.titulo, lang) ?? t('faqs.titulo', lang);
+const { inicio: tituloParte1, resaltado: tituloParte2 } = resaltarTitulo(tituloTexto);
+const subtitulo = localizar(textos?.subtitulo, lang) ?? t('faqs.subtitulo', lang);
 ---
 
 {
@@ -64,14 +71,14 @@ const lista = faqs
               <path d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3' />
               <line x1='12' y1='17' x2='12.01' y2='17' />
             </svg>
-            <span>{t('faqs.chip', lang)}</span>
+            <span>{chip}</span>
           </div>
           <h2 class='text-4xl font-extrabold tracking-tight md:text-balance md:text-5xl'>
-            {t('faqs.tituloParte1', lang)}{' '}
-            <span class='text-[var(--primary)]'>{t('faqs.tituloParte2', lang)}</span>
+            {tituloParte1 && <>{tituloParte1}{' '}</>}
+            <span class='text-[var(--primary)]'>{tituloParte2}</span>
           </h2>
           <p class='mt-4 max-w-2xl text-lg text-[var(--muted-foreground)] md:mx-auto'>
-            {t('faqs.subtitulo', lang)}
+            {subtitulo}
           </p>
         </div>
 

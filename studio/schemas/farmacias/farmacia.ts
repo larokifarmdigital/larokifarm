@@ -4,16 +4,73 @@ import {
   validarLongitudPorIdioma,
 } from '../lib/validacionI18n';
 
+/**
+ * Helper para los sub-objetos "Textos de cabecera" de Servicios/FAQs/Reseñas.
+ * Cada sección tiene siempre los mismos 3 campos i18n (chip, titulo, subtitulo).
+ * En la web se resaltan automáticamente las dos últimas palabras del título.
+ */
+function textosCabeceraSeccion(opts: {
+  name: string;
+  title: string;
+  defaults: { chip: string; titulo: string; subtitulo: string };
+  group: string;
+}) {
+  return defineField({
+    name: opts.name,
+    title: opts.title,
+    type: 'object',
+    group: opts.group,
+    options: { collapsible: true, collapsed: true },
+    description:
+      'Personaliza el chip, título y subtítulo. Si dejas un campo vacío se usa el texto por defecto del sitio.',
+    fields: [
+      {
+        name: 'chip',
+        title: 'Chip (etiqueta superior)',
+        type: 'internationalizedArrayString',
+        description: `Por defecto: "${opts.defaults.chip}".`,
+        validation: (r) => validarTodosIdiomasOninguno(r),
+      },
+      {
+        name: 'titulo',
+        title: 'Título',
+        type: 'internationalizedArrayString',
+        description: `Por defecto: "${opts.defaults.titulo}". Se resaltan en color las dos últimas palabras automáticamente (si solo hay dos palabras, se resalta la última).`,
+        validation: (r) => validarTodosIdiomasOninguno(r),
+      },
+      {
+        name: 'subtitulo',
+        title: 'Subtítulo',
+        type: 'internationalizedArrayText',
+        description: `Por defecto: "${opts.defaults.subtitulo}".`,
+        validation: (r) => validarTodosIdiomasOninguno(r),
+      },
+    ],
+  });
+}
+
 export const farmacia = defineType({
   name: 'farmacia',
   title: 'Farmacia',
   type: 'document',
+  groups: [
+    { name: 'identidad', title: '🪪 Identidad', default: true },
+    { name: 'hero', title: '🦸 Hero' },
+    { name: 'features', title: '✨ Features (bajo el hero)' },
+    { name: 'sobreNosotros', title: '👥 Sobre nosotros' },
+    { name: 'servicios', title: '🛒 Servicios' },
+    { name: 'faqs', title: '❓ FAQs' },
+    { name: 'resenas', title: '⭐ Reseñas' },
+    { name: 'contacto', title: '📞 Contacto y horarios' },
+    { name: 'seo', title: '🔍 SEO' },
+  ],
   fields: [
-    // ── Idiomas activos en ESTA farmacia ─────────────────────────────
+    // ── Identidad ────────────────────────────────────────────────────
     defineField({
       name: 'idiomasActivos',
       title: 'Idiomas activos en esta farmacia',
       type: 'array',
+      group: 'identidad',
       description:
         'Idiomas en los que se publica ESTA farmacia. Escógelos del catálogo "🌐 Idiomas". ' +
         'En cada campo traducible, la validación obliga a rellenar todos los idiomas listados aquí (o dejar el campo vacío en todos).',
@@ -21,9 +78,7 @@ export const farmacia = defineType({
         {
           type: 'reference',
           to: [{ type: 'idioma' }],
-          options: {
-            disableNew: false, // permite crear un idioma nuevo desde aquí si hace falta
-          },
+          options: { disableNew: false },
         },
       ],
       validation: (r) =>
@@ -37,18 +92,15 @@ export const farmacia = defineType({
               .map((i) => i._ref)
               .filter(Boolean) as string[];
             const dup = refs.filter((c, idx) => refs.indexOf(c) !== idx);
-            if (dup.length > 0) {
-              return 'No repitas el mismo idioma dos veces.';
-            }
+            if (dup.length > 0) return 'No repitas el mismo idioma dos veces.';
             return true;
           }),
     }),
-
-    // ── Identidad básica (no se traduce) ─────────────────────────────
     defineField({
       name: 'nombre',
       title: 'Nombre comercial',
       type: 'string',
+      group: 'identidad',
       description: 'Nombre de marca. No se traduce.',
       validation: (r) => r.required(),
     }),
@@ -56,6 +108,7 @@ export const farmacia = defineType({
       name: 'slug',
       title: 'Slug (URL)',
       type: 'slug',
+      group: 'identidad',
       options: { source: 'nombre', maxLength: 60 },
       validation: (r) => r.required(),
     }),
@@ -63,6 +116,7 @@ export const farmacia = defineType({
       name: 'logo',
       title: 'Logo',
       type: 'image',
+      group: 'identidad',
       options: { hotspot: true },
       validation: (r) => r.required(),
     }),
@@ -70,51 +124,50 @@ export const farmacia = defineType({
       name: 'titular',
       title: 'Farmacéutico/a titular',
       type: 'string',
+      group: 'identidad',
     }),
     defineField({
       name: 'numeroColegiado',
       title: 'Nº de colegiado',
       type: 'string',
+      group: 'identidad',
     }),
     defineField({
       name: 'comunidadPredeterminada',
       title: 'Comunidad autónoma del calendario',
       type: 'reference',
+      group: 'identidad',
       to: [{ type: 'comunidad' }],
       description:
         'CCAA cuyo calendario de vacunación se destaca por defecto en /calendario-vacunacion de esta farmacia. Si se deja vacío, se muestra solo el índice.',
     }),
 
-    // ── Google Business Profile (reseñas) ────────────────────────────
+    // ── Hero ─────────────────────────────────────────────────────────
     defineField({
-      name: 'googleLocationName',
-      title: 'Google Business Profile · Resource name',
-      type: 'string',
+      name: 'heroChip',
+      title: 'Chip del Hero (etiqueta superior pequeña)',
+      type: 'internationalizedArrayString',
+      group: 'hero',
       description:
-        'Identificador del negocio en Google Business Profile, formato "accounts/{accountId}/locations/{locationId}". El Worker de sincronización lo usa para traer las reseñas. Se rellena cuando Google aprueba el acceso a la API.',
-      validation: (r) =>
-        r.regex(/^accounts\/\d+\/locations\/\d+$/, {
-          name: 'business profile resource name',
-          invert: false,
-        }).warning(
-          'Formato esperado: accounts/<accountId>/locations/<locationId>',
-        ),
+        'Texto pequeño que aparece en el chip arriba del título principal. Si lo dejas vacío se usa "Farmacia en {ciudad}" o "Tu farmacia de confianza".',
+      validation: (r) => validarTodosIdiomasOninguno(r),
     }),
     defineField({
-      name: 'googleMapsUrl',
-      title: 'Google Maps · URL pública',
-      type: 'url',
+      name: 'heroSubtitulo',
+      title: 'Subtítulo bajo el título (Hero)',
+      type: 'internationalizedArrayString',
+      group: 'hero',
       description:
-        'URL completa de la ficha pública en Google Maps. La usa la web para el botón "Ver en Google". Cópiala desde maps.google.com → buscar la farmacia → "Compartir" → "Copiar enlace".',
+        'Línea destacada justo debajo del nombre de la farmacia. Por defecto: "Farmacia en {ciudad}". Ejemplo libre: "Tu farmacia familiar en el Eixample".',
+      validation: (r) => validarTodosIdiomasOninguno(r),
     }),
-
-    // ── Hero (traducible) ────────────────────────────────────────────
     defineField({
       name: 'descripcionCorta',
-      title: 'Descripción corta (Hero + SEO)',
+      title: 'Claim / descripción corta (Hero + SEO)',
       type: 'internationalizedArrayText',
+      group: 'hero',
       description:
-        'Frase principal del Hero y meta description del SEO. Máx. ~180 caracteres por idioma.',
+        'Frase de apoyo bajo el subtítulo del hero y meta description del SEO. Máx. ~180 caracteres por idioma.',
       validation: (r) => [
         validarTodosIdiomasOninguno(r),
         validarLongitudPorIdioma(180)(r),
@@ -122,8 +175,9 @@ export const farmacia = defineType({
     }),
     defineField({
       name: 'imagenes',
-      title: 'Imágenes principales (Hero)',
+      title: 'Imágenes principales (slider del Hero)',
       type: 'array',
+      group: 'hero',
       description:
         'De 1 a 6 imágenes. Las imágenes son compartidas entre idiomas; solo el alt se traduce.',
       of: [
@@ -144,14 +198,114 @@ export const farmacia = defineType({
       ],
       validation: (r) => r.required().min(1).max(6),
     }),
+    defineField({
+      name: 'heroTarjetasFlotantes',
+      title: 'Tarjetas flotantes sobre la imagen del Hero',
+      type: 'array',
+      group: 'hero',
+      description:
+        'De 0 a 3 tarjetas que flotan sobre la imagen principal. Cada una con un icono, un título y un subtítulo. La posición visual se asigna automáticamente.',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            {
+              name: 'icono',
+              title: 'Icono',
+              type: 'iconoLucide',
+              validation: (r) => r.required(),
+            },
+            {
+              name: 'titulo',
+              title: 'Título',
+              type: 'internationalizedArrayString',
+              validation: (r) => validarTodosIdiomasOninguno(r),
+            },
+            {
+              name: 'subtitulo',
+              title: 'Subtítulo',
+              type: 'internationalizedArrayString',
+              validation: (r) => validarTodosIdiomasOninguno(r),
+            },
+          ],
+          preview: {
+            select: { title: 'titulo.0.value', subtitle: 'subtitulo.0.value', icono: 'icono' },
+            prepare({ title, subtitle, icono }) {
+              return {
+                title: title ?? '(sin título)',
+                subtitle: [icono ? `[${icono}]` : null, subtitle].filter(Boolean).join(' · '),
+              };
+            },
+          },
+        },
+      ],
+      validation: (r) => r.max(3),
+    }),
 
-    // ── Sobre nosotros (mixto) ───────────────────────────────────────
+    // ── Features (sección bajo el hero) ──────────────────────────────
+    defineField({
+      name: 'featuresLista',
+      title: 'Tarjetas de la sección Features',
+      type: 'array',
+      group: 'features',
+      description:
+        'Lista editable de tarjetas (recomendado 4). Aparecen en la franja bajo el Hero. ' +
+        'Si una tarjeta usa el icono "reloj" y dejas la descripción vacía, la web muestra ' +
+        'automáticamente el horario calculado (ej. "Lunes a Sábado").',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            {
+              name: 'icono',
+              title: 'Icono',
+              type: 'iconoLucide',
+              validation: (r) => r.required(),
+            },
+            {
+              name: 'titulo',
+              title: 'Título',
+              type: 'internationalizedArrayString',
+              validation: (r) => validarTodosIdiomasOninguno(r),
+            },
+            {
+              name: 'descripcion',
+              title: 'Descripción (opcional si el icono es "reloj")',
+              type: 'internationalizedArrayString',
+              description:
+                'Si dejas esto vacío y el icono es "reloj", la web mostrará el horario auto-calculado.',
+              validation: (r) => validarTodosIdiomasOninguno(r),
+            },
+          ],
+          preview: {
+            select: { title: 'titulo.0.value', subtitle: 'descripcion.0.value', icono: 'icono' },
+            prepare({ title, subtitle, icono }) {
+              return {
+                title: title ?? '(sin título)',
+                subtitle: [icono ? `[${icono}]` : null, subtitle].filter(Boolean).join(' · '),
+              };
+            },
+          },
+        },
+      ],
+      validation: (r) => r.max(6),
+    }),
+
+    // ── Sobre nosotros ───────────────────────────────────────────────
     defineField({
       name: 'sobreNosotros',
       title: 'Sobre nosotros',
       type: 'object',
+      group: 'sobreNosotros',
       description: 'Contenido de la sección "Sobre nosotros" en la landing.',
       fields: [
+        {
+          name: 'chip',
+          title: 'Chip (etiqueta superior)',
+          type: 'internationalizedArrayString',
+          description: 'Por defecto: "Sobre nosotros".',
+          validation: (r) => validarTodosIdiomasOninguno(r),
+        },
         {
           name: 'titulo',
           title: 'Título',
@@ -178,8 +332,9 @@ export const farmacia = defineType({
     }),
     defineField({
       name: 'descripcionLarga',
-      title: 'Descripción larga (Sobre nosotros)',
+      title: 'Descripción larga (cuerpo de Sobre nosotros)',
       type: 'internationalizedArrayPortableText',
+      group: 'sobreNosotros',
       description: 'Cuerpo principal de la sección "Sobre nosotros".',
       validation: (r) => validarTodosIdiomasOninguno(r),
     }),
@@ -187,6 +342,7 @@ export const farmacia = defineType({
       name: 'imagenesSobre',
       title: 'Imágenes "Sobre nosotros"',
       type: 'array',
+      group: 'sobreNosotros',
       description: 'De 1 a 6 imágenes. Compartidas entre idiomas; solo el alt se traduce.',
       of: [
         {
@@ -205,11 +361,22 @@ export const farmacia = defineType({
       validation: (r) => r.min(1).max(6),
     }),
 
-    // ── Servicios (traducible + icono/enlace compartidos) ────────────
+    // ── Servicios ────────────────────────────────────────────────────
+    textosCabeceraSeccion({
+      name: 'textosServicios',
+      title: 'Textos de cabecera de Servicios',
+      group: 'servicios',
+      defaults: {
+        chip: 'Nuestros servicios',
+        titulo: 'Nuestros servicios',
+        subtitulo: 'Ofrecemos una amplia gama de servicios farmacéuticos…',
+      },
+    }),
     defineField({
       name: 'servicios',
-      title: 'Servicios',
+      title: 'Lista de servicios',
       type: 'array',
+      group: 'servicios',
       of: [
         {
           type: 'object',
@@ -229,31 +396,7 @@ export const farmacia = defineType({
             {
               name: 'icono',
               title: 'Icono',
-              type: 'string',
-              description: 'Elige un icono. Se renderiza con estilo lucide. Compartido entre idiomas.',
-              options: {
-                list: [
-                  { title: '❤️  Corazón (cuidado general)', value: 'heart' },
-                  { title: '💓  Corazón pulso (cardio)', value: 'heart-pulse' },
-                  { title: '💊  Pastilla (medicación)', value: 'pill' },
-                  { title: '💉  Jeringa (vacunación)', value: 'syringe' },
-                  { title: '🩺  Estetoscopio (consulta)', value: 'stethoscope' },
-                  { title: '🌡️  Termómetro (síntomas/fiebre)', value: 'thermometer' },
-                  { title: '👶  Bebé (cuidado infantil)', value: 'baby' },
-                  { title: '💧  Gota (dermocosmética)', value: 'droplet' },
-                  { title: '☀️  Sol (protección solar)', value: 'sun' },
-                  { title: '🛡️  Escudo (protección)', value: 'shield' },
-                  { title: '✨  Brillo (cosmética)', value: 'sparkles' },
-                  { title: '🍃  Hoja (productos naturales)', value: 'leaf' },
-                  { title: '🧠  Cerebro (salud mental)', value: 'brain' },
-                  { title: '📈  Pulso (vitalidad)', value: 'activity' },
-                  { title: '🏆  Premio (calidad)', value: 'award' },
-                  { title: '👥  Personas / familias', value: 'users' },
-                  { title: '⭐  Estrella (favoritos)', value: 'star' },
-                  { title: '🕐  Reloj (horario)', value: 'clock' },
-                ],
-                layout: 'dropdown',
-              },
+              type: 'iconoLucide',
             },
             {
               name: 'enlace',
@@ -286,11 +429,22 @@ export const farmacia = defineType({
       ],
     }),
 
-    // ── FAQs (traducibles) ───────────────────────────────────────────
+    // ── FAQs ─────────────────────────────────────────────────────────
+    textosCabeceraSeccion({
+      name: 'textosFaqs',
+      title: 'Textos de cabecera de FAQs',
+      group: 'faqs',
+      defaults: {
+        chip: 'Preguntas frecuentes',
+        titulo: 'Resolvemos tus dudas',
+        subtitulo: 'Las preguntas más habituales que nos hacen…',
+      },
+    }),
     defineField({
       name: 'faqs',
-      title: 'Preguntas frecuentes',
+      title: 'Lista de preguntas',
       type: 'array',
+      group: 'faqs',
       description:
         'Preguntas y respuestas habituales. Aparecen en la landing y se publican como FAQ schema. Recomendado: 4-8.',
       of: [
@@ -321,11 +475,47 @@ export const farmacia = defineType({
       validation: (r) => r.max(15),
     }),
 
-    // ── Contacto y localización (compartidos) ────────────────────────
+    // ── Reseñas ──────────────────────────────────────────────────────
+    textosCabeceraSeccion({
+      name: 'textosResenas',
+      title: 'Textos de cabecera de Reseñas',
+      group: 'resenas',
+      defaults: {
+        chip: 'Reseñas Google',
+        titulo: 'Lo que dicen nuestros clientes',
+        subtitulo: 'Opiniones reales de personas que han pasado por la farmacia.',
+      },
+    }),
+    defineField({
+      name: 'googleLocationName',
+      title: 'Google Business Profile · Resource name',
+      type: 'string',
+      group: 'resenas',
+      description:
+        'Identificador del negocio en Google Business Profile, formato "accounts/{accountId}/locations/{locationId}". El Worker de sincronización lo usa para traer las reseñas. Se rellena cuando Google aprueba el acceso a la API.',
+      validation: (r) =>
+        r.regex(/^accounts\/\d+\/locations\/\d+$/, {
+          name: 'business profile resource name',
+          invert: false,
+        }).warning(
+          'Formato esperado: accounts/<accountId>/locations/<locationId>',
+        ),
+    }),
+    defineField({
+      name: 'googleMapsUrl',
+      title: 'Google Maps · URL pública',
+      type: 'url',
+      group: 'resenas',
+      description:
+        'URL completa de la ficha pública en Google Maps. La usa la web para el botón "Ver en Google". Cópiala desde maps.google.com → buscar la farmacia → "Compartir" → "Copiar enlace".',
+    }),
+
+    // ── Contacto y localización ──────────────────────────────────────
     defineField({
       name: 'direccion',
       title: 'Dirección',
       type: 'object',
+      group: 'contacto',
       fields: [
         { name: 'calle', title: 'Calle y número', type: 'string' },
         { name: 'codigoPostal', title: 'Código postal', type: 'string' },
@@ -336,8 +526,9 @@ export const farmacia = defineType({
     }),
     defineField({
       name: 'mapaUrl',
-      title: 'URL de Google Maps',
+      title: 'URL de Google Maps (iframe)',
       type: 'url',
+      group: 'contacto',
       description:
         'En Google Maps: Compartir → "Insertar un mapa" → copia el src del iframe. Si pegas un enlace normal se usa para el botón "Cómo llegar" y el iframe cae a la dirección.',
     }),
@@ -345,6 +536,7 @@ export const farmacia = defineType({
       name: 'contacto',
       title: 'Contacto',
       type: 'object',
+      group: 'contacto',
       fields: [
         { name: 'telefono', title: 'Teléfono', type: 'string' },
         { name: 'whatsapp', title: 'WhatsApp', type: 'string' },
@@ -356,6 +548,7 @@ export const farmacia = defineType({
       name: 'horarios',
       title: 'Horarios de apertura',
       type: 'array',
+      group: 'contacto',
       of: [
         {
           type: 'object',
@@ -397,6 +590,7 @@ export const farmacia = defineType({
       name: 'redesSociales',
       title: 'Redes sociales',
       type: 'object',
+      group: 'contacto',
       fields: [
         { name: 'instagram', title: 'Instagram (URL)', type: 'url' },
         { name: 'facebook', title: 'Facebook (URL)', type: 'url' },
@@ -409,6 +603,7 @@ export const farmacia = defineType({
       name: 'seo',
       title: 'SEO',
       type: 'object',
+      group: 'seo',
       fields: [
         {
           name: 'titulo',

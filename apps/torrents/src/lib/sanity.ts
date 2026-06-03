@@ -100,6 +100,7 @@ export type Direccion = {
 };
 
 export type SobreNosotros = {
+  chip?: LocalizedString;
   titulo?: LocalizedString;
   anyosExperiencia?: number;
   puntos?: LocalizedString[];
@@ -135,6 +136,25 @@ export type SeoCampos = {
 
 export type IdiomaActivo = { _id?: string; codigo: string; nombre: string };
 
+/** Textos editables de la cabecera de una sección (chip + título + subtítulo). */
+export type TextosCabecera = {
+  chip?: LocalizedString;
+  titulo?: LocalizedString;
+  subtitulo?: LocalizedText;
+};
+
+export type TarjetaFlotante = {
+  icono?: IconoNombre;
+  titulo?: LocalizedString;
+  subtitulo?: LocalizedString;
+};
+
+export type FeatureItem = {
+  icono?: IconoNombre;
+  titulo?: LocalizedString;
+  descripcion?: LocalizedString;
+};
+
 export type Farmacia = {
   _id: string;
   nombre: string;
@@ -162,6 +182,18 @@ export type Farmacia = {
   googleLocationName?: string;
   /** URL pública del negocio en Google Maps. */
   googleMapsUrl?: string;
+  /** Chip pequeño arriba del título del Hero (fallback: "Farmacia en {ciudad}"). */
+  heroChip?: LocalizedString;
+  /** Línea destacada bajo el nombre en el Hero (fallback: "Farmacia en {ciudad}"). */
+  heroSubtitulo?: LocalizedString;
+  /** De 0 a 3 tarjetas flotando sobre la imagen del Hero. */
+  heroTarjetasFlotantes?: TarjetaFlotante[];
+  /** Lista de tarjetas de la sección Features (bajo el Hero). */
+  featuresLista?: FeatureItem[];
+  /** Textos editables de cabecera de las secciones. */
+  textosServicios?: TextosCabecera;
+  textosFaqs?: TextosCabecera;
+  textosResenas?: TextosCabecera;
 };
 
 const FARMACIA_PROJECTION = `
@@ -190,7 +222,14 @@ const FARMACIA_PROJECTION = `
   },
   "comunidadPredeterminadaSlug": comunidadPredeterminada->slug.current,
   googleLocationName,
-  googleMapsUrl
+  googleMapsUrl,
+  heroChip,
+  heroSubtitulo,
+  "heroTarjetasFlotantes": coalesce(heroTarjetasFlotantes[]{ icono, titulo, subtitulo }, []),
+  "featuresLista": coalesce(featuresLista[]{ icono, titulo, descripcion }, []),
+  textosServicios,
+  textosFaqs,
+  textosResenas
 `;
 
 export async function obtenerFarmaciaPorSlug(slug: string): Promise<Farmacia | null> {

@@ -1,9 +1,15 @@
 ---
-import type { Direccion, ImagenConAlt } from '@/lib/sanity';
+import type {
+  Direccion,
+  ImagenConAlt,
+  LocalizedString,
+  TarjetaFlotante,
+} from '@/lib/sanity';
 import { localizar } from '@/lib/sanity';
 import { t, type Locale } from '@/lib/i18n';
 import Slider from '@/components/Slider.astro';
 import MarcaAgua from '@/components/MarcaAgua.astro';
+import IconoServicio from '@/components/IconoServicio.astro';
 
 export interface Props {
   nombre: string;
@@ -15,6 +21,12 @@ export interface Props {
   logo?: string;
   direccion?: Direccion;
   lang: Locale;
+  /** Chip pequeño arriba del título. Si está vacío cae a "Farmacia en {ciudad}". */
+  chip?: LocalizedString;
+  /** Subtítulo editable bajo el nombre. Si está vacío cae a "Farmacia en {ciudad}". */
+  subtitulo?: LocalizedString;
+  /** Hasta 3 tarjetas que flotan sobre la imagen. Si no hay, no se renderizan. */
+  tarjetas?: TarjetaFlotante[];
 }
 
 const {
@@ -26,7 +38,10 @@ const {
   imagenes = [],
   logo,
   direccion,
-  lang
+  lang,
+  chip,
+  subtitulo,
+  tarjetas = []
 } = Astro.props;
 
 const tieneImagenes = imagenes.length > 0;
@@ -37,11 +52,42 @@ const direccionCorta = direccion
   ? [direccion.calle, direccion.ciudad].filter(Boolean).join(', ')
   : null;
 
-const chipTexto = ciudad
+const chipFallback = ciudad
   ? t('hero.chip.conCiudad', lang, { ciudad })
   : t('hero.chip.sinCiudad', lang);
+const chipTexto = localizar(chip, lang) ?? chipFallback;
+
+const subtituloHero =
+  localizar(subtitulo, lang) ?? (ciudad ? t('hero.ciudad', lang, { ciudad }) : undefined);
 
 const altInterior = t('hero.altInterior', lang, { nombre });
+
+// Tarjetas flotantes: localiza y descarta las que no tengan título.
+type TarjetaRender = {
+  icono?: TarjetaFlotante['icono'];
+  titulo: string;
+  subtitulo?: string;
+};
+
+const tarjetasLocalizadas = (tarjetas ?? [])
+  .map((tarjeta): TarjetaRender | null => {
+    const titulo = localizar(tarjeta.titulo, lang);
+    if (!titulo) return null;
+    return {
+      icono: tarjeta.icono,
+      titulo,
+      subtitulo: localizar(tarjeta.subtitulo, lang) ?? undefined,
+    };
+  })
+  .filter((t): t is TarjetaRender => t !== null)
+  .slice(0, 3);
+
+// Posiciones fijas por slot: superior-derecha, inferior-izquierda, media-izquierda.
+const POSICIONES = [
+  { wrap: 'absolute z-10 -top-4 -right-4', accent: 'var(--kids-green)' },
+  { wrap: 'absolute z-10 -bottom-4 -left-4', accent: 'var(--accent)' },
+  { wrap: 'absolute z-10 top-1/2 -left-8 hidden md:block', accent: 'var(--kids-orange)' },
+] as const;
 ---
 
 <section id='inicio' class='relative flex min-h-[80vh] items-center overflow-hidden pt-16 pb-20'>
@@ -83,8 +129,21 @@ const altInterior = t('hero.altInterior', lang, { nombre });
         <div
           class='inline-flex items-center gap-2 rounded-full border border-[color-mix(in_oklch,var(--primary),transparent_80%)] bg-[color-mix(in_oklch,var(--primary),transparent_94%)] px-4 py-1.5 text-xs font-bold tracking-[0.12em] text-[var(--primary)] uppercase'
         >
-          <span class='inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]'></span>
-          <span>{ciudad ? `Farmacia en ${ciudad}` : 'Tu farmacia de confianza'}</span>
+          <svg
+            width='13'
+            height='13'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            stroke-width='2.4'
+            stroke-linecap='round'
+            stroke-linejoin='round'
+            aria-hidden='true'
+          >
+            <path d='M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z' />
+            <circle cx='12' cy='10' r='3' />
+          </svg>
+          <span>{chipTexto}</span>
         </div>
 
         <h1
@@ -92,9 +151,9 @@ const altInterior = t('hero.altInterior', lang, { nombre });
         >
           {nombre}
           {
-            ciudad && (
+            subtituloHero && (
               <span class='mt-3 block text-2xl font-bold text-[var(--primary)] md:text-3xl lg:text-4xl'>
-                {t('hero.ciudad', lang, { ciudad })}
+                {subtituloHero}
               </span>
             )
           }
@@ -212,93 +271,32 @@ const altInterior = t('hero.altInterior', lang, { nombre });
             )
           }
 
-          <div
-            class='absolute z-10 -top-4 -right-4 rounded-2xl border bg-[var(--card)] p-4 shadow-xl'
-          >
-            <div class='flex items-center gap-3'>
-              <div
-                class='flex h-12 w-12 items-center justify-center rounded-xl bg-[color-mix(in_oklch,var(--kids-green),transparent_80%)]'
-              >
-                <svg
-                  width='22'
-                  height='22'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  stroke-width='2.2'
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  style='color: var(--kids-green);'
-                  aria-hidden='true'
-                >
-                  <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'></path>
-                </svg>
-              </div>
-              <div>
-                <div class='font-extrabold'>Productos seguros</div>
-                <div class='text-sm text-[var(--muted-foreground)]'>Para tu bebé</div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class='absolute z-10 -bottom-4 -left-4 rounded-2xl border bg-[var(--card)] p-4 shadow-xl'
-          >
-            <div class='flex items-center gap-3'>
-              <div
-                class='flex h-12 w-12 items-center justify-center rounded-xl bg-[color-mix(in_oklch,var(--accent),transparent_80%)]'
-              >
-                <svg
-                  width='22'
-                  height='22'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  stroke-width='2.2'
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  class='text-[var(--accent)]'
-                  aria-hidden='true'
-                >
-                  <path d='M11 2v8a4 4 0 0 1-4 4 4 4 0 0 1-4-4V2M6 2v8M11 2V2'></path>
-                  <path d='M19 14v6a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-6a4 4 0 0 1 4-4 4 4 0 0 1 4 4z'>
-                  </path>
-                </svg>
-              </div>
-              <div>
-                <div class='font-extrabold'>Atención profesional</div>
-                <div class='text-sm text-[var(--muted-foreground)]'>Farmacéuticos pediátricos</div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class='absolute z-10 top-1/2 -left-8 hidden rounded-2xl border bg-[var(--card)] p-4 shadow-xl md:block'
-          >
-            <div class='flex items-center gap-3'>
-              <div
-                class='flex h-12 w-12 items-center justify-center rounded-xl bg-[color-mix(in_oklch,var(--kids-yellow),transparent_75%)]'
-              >
-                <svg
-                  width='22'
-                  height='22'
-                  viewBox='0 0 24 24'
-                  fill='currentColor'
-                  style='color: var(--kids-orange);'
-                  aria-hidden='true'
-                >
-                  <polygon
-                    points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'
-                  >
-                  </polygon>
-                </svg>
-              </div>
-              <div>
-                <div class='font-extrabold'>Calidad garantizada</div>
-                <div class='text-sm text-[var(--muted-foreground)]'>Marcas de confianza</div>
-              </div>
-            </div>
-          </div>
+          {
+            tarjetasLocalizadas.map((tarjeta, i) => {
+              const pos = POSICIONES[i];
+              if (!pos) return null;
+              return (
+                <div class={`${pos.wrap} rounded-2xl border bg-[var(--card)] p-4 shadow-xl`}>
+                  <div class='flex items-center gap-3'>
+                    <div
+                      class='flex h-12 w-12 items-center justify-center rounded-xl'
+                      style={`background: color-mix(in oklch, ${pos.accent}, transparent 80%); color: ${pos.accent};`}
+                    >
+                      <IconoServicio nombre={tarjeta.icono} size={22} />
+                    </div>
+                    <div>
+                      <div class='font-extrabold'>{tarjeta.titulo}</div>
+                      {tarjeta.subtitulo && (
+                        <div class='text-sm text-[var(--muted-foreground)]'>
+                          {tarjeta.subtitulo}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          }
         </div>
       </div>
     </div>

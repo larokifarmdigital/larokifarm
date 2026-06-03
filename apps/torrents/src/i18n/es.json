@@ -63,8 +63,7 @@
   },
   "servicios": {
     "chip": "Nuestros servicios",
-    "tituloParte1": "Nuestros",
-    "tituloParte2": "servicios",
+    "titulo": "Nuestros servicios",
     "subtitulo": "Ofrecemos una amplia gama de servicios farmacéuticos y productos seleccionados para el cuidado de toda la familia.",
     "placeholder": "Pronto añadiremos el detalle de servicios.",
     "btnAnterior": "Anterior",
@@ -73,8 +72,7 @@
   },
   "faqs": {
     "chip": "Preguntas frecuentes",
-    "tituloParte1": "Resolvemos tus",
-    "tituloParte2": "dudas",
+    "titulo": "Resolvemos tus dudas",
     "subtitulo": "Las preguntas más habituales que nos hacen nuestros clientes. Si tienes alguna duda más, escríbenos y te contestamos enseguida."
   },
   "cta": {
@@ -123,8 +121,7 @@
   },
   "resenas": {
     "chip": "Reseñas Google",
-    "tituloParte1": "Lo que dicen",
-    "tituloParte2": "nuestros clientes",
+    "titulo": "Lo que dicen nuestros clientes",
     "subtitulo": "{total} reseñas en Google con una valoración media de {media} / 5.",
     "subtituloSinNumero": "Opiniones reales de personas que han pasado por la farmacia.",
     "destacada": "Reseña destacada",

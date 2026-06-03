@@ -63,8 +63,7 @@
   },
   "servicios": {
     "chip": "Our services",
-    "tituloParte1": "Our",
-    "tituloParte2": "services",
+    "titulo": "Our services",
     "subtitulo": "We offer a wide range of pharmaceutical services and carefully selected products for the whole family.",
     "placeholder": "We'll be adding our services soon.",
     "btnAnterior": "Previous",
@@ -73,8 +72,7 @@
   },
   "faqs": {
     "chip": "Frequently asked questions",
-    "tituloParte1": "We answer your",
-    "tituloParte2": "questions",
+    "titulo": "We answer your questions",
     "subtitulo": "The most common questions our customers ask us. If you have any other questions, get in touch and we'll get back to you right away."
   },
   "cta": {
@@ -123,8 +121,7 @@
   },
   "resenas": {
     "chip": "Google Reviews",
-    "tituloParte1": "What our",
-    "tituloParte2": "customers say",
+    "titulo": "What our customers say",
     "subtitulo": "{total} Google reviews with an average rating of {media} / 5.",
     "subtituloSinNumero": "Real opinions from people who have visited the pharmacy.",
     "destacada": "Featured review",

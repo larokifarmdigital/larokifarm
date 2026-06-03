@@ -19,11 +19,16 @@ import {
   t,
   type Locale,
 } from '@/lib/i18n';
+import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
 import diasEs from '@/i18n/es.json';
 import diasEn from '@/i18n/en.json';
 import diasCa from '@/i18n/ca.json';
 
 export async function getStaticPaths() {
+  // Mientras MOSTRAR_RESENAS sea false no generamos la ruta /resenas en
+  // ningún idioma → cualquier visita cae al 404 estándar del sitio.
+  if (!MOSTRAR_RESENAS) return [];
+
   const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
   const codigos = (farmacia?.idiomasActivos ?? [{ codigo: 'es', nombre: 'Español' }])
     .map((i) => i.codigo)
@@ -112,6 +117,7 @@ const filtros = [5, 4, 3, 2, 1];
     telefono={farmacia.contacto?.telefono}
     logo={farmacia.logo}
     mostrarFaqs={mostrarFaqs}
+    mostrarResenas={MOSTRAR_RESENAS}
     lang={lang}
     rutaActual='/resenas'
     idiomasActivos={farmacia.idiomasActivos}
@@ -284,6 +290,7 @@ const filtros = [5, 4, 3, 2, 1];
     servicios={farmacia.servicios}
     descripcionCorta={farmacia.descripcionCorta}
     mostrarFaqs={mostrarFaqs}
+    mostrarResenas={MOSTRAR_RESENAS}
     lang={lang}
     rutaActual='/resenas'
   />

@@ -29,6 +29,8 @@ export function farmaciaAJsonLd(
   siteUrl: string,
   locale: Locale = LOCALE_DEFECTO,
   resumenResenas?: ResumenResenas,
+  /** Si false, omite aggregateRating y review del JSON-LD aunque haya datos. */
+  incluirResenas = true,
 ) {
   const direccion = farmacia.direccion;
   const contacto = farmacia.contacto;
@@ -56,7 +58,7 @@ export function farmaciaAJsonLd(
     );
 
   const aggregateRating =
-    resumenResenas && resumenResenas.total > 0 && resumenResenas.media > 0
+    incluirResenas && resumenResenas && resumenResenas.total > 0 && resumenResenas.media > 0
       ? {
           '@type': 'AggregateRating',
           ratingValue: Number(resumenResenas.media.toFixed(1)),
@@ -66,24 +68,26 @@ export function farmaciaAJsonLd(
         }
       : undefined;
 
-  const reviews = [
-    ...(resumenResenas?.destacadas ?? []),
-    ...(resumenResenas?.recientes ?? []),
-  ]
-    .slice(0, 10)
-    .map((r) => ({
-      '@type': 'Review',
-      reviewRating: {
-        '@type': 'Rating',
-        ratingValue: r.rating,
-        bestRating: 5,
-        worstRating: 1,
-      },
-      author: { '@type': 'Person', name: r.autorNombre || 'Anónimo' },
-      datePublished: r.fechaPublicacion,
-      reviewBody: r.comentario,
-      inLanguage: r.comentarioIdioma,
-    }));
+  const reviews = incluirResenas
+    ? [
+        ...(resumenResenas?.destacadas ?? []),
+        ...(resumenResenas?.recientes ?? []),
+      ]
+        .slice(0, 10)
+        .map((r) => ({
+          '@type': 'Review',
+          reviewRating: {
+            '@type': 'Rating',
+            ratingValue: r.rating,
+            bestRating: 5,
+            worstRating: 1,
+          },
+          author: { '@type': 'Person', name: r.autorNombre || 'Anónimo' },
+          datePublished: r.fechaPublicacion,
+          reviewBody: r.comentario,
+          inLanguage: r.comentarioIdioma,
+        }))
+    : [];
 
   const pharmacy = {
     '@context': 'https://schema.org',

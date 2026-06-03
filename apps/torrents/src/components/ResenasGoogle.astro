@@ -1,16 +1,19 @@
 ---
 import MarcaAgua from '@/components/MarcaAgua.astro';
-import type { ResenaGoogle, ResumenResenas } from '@/lib/sanity';
-import { t, rutaConLocale, type Locale } from '@/lib/i18n';
+import type { ResenaGoogle, ResumenResenas, TextosCabecera } from '@/lib/sanity';
+import { localizar } from '@/lib/sanity';
+import { t, rutaConLocale, resaltarTitulo, type Locale } from '@/lib/i18n';
 
 export interface Props {
   resumen: ResumenResenas;
   logo?: string;
   lang: Locale;
   urlGoogleMaps?: string;
+  /** Textos editables de la cabecera. Si están vacíos, cae a i18n. */
+  textos?: TextosCabecera;
 }
 
-const { resumen, logo, lang, urlGoogleMaps } = Astro.props;
+const { resumen, logo, lang, urlGoogleMaps, textos } = Astro.props;
 
 // Hasta 10: primero las destacadas, luego las recientes, deduplicado por _id.
 const vistas = new Set<string>();
@@ -47,10 +50,14 @@ function inicial(nombre?: string): string {
   return c ? c.toUpperCase() : '?';
 }
 
+const chip = localizar(textos?.chip, lang) ?? t('resenas.chip', lang);
+const tituloTexto = localizar(textos?.titulo, lang) ?? t('resenas.titulo', lang);
+const { inicio: tituloParte1, resaltado: tituloParte2 } = resaltarTitulo(tituloTexto);
 const subtitulo =
-  resumen.total > 0
+  localizar(textos?.subtitulo, lang) ??
+  (resumen.total > 0
     ? t('resenas.subtitulo', lang, { total: resumen.total, media: mediaFormateada })
-    : t('resenas.subtituloSinNumero', lang);
+    : t('resenas.subtituloSinNumero', lang));
 
 const verTodasHref = rutaConLocale('/resenas', lang);
 const esGaleria = slides.length > 1;
@@ -80,11 +87,11 @@ const esGaleria = slides.length > 1;
             <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
               <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
             </svg>
-            {t('resenas.chip', lang)}
+            {chip}
           </div>
           <h2 class='mb-4 text-3xl font-bold tracking-tight md:text-4xl'>
-            {t('resenas.tituloParte1', lang)}{' '}
-            <span class='text-primary'>{t('resenas.tituloParte2', lang)}</span>
+            {tituloParte1 && <>{tituloParte1}{' '}</>}
+            <span class='text-primary'>{tituloParte2}</span>
           </h2>
           <p class='text-muted-foreground mx-auto max-w-2xl'>{subtitulo}</p>
         </div>

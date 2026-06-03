@@ -21,6 +21,7 @@ import {
   type DiasI18n,
 } from '@/lib/sanity';
 import { construirMetaSeo, farmaciaAJsonLd } from '@/lib/seo';
+import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
 import {
   esLocaleValido,
   rutaConLocale,
@@ -58,7 +59,7 @@ const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
 
 const meta = construirMetaSeo(farmacia, siteUrl, lang, rutaConLocale('/', lang));
 const resenas = await obtenerResenasGoogle(SLUG_FARMACIA, 10);
-const jsonLd = farmaciaAJsonLd(farmacia, siteUrl, lang, resenas);
+const jsonLd = farmaciaAJsonLd(farmacia, siteUrl, lang, resenas, MOSTRAR_RESENAS);
 
 const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
   es: diasEs.dias as DiasI18n,
@@ -91,6 +92,7 @@ const claim = localizar(farmacia.descripcionCorta, lang);
     telefono={farmacia.contacto?.telefono}
     logo={farmacia.logo}
     mostrarFaqs={mostrarFaqs}
+    mostrarResenas={MOSTRAR_RESENAS}
     lang={lang}
     rutaActual='/'
     idiomasActivos={farmacia.idiomasActivos}
@@ -107,11 +109,24 @@ const claim = localizar(farmacia.descripcionCorta, lang);
       logo={farmacia.logo}
       direccion={farmacia.direccion}
       lang={lang}
+      chip={farmacia.heroChip}
+      subtitulo={farmacia.heroSubtitulo}
+      tarjetas={farmacia.heroTarjetasFlotantes}
     />
 
-    <Features horarioTexto={horarioTexto} logo={farmacia.logo} lang={lang} />
+    <Features
+      horarioTexto={horarioTexto}
+      logo={farmacia.logo}
+      lang={lang}
+      lista={farmacia.featuresLista}
+    />
 
-    <Servicios servicios={farmacia.servicios} logo={farmacia.logo} lang={lang} />
+    <Servicios
+      servicios={farmacia.servicios}
+      logo={farmacia.logo}
+      lang={lang}
+      textos={farmacia.textosServicios}
+    />
 
     <About
       imagenes={farmacia.imagenesSobre}
@@ -121,16 +136,25 @@ const claim = localizar(farmacia.descripcionCorta, lang);
       puntos={farmacia.sobreNosotros?.puntos}
       anyosExperiencia={farmacia.sobreNosotros?.anyosExperiencia}
       lang={lang}
+      chip={farmacia.sobreNosotros?.chip}
     />
 
-    <ResenasGoogle
-      resumen={resenas}
+    {MOSTRAR_RESENAS && (
+      <ResenasGoogle
+        resumen={resenas}
+        logo={farmacia.logo}
+        lang={lang}
+        urlGoogleMaps={farmacia.googleMapsUrl}
+        textos={farmacia.textosResenas}
+      />
+    )}
+
+    <Faqs
+      faqs={farmacia.faqs}
       logo={farmacia.logo}
       lang={lang}
-      urlGoogleMaps={farmacia.googleMapsUrl}
+      textos={farmacia.textosFaqs}
     />
-
-    <Faqs faqs={farmacia.faqs} logo={farmacia.logo} lang={lang} />
 
     <CtaCard
       nombre={farmacia.nombre}
@@ -157,6 +181,7 @@ const claim = localizar(farmacia.descripcionCorta, lang);
     servicios={farmacia.servicios}
     descripcionCorta={farmacia.descripcionCorta}
     mostrarFaqs={mostrarFaqs}
+    mostrarResenas={MOSTRAR_RESENAS}
     lang={lang}
     rutaActual='/'
   />

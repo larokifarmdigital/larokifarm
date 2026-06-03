@@ -17,6 +17,7 @@ import {
   t,
   type Locale,
 } from '@/lib/i18n';
+import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
 import diasEs from '@/i18n/es.json';
 import diasEn from '@/i18n/en.json';
 import diasCa from '@/i18n/ca.json';
@@ -87,6 +88,7 @@ const home = rutaConLocale('/', lang);
     telefono={farmacia.contacto?.telefono}
     logo={farmacia.logo}
     mostrarFaqs={mostrarFaqs}
+    mostrarResenas={MOSTRAR_RESENAS}
     lang={lang}
     rutaActual='/politica-privacidad'
     idiomasActivos={farmacia.idiomasActivos}
@@ -232,6 +234,7 @@ const home = rutaConLocale('/', lang);
     servicios={farmacia.servicios}
     descripcionCorta={farmacia.descripcionCorta}
     mostrarFaqs={mostrarFaqs}
+    mostrarResenas={MOSTRAR_RESENAS}
     lang={lang}
     rutaActual='/politica-privacidad'
   />

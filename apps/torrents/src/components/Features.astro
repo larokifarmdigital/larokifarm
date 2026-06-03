@@ -1,45 +1,72 @@
 ---
 import MarcaAgua from '@/components/MarcaAgua.astro';
-
+import IconoServicio from '@/components/IconoServicio.astro';
+import type { FeatureItem, IconoNombre } from '@/lib/sanity';
+import { localizar } from '@/lib/sanity';
 import { t, type Locale } from '@/lib/i18n';
 
-type Feature = {
+interface FeatureRender {
+  icono: IconoNombre;
   titulo: string;
   descripcion: string;
-  icono: 'heart' | 'award' | 'users' | 'clock';
-};
+}
 
 export interface Props {
-  features?: Feature[];
   horarioTexto?: string;
   logo?: string;
   lang: Locale;
+  /**
+   * Lista editable desde Sanity. Si está vacía, se renderizan las 4 features
+   * de fábrica (atención, calidad, equipo, horario) traducidas con i18n.
+   *
+   * Caso especial: una feature con `icono === 'clock'` y descripción vacía cae
+   * al horario auto-calculado (`horarioTexto`).
+   */
+  lista?: FeatureItem[];
 }
 
-const { horarioTexto, logo, lang } = Astro.props;
+const { horarioTexto, logo, lang, lista } = Astro.props;
 
-const features: Feature[] = Astro.props.features ?? [
+function defectoSiVacio(items: FeatureItem[] | undefined, fallback: FeatureRender[]): FeatureRender[] {
+  if (!items || items.length === 0) return fallback;
+  return items
+    .map((it) => {
+      const titulo = localizar(it.titulo, lang);
+      const descLocalizada = localizar(it.descripcion, lang);
+      const icono = (it.icono ?? 'heart') as IconoNombre;
+      const descripcion =
+        descLocalizada ||
+        (icono === 'clock' ? horarioTexto ?? t('features.horarioDescFallback', lang) : '');
+      if (!titulo) return null;
+      return { icono, titulo, descripcion };
+    })
+    .filter((f): f is FeatureRender => f !== null);
+}
+
+const featuresFallback: FeatureRender[] = [
   {
     icono: 'heart',
     titulo: t('features.atencionTitulo', lang),
-    descripcion: t('features.atencionDesc', lang)
+    descripcion: t('features.atencionDesc', lang),
   },
   {
     icono: 'award',
     titulo: t('features.calidadTitulo', lang),
-    descripcion: t('features.calidadDesc', lang)
+    descripcion: t('features.calidadDesc', lang),
   },
   {
     icono: 'users',
     titulo: t('features.equipoTitulo', lang),
-    descripcion: t('features.equipoDesc', lang)
+    descripcion: t('features.equipoDesc', lang),
   },
   {
     icono: 'clock',
     titulo: t('features.horarioTitulo', lang),
-    descripcion: horarioTexto ?? t('features.horarioDescFallback', lang)
-  }
+    descripcion: horarioTexto ?? t('features.horarioDescFallback', lang),
+  },
 ];
+
+const features = defectoSiVacio(lista, featuresFallback);
 ---
 
 <section
@@ -71,47 +98,14 @@ const features: Feature[] = Astro.props.features ?? [
       {
         features.map(f => (
           <div class='flex items-center gap-4'>
-            <div class='flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_oklch,var(--primary),transparent_90%)]'>
-              <svg
-                width='28'
-                height='28'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                stroke-width='2.2'
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                class='text-[var(--primary)]'
-                aria-hidden='true'
-              >
-                {f.icono === 'heart' && (
-                  <path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' />
-                )}
-                {f.icono === 'award' && (
-                  <>
-                    <circle cx='12' cy='8' r='6' />
-                    <path d='M15.477 12.89 17 22l-5-3-5 3 1.523-9.11' />
-                  </>
-                )}
-                {f.icono === 'users' && (
-                  <>
-                    <path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' />
-                    <circle cx='9' cy='7' r='4' />
-                    <path d='M23 21v-2a4 4 0 0 0-3-3.87' />
-                    <path d='M16 3.13a4 4 0 0 1 0 7.75' />
-                  </>
-                )}
-                {f.icono === 'clock' && (
-                  <>
-                    <circle cx='12' cy='12' r='10' />
-                    <path d='M12 6v6l4 2' />
-                  </>
-                )}
-              </svg>
+            <div class='flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_oklch,var(--primary),transparent_90%)] text-[var(--primary)]'>
+              <IconoServicio nombre={f.icono} size={28} />
             </div>
             <div class='min-w-0'>
               <h3 class='font-extrabold'>{f.titulo}</h3>
-              <p class='m-0 text-sm text-[var(--muted-foreground)]'>{f.descripcion}</p>
+              {f.descripcion && (
+                <p class='m-0 text-sm text-[var(--muted-foreground)]'>{f.descripcion}</p>
+              )}
             </div>
           </div>
         ))

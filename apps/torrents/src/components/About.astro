@@ -3,7 +3,7 @@ import Slider from '@/components/Slider.astro';
 import MarcaAgua from '@/components/MarcaAgua.astro';
 import { portableTextAHtml, localizar } from '@/lib/sanity';
 import type { LocalizedString, LocalizedPortableText, ImagenConAlt } from '@/lib/sanity';
-import { t, tArray, type Locale } from '@/lib/i18n';
+import { t, tArray, resaltarTitulo, type Locale } from '@/lib/i18n';
 
 export interface Props {
   titulo?: LocalizedString;
@@ -13,6 +13,8 @@ export interface Props {
   puntos?: LocalizedString[];
   anyosExperiencia?: number;
   lang: Locale;
+  /** Chip editable. Si está vacío cae a i18n. */
+  chip?: LocalizedString;
 }
 
 const {
@@ -22,9 +24,11 @@ const {
   logo,
   puntos,
   anyosExperiencia,
-  lang
+  lang,
+  chip
 } = Astro.props;
 
+const chipTexto = localizar(chip, lang) ?? t('about.chip', lang);
 const tituloTexto = localizar(titulo, lang) || t('about.tituloDefecto', lang);
 const tieneImagenes = imagenes.length > 0;
 const cuerpoHtml = portableTextAHtml(localizar(descripcionLarga, lang));
@@ -35,9 +39,7 @@ const puntosLocalizados = (puntos ?? [])
 const puntosFinales =
   puntosLocalizados.length > 0 ? puntosLocalizados : tArray('about.puntosDefecto', lang);
 
-const palabras = tituloTexto.split(' ');
-const tituloInicio = palabras.slice(0, Math.max(palabras.length - 2, 1)).join(' ');
-const tituloResaltado = palabras.slice(Math.max(palabras.length - 2, 1)).join(' ');
+const { inicio: tituloInicio, resaltado: tituloResaltado } = resaltarTitulo(tituloTexto);
 
 const imagenesParaSlider = imagenes.map(img => ({
   url: img.url,
@@ -155,7 +157,24 @@ const imagenesParaSlider = imagenes.map(img => ({
 
       <div class='order-1 space-y-7 lg:order-2'>
         <div class='chip'>
-          <span>{t('about.chip', lang)}</span>
+          <svg
+            width='14'
+            height='14'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            stroke-width='2.4'
+            stroke-linecap='round'
+            stroke-linejoin='round'
+            aria-hidden='true'
+            class='text-[var(--primary)]'
+          >
+            <path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' />
+            <circle cx='9' cy='7' r='4' />
+            <path d='M22 21v-2a4 4 0 0 0-3-3.87' />
+            <path d='M16 3.13a4 4 0 0 1 0 7.75' />
+          </svg>
+          <span>{chipTexto}</span>
         </div>
 
         <h2 class='text-4xl font-extrabold tracking-tight md:text-5xl'>

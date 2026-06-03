@@ -1,7 +1,7 @@
 ---
-import type { Servicio } from '@/lib/sanity';
+import type { Servicio, TextosCabecera } from '@/lib/sanity';
 import { localizar } from '@/lib/sanity';
-import { t, rutaConLocale, type Locale } from '@/lib/i18n';
+import { t, rutaConLocale, resaltarTitulo, type Locale } from '@/lib/i18n';
 import IconoServicio from './IconoServicio.astro';
 import MarcaAgua from '@/components/MarcaAgua.astro';
 
@@ -9,9 +9,16 @@ export interface Props {
   servicios?: Servicio[];
   logo?: string;
   lang: Locale;
+  /** Textos editables de la cabecera de sección. Si están vacíos, cae a i18n. */
+  textos?: TextosCabecera;
 }
 
-const { servicios = [], logo, lang } = Astro.props;
+const { servicios = [], logo, lang, textos } = Astro.props;
+
+const chip = localizar(textos?.chip, lang) ?? t('servicios.chip', lang);
+const tituloTexto = localizar(textos?.titulo, lang) ?? t('servicios.titulo', lang);
+const { inicio: tituloParte1, resaltado: tituloParte2 } = resaltarTitulo(tituloTexto);
+const subtitulo = localizar(textos?.subtitulo, lang) ?? t('servicios.subtitulo', lang);
 
 const serviciosLocalizados = servicios.map(s => ({
   ...s,
@@ -77,14 +84,29 @@ function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): Enla
   <div class='container-app relative'>
     <div class='mb-12 text-start md:mb-16 md:text-center'>
       <div class='chip mb-6'>
-        <span>{t('servicios.chip', lang)}</span>
+        <svg
+          width='14'
+          height='14'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          stroke-width='2.4'
+          stroke-linecap='round'
+          stroke-linejoin='round'
+          aria-hidden='true'
+          class='text-[var(--primary)]'
+        >
+          <path d='M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z' />
+          <path d='M19 15l.6 1.8L21.5 17.5l-1.9.7L19 20l-.6-1.8L16.5 17.5l1.9-.7z' />
+        </svg>
+        <span>{chip}</span>
       </div>
       <h2 class='mb-6 text-4xl font-extrabold tracking-tight md:text-balance md:text-5xl'>
-        {t('servicios.tituloParte1', lang)}
-        <span class='text-[var(--primary)]'>{t('servicios.tituloParte2', lang)}</span>
+        {tituloParte1 && <>{tituloParte1}{' '}</>}
+        <span class='text-[var(--primary)]'>{tituloParte2}</span>
       </h2>
       <p class='max-w-2xl text-lg text-[var(--muted-foreground)] md:mx-auto'>
-        {t('servicios.subtitulo', lang)}
+        {subtitulo}
       </p>
     </div>
 

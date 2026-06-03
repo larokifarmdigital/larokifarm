@@ -63,8 +63,7 @@
   },
   "servicios": {
     "chip": "Els nostres serveis",
-    "tituloParte1": "Els nostres",
-    "tituloParte2": "serveis",
+    "titulo": "Els nostres serveis",
     "subtitulo": "Oferim una àmplia gamma de serveis farmacèutics i productes seleccionats per a la cura de tota la família.",
     "placeholder": "Aviat afegirem el detall de serveis.",
     "btnAnterior": "Anterior",
@@ -73,8 +72,7 @@
   },
   "faqs": {
     "chip": "Preguntes freqüents",
-    "tituloParte1": "Resolem els teus",
-    "tituloParte2": "dubtes",
+    "titulo": "Resolem els teus dubtes",
     "subtitulo": "Les preguntes més habituals que ens fan els nostres clients. Si tens algun dubte més, escriu-nos i et contestarem de seguida."
   },
   "cta": {
@@ -123,8 +121,7 @@
   },
   "resenas": {
     "chip": "Ressenyes Google",
-    "tituloParte1": "El que diuen",
-    "tituloParte2": "els nostres clients",
+    "titulo": "El que diuen els nostres clients",
     "subtitulo": "{total} ressenyes a Google amb una valoració mitjana de {media} / 5.",
     "subtituloSinNumero": "Opinions reals de persones que han passat per la farmàcia.",
     "destacada": "Ressenya destacada",

@@ -10,6 +10,7 @@ import {
   type DiasI18n,
 } from '@/lib/sanity';
 import { rutaConLocale, t, type Locale } from '@/lib/i18n';
+import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
 import diasEs from '@/i18n/es.json';
 import diasEn from '@/i18n/en.json';
 import diasCa from '@/i18n/ca.json';
@@ -75,6 +76,7 @@ const home = rutaConLocale('/', lang);
     telefono={farmacia.contacto?.telefono}
     logo={farmacia.logo}
     mostrarFaqs={mostrarFaqs}
+    mostrarResenas={MOSTRAR_RESENAS}
     lang={lang}
     rutaActual='/404'
     idiomasActivos={farmacia.idiomasActivos}
@@ -90,7 +92,20 @@ const home = rutaConLocale('/', lang);
       <div class='mx-auto max-w-3xl'>
         <div class='text-center'>
           <div class='mb-6 inline-flex items-center gap-2 rounded-full border border-[color-mix(in_oklch,var(--primary),transparent_80%)] bg-[color-mix(in_oklch,var(--primary),transparent_94%)] px-4 py-1.5 text-xs font-bold tracking-[0.12em] text-[var(--primary)] uppercase md:mb-8'>
-            <span class='inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]'></span>
+            <svg
+              width='13'
+              height='13'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              stroke-width='2.4'
+              stroke-linecap='round'
+              stroke-linejoin='round'
+              aria-hidden='true'
+            >
+              <circle cx='12' cy='12' r='10' />
+              <polygon points='16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76' />
+            </svg>
             <span>{t('p404.chip', lang)}</span>
           </div>
 
@@ -188,6 +203,7 @@ const home = rutaConLocale('/', lang);
     servicios={farmacia.servicios}
     descripcionCorta={farmacia.descripcionCorta}
     mostrarFaqs={mostrarFaqs}
+    mostrarResenas={MOSTRAR_RESENAS}
     lang={lang}
     rutaActual='/404'
   />

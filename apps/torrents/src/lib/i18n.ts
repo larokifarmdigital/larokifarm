@@ -83,6 +83,23 @@ export function tArray(clave: string, locale: Locale = LOCALE_DEFECTO): string[]
 }
 
 /**
+ * Parte un título en (inicio normal + final resaltado) para pintar las últimas
+ * palabras en color, igual que la sección "Sobre nosotros".
+ * Resalta las dos últimas palabras, dejando siempre al menos la primera en normal.
+ * Así, un título de dos palabras ("Nuestros servicios") resalta solo la última.
+ */
+export function resaltarTitulo(texto: string): { inicio: string; resaltado: string } {
+  const palabras = texto.trim().split(/\s+/).filter(Boolean);
+  if (palabras.length === 0) return { inicio: '', resaltado: '' };
+  if (palabras.length === 1) return { inicio: '', resaltado: palabras[0] };
+  const corte = Math.max(palabras.length - 2, 1);
+  return {
+    inicio: palabras.slice(0, corte).join(' '),
+    resaltado: palabras.slice(corte).join(' '),
+  };
+}
+
+/**
  * Construye la URL de una ruta interna respetando el locale activo.
  * - locale por defecto → sin prefijo: `/`, `/aviso-legal`.
  * - otros locales → con prefijo: `/en`, `/ca/aviso-legal`.
