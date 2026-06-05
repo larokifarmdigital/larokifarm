@@ -85,7 +85,9 @@
     "labelHorario": "Horario",
     "btnEscribenos": "Escríbenos",
     "btnLlamar": "Llamar ahora",
-    "ariaMapa": "Mapa de {nombre}"
+    "ariaMapa": "Mapa de {nombre}",
+    "cargarMapa": "Ver mapa",
+    "cargarMapaAviso": "Al pulsar se cargará Google Maps, que instala cookies de Google."
   },
   "footer": {
     "servicios": "Servicios",
@@ -117,7 +119,11 @@
     "ariaWhatsApp": "Contactar por WhatsApp"
   },
   "legal": {
-    "volver": "Volver al inicio"
+    "volver": "Volver al inicio",
+    "avisoTitulo": "Aviso legal",
+    "privacidadTitulo": "Política de privacidad",
+    "avisoMeta": "Aviso legal e información del titular de {nombre}.",
+    "privacidadMeta": "Política de privacidad y tratamiento de datos personales de {nombre}."
   },
   "resenas": {
     "chip": "Reseñas Google",

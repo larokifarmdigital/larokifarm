@@ -135,13 +135,55 @@ const titulo = ciudad ? partirParaResaltar(tituloCiudad) : partirParaResaltar(ti
         {
           embedUrl && (
             <div class='order-2 aspect-4/3 w-full overflow-hidden border-t border-border lg:order-1 lg:aspect-auto lg:border-t-0 lg:border-r'>
-              <iframe
-                src={embedUrl}
-                title={t('cta.ariaMapa', lang, { nombre })}
-                loading='lazy'
-                referrerpolicy='no-referrer-when-downgrade'
-                class='block h-full min-h-80 w-full border-0'
-              />
+              <button
+                type='button'
+                data-mapa-facade
+                data-embed={embedUrl}
+                data-title={t('cta.ariaMapa', lang, { nombre })}
+                aria-label={t('cta.cargarMapa', lang)}
+                class='group relative flex h-full min-h-80 w-full cursor-pointer flex-col items-center justify-center gap-4 bg-[color-mix(in_oklch,var(--primary),transparent_94%)] p-6 text-center transition-colors hover:bg-[color-mix(in_oklch,var(--primary),transparent_90%)]'
+              >
+                <span class='dot-pattern absolute inset-0 opacity-40' aria-hidden='true' />
+                <span class='relative flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--primary)] text-white shadow-lg transition-transform duration-300 group-hover:scale-110'>
+                  <svg
+                    width='26'
+                    height='26'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    stroke-width='2.2'
+                    stroke-linecap='round'
+                    stroke-linejoin='round'
+                    aria-hidden='true'
+                  >
+                    <path d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' />
+                    <circle cx='12' cy='10' r='3' />
+                  </svg>
+                </span>
+                {direccionCorta && (
+                  <span class='relative font-extrabold text-foreground'>{direccionCorta}</span>
+                )}
+                <span class='relative inline-flex items-center gap-2 rounded-full bg-[var(--primary)] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-transform duration-300 group-hover:-translate-y-0.5'>
+                  <svg
+                    width='16'
+                    height='16'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    stroke-width='2.4'
+                    stroke-linecap='round'
+                    stroke-linejoin='round'
+                    aria-hidden='true'
+                  >
+                    <path d='M9 11l-6 3V5l6-3 6 3 6-3v9' />
+                    <path d='M9 2v12M15 5v14' />
+                  </svg>
+                  {t('cta.cargarMapa', lang)}
+                </span>
+                <span class='relative max-w-xs text-xs leading-relaxed text-muted-foreground'>
+                  {t('cta.cargarMapaAviso', lang)}
+                </span>
+              </button>
             </div>
           )
         }
@@ -314,3 +356,36 @@ const titulo = ciudad ? partirParaResaltar(tituloCiudad) : partirParaResaltar(ti
     </div>
   </div>
 </section>
+
+<script>
+  // Patrón "clic para cargar": el iframe de Google Maps NO se crea hasta que el
+  // usuario pulsa el placeholder. Así Google no recibe ninguna petición ni
+  // instala cookies antes de una acción voluntaria (LSSI / art. 7 RGPD).
+  function initMapaFacade() {
+    const facades = document.querySelectorAll<HTMLButtonElement>('[data-mapa-facade]');
+    facades.forEach(facade => {
+      facade.addEventListener(
+        'click',
+        () => {
+          const url = facade.dataset.embed;
+          if (!url) return;
+          const iframe = document.createElement('iframe');
+          iframe.src = url;
+          iframe.title = facade.dataset.title ?? 'Google Maps';
+          iframe.loading = 'eager';
+          iframe.referrerPolicy = 'no-referrer-when-downgrade';
+          iframe.className = 'block h-full min-h-80 w-full border-0';
+          iframe.setAttribute('allowfullscreen', '');
+          facade.replaceWith(iframe);
+        },
+        { once: true }
+      );
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMapaFacade);
+  } else {
+    initMapaFacade();
+  }
+</script>

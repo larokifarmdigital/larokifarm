@@ -62,6 +62,7 @@ export const farmacia = defineType({
     { name: 'faqs', title: '❓ FAQs' },
     { name: 'resenas', title: '⭐ Reseñas' },
     { name: 'contacto', title: '📞 Contacto y horarios' },
+    { name: 'legal', title: '⚖️ Legal' },
     { name: 'seo', title: '🔍 SEO' },
   ],
   fields: [
@@ -596,6 +597,28 @@ export const farmacia = defineType({
         { name: 'facebook', title: 'Facebook (URL)', type: 'url' },
         { name: 'tiktok', title: 'TikTok (URL)', type: 'url' },
       ],
+    }),
+
+    // ── Legal ────────────────────────────────────────────────────────
+    defineField({
+      name: 'avisoLegal',
+      title: 'Aviso legal',
+      type: 'internationalizedArrayPortableText',
+      group: 'legal',
+      description:
+        'Texto completo del aviso legal. Si se deja vacío, la web muestra el aviso legal por defecto. ' +
+        'Rellénalo en cada idioma activo (o déjalo vacío en todos).',
+      validation: (r) => validarTodosIdiomasOninguno(r),
+    }),
+    defineField({
+      name: 'politicaPrivacidad',
+      title: 'Política de privacidad',
+      type: 'internationalizedArrayPortableText',
+      group: 'legal',
+      description:
+        'Texto completo de la política de privacidad. Si se deja vacío, la web muestra la política por defecto. ' +
+        'Rellénalo en cada idioma activo (o déjalo vacío en todos).',
+      validation: (r) => validarTodosIdiomasOninguno(r),
     }),
 
     // ── SEO ──────────────────────────────────────────────────────────

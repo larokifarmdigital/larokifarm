@@ -85,7 +85,9 @@
     "labelHorario": "Horari",
     "btnEscribenos": "Escriu-nos",
     "btnLlamar": "Truca ara",
-    "ariaMapa": "Mapa de {nombre}"
+    "ariaMapa": "Mapa de {nombre}",
+    "cargarMapa": "Veure mapa",
+    "cargarMapaAviso": "En prémer es carregarà Google Maps, que instal·la galetes de Google."
   },
   "footer": {
     "servicios": "Serveis",
@@ -117,7 +119,11 @@
     "ariaWhatsApp": "Contactar per WhatsApp"
   },
   "legal": {
-    "volver": "Tornar a l'inici"
+    "volver": "Tornar a l'inici",
+    "avisoTitulo": "Avís legal",
+    "privacidadTitulo": "Política de privacitat",
+    "avisoMeta": "Avís legal i informació del titular de {nombre}.",
+    "privacidadMeta": "Política de privacitat i tractament de dades personals de {nombre}."
   },
   "resenas": {
     "chip": "Ressenyes Google",

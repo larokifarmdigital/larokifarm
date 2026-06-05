@@ -85,7 +85,9 @@
     "labelHorario": "Opening hours",
     "btnEscribenos": "Write to us",
     "btnLlamar": "Call now",
-    "ariaMapa": "Map of {nombre}"
+    "ariaMapa": "Map of {nombre}",
+    "cargarMapa": "View map",
+    "cargarMapaAviso": "Clicking will load Google Maps, which installs Google cookies."
   },
   "footer": {
     "servicios": "Services",
@@ -117,7 +119,11 @@
     "ariaWhatsApp": "Contact via WhatsApp"
   },
   "legal": {
-    "volver": "Back to home"
+    "volver": "Back to home",
+    "avisoTitulo": "Legal notice",
+    "privacidadTitulo": "Privacy policy",
+    "avisoMeta": "Legal notice and owner information for {nombre}.",
+    "privacidadMeta": "Privacy policy and personal data processing for {nombre}."
   },
   "resenas": {
     "chip": "Google Reviews",

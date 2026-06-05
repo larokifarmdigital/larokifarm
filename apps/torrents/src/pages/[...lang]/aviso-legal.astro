@@ -1,6 +1,4 @@
 ---
-// TODO i18n legal: el texto legal de aviso-legal está en español en todas las locales.
-// Cuando un abogado revise las versiones EN/CA, sustituir el contenido por locale.
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
@@ -8,6 +6,7 @@ import {
   obtenerFarmaciaPorSlug,
   agruparHorarios,
   localizar,
+  portableTextAHtml,
   SLUG_FARMACIA,
   type Farmacia,
   type DiasI18n,
@@ -18,6 +17,7 @@ import {
   t,
   type Locale,
 } from '@/lib/i18n';
+import { LEGAL } from '@/lib/legal';
 import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
 import diasEs from '@/i18n/es.json';
 import diasEn from '@/i18n/en.json';
@@ -62,23 +62,18 @@ const mostrarFaqs = (farmacia.faqs ?? []).some(
   (f) => localizar(f.pregunta, lang) && localizar(f.respuesta, lang),
 );
 
-const direccionCompleta = [
-  farmacia.direccion?.calle,
-  farmacia.direccion?.codigoPostal,
-  farmacia.direccion?.ciudad,
-  farmacia.direccion?.provincia,
-]
-  .filter(Boolean)
-  .join(', ');
-
-const anyo = new Date().getFullYear();
 const canonical = `${siteUrl}${rutaConLocale('/aviso-legal', lang)}`;
 const home = rutaConLocale('/', lang);
+
+// Todo el contenido visible procede de Sanity; si está vacío, del texto por
+// defecto validado y traducido (lib/legal.ts). El título va incluido en el texto.
+const avisoHtml =
+  portableTextAHtml(localizar(farmacia.avisoLegal, lang)) || LEGAL[lang].avisoLegal;
 ---
 
 <BaseLayout
-  titulo={`Aviso legal · ${farmacia.nombre}`}
-  descripcion={`Aviso legal e información del titular de ${farmacia.nombre}.`}
+  titulo={`${t('legal.avisoTitulo', lang)} · ${farmacia.nombre}`}
+  descripcion={t('legal.avisoMeta', lang, { nombre: farmacia.nombre })}
   canonical={canonical}
   lang={lang}
   rutaActual='/aviso-legal'
@@ -96,7 +91,7 @@ const home = rutaConLocale('/', lang);
   />
 
   <main id='contenido' class='container-app py-16 md:py-24'>
-    <article class='prose-legal mx-auto max-w-3xl space-y-6'>
+    <article class='mx-auto max-w-3xl space-y-6'>
       <a href={home} class='inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--primary)]'>
         <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
           <path d='m15 18-6-6 6-6' />
@@ -104,105 +99,7 @@ const home = rutaConLocale('/', lang);
         {t('legal.volver', lang)}
       </a>
 
-      <h1 class='text-4xl font-extrabold tracking-tight md:text-5xl'>Aviso legal</h1>
-
-      <p class='text-sm text-[var(--muted-foreground)]'>
-        Última actualización: {anyo}
-      </p>
-
-      <section class='space-y-3'>
-        <h2 class='text-2xl font-extrabold'>1. Datos identificativos del titular</h2>
-        <p>
-          En cumplimiento del artículo 10 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad
-          de la Información y de Comercio Electrónico (LSSI-CE), se informa de los datos del titular de
-          este sitio web:
-        </p>
-        <ul class='ml-5 list-disc space-y-1'>
-          <li><strong>Denominación:</strong> {farmacia.nombre}</li>
-          {farmacia.titular && <li><strong>Farmacéutico/a titular:</strong> {farmacia.titular}</li>}
-          {farmacia.numeroColegiado && <li><strong>Nº de colegiado:</strong> {farmacia.numeroColegiado}</li>}
-          {direccionCompleta && <li><strong>Dirección:</strong> {direccionCompleta}</li>}
-          {farmacia.contacto?.telefono && <li><strong>Teléfono:</strong> {farmacia.contacto.telefono}</li>}
-          {farmacia.contacto?.email && <li><strong>Email:</strong> {farmacia.contacto.email}</li>}
-        </ul>
-        <p class='text-sm text-[var(--muted-foreground)]'>
-          <em>
-            Si dispones de NIF/CIF, número de registro mercantil u otros datos identificativos
-            relevantes, añádelos también aquí (campo a completar por el titular).
-          </em>
-        </p>
-      </section>
-
-      <section class='space-y-3'>
-        <h2 class='text-2xl font-extrabold'>2. Objeto</h2>
-        <p>
-          El presente aviso legal regula el uso del sitio web accesible desde
-          <a href={siteUrl} class='text-[var(--primary)] underline'>{siteUrl || 'este sitio'}</a> (en
-          adelante, el "Sitio"), que {farmacia.nombre} pone a disposición de los usuarios de Internet con
-          el fin de proporcionar información sobre la farmacia, sus servicios, horarios y datos de
-          contacto.
-        </p>
-      </section>
-
-      <section class='space-y-3'>
-        <h2 class='text-2xl font-extrabold'>3. Condiciones de uso</h2>
-        <p>
-          El acceso al Sitio es gratuito y no exige registro previo. El usuario se compromete a hacer un
-          uso adecuado de los contenidos y a no emplearlos para realizar actividades ilícitas o
-          contrarias a la buena fe.
-        </p>
-        <p>
-          El titular se reserva el derecho a modificar, suspender o interrumpir, total o parcialmente,
-          el acceso al Sitio sin necesidad de previo aviso.
-        </p>
-      </section>
-
-      <section class='space-y-3'>
-        <h2 class='text-2xl font-extrabold'>4. Propiedad intelectual e industrial</h2>
-        <p>
-          Todos los contenidos del Sitio (textos, imágenes, logotipos, diseño gráfico, código fuente,
-          etc.) son propiedad de {farmacia.nombre} o de terceros que han autorizado su uso. Queda
-          prohibida su reproducción, distribución o comunicación pública sin la autorización expresa
-          del titular.
-        </p>
-      </section>
-
-      <section class='space-y-3'>
-        <h2 class='text-2xl font-extrabold'>5. Responsabilidad</h2>
-        <p>
-          {farmacia.nombre} no se hace responsable de los daños y perjuicios derivados de errores u
-          omisiones en los contenidos, ni de los problemas derivados del uso del Sitio por parte de los
-          usuarios. La información sanitaria publicada tiene carácter divulgativo y nunca sustituye el
-          consejo profesional individualizado.
-        </p>
-      </section>
-
-      <section class='space-y-3'>
-        <h2 class='text-2xl font-extrabold'>6. Enlaces a terceros</h2>
-        <p>
-          El Sitio puede contener enlaces a páginas web de terceros (Google Maps, WhatsApp, redes
-          sociales, etc.). {farmacia.nombre} no se responsabiliza del contenido ni de las políticas de
-          privacidad de dichos sitios.
-        </p>
-      </section>
-
-      <section class='space-y-3'>
-        <h2 class='text-2xl font-extrabold'>7. Protección de datos</h2>
-        <p>
-          El tratamiento de los datos personales que pudieran recabarse a través del Sitio se rige por
-          nuestra <a href={rutaConLocale('/politica-privacidad', lang)} class='text-[var(--primary)] underline'>Política de
-          privacidad</a>.
-        </p>
-      </section>
-
-      <section class='space-y-3'>
-        <h2 class='text-2xl font-extrabold'>8. Legislación y jurisdicción aplicables</h2>
-        <p>
-          Las presentes condiciones se rigen por la legislación española. Para la resolución de
-          cualquier controversia, las partes se someten a los Juzgados y Tribunales del domicilio del
-          titular, salvo que la normativa aplicable disponga otra cosa.
-        </p>
-      </section>
+      <div class='legal-cms' set:html={avisoHtml} />
     </article>
   </main>
 
@@ -226,15 +123,61 @@ const home = rutaConLocale('/', lang);
 </BaseLayout>
 
 <style>
-  .prose-legal h2 {
-    margin-top: 1.5rem;
+  /* El contenido legal se inyecta con set:html (sin scope) → estilos globales. */
+  .legal-cms :global(h1) {
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0 0 0.75rem;
   }
-  .prose-legal p,
-  .prose-legal li {
+  @media (min-width: 768px) {
+    .legal-cms :global(h1) {
+      font-size: 3rem;
+    }
+  }
+  .legal-cms :global(h2) {
+    margin-top: 2rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+  }
+  .legal-cms :global(h3) {
+    margin-top: 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .legal-cms :global(h4) {
+    margin-top: 1rem;
+    font-weight: 700;
+  }
+  .legal-cms :global(p),
+  .legal-cms :global(li) {
     line-height: 1.7;
     color: color-mix(in oklch, var(--foreground), transparent 15%);
   }
-  .prose-legal a {
+  .legal-cms :global(p) {
+    margin-top: 1rem;
+  }
+  .legal-cms :global(ul),
+  .legal-cms :global(ol) {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .legal-cms :global(ul) {
+    list-style: disc;
+  }
+  .legal-cms :global(ol) {
+    list-style: decimal;
+  }
+  .legal-cms :global(a) {
+    color: var(--primary);
+    text-decoration: underline;
     word-break: break-word;
+  }
+  .legal-cms :global(strong) {
+    color: var(--foreground);
   }
 </style>

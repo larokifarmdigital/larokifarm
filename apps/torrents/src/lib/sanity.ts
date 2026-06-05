@@ -38,7 +38,20 @@ export type IconoNombre =
   | 'leaf' | 'brain' | 'activity' | 'award' | 'users' | 'star' | 'clock';
 
 export type PortableSpan = { _type: 'span'; text?: string; marks?: string[] };
-export type PortableBlock = { _type: string; style?: string; children?: PortableSpan[] };
+export type PortableMarkDef = {
+  _key: string;
+  _type: string;
+  href?: string;
+  externo?: boolean;
+};
+export type PortableBlock = {
+  _type: string;
+  style?: string;
+  listItem?: 'bullet' | 'number';
+  level?: number;
+  markDefs?: PortableMarkDef[];
+  children?: PortableSpan[];
+};
 
 /**
  * Entrada de un campo internacionalizado (sanity-plugin-internationalized-array).
@@ -134,6 +147,8 @@ export type SeoCampos = {
   imagenOg?: { asset: { url: string } };
 };
 
+export type LegalTexto = EntradaI18n<PortableBlock[]>[];
+
 export type IdiomaActivo = { _id?: string; codigo: string; nombre: string };
 
 /** Textos editables de la cabecera de una sección (chip + título + subtítulo). */
@@ -194,6 +209,8 @@ export type Farmacia = {
   textosServicios?: TextosCabecera;
   textosFaqs?: TextosCabecera;
   textosResenas?: TextosCabecera;
+  avisoLegal?: LegalTexto;
+  politicaPrivacidad?: LegalTexto;
 };
 
 const FARMACIA_PROJECTION = `
@@ -229,7 +246,9 @@ const FARMACIA_PROJECTION = `
   "featuresLista": coalesce(featuresLista[]{ icono, titulo, descripcion }, []),
   textosServicios,
   textosFaqs,
-  textosResenas
+  textosResenas,
+  avisoLegal,
+  politicaPrivacidad
 `;
 
 export async function obtenerFarmaciaPorSlug(slug: string): Promise<Farmacia | null> {
@@ -379,26 +398,67 @@ function escaparHtml(t: string): string {
     .replace(/'/g, '&#39;');
 }
 
-export function portableTextAHtml(bloques?: PortableBlock[]): string {
-  if (!Array.isArray(bloques) || bloques.length === 0) return '';
-  return bloques
-    .filter((b) => b._type === 'block')
-    .map((b) => {
-      const texto = (b.children ?? [])
-        .map((span) => {
-          let t = escaparHtml(span.text ?? '');
-          if (span.marks?.includes('strong')) t = `<strong>${t}</strong>`;
-          if (span.marks?.includes('em')) t = `<em>${t}</em>`;
-          return t;
-        })
-        .join('');
-      const estilo = b.style ?? 'normal';
-      if (estilo === 'h2') return `<h2>${texto}</h2>`;
-      if (estilo === 'h3') return `<h3>${texto}</h3>`;
-      if (estilo === 'blockquote') return `<blockquote>${texto}</blockquote>`;
-      return `<p>${texto}</p>`;
+function bloqueInline(b: PortableBlock): string {
+  const defs = b.markDefs ?? [];
+  return (b.children ?? [])
+    .map((span) => {
+      let t = escaparHtml(span.text ?? '');
+      const marks = span.marks ?? [];
+      // Decoradores
+      if (marks.includes('strong')) t = `<strong>${t}</strong>`;
+      if (marks.includes('em')) t = `<em>${t}</em>`;
+      if (marks.includes('underline')) t = `<u>${t}</u>`;
+      // Anotaciones (enlaces): la mark es la _key del markDef
+      const def = defs.find((d) => marks.includes(d._key));
+      if (def && def._type === 'link' && def.href) {
+        const href = escaparHtml(def.href);
+        const attrs = def.externo
+          ? ' target="_blank" rel="noopener noreferrer"'
+          : '';
+        t = `<a href="${href}"${attrs}>${t}</a>`;
+      }
+      return t;
     })
     .join('');
+}
+
+export function portableTextAHtml(bloques?: PortableBlock[]): string {
+  if (!Array.isArray(bloques) || bloques.length === 0) return '';
+  const salida: string[] = [];
+  let listaAbierta: 'bullet' | 'number' | null = null;
+
+  const cerrarLista = () => {
+    if (listaAbierta) {
+      salida.push(listaAbierta === 'number' ? '</ol>' : '</ul>');
+      listaAbierta = null;
+    }
+  };
+
+  for (const b of bloques) {
+    if (b._type !== 'block') continue;
+    const texto = bloqueInline(b);
+
+    if (b.listItem === 'bullet' || b.listItem === 'number') {
+      if (listaAbierta !== b.listItem) {
+        cerrarLista();
+        salida.push(b.listItem === 'number' ? '<ol>' : '<ul>');
+        listaAbierta = b.listItem;
+      }
+      salida.push(`<li>${texto}</li>`);
+      continue;
+    }
+
+    cerrarLista();
+    const estilo = b.style ?? 'normal';
+    if (estilo === 'h1') salida.push(`<h1>${texto}</h1>`);
+    else if (estilo === 'h2') salida.push(`<h2>${texto}</h2>`);
+    else if (estilo === 'h3') salida.push(`<h3>${texto}</h3>`);
+    else if (estilo === 'h4') salida.push(`<h4>${texto}</h4>`);
+    else if (estilo === 'blockquote') salida.push(`<blockquote>${texto}</blockquote>`);
+    else salida.push(`<p>${texto}</p>`);
+  }
+  cerrarLista();
+  return salida.join('');
 }
 
 const ORDEN_DIAS: DiaSemana[] = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
