@@ -1,0 +1,17 @@
+/node_modules
+/.next
+/out
+/build
+/.open-next
+/.wrangler
+next-env.d.ts
+*.tsbuildinfo
+
+# Entorno (secrets)
+.env
+.env*.local
+.dev.vars
+
+# Sistema
+.DS_Store
+*.log
