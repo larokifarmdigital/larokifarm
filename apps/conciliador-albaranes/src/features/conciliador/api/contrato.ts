@@ -1,10 +1,12 @@
-import type { LineaConciliada } from '../core/tipos';
+import type { LineaAlbaran, LineaConciliada } from '../core/tipos';
 
 /** Contrato de la API `POST /api/conciliar`. Compartido por el route y el cliente. */
 
 export interface DetalleConciliacion {
   numeroAlbaran: string;
   lineas: LineaConciliada[];
+  /** Líneas tal cual las extrajo Gemini (para depurar la lectura del PDF). */
+  lineasCrudas?: LineaAlbaran[];
 }
 
 export interface ResultadoPar {

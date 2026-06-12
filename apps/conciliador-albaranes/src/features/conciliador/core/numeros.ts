@@ -13,6 +13,17 @@ export function limpiarCN(valor: unknown): string {
 }
 
 /**
+ * Normaliza un código alternativo / EAN para el cruce secundario: mayúsculas,
+ * solo alfanumérico, sin truncar. Devuelve '' si queda demasiado corto (<4) para
+ * evitar emparejamientos espurios por códigos triviales.
+ */
+export function limpiarAlt(valor: unknown): string {
+  if (valor === null || valor === undefined) return '';
+  const s = String(valor).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return s.length >= 4 ? s : '';
+}
+
+/**
  * Parsea números soportando coma decimal, separador de miles y `%`.
  * - number → tal cual.
  * - "2,45" → 2.45 ; "1.234,56" → 1234.56 ; "21,00%" → 21 ; "154054.6" → 154054.6

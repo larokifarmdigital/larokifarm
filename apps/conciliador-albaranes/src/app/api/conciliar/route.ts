@@ -75,7 +75,7 @@ export async function POST(req: Request) {
         nDiscrepancias: conc.totalDiscrepancias,
         nombreArchivo: nombreInforme(conc, pedido.nProveedor),
         informeBase64: toBase64(informe),
-        detalle: { numeroAlbaran: conc.numeroAlbaran, lineas: conc.lineas },
+        detalle: { numeroAlbaran: conc.numeroAlbaran, lineas: conc.lineas, lineasCrudas: albaran.lineas },
       };
     } catch (e) {
       return {

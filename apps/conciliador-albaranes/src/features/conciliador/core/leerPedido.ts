@@ -42,6 +42,7 @@ export function leerPedido(bytes: Uint8Array | ArrayBuffer): PedidoData {
 
   const cabeceras = Object.keys(filas[0]);
   const colCN = buscarColumna(cabeceras, ['CodigoArticulo']);
+  const colAlt = buscarColumna(cabeceras, ['CodigoAlternativo', 'CodigoEAN', 'EAN', 'CodigoBarras']);
   const colUds = buscarColumna(cabeceras, ['Unidades', 'UnidadesPedidas']);
   const colPrecio = buscarColumna(cabeceras, ['Precio']);
   const colDto = buscarColumna(cabeceras, ['%Descuento', 'Descuento']);
@@ -52,12 +53,13 @@ export function leerPedido(bytes: Uint8Array | ArrayBuffer): PedidoData {
   const lineas = filas
     .map((row) => ({
       codigoArticulo: colCN ? String(row[colCN] ?? '') : '',
+      codigoAlternativo: colAlt ? String(row[colAlt] ?? '') : '',
       descripcion: colDesc ? String(row[colDesc] ?? '') : '',
       unidades: colUds ? num(row[colUds]) : 0,
       precio: colPrecio ? num(row[colPrecio]) : 0,
       descuento: colDto ? num(row[colDto]) : 0,
     }))
-    .filter((l) => l.codigoArticulo.trim() !== '');
+    .filter((l) => l.codigoArticulo.trim() !== '' || l.codigoAlternativo.trim() !== '');
 
   const primera = filas.find((r) => (colNombreProv ? String(r[colNombreProv] ?? '').trim() : ''));
 

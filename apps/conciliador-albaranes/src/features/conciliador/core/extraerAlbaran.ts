@@ -12,10 +12,22 @@ const MODELO = 'gemini-2.5-flash';
 const PROMPT = `Eres un extractor de albaranes de proveedores farmacéuticos.
 Vienen en muchos formatos; adáptate. Extrae cabecera y TODAS las líneas
 (puede haber varias páginas: no te dejes ninguna).
-- "cantidad" = unidades servidas (UDS).
-- "precio_unitario" = precio base por unidad (ej. PVL/PRECIO).
-- "descuento" = porcentaje de la columna DTO (solo el número, ej. 21). Si no hay, 0.
+- "cantidad" = valor de la columna UDS TAL CUAL aparece (unidades servidas totales; no
+  restes la bonificación, eso lo hace el sistema).
+- "precio_unitario" = precio base por unidad de la columna PVL/PRECIO (NO el precio neto
+  ni el importe). Léelo de la línea facturada; nunca pongas 0 si la columna PVL tiene valor.
+- "descuento" = porcentaje de la columna DTO/DESCUENTO de ESA línea (solo el número, ej.
+  21 ó 21,5). Léelo SIEMPRE que la línea tenga un valor en DTO; solo pon 0 si esa columna
+  está vacía. El descuento NO es la bonificación: son columnas distintas.
+- "bonificacion" = valor de la columna BONIF. TAL CUAL (unidades de regalo/muestra/
+  promoción de esa línea). Si no hay, 0.
+- IMPORTANTE sobre bonificaciones: a veces el regalo NO va en columna BONIF. sino como
+  una LÍNEA APARTE del mismo producto con precio 0 (o 100% de descuento). En ese caso
+  extrae esa línea tal cual: su "cantidad" = sus unidades y "precio_unitario" = 0. NO
+  la fusiones con la línea facturada; el sistema la reconocerá como bonificación.
 - "codigo_nacional" = columna C.N. si existe; si no, "".
+- "codigo_ean" = código de barras / EAN / código alternativo del artículo si aparece
+  (solo el código, normalmente 8-13 dígitos); si no, "".
 - "proveedor" = nombre del proveedor que emite el albarán (ej. "DENTAID").
 - Fechas en formato YYYY-MM-DD.`;
 
@@ -34,10 +46,12 @@ const RESPONSE_SCHEMA = {
         properties: {
           codigo: { type: 'string' },
           codigo_nacional: { type: 'string' },
+          codigo_ean: { type: 'string' },
           descripcion: { type: 'string' },
           cantidad: { type: 'number' },
           precio_unitario: { type: 'number' },
           descuento: { type: 'number' },
+          bonificacion: { type: 'number' },
         },
         required: ['descripcion', 'cantidad', 'precio_unitario'],
       },
@@ -50,10 +64,12 @@ const RESPONSE_SCHEMA = {
 const lineaSchema = z.object({
   codigo: z.string().optional(),
   codigo_nacional: z.string().optional(),
+  codigo_ean: z.string().optional(),
   descripcion: z.string(),
   cantidad: z.number(),
   precio_unitario: z.number(),
   descuento: z.number().optional(),
+  bonificacion: z.number().optional(),
 });
 const albaranSchema = z.object({
   numero_albaran: z.string(),

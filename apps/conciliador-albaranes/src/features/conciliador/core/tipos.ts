@@ -7,10 +7,15 @@
 export interface LineaAlbaran {
   codigo?: string;
   codigo_nacional?: string;
+  /** Código de barras / EAN / código alternativo del artículo, si aparece. */
+  codigo_ean?: string;
   descripcion: string;
+  /** Unidades FACTURADAS (UDS), sin contar bonificaciones. */
   cantidad: number;
   precio_unitario: number;
   descuento?: number;
+  /** Unidades de bonificación/regalo/muestra de la columna BONIF. (si la hay). */
+  bonificacion?: number;
 }
 
 /** Datos estructurados de un albarán PDF. */
@@ -25,6 +30,8 @@ export interface AlbaranData {
 /** Línea del pedido leída del Excel del cliente. */
 export interface LineaPedido {
   codigoArticulo: string;
+  /** Código alternativo / EAN (cruce secundario si el C.N. no casa). */
+  codigoAlternativo?: string;
   descripcion?: string;
   unidades: number;
   precio: number;
@@ -52,6 +59,8 @@ export interface LineaConciliada {
   descripcion: string;
   udsPedido: number | null;
   udsAlbaran: number | null;
+  /** Unidades de bonificación/regalo servidas (no cuentan como discrepancia). */
+  bonifAlbaran: number | null;
   precioPedido: number | null;
   precioAlbaran: number | null;
   dtoPedido: number | null;

@@ -9,16 +9,22 @@ import type { Conciliacion, LineaConciliada } from './tipos';
  */
 
 const CABECERAS = [
-  'C.N.',
+  'Código',
   'Descripción',
   'Uds pedido',
   'Uds albarán',
+  'Bonif. alb.',
   'Precio pedido',
   'Precio albarán',
   'Dto pedido %',
   'Dto albarán %',
   'Estado / motivo',
 ] as const;
+
+// Índice de la columna de estado y rango de columnas numéricas (alineadas a la dcha.).
+const COL_ESTADO = CABECERAS.length - 1;
+const NUM_DESDE = 2;
+const NUM_HASTA = COL_ESTADO - 1;
 
 // Colores (RGB sin #).
 const HEADER_BG = '1E293B'; // slate-800
@@ -36,10 +42,10 @@ const borde = {
 };
 
 function celdaDiscrepa(l: LineaConciliada, col: number): boolean {
-  // 2,3 = unidades · 4,5 = precio · 6,7 = descuento
+  // 2,3 = unidades · 4 = bonif · 5,6 = precio · 7,8 = descuento
   if (col === 2 || col === 3) return l.discrepancias.includes('unidades');
-  if (col === 4 || col === 5) return l.discrepancias.includes('precio');
-  if (col === 6 || col === 7) return l.discrepancias.includes('descuento');
+  if (col === 5 || col === 6) return l.discrepancias.includes('precio');
+  if (col === 7 || col === 8) return l.discrepancias.includes('descuento');
   return false;
 }
 
@@ -57,6 +63,7 @@ export function generarInforme(c: Conciliacion): Uint8Array {
       l.descripcion,
       l.udsPedido ?? '',
       l.udsAlbaran ?? '',
+      l.bonifAlbaran ? l.bonifAlbaran : '',
       l.precioPedido ?? '',
       l.precioAlbaran ?? '',
       l.dtoPedido ?? '',
@@ -67,8 +74,8 @@ export function generarInforme(c: Conciliacion): Uint8Array {
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols'] = [
-    { wch: 10 }, { wch: 42 }, { wch: 11 }, { wch: 11 }, { wch: 13 },
-    { wch: 13 }, { wch: 12 }, { wch: 12 }, { wch: 34 },
+    { wch: 12 }, { wch: 42 }, { wch: 11 }, { wch: 11 }, { wch: 11 },
+    { wch: 13 }, { wch: 13 }, { wch: 12 }, { wch: 12 }, { wch: 34 },
   ];
 
   const set = (r: number, col: number, estilo: Record<string, unknown>) => {
@@ -84,7 +91,7 @@ export function generarInforme(c: Conciliacion): Uint8Array {
     set(HEADER_ROW, col, {
       font: { bold: true, color: { rgb: HEADER_FG } },
       fill: { patternType: 'solid', fgColor: { rgb: HEADER_BG } },
-      alignment: { horizontal: col >= 2 && col <= 7 ? 'right' : 'left', vertical: 'center' },
+      alignment: { horizontal: col >= NUM_DESDE && col <= NUM_HASTA ? 'right' : 'left', vertical: 'center' },
       border: borde,
     });
   }
@@ -95,7 +102,7 @@ export function generarInforme(c: Conciliacion): Uint8Array {
     for (let col = 0; col < CABECERAS.length; col++) {
       const estilo: Record<string, unknown> = {
         border: borde,
-        alignment: { horizontal: col >= 2 && col <= 7 ? 'right' : 'left', vertical: 'center' },
+        alignment: { horizontal: col >= NUM_DESDE && col <= NUM_HASTA ? 'right' : 'left', vertical: 'center' },
       };
       if (celdaDiscrepa(l, col)) {
         estilo.fill = { patternType: 'solid', fgColor: { rgb: CELDA_MAL } };
@@ -106,7 +113,7 @@ export function generarInforme(c: Conciliacion): Uint8Array {
         // Banding: filas OK alternas con un gris muy suave → aspecto de tabla.
         estilo.fill = { patternType: 'solid', fgColor: { rgb: BANDA } };
       }
-      if (col === 8 && filaMal) estilo.font = { bold: true, color: { rgb: '991B1B' } };
+      if (col === COL_ESTADO && filaMal) estilo.font = { bold: true, color: { rgb: '991B1B' } };
       set(r, col, estilo);
     }
   });

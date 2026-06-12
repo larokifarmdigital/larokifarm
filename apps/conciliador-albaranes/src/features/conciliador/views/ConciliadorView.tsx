@@ -435,7 +435,49 @@ function ResultadoFila({ r }: { r: ResultadoPar }) {
         )}
       </div>
       {abierto && r.detalle && <DetalleTabla lineas={r.detalle.lineas} />}
+      {abierto && r.detalle?.lineasCrudas && r.detalle.lineasCrudas.length > 0 && (
+        <DebugExtraccion lineas={r.detalle.lineasCrudas} />
+      )}
     </li>
+  );
+}
+
+function DebugExtraccion({ lineas }: { lineas: NonNullable<ResultadoPar['detalle']>['lineasCrudas'] }) {
+  if (!lineas) return null;
+  return (
+    <details className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs">
+      <summary className="cursor-pointer font-semibold text-slate-500">
+        🔎 Ver lo que leyó Gemini del PDF ({lineas.length} líneas) — debug
+      </summary>
+      <div className="mt-2 overflow-x-auto">
+        <table className="w-full min-w-[720px]">
+          <thead>
+            <tr className="text-left text-slate-400">
+              <th className="px-2 py-1">C.N.</th>
+              <th className="px-2 py-1">EAN</th>
+              <th className="px-2 py-1">Descripción</th>
+              <th className="px-2 py-1 text-right">UDS</th>
+              <th className="px-2 py-1 text-right">PVL</th>
+              <th className="px-2 py-1 text-right">DTO</th>
+              <th className="px-2 py-1 text-right">BONIF</th>
+            </tr>
+          </thead>
+          <tbody className="font-mono">
+            {lineas.map((l, i) => (
+              <tr key={i} className="border-t border-slate-200">
+                <td className="px-2 py-1">{l.codigo_nacional || l.codigo || '—'}</td>
+                <td className="px-2 py-1">{l.codigo_ean || '—'}</td>
+                <td className="px-2 py-1 font-sans">{l.descripcion}</td>
+                <td className="px-2 py-1 text-right">{l.cantidad}</td>
+                <td className="px-2 py-1 text-right">{l.precio_unitario}</td>
+                <td className="px-2 py-1 text-right">{l.descuento ?? 0}</td>
+                <td className="px-2 py-1 text-right">{l.bonificacion ?? 0}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
   );
 }
 
@@ -455,10 +497,11 @@ function DetalleTabla({ lineas }: { lineas: LineaConciliada[] }) {
       <table className="w-full min-w-[820px] text-sm">
         <thead>
           <tr className="bg-slate-800 text-left text-xs tracking-wide text-white uppercase">
-            <th className={TH}>C.N.</th>
+            <th className={TH}>Código</th>
             <th className={TH}>Descripción</th>
             <th className={`${TH} text-right`}>Uds ped.</th>
             <th className={`${TH} text-right`}>Uds alb.</th>
+            <th className={`${TH} text-right`}>Bonif.</th>
             <th className={`${TH} text-right`}>Precio ped.</th>
             <th className={`${TH} text-right`}>Precio alb.</th>
             <th className={`${TH} text-right`}>Dto ped.</th>
@@ -475,6 +518,9 @@ function DetalleTabla({ lineas }: { lineas: LineaConciliada[] }) {
                 <td className="px-3 py-2">{l.descripcion}</td>
                 <td className={`px-3 py-2 text-right ${marca(l, 'unidades')}`}>{celda(l.udsPedido)}</td>
                 <td className={`px-3 py-2 text-right ${marca(l, 'unidades')}`}>{celda(l.udsAlbaran)}</td>
+                <td className="px-3 py-2 text-right text-emerald-700">
+                  {l.bonifAlbaran ? `+${l.bonifAlbaran}` : '—'}
+                </td>
                 <td className={`px-3 py-2 text-right ${marca(l, 'precio')}`}>{celda(l.precioPedido)}</td>
                 <td className={`px-3 py-2 text-right ${marca(l, 'precio')}`}>{celda(l.precioAlbaran)}</td>
                 <td className={`px-3 py-2 text-right ${marca(l, 'descuento')}`}>{celda(l.dtoPedido)}</td>
