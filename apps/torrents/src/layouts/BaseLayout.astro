@@ -3,6 +3,7 @@ import '@/styles/global.css';
 import gilroyRegular from '@/assets/fonts/Gilroy-Regular.ttf?url';
 import gilroyBlack from '@/assets/fonts/Gilroy-Black.ttf?url';
 import { LOCALES_DISPONIBLES, LOCALE_DEFECTO, rutaConLocale, type Locale } from '@/lib/i18n';
+import Analytics from '@vercel/analytics/astro';
 
 export interface Props {
   titulo: string;
@@ -100,6 +101,8 @@ const hrefDefault =
     </a>
     <slot />
 
+    <Analytics />
+
     <div
       data-cima-chat
       data-theme='light'
@@ -108,7 +111,7 @@ const hrefDefault =
       data-position='bottom-right'
     >
     </div>
-    <script is:inline async src='https://larokifarm-cima-chat.zpjstudio.com/cima-chat.iife.js'>
-    </script>
+    <script is:inline async src='https://larokifarm-cima-chat.zpjstudio.com/cima-chat.iife.js'
+    ></script>
   </body>
 </html>

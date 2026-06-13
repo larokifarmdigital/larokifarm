@@ -2,7 +2,7 @@
 
 Documento operativo para llevar la web a producción y posicionarla en Google, Bing y motores de IA (ChatGPT, Perplexity, Claude, Gemini).
 
-**Sitio:** https://farmaciatorrents.zpjstudio.com
+**Sitio:** https://farmaciapediatrica.com
 **Stack:** Astro + Sanity (CMS)
 **Última actualización:** mayo 2026
 
@@ -12,7 +12,7 @@ Documento operativo para llevar la web a producción y posicionarla en Google, B
 
 Marcar antes de hacer push a producción.
 
-- [ ] `SITE_URL` en `.env` apunta al dominio definitivo (actual: `https://farmaciatorrents.zpjstudio.com`). Si cambia el dominio, actualizar y rebuild.
+- [ ] `SITE_URL` en `.env` apunta al dominio definitivo (actual: `https://farmaciapediatrica.com`). Si cambia el dominio, actualizar y rebuild.
 - [ ] `pnpm build` se ejecuta sin errores (`pnpm astro check` + `pnpm build`).
 - [ ] Probar en local con `pnpm preview` que se ven:
   - [ ] Home con Hero, Features, Servicios, About, FAQs, Contacto, Footer.
@@ -183,7 +183,7 @@ Las IAs (ChatGPT, Claude, Perplexity, Gemini) entrenan masivamente con Wikidata.
   - [ ] `name=Farmacia Torrents`
   - [ ] `phone=+34 932 461 228`
   - [ ] `opening_hours=Mo-Fr 08:00-22:00; Sa-Su 09:00-22:00` (formato OSM)
-  - [ ] `website=https://farmaciatorrents.zpjstudio.com`
+  - [ ] `website=https://farmaciapediatrica.com`
   - [ ] `wheelchair=yes/no`
   - [ ] `addr:street`, `addr:housenumber`, `addr:postcode`, `addr:city`
 - [ ] Guardar el changeset con un comentario tipo "Actualizo datos de farmacia local".
@@ -262,12 +262,12 @@ Crear recordatorio recurrente en el calendario:
 
 | Recurso | URL |
 |---|---|
-| Sitio | https://farmaciatorrents.zpjstudio.com |
-| Sitemap | https://farmaciatorrents.zpjstudio.com/sitemap-index.xml |
-| robots.txt | https://farmaciatorrents.zpjstudio.com/robots.txt |
-| llms.txt | https://farmaciatorrents.zpjstudio.com/llms.txt |
-| Aviso legal | https://farmaciatorrents.zpjstudio.com/aviso-legal |
-| Política de privacidad | https://farmaciatorrents.zpjstudio.com/politica-privacidad |
+| Sitio | https://farmaciapediatrica.com |
+| Sitemap | https://farmaciapediatrica.com/sitemap-index.xml |
+| robots.txt | https://farmaciapediatrica.com/robots.txt |
+| llms.txt | https://farmaciapediatrica.com/llms.txt |
+| Aviso legal | https://farmaciapediatrica.com/aviso-legal |
+| Política de privacidad | https://farmaciapediatrica.com/politica-privacidad |
 | Sanity Studio | (la URL de tu instalación de Studio) |
 
 ---
