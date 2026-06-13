@@ -358,6 +358,8 @@ const titulo = ciudad ? partirParaResaltar(tituloCiudad) : partirParaResaltar(ti
 </section>
 
 <script>
+  import { track } from '@vercel/analytics';
+
   // Patrón "clic para cargar": el iframe de Google Maps NO se crea hasta que el
   // usuario pulsa el placeholder. Así Google no recibe ninguna petición ni
   // instala cookies antes de una acción voluntaria (LSSI / art. 7 RGPD).
@@ -367,6 +369,7 @@ const titulo = ciudad ? partirParaResaltar(tituloCiudad) : partirParaResaltar(ti
       facade.addEventListener(
         'click',
         () => {
+          track('como_llegar');
           const url = facade.dataset.embed;
           if (!url) return;
           const iframe = document.createElement('iframe');

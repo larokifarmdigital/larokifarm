@@ -103,6 +103,19 @@ const hrefDefault =
 
     <Analytics />
 
+    <script>
+      // Tracking de conversiones (cookieless): clics en llamar y WhatsApp en toda la web.
+      import { track } from '@vercel/analytics';
+
+      document.addEventListener('click', e => {
+        const enlace = (e.target as Element | null)?.closest('a');
+        if (!enlace) return;
+        const href = enlace.getAttribute('href') ?? '';
+        if (href.startsWith('tel:')) track('llamar');
+        else if (href.includes('wa.me') || href.includes('whatsapp')) track('whatsapp');
+      });
+    </script>
+
     <div
       data-cima-chat
       data-theme='light'
