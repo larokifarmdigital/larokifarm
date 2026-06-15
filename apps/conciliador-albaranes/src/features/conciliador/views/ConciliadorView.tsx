@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { conciliarPares, type ParEnvio } from '../api/conciliar';
+import { useEffect, useMemo, useState } from 'react';
+import { conciliarPares, ConciliarError, type ParEnvio } from '../api/conciliar';
 import type { ResultadoPar } from '../api/contrato';
 import { Dropzone } from '../components/Dropzone';
 import { estadoTexto } from '../core/comparar';
@@ -23,6 +23,9 @@ interface Par {
 }
 
 const uid = () => crypto.randomUUID();
+
+/** Clave de acceso recordada en el navegador del cliente (persiste tras F5 / reabrir). */
+const CLAVE_STORAGE_KEY = 'conciliador.acceso_clave';
 
 function aCargado(file: File): Cargado | null {
   const tipo = tipoPorNombre(file.name);
@@ -48,6 +51,15 @@ export function ConciliadorView() {
   const [resultados, setResultados] = useState<ResultadoPar[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [clave, setClave] = useState('');
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [errorModal, setErrorModal] = useState<string | null>(null);
+
+  // Cargar la clave guardada tras el montaje (en useEffect, no en el initializer,
+  // para no provocar un desajuste de hidratación con el render del servidor).
+  useEffect(() => {
+    const guardada = localStorage.getItem(CLAVE_STORAGE_KEY);
+    if (guardada) setClave(guardada);
+  }, []);
 
   const completos = useMemo(() => pares.filter((p) => p.pdf && p.excel), [pares]);
   const incompletos = pares.length - completos.length;
@@ -130,8 +142,9 @@ export function ConciliadorView() {
     setError(null);
   }
 
-  async function comparar() {
-    if (completos.length === 0) return;
+  // Ejecuta la conciliación con la clave indicada. Devuelve el desenlace para que
+  // quien llama decida la UI (abrir el modal, mostrar error en el modal, etc.).
+  async function ejecutarComparar(claveUsar?: string): Promise<'ok' | 'noAutorizado' | 'error'> {
     setCargando(true);
     setError(null);
     setResultados(null);
@@ -141,12 +154,46 @@ export function ConciliadorView() {
         pdf: p.pdf!.file,
         xlsx: p.excel!.file,
       }));
-      const { resumen } = await conciliarPares(envio, clave || undefined);
+      const { resumen } = await conciliarPares(envio, claveUsar || undefined);
       setResultados(resumen);
+      // La clave funcionó (no hubo 401) → recordarla para no volver a pedirla.
+      if (claveUsar) localStorage.setItem(CLAVE_STORAGE_KEY, claveUsar);
+      return 'ok';
     } catch (e) {
+      if (e instanceof ConciliarError && e.status === 401) {
+        // La clave guardada ya no sirve (o no había): bórrala y pídela.
+        localStorage.removeItem(CLAVE_STORAGE_KEY);
+        return 'noAutorizado';
+      }
       setError(e instanceof Error ? e.message : 'Error al conciliar');
+      return 'error';
     } finally {
       setCargando(false);
+    }
+  }
+
+  async function comparar() {
+    if (completos.length === 0) return;
+    const r = await ejecutarComparar(clave || undefined);
+    if (r === 'noAutorizado') {
+      setErrorModal(null);
+      setModalAbierto(true);
+    }
+  }
+
+  // Reintenta con la clave tecleada en el modal.
+  async function confirmarClave(claveIngresada: string) {
+    const limpia = claveIngresada.trim();
+    if (!limpia) return;
+    const r = await ejecutarComparar(limpia);
+    if (r === 'ok') {
+      setClave(limpia);
+      setModalAbierto(false);
+    } else if (r === 'noAutorizado') {
+      setErrorModal('Clave incorrecta. Inténtalo de nuevo.');
+    } else {
+      // Error distinto (red, servidor): cierra el modal y muestra el error general.
+      setModalAbierto(false);
     }
   }
 
@@ -200,13 +247,6 @@ export function ConciliadorView() {
           )}
 
           <div className="flex flex-wrap items-center gap-4 border-t border-slate-200 pt-4">
-            <input
-              type="password"
-              value={clave}
-              onChange={(e) => setClave(e.target.value)}
-              placeholder="Clave de acceso (si aplica)"
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
             <button
               type="button"
               onClick={comparar}
@@ -261,7 +301,105 @@ export function ConciliadorView() {
           </ul>
         </section>
       )}
+
+      {modalAbierto && (
+        <ModalClave
+          cargando={cargando}
+          error={errorModal}
+          onConfirmar={confirmarClave}
+          onCerrar={() => setModalAbierto(false)}
+        />
+      )}
     </main>
+  );
+}
+
+function ModalClave({
+  cargando,
+  error,
+  onConfirmar,
+  onCerrar,
+}: {
+  cargando: boolean;
+  error: string | null;
+  onConfirmar: (clave: string) => void;
+  onCerrar: () => void;
+}) {
+  const [valor, setValor] = useState('');
+
+  // Cerrar con Escape.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCerrar();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onCerrar]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-clave-titulo"
+      onClick={onCerrar}
+    >
+      <form
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={(e) => {
+          e.preventDefault();
+          onConfirmar(valor);
+        }}
+        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+      >
+        <div className="mb-4 flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <h2 id="modal-clave-titulo" className="text-lg font-bold text-slate-900">
+              Clave de acceso
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Introduce la clave para usar el conciliador. Se recordará en este equipo.
+            </p>
+          </div>
+        </div>
+
+        <input
+          type="password"
+          value={valor}
+          onChange={(e) => setValor(e.target.value)}
+          placeholder="Clave de acceso"
+          aria-label="Clave de acceso"
+          autoFocus
+          autoComplete="current-password"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-100 focus:outline-none"
+        />
+
+        {error && <p className="mt-2 text-sm font-medium text-red-600">{error}</p>}
+
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={cargando || valor.trim().length === 0}
+            className="rounded-lg bg-sky-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {cargando ? 'Comprobando…' : 'Entrar y comparar'}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 

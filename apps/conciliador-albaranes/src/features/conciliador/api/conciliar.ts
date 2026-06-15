@@ -6,6 +6,17 @@ export interface ParEnvio {
   xlsx: File;
 }
 
+/** Error de la API que conserva el status HTTP (para distinguir el 401 de no autorizado). */
+export class ConciliarError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ConciliarError';
+  }
+}
+
 /** Llama a `POST /api/conciliar` con los pares completos. */
 export async function conciliarPares(
   pares: ParEnvio[],
@@ -26,7 +37,7 @@ export async function conciliarPares(
 
   if (!res.ok) {
     const j = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(j.error ?? `Error ${res.status}`);
+    throw new ConciliarError(j.error ?? `Error ${res.status}`, res.status);
   }
   return res.json() as Promise<RespuestaConciliacion>;
 }
