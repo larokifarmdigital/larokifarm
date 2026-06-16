@@ -15,7 +15,7 @@
   "header": {
     "nav": {
       "inicio": "Inici",
-      "servicios": "Serveis",
+      "servicios": "Recursos",
       "sobreNosotros": "Sobre nosaltres",
       "faqs": "FAQs",
       "resenas": "Ressenyes",
@@ -62,10 +62,10 @@
     }
   },
   "servicios": {
-    "chip": "Els nostres serveis",
-    "titulo": "Els nostres serveis",
-    "subtitulo": "Oferim una àmplia gamma de serveis farmacèutics i productes seleccionats per a la cura de tota la família.",
-    "placeholder": "Aviat afegirem el detall de serveis.",
+    "chip": "Els nostres recursos",
+    "titulo": "Els nostres recursos",
+    "subtitulo": "Oferim una àmplia gamma de recursos farmacèutics i productes seleccionats per a la cura de tota la família.",
+    "placeholder": "Aviat afegirem el detall de recursos.",
     "btnAnterior": "Anterior",
     "btnSiguiente": "Següent",
     "btnSlide": "Anar a la diapositiva {n}"
@@ -90,7 +90,7 @@
     "cargarMapaAviso": "En prémer es carregarà Google Maps, que instal·la galetes de Google."
   },
   "footer": {
-    "servicios": "Serveis",
+    "servicios": "Recursos",
     "informacion": "Informació",
     "contactanos": "Contacta'ns",
     "sobreNosotros": "Sobre nosaltres",

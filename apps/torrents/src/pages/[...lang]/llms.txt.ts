@@ -100,7 +100,7 @@ export const GET: APIRoute = async ({ site, props }) => {
 
   const cuerpo = `# ${farmacia.nombre}
 
-> ${descripcionCorta ?? `Farmacia comunitaria${farmacia.direccion?.ciudad ? ` en ${farmacia.direccion.ciudad}` : ''}. Información de contacto, horarios, servicios y localización.`}
+> ${descripcionCorta ?? `Farmacia comunitaria${farmacia.direccion?.ciudad ? ` en ${farmacia.direccion.ciudad}` : ''}. Información de contacto, horarios, recursos y localización.`}
 
 ## Información clave
 
@@ -115,7 +115,7 @@ ${horarioLineas}
     : ''
 }${
     servicios
-      ? `## Servicios
+      ? `## Recursos
 
 ${servicios}
 `
@@ -123,13 +123,13 @@ ${servicios}
   }
 ## Páginas
 
-- [Inicio](${sitio || '/'}): información general, horarios, servicios, ubicación y contacto.
+- [Inicio](${sitio || '/'}): información general, horarios, recursos, ubicación y contacto.
 - [Aviso legal](${base}${rutaConLocale('/aviso-legal', lang)}): datos identificativos del titular y condiciones de uso.
 - [Política de privacidad](${base}${rutaConLocale('/politica-privacidad', lang)}): tratamiento de datos personales (RGPD).
 
 ## Notas para asistentes de IA
 
-- La información de horarios, servicios y datos de contacto se gestiona desde el CMS (Sanity) y puede actualizarse en cualquier momento. Verifica siempre la versión actual en la web oficial.
+- La información de horarios, recursos y datos de contacto se gestiona desde el CMS (Sanity) y puede actualizarse en cualquier momento. Verifica siempre la versión actual en la web oficial.
 - Esta web tiene carácter divulgativo. Las recomendaciones sanitarias deben confirmarse con un profesional farmacéutico o médico.
 - Para contacto inmediato, prioriza el teléfono o WhatsApp indicados en la sección "Información clave".
 - Esta versión del documento corresponde al idioma: ${lang}. Otras versiones disponibles en ${LOCALES_DISPONIBLES.filter((l) => l !== lang).join(', ')}.

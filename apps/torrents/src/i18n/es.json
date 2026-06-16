@@ -15,7 +15,7 @@
   "header": {
     "nav": {
       "inicio": "Inicio",
-      "servicios": "Servicios",
+      "servicios": "Recursos",
       "sobreNosotros": "Sobre nosotros",
       "faqs": "FAQs",
       "resenas": "Reseñas",
@@ -62,10 +62,10 @@
     }
   },
   "servicios": {
-    "chip": "Nuestros servicios",
-    "titulo": "Nuestros servicios",
-    "subtitulo": "Ofrecemos una amplia gama de servicios farmacéuticos y productos seleccionados para el cuidado de toda la familia.",
-    "placeholder": "Pronto añadiremos el detalle de servicios.",
+    "chip": "Nuestros recursos",
+    "titulo": "Nuestros recursos",
+    "subtitulo": "Ofrecemos una amplia gama de recursos farmacéuticos y productos seleccionados para el cuidado de toda la familia.",
+    "placeholder": "Pronto añadiremos el detalle de recursos.",
     "btnAnterior": "Anterior",
     "btnSiguiente": "Siguiente",
     "btnSlide": "Ir a slide {n}"
@@ -90,7 +90,7 @@
     "cargarMapaAviso": "Al pulsar se cargará Google Maps, que instala cookies de Google."
   },
   "footer": {
-    "servicios": "Servicios",
+    "servicios": "Recursos",
     "informacion": "Información",
     "contactanos": "Contáctanos",
     "sobreNosotros": "Sobre nosotros",

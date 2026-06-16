@@ -15,7 +15,7 @@
   "header": {
     "nav": {
       "inicio": "Home",
-      "servicios": "Services",
+      "servicios": "Resources",
       "sobreNosotros": "About us",
       "faqs": "FAQs",
       "resenas": "Reviews",
@@ -62,10 +62,10 @@
     }
   },
   "servicios": {
-    "chip": "Our services",
-    "titulo": "Our services",
-    "subtitulo": "We offer a wide range of pharmaceutical services and carefully selected products for the whole family.",
-    "placeholder": "We'll be adding our services soon.",
+    "chip": "Our resources",
+    "titulo": "Our resources",
+    "subtitulo": "We offer a wide range of pharmaceutical resources and carefully selected products for the whole family.",
+    "placeholder": "We'll be adding our resources soon.",
     "btnAnterior": "Previous",
     "btnSiguiente": "Next",
     "btnSlide": "Go to slide {n}"
@@ -90,7 +90,7 @@
     "cargarMapaAviso": "Clicking will load Google Maps, which installs Google cookies."
   },
   "footer": {
-    "servicios": "Services",
+    "servicios": "Resources",
     "informacion": "Information",
     "contactanos": "Get in touch",
     "sobreNosotros": "About us",
