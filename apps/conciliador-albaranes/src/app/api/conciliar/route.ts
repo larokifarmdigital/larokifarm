@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import {
   conciliar,
   extraerAlbaran,
+  fusionarAlbaranes,
   generarInforme,
   leerPedido,
   nombreInforme,
@@ -12,10 +13,14 @@ import type { ResultadoPar } from '@/features/conciliador/api/contrato';
 export const runtime = 'nodejs';
 
 /**
- * POST /api/conciliar  (Fase 2 — Modo B: pares explícitos)
+ * POST /api/conciliar  (Fase 2 — Modo B: pares explícitos, multi-PDF)
  *
- * multipart/form-data con pares por índice:
- *   pdf_0, xlsx_0, [label_0], pdf_1, xlsx_1, ...
+ * multipart/form-data con pares por índice. Cada par lleva 1..N PDFs + 1 Excel:
+ *   pdfs_0 (multivaluado), xlsx_0, [label_0], pdfs_1, xlsx_1, ...
+ *
+ * Cuando el par tiene varios PDFs (típicamente albarán + factura del mismo
+ * envío), cada uno se extrae por separado con Gemini y luego se fusionan en un
+ * único `AlbaranData` antes de conciliar contra el pedido.
  *
  * Respuesta JSON (stateless): un resumen por par + el informe en base64. El ZIP
  * "Descargar todo" lo arma el navegador con fflate a partir de estos base64.
@@ -40,31 +45,46 @@ export async function POST(req: Request) {
 
   const form = await req.formData();
 
-  // Recoger pares por índice.
+  // Recoger índices de pares: cualquier campo pdfs_N o xlsx_N.
   const indices = new Set<number>();
   for (const key of form.keys()) {
-    const m = key.match(/^(?:pdf|xlsx)_(\d+)$/);
+    const m = key.match(/^(?:pdfs|xlsx)_(\d+)$/);
     if (m) indices.add(Number(m[1]));
   }
 
+  const apiKey = env.GEMINI_API_KEY;
+
   const tareas = [...indices].sort((a, b) => a - b).map(async (i): Promise<ResultadoPar> => {
     const etiqueta = String(form.get(`label_${i}`) ?? `Par ${i + 1}`);
-    const pdf = form.get(`pdf_${i}`);
+    const pdfs = form.getAll(`pdfs_${i}`).filter((v): v is File => v instanceof File);
     const xlsx = form.get(`xlsx_${i}`);
 
-    if (!(pdf instanceof File) || !(xlsx instanceof File)) {
-      return { id: i, etiqueta, proveedor: '', estado: 'ERROR', nDiscrepancias: 0, error: 'Faltan archivos del par (PDF + Excel).' };
+    if (pdfs.length === 0 || !(xlsx instanceof File)) {
+      return {
+        id: i,
+        etiqueta,
+        proveedor: '',
+        estado: 'ERROR',
+        nDiscrepancias: 0,
+        error: 'Faltan archivos del par (al menos 1 PDF + 1 Excel).',
+      };
     }
 
     try {
-      const [pdfBytes, xlsxBytes] = await Promise.all([
-        pdf.arrayBuffer().then((b) => new Uint8Array(b)),
-        xlsx.arrayBuffer().then((b) => new Uint8Array(b)),
-      ]);
+      const xlsxBytes = new Uint8Array(await xlsx.arrayBuffer());
 
-      const albaran = await extraerAlbaran(toBase64(pdfBytes), { apiKey: env.GEMINI_API_KEY! });
+      // Extraer cada PDF en paralelo. Cada llamada a Gemini es independiente;
+      // el orden de respuesta no importa porque la fusión es conmutativa.
+      const albaranes = await Promise.all(
+        pdfs.map(async (pdf) => {
+          const bytes = new Uint8Array(await pdf.arrayBuffer());
+          return extraerAlbaran(toBase64(bytes), { apiKey });
+        }),
+      );
+
+      const albaranFusionado = fusionarAlbaranes(albaranes);
       const pedido = leerPedido(xlsxBytes);
-      const conc = conciliar(albaran, pedido);
+      const conc = conciliar(albaranFusionado, pedido);
       const informe = generarInforme(conc);
 
       return {
@@ -75,7 +95,12 @@ export async function POST(req: Request) {
         nDiscrepancias: conc.totalDiscrepancias,
         nombreArchivo: nombreInforme(conc, pedido.nProveedor),
         informeBase64: toBase64(informe),
-        detalle: { numeroAlbaran: conc.numeroAlbaran, lineas: conc.lineas, lineasCrudas: albaran.lineas },
+        detalle: {
+          numeroAlbaran: conc.numeroAlbaran,
+          lineas: conc.lineas,
+          // Para el debug mostramos lo extraído de CADA PDF de forma concatenada.
+          lineasCrudas: albaranes.flatMap((a) => a.lineas),
+        },
       };
     } catch (e) {
       return {

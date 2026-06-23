@@ -2,7 +2,8 @@ import type { RespuestaConciliacion } from './contrato';
 
 export interface ParEnvio {
   etiqueta: string;
-  pdf: File;
+  /** 1 o N PDFs del MISMO envío (albarán + factura + …). Se fusionan en el server. */
+  pdfs: File[];
   xlsx: File;
 }
 
@@ -24,7 +25,7 @@ export async function conciliarPares(
 ): Promise<RespuestaConciliacion> {
   const fd = new FormData();
   pares.forEach((p, i) => {
-    fd.append(`pdf_${i}`, p.pdf);
+    for (const pdf of p.pdfs) fd.append(`pdfs_${i}`, pdf);
     fd.append(`xlsx_${i}`, p.xlsx);
     fd.append(`label_${i}`, p.etiqueta);
   });

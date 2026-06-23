@@ -24,6 +24,12 @@ export interface AlbaranData {
   proveedor?: string;
   fecha?: string;
   numero_pedido?: string;
+  /**
+   * Rol del PDF dentro del envío (usado por la fusión multi-PDF para priorizar
+   * fuentes: cantidad y EAN ← albarán; precio y descuento ← factura).
+   * Lo clasifica Gemini en la extracción a partir de las cabeceras del PDF.
+   */
+  tipo_documento?: 'albaran' | 'factura' | 'otro';
   lineas: LineaAlbaran[];
 }
 

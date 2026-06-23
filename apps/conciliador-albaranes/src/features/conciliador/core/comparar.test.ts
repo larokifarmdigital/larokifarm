@@ -110,6 +110,62 @@ describe('conciliar', () => {
     expect(r.lineas[0].cn).toBe('154054');
   });
 
+  // Caso PEROXFARMA: la factura solo trae el código interno del proveedor
+  // (ej. "UN14080"); ni C.N. ni EAN. El cruce con el pedido tiene que poder
+  // hacerse por ese código interno (3er nivel del buscar).
+  it('cruza por código interno del proveedor cuando no hay C.N. ni EAN', () => {
+    const r = conciliar(
+      albaran([{ codigo: 'UN14080', descripcion: 'ICO JERINGA INS. 1ML', cantidad: 200, precio_unitario: 37.18, descuento: 40 }]),
+      pedido([{ codigoArticulo: 'UN14080', descripcion: 'ICO JERINGA INS. 1ML', unidades: 200, precio: 37.18, descuento: 40 }]),
+    );
+    expect(r.lineas).toHaveLength(1);
+    expect(r.lineas[0].estado).toBe('OK');
+    expect(r.lineas[0].udsPedido).toBe(200);
+    expect(r.lineas[0].udsAlbaran).toBe(200);
+  });
+
+  // Variante del caso PEROX: el código interno cruza incluso cuando
+  // limpiarCN del pedido produciría una clave distinta (porque el pedido
+  // mete codigoArticulo también por cn). Aquí solo hay match si la 3ª clave
+  // (cod sin truncar) funciona.
+  it('cruza por código interno aunque cn (truncado) no coincida', () => {
+    const r = conciliar(
+      // Albarán sin C.N. ni EAN, solo código interno
+      albaran([{ codigo: 'UN14080', descripcion: 'JERINGA', cantidad: 100, precio_unitario: 22.31, descuento: 40 }]),
+      // Pedido con codigoArticulo idéntico
+      pedido([{ codigoArticulo: 'UN14080', descripcion: 'JERINGA', unidades: 100, precio: 22.31, descuento: 40 }]),
+    );
+    expect(r.lineas).toHaveLength(1);
+    expect(r.lineas[0].estado).toBe('OK');
+    expect(r.lineas[0].discrepancias).toEqual([]);
+  });
+
+  // Caso bug Marvis/Perrigo: 4 productos distintos cuyos códigos internos
+  // empiezan igual ("5000036689", "5000036691"...). Sin la separación cn/cod,
+  // limpiarCN truncaría a 6 dígitos ("500003") y agrupar() colapsaría los 4
+  // en un solo item sumando las unidades. Cada uno debe quedar separado y
+  // cruzarse por su EAN único contra el pedido.
+  it('no colapsa productos distintos del mismo proveedor con códigos internos parecidos', () => {
+    const r = conciliar(
+      albaran([
+        { codigo: '5000036689', codigo_ean: '8004395111718', descripcion: 'MARVIS BLANQUEADOR', cantidad: 36, precio_unitario: 5.79, descuento: 5 },
+        { codigo: '5000036691', codigo_ean: '8004395112425', descripcion: 'MARVIS SENSITIVE', cantidad: 24, precio_unitario: 5.79, descuento: 5 },
+        { codigo: '5000036692', codigo_ean: '8004395111756', descripcion: 'MARVIS JAZMIN', cantidad: 12, precio_unitario: 5.21, descuento: 5 },
+        { codigo: '5000036693', codigo_ean: '8004395111725', descripcion: 'MARVIS MENTA ACUATICA', cantidad: 24, precio_unitario: 5.21, descuento: 5 },
+      ]),
+      pedido([
+        { codigoArticulo: '000371', codigoAlternativo: '8004395111718', descripcion: 'MARVIS BLANQUEADOR', unidades: 36, precio: 5.79, descuento: 5 },
+        { codigoArticulo: '000264', codigoAlternativo: '8004395112425', descripcion: 'MARVIS SENSITIVE', unidades: 24, precio: 5.79, descuento: 5 },
+        { codigoArticulo: '000589', codigoAlternativo: '8004395111756', descripcion: 'MARVIS JAZMIN', unidades: 12, precio: 5.21, descuento: 5 },
+        { codigoArticulo: '000263', codigoAlternativo: '8004395111725', descripcion: 'MARVIS MENTA ACUATICA', unidades: 18, precio: 5.21, descuento: 5 },
+      ]),
+    );
+    expect(r.lineas).toHaveLength(4);
+    const blanqueador = r.lineas.find((l) => l.descripcion.includes('BLANQUEADOR'));
+    expect(blanqueador?.udsAlbaran).toBe(36); // no 96
+    expect(blanqueador?.estado).toBe('OK');
+  });
+
   it('bonificación por columna BONIF.: UDS es el total, facturadas = UDS − BONIF', () => {
     const r = conciliar(
       // Caso real: UDS=8 (total) con BONIF=2 → 6 facturadas. dto 28 en la línea.

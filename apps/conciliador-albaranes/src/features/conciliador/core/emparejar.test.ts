@@ -47,4 +47,17 @@ describe('emparejar', () => {
     expect(pares).toHaveLength(1);
     expect(sueltos.map((s) => s.nombre)).toEqual(['SOLO_albaran.pdf']);
   });
+
+  it('agrupa varios PDFs con la misma clave en un único par (albarán + factura)', () => {
+    const { pares, sueltos } = emparejar(
+      items(['NESTLE_albaran.pdf', 'NESTLE_factura.pdf', 'NESTLE_pedido.xlsx']),
+    );
+    expect(pares).toHaveLength(1);
+    expect(sueltos).toHaveLength(0);
+    expect(pares[0].pdfs).toHaveLength(2);
+    expect(pares[0].pdfs.map((p) => p.nombre).sort()).toEqual([
+      'NESTLE_albaran.pdf',
+      'NESTLE_factura.pdf',
+    ]);
+  });
 });

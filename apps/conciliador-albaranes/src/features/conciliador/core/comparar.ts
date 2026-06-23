@@ -15,6 +15,7 @@ export const TOL_DESCUENTO = 0.01;
 interface Item {
   cn: string; // Código Nacional normalizado (6 dígitos) o ''
   alt: string; // Código alternativo / EAN normalizado o ''
+  cod: string; // Código interno del proveedor (ej. PEROX "UN14080", Nestlé "12578223") o ''
   descripcion: string;
   uds: number; // unidades FACTURADAS
   bonus: number; // unidades de bonificación/regalo
@@ -25,6 +26,7 @@ interface Item {
 interface FilaCruda {
   cnRaw: unknown;
   altRaw: unknown;
+  codRaw?: unknown;
   descripcion: string;
   uds: unknown;
   precio: unknown;
@@ -60,20 +62,22 @@ function masUnidades(ls: LineaNorm[]): LineaNorm {
 function agrupar(filas: FilaCruda[], detectarRegalo: boolean): Item[] {
   const grupos = new Map<
     string,
-    { cn: string; alt: string; descripcion: string; lineas: LineaNorm[] }
+    { cn: string; alt: string; cod: string; descripcion: string; lineas: LineaNorm[] }
   >();
 
   for (const f of filas) {
     const cn = limpiarCN(f.cnRaw);
     const alt = limpiarAlt(f.altRaw);
-    const clave = cn || alt;
+    const cod = limpiarAlt(f.codRaw);
+    const clave = cn || alt || cod;
     if (!clave) continue;
     let g = grupos.get(clave);
     if (!g) {
-      g = { cn, alt, descripcion: f.descripcion ?? '', lineas: [] };
+      g = { cn, alt, cod, descripcion: f.descripcion ?? '', lineas: [] };
       grupos.set(clave, g);
     }
     if (!g.alt && alt) g.alt = alt;
+    if (!g.cod && cod) g.cod = cod;
     if (!g.descripcion) g.descripcion = f.descripcion ?? '';
     g.lineas.push({ cant: num(f.uds), precio: num(f.precio), dto: num(f.dto), bonif: num(f.bonifRaw) });
   }
@@ -102,6 +106,7 @@ function agrupar(filas: FilaCruda[], detectarRegalo: boolean): Item[] {
     items.push({
       cn: g.cn,
       alt: g.alt,
+      cod: g.cod,
       descripcion: g.descripcion,
       uds: charged,
       bonus,
@@ -112,9 +117,9 @@ function agrupar(filas: FilaCruda[], detectarRegalo: boolean): Item[] {
   return items;
 }
 
-/** Código a mostrar en el informe (prioriza C.N., luego alternativo). */
+/** Código a mostrar en el informe (prioriza C.N., luego EAN, luego código interno). */
 function codigoVisible(p: Item | null, a: Item | null): string {
-  return p?.cn || a?.cn || p?.alt || a?.alt || '';
+  return p?.cn || a?.cn || p?.alt || a?.alt || p?.cod || a?.cod || '';
 }
 
 function comparaCampos(p: Item, a: Item): TipoDiscrepancia[] {
@@ -126,15 +131,28 @@ function comparaCampos(p: Item, a: Item): TipoDiscrepancia[] {
 }
 
 /**
- * Concilia un albarán contra su pedido. Cruce primario por C.N. normalizado a 6
- * dígitos; si no casa (o falta), se intenta por código alternativo / EAN (§9).
+ * Concilia un albarán contra su pedido. Cruce en 3 niveles (§9):
+ *   1º C.N. español normalizado a 6 dígitos.
+ *   2º Código alternativo / EAN.
+ *   3º Código interno del proveedor sin truncar (ej. PEROX "UN14080", Nestlé
+ *      "12578223"). Algunos proveedores no traen ni C.N. ni EAN en la factura,
+ *      solo su código interno — sin este 3er nivel, no habría cruce posible.
+ *
+ * Importante: el código interno NO debe pasar nunca por limpiarCN (trunca a 6
+ * dígitos), o productos distintos del mismo proveedor colapsan en la misma
+ * clave. Ver bug Marvis/Perrigo: "5000036689", "5000036691"... → "500003" y se
+ * sumaban las unidades de los 4 Marvis. Por eso codRaw va por limpiarAlt.
  */
 export function conciliar(albaran: AlbaranData, pedido: PedidoData): Conciliacion {
   // El pedido no tiene bonificaciones → no detectar regalo.
+  // codigoArticulo del pedido va a las 2 ramas (cn y cod): si parece C.N.
+  // (numérico ≤6 dígitos efectivos) casará por la 1ª; si es un código interno
+  // alfanumérico (ej. "UN14080"), casará por la 3ª.
   const itemsPedido = agrupar(
     pedido.lineas.map((l) => ({
       cnRaw: l.codigoArticulo,
       altRaw: l.codigoAlternativo,
+      codRaw: l.codigoArticulo,
       descripcion: l.descripcion ?? '',
       uds: l.unidades,
       precio: l.precio,
@@ -144,15 +162,11 @@ export function conciliar(albaran: AlbaranData, pedido: PedidoData): Conciliacio
   );
 
   // El albarán sí: BONIF. en columna y/o líneas de regalo con precio 0.
-  // Ojo: NO usamos l.codigo como fallback de cnRaw. Si el albarán no trae C.N.
-  // español, l.codigo suele ser el código interno del proveedor (ej. Perrigo
-  // "5000036689"), y limpiarCN lo trunca a 6 dígitos → varios productos distintos
-  // colapsan a la misma clave (todos los Perrigo "5000036xxx" → "500003") y
-  // agrupar() suma sus unidades. Cruce por EAN en codigo_ean cuando falte C.N.
   const itemsAlbaran = agrupar(
     albaran.lineas.map((l) => ({
       cnRaw: l.codigo_nacional || '',
-      altRaw: l.codigo_ean || l.codigo,
+      altRaw: l.codigo_ean || '',
+      codRaw: l.codigo || '',
       descripcion: l.descripcion ?? '',
       uds: l.cantidad,
       precio: l.precio_unitario,
@@ -164,7 +178,7 @@ export function conciliar(albaran: AlbaranData, pedido: PedidoData): Conciliacio
 
   const pedidoUsado = new Array<boolean>(itemsPedido.length).fill(false);
 
-  // Busca el pedido que cruza con un item de albarán: 1º por C.N., 2º por alt/EAN.
+  // Busca el pedido que cruza con un item de albarán: 1º C.N., 2º alt/EAN, 3º código interno.
   const buscar = (a: Item): number => {
     if (a.cn) {
       const i = itemsPedido.findIndex((p, idx) => !pedidoUsado[idx] && p.cn !== '' && p.cn === a.cn);
@@ -172,6 +186,10 @@ export function conciliar(albaran: AlbaranData, pedido: PedidoData): Conciliacio
     }
     if (a.alt) {
       const i = itemsPedido.findIndex((p, idx) => !pedidoUsado[idx] && p.alt !== '' && p.alt === a.alt);
+      if (i >= 0) return i;
+    }
+    if (a.cod) {
+      const i = itemsPedido.findIndex((p, idx) => !pedidoUsado[idx] && p.cod !== '' && p.cod === a.cod);
       if (i >= 0) return i;
     }
     return -1;

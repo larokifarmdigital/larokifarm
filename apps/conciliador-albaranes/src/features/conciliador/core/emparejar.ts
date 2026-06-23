@@ -39,37 +39,52 @@ export interface ItemArchivo {
 }
 
 export interface ParEmparejado<T> {
-  pdf: T;
+  /** 1..N PDFs con la misma clave (caso multi-PDF: albarán + factura del mismo envío). */
+  pdfs: T[];
   excel: T;
   clave: string;
 }
 
-/** Empareja PDFs con Excels por clave de nombre. Lo no emparejado va a `sueltos`. */
+/**
+ * Empareja PDFs con Excels por clave de nombre. Varios PDFs con la MISMA clave
+ * (ej. `NESTLE_albaran.pdf` + `NESTLE_factura.pdf`) van al mismo par. Un Excel
+ * solo puede pertenecer a un par; si llegan dos Excels con la misma clave, el
+ * segundo queda como suelto. Lo no emparejado va a `sueltos`.
+ */
 export function emparejar<T extends ItemArchivo>(
   items: T[],
 ): { pares: Array<ParEmparejado<T>>; sueltos: T[] } {
-  const pdfs = items.filter((i) => i.tipo === 'pdf');
-  const excels = items.filter((i) => i.tipo === 'excel');
-  const excelUsado = new Array<boolean>(excels.length).fill(false);
-  const pares: Array<ParEmparejado<T>> = [];
+  const pdfsPorClave = new Map<string, T[]>();
+  const excelPorClave = new Map<string, T>();
   const sueltos: T[] = [];
 
-  for (const pdf of pdfs) {
-    const clave = claveArchivo(pdf.nombre);
-    const idx =
-      clave === ''
-        ? -1
-        : excels.findIndex((e, i) => !excelUsado[i] && claveArchivo(e.nombre) === clave);
-    if (idx >= 0) {
-      excelUsado[idx] = true;
-      pares.push({ pdf, excel: excels[idx], clave });
+  for (const it of items) {
+    const c = claveArchivo(it.nombre);
+    if (!c) {
+      sueltos.push(it);
+      continue;
+    }
+    if (it.tipo === 'pdf') {
+      const arr = pdfsPorClave.get(c) ?? [];
+      arr.push(it);
+      pdfsPorClave.set(c, arr);
     } else {
-      sueltos.push(pdf);
+      if (excelPorClave.has(c)) sueltos.push(it);
+      else excelPorClave.set(c, it);
     }
   }
-  excels.forEach((e, i) => {
-    if (!excelUsado[i]) sueltos.push(e);
-  });
+
+  const pares: Array<ParEmparejado<T>> = [];
+  for (const [clave, pdfs] of pdfsPorClave) {
+    const excel = excelPorClave.get(clave);
+    if (excel) {
+      pares.push({ pdfs, excel, clave });
+      excelPorClave.delete(clave);
+    } else {
+      sueltos.push(...pdfs);
+    }
+  }
+  for (const excel of excelPorClave.values()) sueltos.push(excel);
 
   return { pares, sueltos };
 }

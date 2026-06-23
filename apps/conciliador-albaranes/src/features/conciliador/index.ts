@@ -2,6 +2,7 @@
 // handler y la UI. Lo interno no se reexporta.
 export { conciliar, estadoTexto, TOL_PRECIO, TOL_UNIDADES, TOL_DESCUENTO } from './core/comparar';
 export { extraerAlbaran } from './core/extraerAlbaran';
+export { fusionarAlbaranes } from './core/fusionarAlbaranes';
 export { leerPedido } from './core/leerPedido';
 export { generarInforme, nombreInforme } from './core/generarInforme';
 export { normalizarProveedor, mismoProveedor } from './core/proveedor';

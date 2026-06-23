@@ -18,7 +18,8 @@ interface Cargado {
 interface Par {
   id: string;
   etiqueta: string;
-  pdf: Cargado | null;
+  /** 1..N PDFs del MISMO envío (albarán + factura + …). Vacío = par incompleto. */
+  pdfs: Cargado[];
   excel: Cargado | null;
 }
 
@@ -33,9 +34,9 @@ function aCargado(file: File): Cargado | null {
   return { id: uid(), file, nombre: file.name, tipo };
 }
 
-/** Nombre por defecto del par: clave compartida, o nombre del archivo sin extensión. */
-function etiquetaPorDefecto(pdf: Cargado | null, excel: Cargado | null): string {
-  const base = pdf?.nombre ?? excel?.nombre ?? '';
+/** Nombre por defecto del par: clave compartida, o nombre del primer archivo sin extensión. */
+function etiquetaPorDefecto(pdfs: Cargado[], excel: Cargado | null): string {
+  const base = pdfs[0]?.nombre ?? excel?.nombre ?? '';
   const clave = claveArchivo(base);
   return clave ? clave.toUpperCase() : base.replace(/\.[^.]+$/, '');
 }
@@ -61,7 +62,7 @@ export function ConciliadorView() {
     if (guardada) setClave(guardada);
   }, []);
 
-  const completos = useMemo(() => pares.filter((p) => p.pdf && p.excel), [pares]);
+  const completos = useMemo(() => pares.filter((p) => p.pdfs.length > 0 && p.excel), [pares]);
   const incompletos = pares.length - completos.length;
 
   function agregar(files: File[]) {
@@ -74,12 +75,13 @@ export function ConciliadorView() {
     // ejecuta los updaters dos veces en dev y duplicaría los pares).
     let { pares: np, sueltos: ns } = emparejar([...sueltos, ...nuevos]);
 
-    // Conveniencia: si queda exactamente 1 PDF y 1 Excel sueltos, emparéjalos
-    // aunque sus nombres no casen (caso típico de un único proveedor por lote).
-    const pdf1 = ns.filter((s) => s.tipo === 'pdf');
-    const xls1 = ns.filter((s) => s.tipo === 'excel');
-    if (pdf1.length === 1 && xls1.length === 1) {
-      np = [...np, { pdf: pdf1[0], excel: xls1[0], clave: '' }];
+    // Conveniencia: si lo que queda suelto es N PDFs y exactamente 1 Excel sin
+    // pareja por nombre, los agrupamos en un único par (caso típico: subes los
+    // 2 PDFs de un proveedor + su Excel con nombres que no comparten clave).
+    const pdfsSueltos = ns.filter((s) => s.tipo === 'pdf');
+    const excelsSueltos = ns.filter((s) => s.tipo === 'excel');
+    if (pdfsSueltos.length >= 1 && excelsSueltos.length === 1) {
+      np = [...np, { pdfs: pdfsSueltos, excel: excelsSueltos[0], clave: '' }];
       ns = [];
     }
 
@@ -88,8 +90,8 @@ export function ConciliadorView() {
         ...prev,
         ...np.map((p) => ({
           id: uid(),
-          etiqueta: etiquetaPorDefecto(p.pdf, p.excel),
-          pdf: p.pdf,
+          etiqueta: etiquetaPorDefecto(p.pdfs, p.excel),
+          pdfs: p.pdfs,
           excel: p.excel,
         })),
       ]);
@@ -101,29 +103,48 @@ export function ConciliadorView() {
     setPares((prev) => prev.filter((p) => p.id !== id));
   }
 
-  // Sacar un archivo de un par → vuelve a "sueltos". Se calcula FUERA del updater
-  // para no duplicar (los updaters de React se ejecutan dos veces en dev).
-  function sacarDePar(parId: string, tipo: TipoArchivo) {
+  // Sacar un PDF concreto de un par → vuelve a "sueltos".
+  function sacarPdfDePar(parId: string, pdfId: string) {
     const par = pares.find((p) => p.id === parId);
-    const sacado = par ? (tipo === 'pdf' ? par.pdf : par.excel) : null;
+    const sacado = par?.pdfs.find((p) => p.id === pdfId);
     if (!sacado) return;
-    setPares((prev) => prev.map((p) => (p.id === parId ? { ...p, [tipo]: null } : p)));
+    setPares((prev) =>
+      prev.map((p) => (p.id === parId ? { ...p, pdfs: p.pdfs.filter((x) => x.id !== pdfId) } : p)),
+    );
+    setSueltos((prev) => (prev.some((s) => s.id === sacado.id) ? prev : [...prev, sacado]));
+  }
+
+  // Sacar el Excel de un par → vuelve a "sueltos".
+  function sacarExcelDePar(parId: string) {
+    const par = pares.find((p) => p.id === parId);
+    const sacado = par?.excel;
+    if (!sacado) return;
+    setPares((prev) => prev.map((p) => (p.id === parId ? { ...p, excel: null } : p)));
     setSueltos((prev) => (prev.some((s) => s.id === sacado.id) ? prev : [...prev, sacado]));
   }
 
   function asignarSuelto(sueltoId: string, parId: string) {
     const suelto = sueltos.find((s) => s.id === sueltoId);
     if (!suelto) return;
-    setPares((prev) => prev.map((p) => (p.id === parId ? { ...p, [suelto.tipo]: suelto } : p)));
+    setPares((prev) =>
+      prev.map((p) => {
+        if (p.id !== parId) return p;
+        if (suelto.tipo === 'pdf') return { ...p, pdfs: [...p.pdfs, suelto] };
+        return { ...p, excel: suelto };
+      }),
+    );
     setSueltos((prev) => prev.filter((s) => s.id !== sueltoId));
   }
 
   function nuevoPar(sueltoId: string) {
     const suelto = sueltos.find((s) => s.id === sueltoId);
     if (!suelto) return;
-    const pdf = suelto.tipo === 'pdf' ? suelto : null;
+    const pdfs = suelto.tipo === 'pdf' ? [suelto] : [];
     const excel = suelto.tipo === 'excel' ? suelto : null;
-    setPares((prev) => [...prev, { id: uid(), etiqueta: etiquetaPorDefecto(pdf, excel), pdf, excel }]);
+    setPares((prev) => [
+      ...prev,
+      { id: uid(), etiqueta: etiquetaPorDefecto(pdfs, excel), pdfs, excel },
+    ]);
     setSueltos((prev) => prev.filter((s) => s.id !== sueltoId));
   }
 
@@ -150,8 +171,8 @@ export function ConciliadorView() {
     setResultados(null);
     try {
       const envio: ParEnvio[] = completos.map((p) => ({
-        etiqueta: p.etiqueta.trim() || etiquetaPorDefecto(p.pdf, p.excel) || 'Par',
-        pdf: p.pdf!.file,
+        etiqueta: p.etiqueta.trim() || etiquetaPorDefecto(p.pdfs, p.excel) || 'Par',
+        pdfs: p.pdfs.map((pdf) => pdf.file),
         xlsx: p.excel!.file,
       }));
       const { resumen } = await conciliarPares(envio, claveUsar || undefined);
@@ -220,7 +241,8 @@ export function ConciliadorView() {
               <ParFila
                 key={p.id}
                 par={p}
-                onSacar={sacarDePar}
+                onSacarPdf={sacarPdfDePar}
+                onSacarExcel={sacarExcelDePar}
                 onQuitar={quitarPar}
                 onRenombrar={renombrar}
               />
@@ -429,16 +451,18 @@ function Hueco({ tipo }: { tipo: TipoArchivo }) {
 
 function ParFila({
   par,
-  onSacar,
+  onSacarPdf,
+  onSacarExcel,
   onQuitar,
   onRenombrar,
 }: {
   par: Par;
-  onSacar: (parId: string, tipo: TipoArchivo) => void;
+  onSacarPdf: (parId: string, pdfId: string) => void;
+  onSacarExcel: (parId: string) => void;
   onQuitar: (id: string) => void;
   onRenombrar: (id: string, etiqueta: string) => void;
 }) {
-  const completo = par.pdf && par.excel;
+  const completo = par.pdfs.length > 0 && par.excel;
   return (
     <div className={`rounded-2xl border bg-white p-3 ${completo ? 'border-slate-200' : 'border-amber-300'}`}>
       <div className="mb-2 flex items-center gap-2">
@@ -474,9 +498,29 @@ function ParFila({
         </button>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        {par.pdf ? <Chip nombre={par.pdf.nombre} tipo="pdf" onQuitar={() => onSacar(par.id, 'pdf')} /> : <Hueco tipo="pdf" />}
-        {par.excel ? <Chip nombre={par.excel.nombre} tipo="excel" onQuitar={() => onSacar(par.id, 'excel')} /> : <Hueco tipo="excel" />}
+        {par.pdfs.length === 0 ? (
+          <Hueco tipo="pdf" />
+        ) : (
+          par.pdfs.map((pdf) => (
+            <Chip
+              key={pdf.id}
+              nombre={pdf.nombre}
+              tipo="pdf"
+              onQuitar={() => onSacarPdf(par.id, pdf.id)}
+            />
+          ))
+        )}
+        {par.excel ? (
+          <Chip nombre={par.excel.nombre} tipo="excel" onQuitar={() => onSacarExcel(par.id)} />
+        ) : (
+          <Hueco tipo="excel" />
+        )}
       </div>
+      {par.pdfs.length > 1 && (
+        <p className="mt-2 text-xs text-slate-500">
+          🔀 Los {par.pdfs.length} PDFs se fusionarán en un único informe (albarán + factura del mismo envío).
+        </p>
+      )}
     </div>
   );
 }
@@ -494,7 +538,8 @@ function SueltoFila({
   onNuevo: (sueltoId: string) => void;
   onQuitar: (sueltoId: string) => void;
 }) {
-  const disponibles = pares.filter((p) => (suelto.tipo === 'pdf' ? !p.pdf : !p.excel));
+  // Para PDFs: cualquier par (puede llevar varios). Para Excels: solo pares sin Excel.
+  const disponibles = pares.filter((p) => (suelto.tipo === 'pdf' ? true : !p.excel));
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Chip nombre={suelto.nombre} tipo={suelto.tipo} />
@@ -550,7 +595,6 @@ function ResultadoFila({ r }: { r: ResultadoPar }) {
           {r.proveedor && r.etiqueta !== r.proveedor && (
             <p className="truncate text-xs text-slate-500">Proveedor detectado: {r.proveedor}</p>
           )}
-          {r.error && <p className="text-sm text-red-600">{r.error}</p>}
         </div>
         <span className={`rounded-full px-3 py-1 text-sm font-semibold ${estilo}`}>{texto}</span>
         {r.detalle && (
@@ -572,6 +616,29 @@ function ResultadoFila({ r }: { r: ResultadoPar }) {
           </button>
         )}
       </div>
+      {r.error && (
+        <div className="border-t border-red-100 bg-red-50 px-4 py-3">
+          <div className="flex items-start gap-2.5">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mt-0.5 shrink-0 text-red-500"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" x2="12" y1="8" y2="12" />
+              <line x1="12" x2="12.01" y1="16" y2="16" />
+            </svg>
+            <p className="text-sm leading-relaxed text-red-800">{r.error}</p>
+          </div>
+        </div>
+      )}
       {abierto && r.detalle && <DetalleTabla lineas={r.detalle.lineas} />}
       {abierto && r.detalle?.lineasCrudas && r.detalle.lineasCrudas.length > 0 && (
         <DebugExtraccion lineas={r.detalle.lineasCrudas} />

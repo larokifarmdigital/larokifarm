@@ -49,7 +49,8 @@ export function Dropzone({ onArchivos }: DropzoneProps) {
       </p>
       <p className="text-sm text-slate-500">
         Se emparejan solos por nombre (ej. <code>DENTAID_albaran.pdf</code> ↔{' '}
-        <code>DENTAID_pedido.xlsx</code>).
+        <code>DENTAID_pedido.xlsx</code>). Si un proveedor envía varios PDFs del mismo pedido
+        (albarán + factura), ponles la misma clave para que se fusionen.
       </p>
       <input
         ref={inputRef}
