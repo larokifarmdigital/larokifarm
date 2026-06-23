@@ -29,7 +29,25 @@ Vienen en muchos formatos; adáptate. Extrae cabecera y TODAS las líneas
 - "codigo_ean" = código de barras / EAN / código alternativo del artículo si aparece
   (solo el código, normalmente 8-13 dígitos); si no, "".
 - "proveedor" = nombre del proveedor que emite el albarán (ej. "DENTAID").
-- Fechas en formato YYYY-MM-DD.`;
+- Fechas en formato YYYY-MM-DD.
+
+FORMATOS DE TABLA — IMPORTANTE:
+- Algunos proveedores (Perrigo y similares) usan CABECERAS Y FILAS APILADAS en 2
+  líneas visuales: arriba "Cód. Art." / "Descripción" y debajo "Uds." / "PV" /
+  "Dto" / "Precio neto" / "Importe" / "% IVA". Cada artículo ocupa también 2 líneas:
+  arriba código + descripción, debajo "{uds} ST {PV} {dto} {neto} {importe} {%iva}".
+  Trátalas como UNA SOLA línea de artículo, no como dos. La columna "Uds." aparece
+  DEBAJO de "Cód. Art." (apilada), no a su derecha: no confundas el código con las
+  unidades.
+- Cuando veas la unidad "ST" (o "UN", "UDS") detrás de un número (ej. "36 ST",
+  "120 ST"), la cantidad es ese número. Nunca tomes dígitos del código de artículo
+  ni del EAN como cantidad.
+- En la descripción pueden aparecer notaciones de envase como "2X6", "1X12",
+  "6x10": son el formato del pack del proveedor, NO son cantidades, multiplicadores
+  ni unidades. Ignóralas para "cantidad".
+- Sanity check antes de devolver cada línea: cantidad × precio_neto debe cuadrar
+  aproximadamente con el importe de la línea. Si no cuadra ni de lejos, has leído
+  mal alguna columna — vuelve a mirarla.`;
 
 // Schema que se le pasa a Gemini para forzar la salida (OpenAPI subset).
 const RESPONSE_SCHEMA = {

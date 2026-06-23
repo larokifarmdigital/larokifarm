@@ -144,10 +144,15 @@ export function conciliar(albaran: AlbaranData, pedido: PedidoData): Conciliacio
   );
 
   // El albarán sí: BONIF. en columna y/o líneas de regalo con precio 0.
+  // Ojo: NO usamos l.codigo como fallback de cnRaw. Si el albarán no trae C.N.
+  // español, l.codigo suele ser el código interno del proveedor (ej. Perrigo
+  // "5000036689"), y limpiarCN lo trunca a 6 dígitos → varios productos distintos
+  // colapsan a la misma clave (todos los Perrigo "5000036xxx" → "500003") y
+  // agrupar() suma sus unidades. Cruce por EAN en codigo_ean cuando falte C.N.
   const itemsAlbaran = agrupar(
     albaran.lineas.map((l) => ({
-      cnRaw: l.codigo_nacional || l.codigo || '',
-      altRaw: l.codigo_ean,
+      cnRaw: l.codigo_nacional || '',
+      altRaw: l.codigo_ean || l.codigo,
       descripcion: l.descripcion ?? '',
       uds: l.cantidad,
       precio: l.precio_unitario,
