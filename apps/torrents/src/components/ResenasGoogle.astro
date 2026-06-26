@@ -9,24 +9,32 @@ export interface Props {
   logo?: string;
   lang: Locale;
   urlGoogleMaps?: string;
-  /** Textos editables de la cabecera. Si están vacíos, cae a i18n. */
   textos?: TextosCabecera;
 }
 
 const { resumen, logo, lang, urlGoogleMaps, textos } = Astro.props;
 
-// Hasta 10: primero las destacadas, luego las recientes, deduplicado por _id.
-const vistas = new Set<string>();
-const slides: ResenaGoogle[] = [];
+// Hasta 12 reseñas en el marquee: primero destacadas, luego recientes, deduplicado.
+const vistos = new Set<string>();
+const tarjetas: ResenaGoogle[] = [];
 for (const r of [...resumen.destacadas, ...resumen.recientes]) {
-  if (vistas.has(r._id)) continue;
-  vistas.add(r._id);
-  slides.push(r);
-  if (slides.length >= 10) break;
+  if (vistos.has(r._id)) continue;
+  vistos.add(r._id);
+  tarjetas.push(r);
+  if (tarjetas.length >= 12) break;
 }
 
-const mostrar = slides.length > 0;
+const mostrar = tarjetas.length > 0;
 const mediaFormateada = resumen.media > 0 ? resumen.media.toFixed(1) : '—';
+
+// Partimos en dos filas alternando para distribuir destacadas y largos.
+const fila1: ResenaGoogle[] = [];
+const fila2: ResenaGoogle[] = [];
+tarjetas.forEach((r, i) => (i % 2 === 0 ? fila1.push(r) : fila2.push(r)));
+
+// Duplicamos cada fila para conseguir loop infinito sin saltos visibles.
+const fila1Duplicada = [...fila1, ...fila1];
+const fila2Duplicada = [...fila2, ...fila2];
 
 function relativo(fechaIso: string): string {
   const ahora = Date.now();
@@ -60,26 +68,13 @@ const subtitulo =
     : t('resenas.subtituloSinNumero', lang));
 
 const verTodasHref = rutaConLocale('/resenas', lang);
-const esGaleria = slides.length > 1;
 ---
 
 {
   mostrar && (
     <section id='resenas' class='relative overflow-hidden py-24'>
-      <MarcaAgua
-        logo={logo}
-        class='top-20 right-6 md:right-16'
-        tamano={68}
-        opacidad={0.05}
-        rotacion={-12}
-      />
-      <MarcaAgua
-        logo={logo}
-        class='bottom-16 left-6 md:left-16'
-        tamano={60}
-        opacidad={0.05}
-        rotacion={14}
-      />
+      <MarcaAgua logo={logo} class='top-20 right-6 md:right-16' tamano={68} opacidad={0.05} rotacion={-12} />
+      <MarcaAgua logo={logo} class='bottom-16 left-6 md:left-16' tamano={60} opacidad={0.05} rotacion={14} />
 
       <div class='container-app relative'>
         <div class='mb-10 text-start md:mb-14 md:text-center'>
@@ -95,123 +90,124 @@ const esGaleria = slides.length > 1;
           </h2>
           <p class='text-muted-foreground mx-auto max-w-2xl'>{subtitulo}</p>
         </div>
+      </div>
 
-        <div
-          class='resena-slider'
-          data-slider={esGaleria ? 'true' : 'false'}
-          data-autoplay-ms='6000'
-          data-total={slides.length}
-          role='region'
-          aria-roledescription='carousel'
-          aria-label={t('resenas.ariaSlider', lang)}
-        >
-          {esGaleria && (
-            <>
-              <button
-                type='button'
-                class='resena-slider__flecha resena-slider__flecha--prev'
-                aria-label={t('resenas.anterior', lang)}
-                data-prev
-              >
-                <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
-                  <path d='M15 18l-6-6 6-6' />
-                </svg>
-              </button>
-              <button
-                type='button'
-                class='resena-slider__flecha resena-slider__flecha--next'
-                aria-label={t('resenas.siguiente', lang)}
-                data-next
-              >
-                <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
-                  <path d='M9 6l6 6-6 6' />
-                </svg>
-              </button>
-            </>
-          )}
-          <div class='resena-slider__viewport'>
-            <ul class='resena-slider__pista'>
-              {slides.map((r, i) => {
-                const estrellas = Math.max(0, Math.min(5, r.rating ?? 0));
-                return (
-                  <li
-                    class='resena-slider__slide'
-                    data-slide={String(i)}
-                  >
-                    <article class={`resena ${r.destacada ? 'resena--destacada' : ''}`}>
-                    <header class='resena__head'>
-                      {r.autorFotoUrl ? (
-                        <img
-                          src={r.autorFotoUrl}
-                          alt=''
-                          loading='lazy'
-                          referrerpolicy='no-referrer'
-                          class='resena__avatar'
-                        />
-                      ) : (
-                        <span class='resena__avatar resena__avatar--inicial' aria-hidden='true'>
-                          {inicial(r.autorNombre)}
-                        </span>
-                      )}
-                      <div class='resena__meta'>
-                        <p class='resena__autor'>{r.autorNombre ?? t('resenas.anonimo', lang)}</p>
-                        <time datetime={r.fechaPublicacion} class='resena__fecha'>
-                          {relativo(r.fechaPublicacion)}
-                        </time>
-                      </div>
-                      <div
-                        class='resena__estrellas'
-                        role='img'
-                        aria-label={t('resenas.ariaEstrellas', lang, { rating: estrellas })}
-                      >
-                        {Array.from({ length: 5 }).map((_, j) => (
-                          <svg
-                            width='16'
-                            height='16'
-                            viewBox='0 0 24 24'
-                            fill={j < estrellas ? 'currentColor' : 'none'}
-                            stroke='currentColor'
-                            stroke-width='2'
-                            stroke-linejoin='round'
-                            aria-hidden='true'
-                          >
-                            <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
-                          </svg>
-                        ))}
-                      </div>
-                    </header>
-
-                    {r.comentario && <p class='resena__texto'>{r.comentario}</p>}
-
-                    {r.respuestaOwner && (
-                      <div class='resena__respuesta'>
-                        <p class='resena__respuesta-label'>{t('resenas.respuestaFarmacia', lang)}</p>
-                        <p>{r.respuestaOwner}</p>
-                      </div>
+      {/* ── Versión móvil: scroll horizontal con snap, sin animación ─────── */}
+      <div class='resenas-mobile' aria-label={t('resenas.ariaSlider', lang)}>
+        <ul class='resenas-mobile__pista'>
+          {tarjetas.map((r) => {
+            const estrellas = Math.max(0, Math.min(5, r.rating ?? 0));
+            return (
+              <li class='resenas-mobile__item'>
+                <article class={`resena ${r.destacada ? 'resena--destacada' : ''}`}>
+                  <header class='resena__head'>
+                    {r.autorFotoUrl ? (
+                      <img src={r.autorFotoUrl} alt='' loading='lazy' referrerpolicy='no-referrer' class='resena__avatar' />
+                    ) : (
+                      <span class='resena__avatar resena__avatar--inicial' aria-hidden='true'>
+                        {inicial(r.autorNombre)}
+                      </span>
                     )}
-                  </article>
+                    <div class='resena__meta'>
+                      <p class='resena__autor'>{r.autorNombre ?? t('resenas.anonimo', lang)}</p>
+                      <time datetime={r.fechaPublicacion} class='resena__fecha'>{relativo(r.fechaPublicacion)}</time>
+                    </div>
+                    <div class='resena__estrellas' role='img' aria-label={t('resenas.ariaEstrellas', lang, { rating: estrellas })}>
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <svg width='14' height='14' viewBox='0 0 24 24' fill={j < estrellas ? 'currentColor' : 'none'} stroke='currentColor' stroke-width='2' stroke-linejoin='round' aria-hidden='true'>
+                          <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
+                        </svg>
+                      ))}
+                    </div>
+                  </header>
+                  {r.comentario && <p class='resena__texto'>{r.comentario}</p>}
+                </article>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      {/* ── Versión desktop: marquee infinito 2 filas ────────────────────── */}
+      <div class='resenas-marquee' aria-label={t('resenas.ariaSlider', lang)}>
+        {fila1.length > 0 && (
+          <div class='resenas-marquee__fila' data-fila='1'>
+            <ul class='resenas-marquee__pista' aria-hidden='false'>
+              {fila1Duplicada.map((r, i) => {
+                const estrellas = Math.max(0, Math.min(5, r.rating ?? 0));
+                const esClon = i >= fila1.length;
+                return (
+                  <li class='resenas-marquee__item' aria-hidden={esClon ? 'true' : 'false'}>
+                    <article class={`resena ${r.destacada ? 'resena--destacada' : ''}`}>
+                      <header class='resena__head'>
+                        {r.autorFotoUrl ? (
+                          <img src={r.autorFotoUrl} alt='' loading='lazy' referrerpolicy='no-referrer' class='resena__avatar' />
+                        ) : (
+                          <span class='resena__avatar resena__avatar--inicial' aria-hidden='true'>
+                            {inicial(r.autorNombre)}
+                          </span>
+                        )}
+                        <div class='resena__meta'>
+                          <p class='resena__autor'>{r.autorNombre ?? t('resenas.anonimo', lang)}</p>
+                          <time datetime={r.fechaPublicacion} class='resena__fecha'>{relativo(r.fechaPublicacion)}</time>
+                        </div>
+                        <div class='resena__estrellas' role='img' aria-label={t('resenas.ariaEstrellas', lang, { rating: estrellas })}>
+                          {Array.from({ length: 5 }).map((_, j) => (
+                            <svg width='14' height='14' viewBox='0 0 24 24' fill={j < estrellas ? 'currentColor' : 'none'} stroke='currentColor' stroke-width='2' stroke-linejoin='round' aria-hidden='true'>
+                              <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
+                            </svg>
+                          ))}
+                        </div>
+                      </header>
+                      {r.comentario && <p class='resena__texto'>{r.comentario}</p>}
+                    </article>
                   </li>
                 );
               })}
             </ul>
           </div>
+        )}
 
-          {esGaleria && (
-            <div class='resena-slider__dots' role='tablist'>
-              {slides.map((_, i) => (
-                <button
-                  type='button'
-                  class='resena-slider__dot'
-                  role='tab'
-                  aria-label={t('resenas.irA', lang, { n: i + 1 })}
-                  aria-selected={i === 0 ? 'true' : 'false'}
-                  data-dot={String(i)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {fila2.length > 0 && (
+          <div class='resenas-marquee__fila' data-fila='2'>
+            <ul class='resenas-marquee__pista' aria-hidden='false'>
+              {fila2Duplicada.map((r, i) => {
+                const estrellas = Math.max(0, Math.min(5, r.rating ?? 0));
+                const esClon = i >= fila2.length;
+                return (
+                  <li class='resenas-marquee__item' aria-hidden={esClon ? 'true' : 'false'}>
+                    <article class={`resena ${r.destacada ? 'resena--destacada' : ''}`}>
+                      <header class='resena__head'>
+                        {r.autorFotoUrl ? (
+                          <img src={r.autorFotoUrl} alt='' loading='lazy' referrerpolicy='no-referrer' class='resena__avatar' />
+                        ) : (
+                          <span class='resena__avatar resena__avatar--inicial' aria-hidden='true'>
+                            {inicial(r.autorNombre)}
+                          </span>
+                        )}
+                        <div class='resena__meta'>
+                          <p class='resena__autor'>{r.autorNombre ?? t('resenas.anonimo', lang)}</p>
+                          <time datetime={r.fechaPublicacion} class='resena__fecha'>{relativo(r.fechaPublicacion)}</time>
+                        </div>
+                        <div class='resena__estrellas' role='img' aria-label={t('resenas.ariaEstrellas', lang, { rating: estrellas })}>
+                          {Array.from({ length: 5 }).map((_, j) => (
+                            <svg width='14' height='14' viewBox='0 0 24 24' fill={j < estrellas ? 'currentColor' : 'none'} stroke='currentColor' stroke-width='2' stroke-linejoin='round' aria-hidden='true'>
+                              <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
+                            </svg>
+                          ))}
+                        </div>
+                      </header>
+                      {r.comentario && <p class='resena__texto'>{r.comentario}</p>}
+                    </article>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
 
+      <div class='container-app relative'>
         <div class='mt-12 flex flex-wrap items-center justify-center gap-4'>
           <a
             href={verTodasHref}
@@ -242,117 +238,134 @@ const esGaleria = slides.length > 1;
 }
 
 <style>
-  .resena-slider {
-    --per-page: 1;
-    --gap: 0px;
-    position: relative;
-    max-width: 720px;
-    margin: 0 auto;
+  /* ── Mobile: snap-scroll horizontal, sin animación ───────────────────── */
+  .resenas-mobile {
+    display: block;
+    /* Padding lateral mantiene el "peek" de la siguiente card al borde */
+    padding-inline: 1rem;
   }
-  @media (min-width: 768px) {
-    .resena-slider {
-      --per-page: 2;
-      --gap: 1.25rem;
-      max-width: 960px;
-      padding-inline: 3rem;
-    }
-  }
-  @media (min-width: 1024px) {
-    .resena-slider {
-      --per-page: 3;
-      max-width: 1200px;
-    }
-  }
-
-  .resena-slider__viewport {
-    overflow: hidden;
-  }
-
-  .resena-slider__pista {
-    display: flex;
-    gap: var(--gap);
+  .resenas-mobile__pista {
     list-style: none;
     margin: 0;
     padding: 0;
-    transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
-    will-change: transform;
-    align-items: stretch;
+    display: flex;
+    gap: 0.85rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 1rem;
+    /* Padding interno para que la primera y última card respiren */
+    padding-inline: 0.25rem;
+    /* Ocultar scrollbar visual (mantiene scroll funcional) */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
+  .resenas-mobile__pista::-webkit-scrollbar { display: none; }
 
-  .resena-slider__slide {
-    flex: 0 0 calc((100% - (var(--per-page) - 1) * var(--gap)) / var(--per-page));
-    min-width: 0;
+  .resenas-mobile__item {
+    flex: 0 0 min(85vw, 320px);
+    scroll-snap-align: center;
     display: flex;
   }
-  .resena-slider__slide > .resena {
+  .resenas-mobile__item > .resena {
     width: 100%;
   }
 
-  .resena-slider__flecha {
+  @media (min-width: 768px) {
+    .resenas-mobile { display: none; }
+  }
+
+  /* ── Desktop: marquee infinito 2 filas ───────────────────────────────── */
+  .resenas-marquee {
+    --duracion-1: 60s;
+    --duracion-2: 75s;
+    --gap: 1.25rem;
     display: none;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 2;
-    width: 40px;
-    height: 40px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    border: 1px solid var(--border, #e5e7eb);
-    background: var(--card, #fff);
-    color: var(--foreground, #0f172a);
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-    transition: background 200ms ease, color 200ms ease, transform 200ms ease, opacity 200ms ease;
-  }
-  .resena-slider__flecha--prev { left: 0; }
-  .resena-slider__flecha--next { right: 0; }
-  .resena-slider__flecha:hover:not(:disabled) {
-    background: var(--primary, #0d6e6e);
-    color: #fff;
-    border-color: var(--primary, #0d6e6e);
-  }
-  .resena-slider__flecha:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+    flex-direction: column;
+    gap: var(--gap);
+    /* Fade en los bordes laterales para que las cards "aparezcan" suavemente */
+    -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+            mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
   }
   @media (min-width: 768px) {
-    .resena-slider__flecha {
-      display: inline-flex;
+    .resenas-marquee { display: flex; }
+  }
+
+  .resenas-marquee__fila {
+    overflow: hidden;
+  }
+
+  .resenas-marquee__pista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: var(--gap);
+    width: max-content;
+    will-change: transform;
+  }
+
+  /* Dirección y velocidad distintas por fila */
+  .resenas-marquee__fila[data-fila='1'] .resenas-marquee__pista {
+    animation: marquee-izq var(--duracion-1) linear infinite;
+  }
+  .resenas-marquee__fila[data-fila='2'] .resenas-marquee__pista {
+    animation: marquee-der var(--duracion-2) linear infinite;
+  }
+
+  @keyframes marquee-izq {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @keyframes marquee-der {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0); }
+  }
+
+  /* Pausa al hover/focus dentro del marquee */
+  .resenas-marquee:hover .resenas-marquee__pista,
+  .resenas-marquee:focus-within .resenas-marquee__pista {
+    animation-play-state: paused;
+  }
+
+  /* Respeta prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    .resenas-marquee__pista {
+      animation: none !important;
+      transform: none !important;
+    }
+    .resenas-marquee__fila {
+      overflow-x: auto;
     }
   }
 
-  .resena-slider__dots {
+  .resenas-marquee__item {
+    flex: 0 0 320px;
     display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-top: 1.25rem;
   }
-  .resena-slider__dot {
-    width: 8px;
-    height: 8px;
-    padding: 0;
-    border: 0;
-    border-radius: 999px;
-    background: color-mix(in oklch, var(--primary, #0d6e6e), transparent 70%);
-    cursor: pointer;
-    transition: background 200ms ease, width 200ms ease, box-shadow 200ms ease;
+  .resenas-marquee__item > .resena {
+    width: 100%;
   }
-  .resena-slider__dot:hover {
-    background: color-mix(in oklch, var(--primary, #0d6e6e), transparent 40%);
-  }
-  .resena-slider__dot[aria-selected='true'] {
-    width: 24px;
-    background: var(--primary, #0d6e6e);
-    box-shadow: 0 0 8px color-mix(in oklch, var(--primary, #0d6e6e), transparent 60%);
+  @media (max-width: 640px) {
+    .resenas-marquee__item {
+      flex-basis: 280px;
+    }
+    .resenas-marquee {
+      --gap: 0.85rem;
+    }
   }
 
+  /* Card */
   .resena {
     background: var(--card, #fff);
     border: 1px solid var(--border, #e5e7eb);
     border-radius: 16px;
-    padding: 1.75rem;
+    padding: 1.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   }
   .resena--destacada {
     border-color: color-mix(in srgb, var(--primary, #0d6e6e) 45%, transparent);
@@ -361,14 +374,14 @@ const esGaleria = slides.length > 1;
 
   .resena__head {
     display: grid;
-    grid-template-columns: 48px 1fr auto;
-    gap: 0.75rem;
+    grid-template-columns: 44px 1fr auto;
+    gap: 0.7rem;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.9rem;
   }
   .resena__avatar {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     border-radius: 999px;
     object-fit: cover;
     background: #f1f5f9;
@@ -380,20 +393,20 @@ const esGaleria = slides.length > 1;
     background: var(--primary, #0d6e6e);
     color: white;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
   .resena__meta { min-width: 0; }
   .resena__autor {
     margin: 0;
     font-weight: 600;
     color: #0f172a;
-    font-size: 1rem;
+    font-size: 0.95rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .resena__fecha {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: #64748b;
   }
   .resena__estrellas {
@@ -404,157 +417,12 @@ const esGaleria = slides.length > 1;
   .resena__texto {
     margin: 0;
     color: #334155;
-    font-size: 1rem;
-    line-height: 1.6;
-  }
-  .resena__respuesta {
-    margin-top: 1rem;
-    padding: 0.8rem 1rem;
-    background: #f8fafc;
-    border-left: 3px solid var(--primary, #0d6e6e);
-    border-radius: 0 8px 8px 0;
-  }
-  .resena__respuesta-label {
-    margin: 0 0 0.25rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--primary, #0d6e6e);
-  }
-  .resena__respuesta p {
-    margin: 0;
-    font-size: 0.88rem;
-    color: #475569;
+    font-size: 0.92rem;
     line-height: 1.55;
-  }
-
-  @media (max-width: 640px) {
-    .resena { padding: 1.25rem; }
-    .resena__head { grid-template-columns: 40px 1fr; }
-    .resena__estrellas { grid-column: 1 / -1; margin-top: 0.25rem; }
+    /* Limita a 6 líneas para que las cards mantengan altura razonable en el marquee */
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 </style>
-
-<script>
-  function inicializarResenas() {
-    const sliders = document.querySelectorAll<HTMLElement>('.resena-slider[data-slider="true"]');
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    sliders.forEach((root) => {
-      if (root.dataset.iniciado === '1') return;
-      root.dataset.iniciado = '1';
-
-      const pista = root.querySelector<HTMLElement>('.resena-slider__pista');
-      const slides = Array.from(root.querySelectorAll<HTMLElement>('[data-slide]'));
-      const dots = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dot]'));
-      const btnPrev = root.querySelector<HTMLButtonElement>('[data-prev]');
-      const btnNext = root.querySelector<HTMLButtonElement>('[data-next]');
-      const autoplayMs = Number(root.dataset.autoplayMs || 6000);
-      if (!pista || slides.length === 0) return;
-
-      let idx = 0;
-      let timer: number | undefined;
-
-      function perPage(): number {
-        const valor = getComputedStyle(root).getPropertyValue('--per-page').trim();
-        const n = parseInt(valor, 10);
-        return Number.isFinite(n) && n > 0 ? n : 1;
-      }
-
-      function maxIdx(): number {
-        return Math.max(0, slides.length - perPage());
-      }
-
-      function aplicarTransform() {
-        const slideRect = slides[0]!.getBoundingClientRect();
-        const gap = parseFloat(getComputedStyle(pista!).gap || '0') || 0;
-        const offset = (slideRect.width + gap) * idx;
-        pista!.style.transform = `translateX(-${offset}px)`;
-      }
-
-      function actualizarDots() {
-        const max = maxIdx();
-        dots.forEach((d, i) => {
-          d.hidden = i > max;
-          d.setAttribute('aria-selected', i === idx ? 'true' : 'false');
-        });
-      }
-
-      function actualizarFlechas() {
-        const max = maxIdx();
-        if (btnPrev) btnPrev.disabled = idx <= 0;
-        if (btnNext) btnNext.disabled = idx >= max;
-      }
-
-      function mostrar(n: number, opts: { ciclar?: boolean } = {}) {
-        const max = maxIdx();
-        if (opts.ciclar) {
-          idx = n > max ? 0 : n < 0 ? max : n;
-        } else {
-          idx = Math.max(0, Math.min(max, n));
-        }
-        aplicarTransform();
-        actualizarDots();
-        actualizarFlechas();
-      }
-
-      function iniciar() {
-        if (reduceMotion) return;
-        detener();
-        timer = window.setInterval(() => mostrar(idx + 1, { ciclar: true }), autoplayMs);
-      }
-
-      function detener() {
-        if (timer !== undefined) {
-          window.clearInterval(timer);
-          timer = undefined;
-        }
-      }
-
-      dots.forEach((d, i) =>
-        d.addEventListener('click', () => {
-          mostrar(i);
-          iniciar();
-        }),
-      );
-
-      btnPrev?.addEventListener('click', () => {
-        mostrar(idx - 1);
-        iniciar();
-      });
-      btnNext?.addEventListener('click', () => {
-        mostrar(idx + 1);
-        iniciar();
-      });
-
-      root.addEventListener('mouseenter', detener);
-      root.addEventListener('mouseleave', iniciar);
-      root.addEventListener('focusin', detener);
-      root.addEventListener('focusout', iniciar);
-
-      let resizeRaf = 0;
-      window.addEventListener('resize', () => {
-        if (resizeRaf) cancelAnimationFrame(resizeRaf);
-        resizeRaf = requestAnimationFrame(() => {
-          const max = maxIdx();
-          if (idx > max) idx = max;
-          aplicarTransform();
-          actualizarDots();
-          actualizarFlechas();
-        });
-      });
-
-      aplicarTransform();
-      actualizarDots();
-      actualizarFlechas();
-      iniciar();
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', inicializarResenas);
-  } else {
-    inicializarResenas();
-  }
-</script>

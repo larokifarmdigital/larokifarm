@@ -1,0 +1,1 @@
+export { NegociosListView } from './NegociosListView';

@@ -1,6 +1,5 @@
 packages:
   - "apps/*"
-  - "!apps/pharmacy-landing-page"
   - "packages/*"
   - "widgets/*"
   - "workers/*"

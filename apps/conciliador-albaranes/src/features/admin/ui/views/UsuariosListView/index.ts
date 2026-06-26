@@ -1,0 +1,1 @@
+export { UsuariosListView } from './UsuariosListView';

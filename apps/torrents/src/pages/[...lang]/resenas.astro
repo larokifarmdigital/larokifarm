@@ -198,7 +198,7 @@ const filtros = [5, 4, 3, 2, 1];
           })}
         </div>
 
-        <ul class='grid gap-5 sm:grid-cols-2 lg:grid-cols-3'>
+        <ul class='resenas-masonry'>
           {todas.map((r) => {
             const estrellas = Math.max(0, Math.min(5, r.rating ?? 0));
             return (
@@ -323,14 +323,33 @@ const filtros = [5, 4, 3, 2, 1];
     color: var(--primary-foreground, white);
   }
 
+  /* Masonry vía CSS multi-column: cada card mantiene su altura natural y rellena huecos. */
+  .resenas-masonry {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    column-gap: 1.25rem;
+    columns: 1;
+  }
+  @media (min-width: 640px) {
+    .resenas-masonry { columns: 2; }
+  }
+  @media (min-width: 1024px) {
+    .resenas-masonry { columns: 3; }
+  }
+
   .resena-card {
     list-style: none;
     background: var(--card, #fff);
     border: 1px solid var(--border, #e5e7eb);
     border-radius: 14px;
     padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
+    margin: 0 0 1.25rem;
+    display: inline-block;
+    width: 100%;
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
     transition: border-color 180ms ease, box-shadow 220ms ease, transform 180ms ease;
   }
   .resena-card:hover {

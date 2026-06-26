@@ -1,18 +1,25 @@
-import { createClient, type ClientConfig } from '@sanity/client';
+import { crearSanityClient } from '@larokifarm/sanity-client';
+import type { PortableBlock, PortableSpan, PortableMarkDef } from '@larokifarm/sanity-client';
 import type { Lang } from './i18n';
+
+// Re-exportamos las utilidades compartidas para consumidores del package.
+export {
+  localizar,
+  imagenSanity,
+  portableTextAHtml,
+} from '@larokifarm/sanity-client';
+export type {
+  EntradaI18n,
+  LocalizedString,
+  LocalizedText,
+  LocalizedPortableText,
+  PortableBlock,
+} from '@larokifarm/sanity-client';
 
 const projectId = import.meta.env.PUBLIC_SANITY_PROJECT_ID || 'TU_PROJECT_ID';
 const dataset = import.meta.env.PUBLIC_SANITY_DATASET || 'production';
 
-const config: ClientConfig = {
-  projectId,
-  dataset,
-  apiVersion: '2024-10-01',
-  useCdn: false,
-  perspective: 'published',
-};
-
-export const sanity = createClient(config);
+export const sanity = crearSanityClient({ projectId, dataset });
 
 export type Enfermedad = {
   _id: string;
@@ -198,28 +205,13 @@ export async function listarFuentesOficiales(lang: Lang = 'es'): Promise<FuenteO
 
 export type PaginaLegalSlug = 'aviso-legal' | 'politica-privacidad';
 
-export type PortableTextMark = {
-  _key: string;
-  _type: string;
-  [k: string]: unknown;
-};
-
-export type PortableTextSpan = {
-  _key?: string;
-  _type: 'span';
-  text: string;
-  marks?: string[];
-};
-
-export type PortableTextBlock = {
-  _key?: string;
-  _type: 'block';
-  style?: 'normal' | 'h2' | 'h3' | 'h4' | 'blockquote';
-  listItem?: 'bullet' | 'number';
-  level?: number;
-  children: PortableTextSpan[];
-  markDefs?: PortableTextMark[];
-};
+/**
+ * Reutilizamos los tipos Portable Text del package compartido para mantener
+ * una sola definición canónica del shape de bloques de Sanity.
+ */
+export type PortableTextMark = PortableMarkDef;
+export type PortableTextSpan = PortableSpan;
+export type PortableTextBlock = PortableBlock;
 
 export type PaginaLegal = {
   _id: string;

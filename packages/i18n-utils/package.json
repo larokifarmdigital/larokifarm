@@ -1,0 +1,10 @@
+{
+  "name": "@larokifarm/i18n-utils",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Primitives genéricas para i18n de UI: lookup por ruta en JSON, interpolación {var}, factory de traductor y enrutado con locale.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

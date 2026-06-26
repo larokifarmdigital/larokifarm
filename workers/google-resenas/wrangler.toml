@@ -1,0 +1,21 @@
+name = "larokifarm-google-resenas"
+main = "src/index.ts"
+compatibility_date = "2026-01-15"
+
+# Sincroniza dos veces al día (06:00 y 18:00 UTC).
+[triggers]
+crons = ["0 6,18 * * *"]
+
+# Variables públicas (no sensibles). El resto van como secrets:
+#   wrangler secret put GOOGLE_CLIENT_ID
+#   wrangler secret put GOOGLE_CLIENT_SECRET
+#   wrangler secret put GOOGLE_REFRESH_TOKEN
+#   wrangler secret put SANITY_WRITE_TOKEN
+#   wrangler secret put SYNC_SECRET
+[vars]
+SANITY_PROJECT_ID = "yovi040n"
+SANITY_DATASET = "calendario"
+SANITY_API_VERSION = "2024-10-01"
+
+[observability]
+enabled = true

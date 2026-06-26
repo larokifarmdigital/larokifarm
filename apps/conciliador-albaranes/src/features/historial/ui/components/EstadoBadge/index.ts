@@ -1,0 +1,1 @@
+export { EstadoBadge } from './EstadoBadge';

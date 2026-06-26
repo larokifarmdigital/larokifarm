@@ -1,25 +1,21 @@
+import { crearTraductor } from '@larokifarm/i18n-utils';
 import es from '../i18n/es.json';
 import en from '../i18n/en.json';
 import ca from '../i18n/ca.json';
 
 export type Lang = 'es' | 'en' | 'ca';
 
-const dicts: Record<Lang, Record<string, string>> = { es, en, ca };
+const traductor = crearTraductor<Lang>({
+  recursos: { es, en, ca },
+  localesDisponibles: ['es', 'en', 'ca'] as const,
+  localeDefecto: 'es',
+});
 
 export function t(key: string, lang: Lang = 'es', params?: Record<string, string | number>): string {
-  const dict = dicts[lang] ?? dicts.es;
-  let value = dict[key] ?? dicts.es[key] ?? key;
-  if (params) {
-    for (const [k, v] of Object.entries(params)) {
-      value = value.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
-    }
-  }
-  return value;
+  return traductor.t(key, lang, params);
 }
 
-export function isLang(value: unknown): value is Lang {
-  return value === 'es' || value === 'en' || value === 'ca';
-}
+export const isLang = traductor.esLocaleValido;
 
 export function resolveLang(value: unknown, fallback: Lang = 'es'): Lang {
   return isLang(value) ? value : fallback;

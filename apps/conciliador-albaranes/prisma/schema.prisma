@@ -1,0 +1,106 @@
+// Conciliador de Albaranes — Multi-tenant schema
+// Fase 1: User + Business + Role.
+// Fase 2: Comparison + ComparisonFile (historial persistente + métricas de uso).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  BUSINESS_ADMIN
+  USER
+}
+
+model Business {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  geminiKeyEnc String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users       User[]
+  comparisons Comparison[]
+
+  @@map("businesses")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role
+  businessId   String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  business    Business?    @relation(fields: [businessId], references: [id])
+  comparisons Comparison[]
+
+  @@index([businessId])
+  @@map("users")
+}
+
+enum ComparisonStatus {
+  OK
+  DISCREPANCIAS
+  ERROR
+}
+
+enum FileKind {
+  PDF_INPUT
+  XLSX_INPUT
+  REPORT_OUTPUT
+}
+
+model Comparison {
+  id                 String           @id @default(cuid())
+  businessId         String
+  userId             String
+  createdAt          DateTime         @default(now())
+  durationMs         Int
+  status             ComparisonStatus
+  proveedor          String?
+  etiqueta           String?
+  numPairs           Int
+  numPdfs            Int
+  numXlsx            Int
+  numDiscrepancias   Int              @default(0)
+  geminiInputTokens  Int              @default(0)
+  geminiOutputTokens Int              @default(0)
+  geminiCostUsd      Decimal          @default(0) @db.Decimal(10, 6)
+  summary            Json
+
+  business Business         @relation(fields: [businessId], references: [id])
+  user     User             @relation(fields: [userId], references: [id])
+  files    ComparisonFile[]
+
+  @@index([businessId, createdAt])
+  @@index([userId, createdAt])
+  @@index([businessId, proveedor])
+  @@map("comparisons")
+}
+
+model ComparisonFile {
+  id           String   @id @default(cuid())
+  comparisonId String
+  kind         FileKind
+  filename     String
+  storageKey   String
+  sizeBytes    Int
+  createdAt    DateTime @default(now())
+
+  comparison Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+
+  @@index([comparisonId])
+  @@map("comparison_files")
+}

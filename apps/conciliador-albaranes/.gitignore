@@ -7,6 +7,9 @@
 next-env.d.ts
 *.tsbuildinfo
 
+# Storage local (driver `local` del helper storage.ts — Fase 2)
+/storage
+
 # Entorno (secrets)
 .env
 .env*.local

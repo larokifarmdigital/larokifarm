@@ -58,7 +58,9 @@ const farmacia: Farmacia = farmaciaCargada ?? {
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
 
 const meta = construirMetaSeo(farmacia, siteUrl, lang, rutaConLocale('/', lang));
-const resenas = await obtenerResenasGoogle(SLUG_FARMACIA, 10);
+// En la home solo mostramos reseñas de 4-5 estrellas que tengan texto;
+// en /resenas se ven todas (incluyendo las que solo tienen estrellas).
+const resenas = await obtenerResenasGoogle(SLUG_FARMACIA, 10, 4, true);
 const jsonLd = farmaciaAJsonLd(farmacia, siteUrl, lang, resenas, MOSTRAR_RESENAS);
 
 const DIAS_POR_LANG: Record<Locale, DiasI18n> = {

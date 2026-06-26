@@ -12,6 +12,10 @@
     "./styles/calendario.css": "./src/styles/calendario.css",
     "./i18n/*": "./src/i18n/*.json"
   },
+  "dependencies": {
+    "@larokifarm/i18n-utils": "workspace:*",
+    "@larokifarm/sanity-client": "workspace:*"
+  },
   "peerDependencies": {
     "@sanity/client": "^6.22.0",
     "astro": "^5.1.0"

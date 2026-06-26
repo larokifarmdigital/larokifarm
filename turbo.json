@@ -3,7 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".astro/**", ".vercel/**"],
+      "outputs": ["dist/**", ".astro/**", ".vercel/**", ".next/**", "!.next/cache/**"],
       "env": ["PUBLIC_*", "SITE_URL", "NODE_VERSION", "SANITY_*"]
     },
     "dev": {
@@ -11,13 +11,19 @@
       "persistent": true
     },
     "check": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "outputs": []
     },
-    "lint": {},
+    "lint": {
+      "outputs": []
+    },
     "preview": {
       "cache": false,
       "persistent": true,
       "dependsOn": ["build"]
+    },
+    "test": {
+      "outputs": []
     }
   }
 }

@@ -47,11 +47,7 @@ pnpm-debug.log*
 # Sanity studio dist
 studio/dist/
 
-# Archivos sueltos en la raíz (notas, capturas) que no deben entrar al repo
-/MULTI_TENANT_LANDING.md
+# Capturas sueltas que no deben entrar al repo
 /WhatsApp Image*.jpeg
 /WhatsApp Image*.jpg
 /WhatsApp Image*.png
-
-# apps/pharmacy-landing-page no forma parte del monorepo larokifarm
-apps/pharmacy-landing-page/
