@@ -184,6 +184,58 @@ interface ResenaExistente {
   eliminadaEnGoogle?: boolean;
   oculta?: boolean;
   destacada?: boolean;
+  autorFotoAssetRef?: string;
+}
+
+interface SanityImageRef {
+  _type: 'image';
+  asset: { _type: 'reference'; _ref: string };
+}
+
+/**
+ * Descarga el avatar de Google y lo sube a los assets de Sanity para evitar
+ * llamar a `lh3.googleusercontent.com` desde el browser (política cero-cookies).
+ *
+ * Sanity deduplica por hash SHA-1, así que re-subir la misma imagen no consume
+ * almacenamiento adicional. Devuelve null si la descarga o subida fallan —
+ * en ese caso el doc queda sin avatar y el frontend cae al inicial del nombre.
+ */
+async function subirAvatarASanity(
+  env: Env,
+  fotoUrl: string,
+): Promise<SanityImageRef | null> {
+  try {
+    const imgRes = await fetch(fotoUrl, {
+      headers: { 'User-Agent': 'larokifarm-google-resenas/0.1' },
+    });
+    if (!imgRes.ok) {
+      console.warn(`[avatar] download ${imgRes.status} → ${fotoUrl}`);
+      return null;
+    }
+    const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+    const cuerpo = await imgRes.arrayBuffer();
+
+    const uploadUrl = `https://${env.SANITY_PROJECT_ID}.api.sanity.io/v${env.SANITY_API_VERSION}/assets/images/${env.SANITY_DATASET}`;
+    const upRes = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': contentType,
+        Authorization: `Bearer ${env.SANITY_WRITE_TOKEN}`,
+      },
+      body: cuerpo,
+    });
+    if (!upRes.ok) {
+      console.warn(`[avatar] upload ${upRes.status} ${(await upRes.text()).slice(0, 200)}`);
+      return null;
+    }
+    const data = (await upRes.json()) as { document?: { _id?: string } };
+    const ref = data.document?._id;
+    if (!ref) return null;
+    return { _type: 'image', asset: { _type: 'reference', _ref: ref } };
+  } catch (err) {
+    console.warn(`[avatar] error: ${err instanceof Error ? err.message : err}`);
+    return null;
+  }
 }
 
 function docIdParaReview(reviewName: string): string {
@@ -194,20 +246,32 @@ function docIdParaReview(reviewName: string): string {
   return `resena-${limpio}`;
 }
 
-function mapearResenaADoc(
+async function mapearResenaADoc(
+  env: Env,
   review: GoogleReview,
   farmaciaId: string,
   ahora: string,
   flagsEditoriales: { oculta?: boolean; destacada?: boolean },
+  fotoExistenteRef: string | undefined,
 ) {
   const rating = review.starRating ? STAR_TO_NUMBER[review.starRating] : 0;
+
+  // Si ya tenemos el asset en Sanity de un sync anterior, reutilizamos —
+  // evitamos descargar/subir cada vez. Solo subimos cuando es nueva.
+  let autorFoto: SanityImageRef | undefined;
+  if (fotoExistenteRef) {
+    autorFoto = { _type: 'image', asset: { _type: 'reference', _ref: fotoExistenteRef } };
+  } else if (review.reviewer?.profilePhotoUrl) {
+    autorFoto = (await subirAvatarASanity(env, review.reviewer.profilePhotoUrl)) ?? undefined;
+  }
+
   return {
     _id: docIdParaReview(review.name),
     _type: 'resenaGoogle',
     farmacia: { _type: 'reference', _ref: farmaciaId },
     googleReviewId: review.name,
     autorNombre: review.reviewer?.displayName ?? 'Anónimo',
-    autorFotoUrl: review.reviewer?.profilePhotoUrl,
+    ...(autorFoto ? { autorFoto } : {}),
     rating: rating || 1,
     comentario: extraerOriginal(review.comment),
     fechaPublicacion: review.createTime,
@@ -247,7 +311,7 @@ async function sincronizarFarmacia(
     listarResenasGoogle(accessToken, farmacia.googleLocationName),
     sanityFetch<ResenaExistente[]>(
       env,
-      '*[_type=="resenaGoogle" && farmacia._ref == $farmaciaId]{_id, googleReviewId, eliminadaEnGoogle, oculta, destacada}',
+      '*[_type=="resenaGoogle" && farmacia._ref == $farmaciaId]{_id, googleReviewId, eliminadaEnGoogle, oculta, destacada, "autorFotoAssetRef": autorFoto.asset._ref}',
       { farmaciaId: farmacia._id },
     ),
   ]);
@@ -255,20 +319,32 @@ async function sincronizarFarmacia(
   const ahora = new Date().toISOString();
   const idsActualesGoogle = new Set(resenasGoogle.map((r) => r.name));
 
-  // Map de flags editoriales por reviewId, para preservar lo que el editor marcó.
+  // Map por reviewId para preservar lo que ya conocemos: flags editoriales y
+  // el asset ref del avatar (evita re-descargar cada sync).
   const flagsPorReviewId = new Map<string, { oculta?: boolean; destacada?: boolean }>();
+  const fotoPorReviewId = new Map<string, string>();
   for (const r of resenasSanity) {
     flagsPorReviewId.set(r.googleReviewId, { oculta: r.oculta, destacada: r.destacada });
+    if (r.autorFotoAssetRef) fotoPorReviewId.set(r.googleReviewId, r.autorFotoAssetRef);
   }
 
-  const mutations: SanityMutation[] = [];
+  // Construimos los docs en paralelo (las descargas/subidas de avatares son IO-bound).
+  const docs = await Promise.all(
+    resenasGoogle.map((review) =>
+      mapearResenaADoc(
+        env,
+        review,
+        farmacia._id,
+        ahora,
+        flagsPorReviewId.get(review.name) ?? {},
+        fotoPorReviewId.get(review.name),
+      ),
+    ),
+  );
 
-  // Upsert de las reseñas que vinieron de Google, preservando flags editoriales.
-  for (const review of resenasGoogle) {
-    const flags = flagsPorReviewId.get(review.name) ?? {};
-    mutations.push({
-      createOrReplace: mapearResenaADoc(review, farmacia._id, ahora, flags),
-    });
+  const mutations: SanityMutation[] = [];
+  for (const doc of docs) {
+    mutations.push({ createOrReplace: doc });
   }
 
   // Marca como eliminada cualquier reseña que existía en Sanity y ya no está en Google.

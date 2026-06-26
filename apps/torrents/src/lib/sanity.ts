@@ -260,7 +260,7 @@ const RESENA_PROJECTION = `
   _id,
   googleReviewId,
   autorNombre,
-  autorFotoUrl,
+  "autorFotoUrl": autorFoto.asset->url,
   rating,
   comentario,
   comentarioIdioma,

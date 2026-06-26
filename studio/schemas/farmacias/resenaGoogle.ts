@@ -64,12 +64,13 @@ export const resenaGoogle = defineType({
       description: '🔒 Auto · Nombre tal como aparece en Google.',
     }),
     defineField({
-      name: 'autorFotoUrl',
-      title: 'Foto de perfil del autor (URL)',
-      type: 'url',
+      name: 'autorFoto',
+      title: 'Foto de perfil del autor',
+      type: 'image',
       readOnly: true,
       fieldset: 'sincronizado',
-      description: '🔒 Auto · URL de la foto de perfil del autor en Google.',
+      description:
+        '🔒 Auto · Foto de perfil rehospedada en Sanity (descargada desde Google y subida aquí para cumplir la política cero-cookies del sitio).',
     }),
     defineField({
       name: 'rating',
