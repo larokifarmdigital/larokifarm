@@ -81,12 +81,15 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
           <img src={logoOpt} alt='' width='40' height='40' class='h-10 w-10 object-contain' />
         ) : null
       }
-      <span class='text-lg font-extrabold tracking-tight text-primary'>{nombre}</span>
+      <span class='logo-text font-extrabold tracking-tight text-primary'>{nombre}</span>
     </a>
 
     {
       enlaces.length > 0 && (
-        <nav class='hidden items-center gap-8 lg:flex' aria-label={t('header.nav.aria', lang)}>
+        <nav
+          class='nav-fluida hidden items-center lg:flex'
+          aria-label={t('header.nav.aria', lang)}
+        >
           {enlaces.map(l => (
             <a
               href={l.href}
@@ -158,7 +161,7 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
             <a
               href={`tel:${telLimpio}`}
               aria-label={llamarLabel}
-              class='btn-primary !px-4 !py-2.5 !text-sm hidden md:inline-flex'
+              class='cta-fluida btn-primary !px-4 !py-2.5 !text-sm hidden md:inline-flex'
             >
               <svg
                 width='16'
@@ -380,6 +383,35 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
   [data-lang-menu]:not(.hidden) {
     display: block;
   }
+  /*
+   * Tipografía fluida en el rango portátil (1024-1280px).
+   * Logo y CTA encogen un punto para liberar espacio, y la nav crece
+   * un poco respecto al min anterior para mantener legibilidad.
+   * Por debajo de 1024px (mobile/tablet) los tamaños fijos por defecto
+   * mandan; por encima de 1280px se llega al tope del clamp.
+   */
+  .logo-text {
+    font-size: 1.125rem; /* 18px — default en mobile/tablet */
+  }
+  .nav-fluida {
+    gap: clamp(1.25rem, calc(4.69vw - 28px), 2rem);
+  }
+  .nav-fluida .nav-link {
+    font-size: clamp(14.5px, calc(8.5px + 0.586vw), 16px);
+  }
+  @media (min-width: 1024px) {
+    .logo-text {
+      /* 15px @ 1024 → 20px @ 1280 */
+      font-size: clamp(15px, calc(-5px + 1.953vw), 20px);
+    }
+    .cta-fluida {
+      /* 12px @ 1024 → 14px @ 1280 */
+      font-size: clamp(12px, calc(4px + 0.781vw), 14px) !important;
+      /* padding x: 0.625rem @ 1024 → 1rem @ 1280 */
+      padding-inline: clamp(0.625rem, calc(-14px + 1.953vw), 1rem) !important;
+    }
+  }
+
   .nav-link {
     position: relative;
   }
