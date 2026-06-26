@@ -65,6 +65,32 @@ const STAR_TO_NUMBER: Record<string, number> = {
   FIVE: 5,
 };
 
+/**
+ * Google auto-traduce las reseñas en idiomas distintos al de la cuenta y devuelve
+ * el `comment` en uno de estos formatos:
+ *
+ *   A) "(Translated by Google) <traducción> (Original) <original>"
+ *      → cortamos en "(Original)" y nos quedamos con lo de después.
+ *
+ *   B) "<original> (Translated by Google) <traducción>"
+ *      (sin marcador "(Original)") → cortamos en "(Translated by Google)" y
+ *      nos quedamos con lo de antes.
+ *
+ * Nos quedamos siempre con el texto que el cliente realmente escribió.
+ */
+function extraerOriginal(comment: string | undefined): string {
+  if (!comment) return '';
+  const idxOriginal = comment.indexOf('(Original)');
+  if (idxOriginal !== -1) {
+    return comment.slice(idxOriginal + '(Original)'.length).trim();
+  }
+  const idxTraducido = comment.indexOf('(Translated by Google)');
+  if (idxTraducido !== -1) {
+    return comment.slice(0, idxTraducido).trim();
+  }
+  return comment.trim();
+}
+
 async function listarResenasGoogle(
   accessToken: string,
   locationName: string,
@@ -156,6 +182,8 @@ interface ResenaExistente {
   _id: string;
   googleReviewId: string;
   eliminadaEnGoogle?: boolean;
+  oculta?: boolean;
+  destacada?: boolean;
 }
 
 function docIdParaReview(reviewName: string): string {
@@ -166,7 +194,12 @@ function docIdParaReview(reviewName: string): string {
   return `resena-${limpio}`;
 }
 
-function mapearResenaADoc(review: GoogleReview, farmaciaId: string, ahora: string) {
+function mapearResenaADoc(
+  review: GoogleReview,
+  farmaciaId: string,
+  ahora: string,
+  flagsEditoriales: { oculta?: boolean; destacada?: boolean },
+) {
   const rating = review.starRating ? STAR_TO_NUMBER[review.starRating] : 0;
   return {
     _id: docIdParaReview(review.name),
@@ -176,11 +209,14 @@ function mapearResenaADoc(review: GoogleReview, farmaciaId: string, ahora: strin
     autorNombre: review.reviewer?.displayName ?? 'Anónimo',
     autorFotoUrl: review.reviewer?.profilePhotoUrl,
     rating: rating || 1,
-    comentario: review.comment ?? '',
+    comentario: extraerOriginal(review.comment),
     fechaPublicacion: review.createTime,
     fechaActualizacion: review.updateTime,
     fechaSincronizacion: ahora,
     eliminadaEnGoogle: false,
+    // Flags editoriales: se preservan entre syncs (no se sobreescriben con false).
+    oculta: flagsEditoriales.oculta === true,
+    destacada: flagsEditoriales.destacada === true,
     ...(review.reviewReply?.comment
       ? { respuestaOwner: review.reviewReply.comment }
       : {}),
@@ -211,7 +247,7 @@ async function sincronizarFarmacia(
     listarResenasGoogle(accessToken, farmacia.googleLocationName),
     sanityFetch<ResenaExistente[]>(
       env,
-      '*[_type=="resenaGoogle" && farmacia._ref == $farmaciaId]{_id, googleReviewId, eliminadaEnGoogle}',
+      '*[_type=="resenaGoogle" && farmacia._ref == $farmaciaId]{_id, googleReviewId, eliminadaEnGoogle, oculta, destacada}',
       { farmaciaId: farmacia._id },
     ),
   ]);
@@ -219,12 +255,19 @@ async function sincronizarFarmacia(
   const ahora = new Date().toISOString();
   const idsActualesGoogle = new Set(resenasGoogle.map((r) => r.name));
 
+  // Map de flags editoriales por reviewId, para preservar lo que el editor marcó.
+  const flagsPorReviewId = new Map<string, { oculta?: boolean; destacada?: boolean }>();
+  for (const r of resenasSanity) {
+    flagsPorReviewId.set(r.googleReviewId, { oculta: r.oculta, destacada: r.destacada });
+  }
+
   const mutations: SanityMutation[] = [];
 
-  // Upsert de las reseñas que vinieron de Google.
+  // Upsert de las reseñas que vinieron de Google, preservando flags editoriales.
   for (const review of resenasGoogle) {
+    const flags = flagsPorReviewId.get(review.name) ?? {};
     mutations.push({
-      createOrReplace: mapearResenaADoc(review, farmacia._id, ahora),
+      createOrReplace: mapearResenaADoc(review, farmacia._id, ahora, flags),
     });
   }
 

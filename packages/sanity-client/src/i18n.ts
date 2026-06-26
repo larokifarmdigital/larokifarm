@@ -1,4 +1,4 @@
-import type { EntradaI18n } from './types';
+import type { EntradaI18n } from './types.ts';
 
 export const LOCALE_DEFECTO_SANITY = 'es';
 

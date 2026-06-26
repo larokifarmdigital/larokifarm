@@ -1,4 +1,4 @@
-import type { PortableBlock } from './types';
+import type { PortableBlock } from './types.ts';
 
 function escaparHtml(t: string): string {
   return t

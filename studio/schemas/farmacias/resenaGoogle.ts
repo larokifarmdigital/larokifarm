@@ -16,8 +16,25 @@ export const resenaGoogle = defineType({
   title: 'Reseña Google',
   type: 'document',
   description:
-    'Reseñas sincronizadas desde Google Business Profile. Editables solo en los campos de control editorial (oculta / destacada).',
+    'Reseñas sincronizadas desde Google Business Profile. Los datos provenientes de Google se sobrescriben en cada sync; sólo puedes editar los controles editoriales (ocultar / destacar).',
+  fieldsets: [
+    {
+      name: 'sincronizado',
+      title: '🔒 Datos sincronizados desde Google',
+      description:
+        'Estos campos los rellena automáticamente el Worker en cada sync (cada ~12 h). Cualquier cambio que hagas aquí se perderá en el próximo cron — son sólo para consulta.',
+      options: { collapsible: true, collapsed: false },
+    },
+    {
+      name: 'editorial',
+      title: '✏️ Control editorial (lo único editable)',
+      description:
+        'Estos dos campos son los únicos que SÍ persisten — el sync respeta lo que marques aquí.',
+      options: { collapsible: false },
+    },
+  ],
   fields: [
+    // ── Datos sincronizados desde Google (read-only) ─────────────────
     defineField({
       name: 'farmacia',
       title: 'Farmacia',
@@ -25,7 +42,9 @@ export const resenaGoogle = defineType({
       to: [{ type: 'farmacia' }],
       validation: (r) => r.required(),
       readOnly: true,
-      description: 'A qué farmacia corresponde esta reseña. Lo asigna el Worker.',
+      fieldset: 'sincronizado',
+      description:
+        '🔒 Auto · Asignado por el Worker según el `googleLocationName` del doc Farmacia.',
     }),
     defineField({
       name: 'googleReviewId',
@@ -33,19 +52,24 @@ export const resenaGoogle = defineType({
       type: 'string',
       validation: (r) => r.required(),
       readOnly: true,
-      description: 'Identificador único de la reseña en Google. Usado para upsert.',
+      fieldset: 'sincronizado',
+      description: '🔒 Auto · Identificador único en Google. Usado para upsert.',
     }),
     defineField({
       name: 'autorNombre',
       title: 'Autor',
       type: 'string',
       readOnly: true,
+      fieldset: 'sincronizado',
+      description: '🔒 Auto · Nombre tal como aparece en Google.',
     }),
     defineField({
       name: 'autorFotoUrl',
       title: 'Foto de perfil del autor (URL)',
       type: 'url',
       readOnly: true,
+      fieldset: 'sincronizado',
+      description: '🔒 Auto · URL de la foto de perfil del autor en Google.',
     }),
     defineField({
       name: 'rating',
@@ -53,6 +77,8 @@ export const resenaGoogle = defineType({
       type: 'number',
       validation: (r) => r.required().integer().min(1).max(5),
       readOnly: true,
+      fieldset: 'sincronizado',
+      description: '🔒 Auto · Puntuación que el cliente dio en Google (1-5).',
     }),
     defineField({
       name: 'comentario',
@@ -60,14 +86,17 @@ export const resenaGoogle = defineType({
       type: 'text',
       rows: 4,
       readOnly: true,
-      description: 'Texto de la reseña en su idioma original. Puede estar vacío si el cliente solo puso estrellas.',
+      fieldset: 'sincronizado',
+      description:
+        '🔒 Auto · Texto en su idioma original. Puede estar vacío si el cliente solo puso estrellas.',
     }),
     defineField({
       name: 'comentarioIdioma',
       title: 'Idioma del comentario',
       type: 'string',
       readOnly: true,
-      description: 'Código BCP-47 detectado por Google (ej: "es", "en", "ca").',
+      fieldset: 'sincronizado',
+      description: '🔒 Auto · Código BCP-47 detectado por Google (ej: "es", "en", "ca").',
     }),
     defineField({
       name: 'respuestaOwner',
@@ -75,13 +104,17 @@ export const resenaGoogle = defineType({
       type: 'text',
       rows: 3,
       readOnly: true,
-      description: 'Si la farmacia ya respondió desde Google, aparece aquí. No se edita desde Sanity.',
+      fieldset: 'sincronizado',
+      description:
+        '🔒 Auto · Si respondiste a esta reseña desde Google Business Profile, aparece aquí. Para responder, hazlo desde tu app de Google Business — el sync lo traerá.',
     }),
     defineField({
       name: 'respuestaOwnerFecha',
       title: 'Fecha de respuesta',
       type: 'datetime',
       readOnly: true,
+      fieldset: 'sincronizado',
+      description: '🔒 Auto · Cuándo se publicó la respuesta del propietario en Google.',
     }),
     defineField({
       name: 'fechaPublicacion',
@@ -89,19 +122,24 @@ export const resenaGoogle = defineType({
       type: 'datetime',
       validation: (r) => r.required(),
       readOnly: true,
+      fieldset: 'sincronizado',
+      description: '🔒 Auto · Cuándo el cliente publicó la reseña en Google.',
     }),
     defineField({
       name: 'fechaActualizacion',
       title: 'Última actualización en Google',
       type: 'datetime',
       readOnly: true,
+      fieldset: 'sincronizado',
+      description: '🔒 Auto · Cuándo el cliente editó por última vez su reseña en Google.',
     }),
     defineField({
       name: 'fechaSincronizacion',
       title: 'Última sincronización',
       type: 'datetime',
       readOnly: true,
-      description: 'Cuándo trajimos esta versión de la reseña desde Google.',
+      fieldset: 'sincronizado',
+      description: '🔒 Auto · Cuándo trajimos esta versión de la reseña desde Google.',
     }),
     defineField({
       name: 'eliminadaEnGoogle',
@@ -109,25 +147,29 @@ export const resenaGoogle = defineType({
       type: 'boolean',
       initialValue: false,
       readOnly: true,
+      fieldset: 'sincronizado',
       description:
-        'Si el Worker detectó que esta reseña ya no aparece en Google, la marca aquí en lugar de borrarla, por trazabilidad.',
+        '🔒 Auto · Si el Worker detectó que esta reseña ya no aparece en Google, se marca aquí en lugar de borrarse, por trazabilidad.',
     }),
+
     // ── Controles editoriales (los únicos editables) ──────────────────
     defineField({
       name: 'oculta',
       title: 'Ocultar de la web',
       type: 'boolean',
       initialValue: false,
+      fieldset: 'editorial',
       description:
-        'Marca para no mostrar esta reseña en el sitio público (sin tener que borrarla en Google).',
+        '✏️ Editable · Marca para no mostrar esta reseña en el sitio público (sin tener que borrarla en Google). Este valor se conserva en cada sync.',
     }),
     defineField({
       name: 'destacada',
       title: 'Destacar en testimonios',
       type: 'boolean',
       initialValue: false,
+      fieldset: 'editorial',
       description:
-        'Promociona esta reseña al bloque principal de testimonios de la landing.',
+        '✏️ Editable · Promociona esta reseña al bloque principal de testimonios de la landing. Este valor se conserva en cada sync.',
     }),
   ],
   orderings: [
