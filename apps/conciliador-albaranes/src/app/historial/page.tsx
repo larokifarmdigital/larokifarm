@@ -1,4 +1,4 @@
-import { HistorialListView, type HistorialListParams } from '@/features/historial';
+import { HistoryListView, type HistoryListParams } from '@/features/history';
 
 export const metadata = {
   title: 'Historial — Conciliador',
@@ -7,8 +7,8 @@ export const metadata = {
 export default async function HistorialPage({
   searchParams,
 }: {
-  searchParams: Promise<HistorialListParams>;
+  searchParams: Promise<HistoryListParams>;
 }) {
   const params = await searchParams;
-  return <HistorialListView params={params} />;
+  return <HistoryListView params={params} />;
 }

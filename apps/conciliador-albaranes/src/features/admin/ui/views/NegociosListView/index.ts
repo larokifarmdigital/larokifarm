@@ -1,1 +1,0 @@
-export { NegociosListView } from './NegociosListView';

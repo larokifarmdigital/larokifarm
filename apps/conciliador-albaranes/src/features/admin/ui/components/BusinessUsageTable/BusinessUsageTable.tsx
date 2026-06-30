@@ -1,4 +1,4 @@
-import type { BusinessBucket } from '@/shared/core';
+import type { BusinessBucket } from '@/core/comparisons';
 import { formatNumber, formatUsd } from '@/shared/lib/format';
 
 export function BusinessUsageTable({ rows }: { rows: BusinessBucket[] }) {
@@ -32,7 +32,7 @@ export function BusinessUsageTable({ rows }: { rows: BusinessBucket[] }) {
                   </td>
                   <td className="px-3 py-2 text-right">{formatNumber(r.metrics.numComparisons)}</td>
                   <td className="px-3 py-2 text-right">{formatNumber(r.metrics.numPdfs)}</td>
-                  <td className="px-3 py-2 text-right">{formatNumber(r.metrics.numDiscrepanciasItems)}</td>
+                  <td className="px-3 py-2 text-right">{formatNumber(r.metrics.numDiscrepancyItems)}</td>
                   <td className="px-3 py-2 text-right">{formatNumber(tokens)}</td>
                   <td className="px-3 py-2 text-right">{formatUsd(r.metrics.geminiCostUsd)}</td>
                 </tr>

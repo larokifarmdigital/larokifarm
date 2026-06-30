@@ -1,5 +1,5 @@
-import { ConciliadorView } from '@/features/conciliador';
+import { ReconcilerView } from '@/features/reconciler';
 
 export default function Home() {
-  return <ConciliadorView />;
+  return <ReconcilerView />;
 }

@@ -1,16 +1,15 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { auth } from '@/features/auth';
-import { getBusinessRepository } from '@/shared/core';
+import { auth } from '@/core/auth';
+import { ForbiddenError, ValidationError } from '@/core/shared';
 import {
   CreateBusinessUseCase,
   DeleteBusinessUseCase,
-  ForbiddenError,
   SetGeminiApiKeyUseCase,
   UpdateBusinessUseCase,
-  ValidationError,
-} from '../core';
+  getBusinessRepository,
+} from '@/core/businesses';
 
 export interface BusinessActionState {
   ok?: boolean;

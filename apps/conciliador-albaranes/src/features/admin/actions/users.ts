@@ -1,15 +1,14 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { auth } from '@/features/auth';
-import { getUserRepository, type Role } from '@/shared/core';
+import { auth } from '@/core/auth';
+import { ForbiddenError, ValidationError, type Role } from '@/core/shared';
 import {
   CreateUserUseCase,
   DeleteUserUseCase,
-  ForbiddenError,
   UpdateUserUseCase,
-  ValidationError,
-} from '../core';
+  getUserRepository,
+} from '@/core/users';
 
 export interface UserActionState {
   ok?: boolean;

@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 // Import directo al sub-barrel `domain` para no arrastrar adapters server-only
 // (StorageLocal usa `node:crypto`) al bundle cliente.
-import { formatPeriod, type MonthlyBucket } from '@/shared/core/domain';
+import { formatPeriod, type MonthlyBucket } from '@/core/comparisons';
 
 interface MonthlyChartProps {
   buckets: MonthlyBucket[];

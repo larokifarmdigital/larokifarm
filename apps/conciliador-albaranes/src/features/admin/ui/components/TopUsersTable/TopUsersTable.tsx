@@ -1,4 +1,4 @@
-import type { UserBucket } from '@/shared/core';
+import type { UserBucket } from '@/core/comparisons';
 import { formatNumber, formatUsd } from '@/shared/lib/format';
 
 interface TopUsersTableProps {

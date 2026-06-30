@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useState, useTransition } from 'react';
-import type { BusinessRow } from '@/shared/core/domain';
+import type { BusinessRow } from '@/core/businesses';
 import {
   deleteBusinessAction,
   setGeminiApiKeyAction,

@@ -1,7 +1,7 @@
 'use server';
 
 import { AuthError } from 'next-auth';
-import { LoginUseCase } from '../core/application';
+import { LoginUseCase } from '@/core/auth';
 
 export type LoginState = {
   error?: string;

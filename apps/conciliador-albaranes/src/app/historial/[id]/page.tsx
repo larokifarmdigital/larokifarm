@@ -1,4 +1,4 @@
-import { ComparisonDetailView } from '@/features/historial';
+import { ComparisonDetailView } from '@/features/history';
 
 export const metadata = {
   title: 'Detalle — Historial',

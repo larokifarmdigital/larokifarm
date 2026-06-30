@@ -7,7 +7,7 @@
  * vars se leen directamente de `process.env`.
  *
  * Se conserva la lectura asíncrona para minimizar el diff en los call-sites
- * existentes (ConciliadorView, route handlers).
+ * existentes (ReconcilerView, route handlers).
  */
 export interface AppEnv {
   // App

@@ -8,14 +8,14 @@
  * Después: borrar con `pnpm tsx scripts/smoke-fase3.ts --clean`.
  */
 import { ComparisonStatus, FileKind, PrismaClient } from '@prisma/client';
-import { buildStorageKey, getStorage } from '../src/shared/core';
+import { buildStorageKey, getStorage } from '../src/core/storage';
 
 const prisma = new PrismaClient();
 const SMOKE_ETIQUETA = '__SMOKE_FASE3__';
 
 async function clean() {
   const found = await prisma.comparison.findMany({
-    where: { etiqueta: SMOKE_ETIQUETA },
+    where: { label: SMOKE_ETIQUETA },
     select: { id: true },
   });
   for (const c of found) {
@@ -42,17 +42,17 @@ async function main() {
       businessId: business.id,
       userId: user.id,
       durationMs: 12_345,
-      status: ComparisonStatus.DISCREPANCIAS,
-      proveedor: 'DENTAID (smoke)',
-      etiqueta: SMOKE_ETIQUETA,
+      status: ComparisonStatus.DISCREPANCIES,
+      supplier: 'DENTAID (smoke)',
+      label: SMOKE_ETIQUETA,
       numPairs: 1,
       numPdfs: 1,
       numXlsx: 1,
-      numDiscrepancias: 3,
+      numDiscrepancies: 3,
       geminiInputTokens: 4567,
       geminiOutputTokens: 890,
       geminiCostUsd: '0.012345',
-      summary: { proveedor: 'DENTAID', numeroAlbaran: 'ALB-SMOKE-001' },
+      summary: { supplier: 'DENTAID', numeroAlbaran: 'ALB-SMOKE-001' },
     },
   });
 

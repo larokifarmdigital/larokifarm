@@ -1,27 +1,25 @@
 /**
  * POST /api/conciliar
  *
- * Thin handler: solo se ocupa del transporte HTTP y la autorización.
- * Toda la lógica está en `ProcesarYPersistirParUseCase` del feature `conciliador`.
+ * Thin handler: only handles HTTP transport and authorization. All the
+ * logic is in `ProcessAndPersistPairUseCase` (core/engine).
  *
- *   1. Verifica sesión (Auth.js).
- *   2. Resuelve negocio del usuario (Fase 4 SUPER_ADMIN podrá elegir).
- *   3. Resuelve la API key de Gemini (BYOK del negocio o global como fallback).
- *   4. Para cada par del form, invoca el use case.
- *   5. Devuelve `{ resumen: ResultadoPar[] }`.
+ *   1. Verifies the session (Auth.js).
+ *   2. Resolves the user's business.
+ *   3. Resolves the Gemini API key (business BYOK or global fallback).
+ *   4. For each pair in the form, invokes the use case.
+ *   5. Returns `{ summary: PairResult[] }`.
  */
 import { NextResponse } from 'next/server';
-import { auth } from '@/features/auth';
+import { auth } from '@/core/auth';
+import { getComparisonRepository } from '@/core/comparisons';
+import { getBusinessRepository } from '@/core/businesses';
+import { getStorage } from '@/core/storage';
 import {
-  getBusinessRepository,
-  getComparisonRepository,
-  getStorage,
-} from '@/shared/core';
-import {
-  ProcesarYPersistirParUseCase,
-  type ParInput,
-  type ResultadoPar,
-} from '@/features/conciliador';
+  ProcessAndPersistPairUseCase,
+  type PairInput,
+  type PairResult,
+} from '@/core/engine';
 
 export const runtime = 'nodejs';
 
@@ -99,20 +97,20 @@ async function resolveContext(): Promise<
   };
 }
 
-async function paresDelForm(form: FormData): Promise<ParInput[]> {
+async function pairsFromForm(form: FormData): Promise<PairInput[]> {
   const indices = new Set<number>();
   for (const key of form.keys()) {
     const m = key.match(/^(?:pdfs|xlsx)_(\d+)$/);
     if (m) indices.add(Number(m[1]));
   }
 
-  const pares: ParInput[] = [];
+  const pairs: PairInput[] = [];
   for (const i of [...indices].sort((a, b) => a - b)) {
-    const etiqueta = String(form.get(`label_${i}`) ?? `Par ${i + 1}`);
+    const label = String(form.get(`label_${i}`) ?? `Par ${i + 1}`);
     const pdfs = form.getAll(`pdfs_${i}`).filter((v): v is File => v instanceof File);
     const xlsx = form.get(`xlsx_${i}`);
     if (pdfs.length === 0 || !(xlsx instanceof File)) {
-      pares.push({ id: i, etiqueta, pdfs: [], xlsx: { filename: '', bytes: new Uint8Array() } });
+      pairs.push({ id: i, label, pdfs: [], xlsx: { filename: '', bytes: new Uint8Array() } });
       continue;
     }
     const pdfBytes = await Promise.all(
@@ -121,14 +119,14 @@ async function paresDelForm(form: FormData): Promise<ParInput[]> {
         bytes: new Uint8Array(await pdf.arrayBuffer()),
       })),
     );
-    pares.push({
+    pairs.push({
       id: i,
-      etiqueta,
+      label,
       pdfs: pdfBytes,
       xlsx: { filename: xlsx.name, bytes: new Uint8Array(await xlsx.arrayBuffer()) },
     });
   }
-  return pares;
+  return pairs;
 }
 
 export async function POST(req: Request) {
@@ -137,21 +135,21 @@ export async function POST(req: Request) {
   const { ctx } = ctxResult;
 
   const form = await req.formData();
-  const pares = await paresDelForm(form);
+  const pairs = await pairsFromForm(form);
 
-  const useCase = new ProcesarYPersistirParUseCase(
+  const useCase = new ProcessAndPersistPairUseCase(
     getComparisonRepository(),
     getStorage(),
   );
 
-  const tareas: Array<Promise<ResultadoPar>> = pares.map((par) => {
-    if (par.pdfs.length === 0) {
-      return Promise.resolve<ResultadoPar>({
-        id: par.id,
-        etiqueta: par.etiqueta,
-        proveedor: '',
-        estado: 'ERROR',
-        nDiscrepancias: 0,
+  const tasks: Array<Promise<PairResult>> = pairs.map((pair) => {
+    if (pair.pdfs.length === 0) {
+      return Promise.resolve<PairResult>({
+        id: pair.id,
+        label: pair.label,
+        supplier: '',
+        status: 'ERROR',
+        numDiscrepancies: 0,
         error: 'Faltan archivos del par (al menos 1 PDF + 1 Excel).',
       });
     }
@@ -159,10 +157,10 @@ export async function POST(req: Request) {
       business: ctx.business,
       userId: ctx.userId,
       apiKey: ctx.apiKey,
-      par,
+      pair,
     });
   });
 
-  const resumen = await Promise.all(tareas);
-  return NextResponse.json({ resumen });
+  const summary = await Promise.all(tasks);
+  return NextResponse.json({ summary });
 }

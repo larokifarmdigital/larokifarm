@@ -12,9 +12,9 @@
  * usuario. SUPER_ADMIN puede acceder a cualquier business.
  */
 import { NextResponse, type NextRequest } from 'next/server';
-import { auth } from '@/features/auth';
+import { auth } from '@/core/auth';
 import { prisma } from '@/shared/lib/prisma';
-import { getStorage, verifyDownloadToken } from '@/shared/core';
+import { getStorage, verifyDownloadToken } from '@/core/storage';
 
 export const runtime = 'nodejs';
 

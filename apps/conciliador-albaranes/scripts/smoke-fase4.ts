@@ -9,11 +9,8 @@
  * Uso: `pnpm tsx scripts/smoke-fase4.ts`
  */
 import { PrismaClient } from '@prisma/client';
-import {
-  getBusinessRepository,
-  getUserRepository,
-} from '../src/shared/core';
-import { SetGeminiApiKeyUseCase, ListUsersUseCase } from '../src/features/admin/core';
+import { getBusinessRepository, SetGeminiApiKeyUseCase } from '../src/core/businesses';
+import { getUserRepository, ListUsersUseCase } from '../src/core/users';
 
 const prisma = new PrismaClient();
 const FAKE_API_KEY = 'test_byok_KEY_value_12345';

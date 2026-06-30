@@ -3,22 +3,21 @@
  *
  * Inserta 8 comparaciones ficticias en distintos meses (3 últimos meses),
  * usuarios (erick + admin@larokifarm) y estados (OK/DISCREPANCIAS/ERROR).
- * Después llama a GetUsoStatsUseCase con ambos roles y verifica que el RBAC
+ * Después llama a GetUsageStatsUseCase con ambos roles y verifica que el RBAC
  * arroja agregados correctos.
  *
  * Uso: `pnpm tsx scripts/smoke-fase5.ts`         crea + verifica
  *      `pnpm tsx scripts/smoke-fase5.ts --clean` borra los smoke creados
  */
 import { ComparisonStatus, PrismaClient } from '@prisma/client';
-import { getComparisonRepository } from '../src/shared/core';
-import { GetUsoStatsUseCase } from '../src/features/admin/core';
+import { GetUsageStatsUseCase, getComparisonRepository } from '../src/core/comparisons';
 
 const prisma = new PrismaClient();
 const SMOKE_TAG = '__SMOKE_FASE5__';
 
 async function clean() {
   const found = await prisma.comparison.findMany({
-    where: { etiqueta: SMOKE_TAG },
+    where: { label: SMOKE_TAG },
     select: { id: true },
   });
   for (const c of found) await prisma.comparison.delete({ where: { id: c.id } });
@@ -40,12 +39,12 @@ async function main() {
   const samples = [
     // mes actual
     { ago: 0, user: admin, status: 'OK', pdfs: 1, disc: 0, inTok: 4500, outTok: 800 },
-    { ago: 0, user: admin, status: 'DISCREPANCIAS', pdfs: 2, disc: 3, inTok: 8200, outTok: 1100 },
+    { ago: 0, user: admin, status: 'DISCREPANCIES', pdfs: 2, disc: 3, inTok: 8200, outTok: 1100 },
     { ago: 0, user: admin, status: 'OK', pdfs: 1, disc: 0, inTok: 3800, outTok: 700 },
     { ago: 0, user: admin, status: 'ERROR', pdfs: 1, disc: 0, inTok: 0, outTok: 0 },
     // mes -1
     { ago: 1, user: admin, status: 'OK', pdfs: 3, disc: 1, inTok: 12000, outTok: 1500 },
-    { ago: 1, user: admin, status: 'DISCREPANCIAS', pdfs: 1, disc: 5, inTok: 4100, outTok: 950 },
+    { ago: 1, user: admin, status: 'DISCREPANCIES', pdfs: 1, disc: 5, inTok: 4100, outTok: 950 },
     // mes -2
     { ago: 2, user: admin, status: 'OK', pdfs: 2, disc: 0, inTok: 7800, outTok: 1200 },
     { ago: 2, user: admin, status: 'OK', pdfs: 1, disc: 0, inTok: 4400, outTok: 850 },
@@ -61,12 +60,12 @@ async function main() {
         createdAt: ago(s.ago),
         durationMs: 5000 + Math.floor(s.inTok / 10),
         status: s.status as ComparisonStatus,
-        proveedor: 'SMOKE',
-        etiqueta: SMOKE_TAG,
+        supplier: 'SMOKE',
+        label: SMOKE_TAG,
         numPairs: 1,
         numPdfs: s.pdfs,
         numXlsx: 1,
-        numDiscrepancias: s.disc,
+        numDiscrepancies: s.disc,
         geminiInputTokens: s.inTok,
         geminiOutputTokens: s.outTok,
         geminiCostUsd: (inputCost + outputCost).toFixed(6),
@@ -87,7 +86,7 @@ async function main() {
   };
 
   const repo = getComparisonRepository();
-  const uc = new GetUsoStatsUseCase(repo);
+  const uc = new GetUsageStatsUseCase(repo);
 
   const su = await uc.execute(sessionSuper);
   const ba = await uc.execute(sessionBA);

@@ -1,4 +1,4 @@
-import type { UsageMetrics } from '@/shared/core';
+import type { UsageMetrics } from '@/core/comparisons';
 import { formatNumber, formatUsd, formatDuration } from '@/shared/lib/format';
 
 const ITEMS: Array<{
@@ -19,9 +19,9 @@ const ITEMS: Array<{
     format: (m) => formatNumber(m.numPdfs),
   },
   {
-    key: 'numDiscrepanciasItems',
+    key: 'numDiscrepancyItems',
     label: 'Discrepancias',
-    format: (m) => formatNumber(m.numDiscrepanciasItems),
+    format: (m) => formatNumber(m.numDiscrepancyItems),
     hint: 'líneas con diferencias',
   },
   {

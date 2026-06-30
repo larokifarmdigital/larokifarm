@@ -1,7 +1,9 @@
 'use client';
 
 import { useActionState } from 'react';
-import type { BusinessRow, Role, UserRow } from '@/shared/core/domain';
+import type { Role } from '@/core/shared';
+import type { UserRow } from '@/core/users';
+import type { BusinessRow } from '@/core/businesses';
 import {
   createUserAction,
   updateUserAction,

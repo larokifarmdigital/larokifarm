@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { auth, logoutAction } from '@/features/auth';
+import { auth } from '@/core/auth';
+import { logoutAction } from '@/features/auth';
 
 /**
  * Cabecera común para páginas autenticadas.

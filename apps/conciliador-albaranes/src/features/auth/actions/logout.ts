@@ -1,6 +1,6 @@
 'use server';
 
-import { LogoutUseCase } from '../core/application';
+import { LogoutUseCase } from '@/core/auth';
 
 const useCase = new LogoutUseCase();
 
