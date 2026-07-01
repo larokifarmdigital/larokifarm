@@ -2,14 +2,18 @@
  * Vista de /admin/usuarios.
  *
  * Server Component: obtiene sesión, llama a los use cases con scoping RBAC,
- * y renderiza tabla + form de creación. La page solo importa esta view.
+ * y renderiza la tabla. El botón "Nuevo usuario" y el modal de creación
+ * viven dentro de `UsersTable`. La page solo importa esta view.
+ *
+ * Roles asignables por rol del actor:
+ *   - SUPER_ADMIN    → cualquier rol
+ *   - BUSINESS_ADMIN → solo USER (no puede crear otros admins)
  */
 import { redirect } from 'next/navigation';
 import { auth } from '@/core/auth';
 import type { Role } from '@/core/shared';
 import { ListUsersUseCase, getUserRepository } from '@/core/users';
 import { ListBusinessesUseCase, getBusinessRepository } from '@/core/businesses';
-import { UserForm } from '../../components/UserForm';
 import { UsersTable } from '../../components/UsersTable';
 
 export async function UsersListView() {
@@ -30,22 +34,16 @@ export async function UsersListView() {
   const isSuperAdmin = session.user.role === 'SUPER_ADMIN';
   const rolesDisponibles: Role[] = isSuperAdmin
     ? ['SUPER_ADMIN', 'BUSINESS_ADMIN', 'USER']
-    : ['BUSINESS_ADMIN', 'USER'];
+    : ['USER'];
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-6">
-      <h1 className="mb-6 text-xl font-semibold text-gray-900">Usuarios</h1>
-
-      <section className="mb-8 rounded-md border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">
-          Crear usuario
-        </h2>
-        <UserForm
-          rolesDisponibles={rolesDisponibles}
-          negocios={negocios}
-          fijarBusiness={!isSuperAdmin}
-        />
-      </section>
+      <div className="mb-6 flex items-baseline justify-between">
+        <h1 className="text-xl font-semibold text-gray-900">Usuarios</h1>
+        <p className="text-xs text-gray-500">
+          {users.length} {users.length === 1 ? 'usuario' : 'usuarios'}
+        </p>
+      </div>
 
       <UsersTable
         users={users}

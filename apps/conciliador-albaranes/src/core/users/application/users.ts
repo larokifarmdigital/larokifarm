@@ -47,11 +47,14 @@ export class CreateUserUseCase {
     let effective: CreateUserInput = { ...input };
 
     if (actor.user.role === 'BUSINESS_ADMIN') {
-      if (effective.role === 'SUPER_ADMIN') {
-        throw new ForbiddenError('No puedes crear SUPER_ADMIN.');
-      }
       if (!actor.user.businessId) {
         throw new ForbiddenError('Tu cuenta no tiene negocio asignado.');
+      }
+      // BUSINESS_ADMIN solo puede crear USER (no otros admins).
+      if (effective.role !== 'USER') {
+        throw new ForbiddenError(
+          'Solo puedes crear usuarios operativos (rol Usuario).',
+        );
       }
       // Forzar el businessId del actor: BUSINESS_ADMIN solo crea en su negocio.
       effective.businessId = actor.user.businessId;
@@ -77,8 +80,10 @@ export class UpdateUserUseCase {
 
     const effective: UpdateUserInput = { ...input };
     if (actor.user.role === 'BUSINESS_ADMIN') {
-      if (effective.role === 'SUPER_ADMIN') {
-        throw new ForbiddenError('No puedes promover a SUPER_ADMIN.');
+      if (effective.role !== undefined && effective.role !== 'USER') {
+        throw new ForbiddenError(
+          'Solo puedes asignar el rol Usuario a los usuarios de tu negocio.',
+        );
       }
       // BUSINESS_ADMIN no puede mover usuarios entre negocios
       delete effective.businessId;

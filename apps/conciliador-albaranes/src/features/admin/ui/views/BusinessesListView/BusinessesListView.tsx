@@ -2,13 +2,12 @@
  * Vista de /admin/negocios.
  *
  * SUPER_ADMIN ve y gestiona todos los negocios (crear, editar, borrar, BYOK).
- * BUSINESS_ADMIN ve solo el suyo y puede editar nombre + BYOK (no borrar).
+ * BUSINESS_ADMIN ve solo el suyo y puede editar nombre + BYOK (no crear/borrar).
  * USER → redirige a /.
  */
 import { redirect } from 'next/navigation';
 import { auth } from '@/core/auth';
 import { ListBusinessesUseCase, getBusinessRepository } from '@/core/businesses';
-import { BusinessForm } from '../../components/BusinessForm';
 import { BusinessesTable } from '../../components/BusinessesTable';
 
 export async function BusinessesListView() {
@@ -24,16 +23,12 @@ export async function BusinessesListView() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-6">
-      <h1 className="mb-6 text-xl font-semibold text-gray-900">Negocios</h1>
-
-      {isSuperAdmin && (
-        <section className="mb-8 rounded-md border border-gray-200 bg-white p-4">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">
-            Crear negocio
-          </h2>
-          <BusinessForm />
-        </section>
-      )}
+      <div className="mb-6 flex items-baseline justify-between">
+        <h1 className="text-xl font-semibold text-gray-900">Negocios</h1>
+        <p className="text-xs text-gray-500">
+          {negocios.length} {negocios.length === 1 ? 'negocio' : 'negocios'}
+        </p>
+      </div>
 
       <BusinessesTable businesses={negocios} canDelete={isSuperAdmin} />
     </main>

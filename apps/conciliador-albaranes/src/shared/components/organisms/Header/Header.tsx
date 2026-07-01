@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { auth } from '@/core/auth';
 import { logoutAction } from '@/features/auth';
+import { roleLabel } from '@/features/admin/lib/roleLabel';
 
 /**
  * Cabecera común para páginas autenticadas.
@@ -60,10 +61,16 @@ export async function Header() {
         </nav>
 
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">
-            {session.user.name}{' '}
-            <span className="text-xs text-gray-400">({session.user.role})</span>
-          </span>
+          <Link
+            href="/perfil"
+            className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
+            title="Ir a mi perfil"
+          >
+            <span>{session.user.name}</span>
+            <span className="text-xs text-gray-400">
+              ({roleLabel(session.user.role, { short: true })})
+            </span>
+          </Link>
           <form action={logoutAction}>
             <button
               type="submit"
