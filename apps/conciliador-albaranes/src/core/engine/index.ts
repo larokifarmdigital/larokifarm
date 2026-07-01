@@ -1,9 +1,20 @@
 /**
- * API pública de `core/motor`: el engine de conciliación + el use case que lo
- * orquesta con persistencia (subida a storage + Comparison en BD).
+ * API pública de `core/engine`: dominio puro + tipos del contrato del use case.
  *
- * Dependencias cross-core: `core/comparaciones` (escribir Comparison),
- * `core/storage` (subir archivos). Acíclico — solo escribe, no lee.
+ * El **use case** `ProcessAndPersistPairUseCase` NO se reexporta aquí porque
+ * arrastra `@/core/storage` (con `node:crypto`) y rompe el bundle de cliente
+ * cuando una vista `'use client'` importa tipos del engine. Para usar el use
+ * case desde el servidor, importar directo:
+ *
+ *   import { ProcessAndPersistPairUseCase } from '@/core/engine/application'
  */
 export * from './domain';
-export * from './application';
+export type {
+  PairInput,
+  ProcessAndPersistPairInput,
+} from './application/processAndPersistPair';
+export type {
+  ReconciliationDetail,
+  PairResult,
+  ReconciliationResponse,
+} from './application/contract';

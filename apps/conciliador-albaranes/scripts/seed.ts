@@ -1,9 +1,11 @@
 /**
- * Seed inicial — Fase 1.
+ * Seed inicial.
  *
- * Crea (idempotente):
- *   - 1 negocio "larokifarm" si no existe.
- *   - 1 SUPER_ADMIN con email/password de las vars SEED_SUPER_ADMIN_*.
+ * Crea (idempotente) únicamente el SUPER_ADMIN con las credenciales de
+ * `SEED_SUPER_ADMIN_EMAIL`, `SEED_SUPER_ADMIN_PASSWORD` y `SEED_SUPER_ADMIN_NAME`.
+ *
+ * Los negocios y sus usuarios se crean desde el panel `/admin` como
+ * SUPER_ADMIN — no se hardcodean aquí.
  *
  * Uso: `pnpm tsx scripts/seed.ts`
  */
@@ -17,16 +19,6 @@ const SEED_PASSWORD = process.env.SEED_SUPER_ADMIN_PASSWORD ?? 'changeme123';
 const SEED_NAME = process.env.SEED_SUPER_ADMIN_NAME ?? 'Erick';
 
 async function main() {
-  const business = await prisma.business.upsert({
-    where: { slug: 'larokifarm' },
-    update: {},
-    create: {
-      slug: 'larokifarm',
-      name: 'Larokifarm',
-    },
-  });
-  console.log(`✓ Negocio: ${business.name} (${business.slug})`);
-
   const passwordHash = await bcrypt.hash(SEED_PASSWORD, 10);
 
   const superAdmin = await prisma.user.upsert({
@@ -45,34 +37,12 @@ async function main() {
       active: true,
     },
   });
+
   console.log(`✓ SUPER_ADMIN: ${superAdmin.email}  (sin negocio asignado)`);
-
-  // Usuario operativo del negocio — para poder probar /api/conciliar en Fase 2.
-  // En Fase 4 SUPER_ADMIN podrá hacer comparaciones eligiendo negocio en el sidebar.
-  const businessAdminEmail = 'admin@larokifarm.com';
-  const businessAdmin = await prisma.user.upsert({
-    where: { email: businessAdminEmail },
-    update: {
-      passwordHash,
-      role: 'BUSINESS_ADMIN',
-      businessId: business.id,
-      active: true,
-    },
-    create: {
-      email: businessAdminEmail,
-      name: 'Admin Larokifarm',
-      passwordHash,
-      role: 'BUSINESS_ADMIN',
-      businessId: business.id,
-      active: true,
-    },
-  });
-  console.log(`✓ BUSINESS_ADMIN: ${businessAdmin.email}  (negocio: ${business.slug})`);
-
-  console.log('');
-  console.log(`  Contraseña (ambos): ${SEED_PASSWORD}`);
+  console.log(`  Contraseña: ${SEED_PASSWORD}`);
   console.log('');
   console.log('Listo. Arranca con `pnpm dev` y entra a http://localhost:3000/login');
+  console.log('Desde /admin puedes crear negocios y usuarios.');
 }
 
 main()

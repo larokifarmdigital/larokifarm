@@ -15,11 +15,8 @@ import { auth } from '@/core/auth';
 import { getComparisonRepository } from '@/core/comparisons';
 import { getBusinessRepository } from '@/core/businesses';
 import { getStorage } from '@/core/storage';
-import {
-  ProcessAndPersistPairUseCase,
-  type PairInput,
-  type PairResult,
-} from '@/core/engine';
+import { ProcessAndPersistPairUseCase } from '@/core/engine/application';
+import type { PairInput, PairResult } from '@/core/engine';
 
 export const runtime = 'nodejs';
 
