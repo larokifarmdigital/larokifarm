@@ -24,7 +24,7 @@ describe('mergeDeliveryNotes', () => {
       documentKind: 'deliveryNote',
       lines: [line({ ean: '1111', description: 'P', quantity: 1, unitPrice: 1 })],
     };
-    expect(mergeDeliveryNotes([a])).toBe(a);
+    expect(mergeDeliveryNotes([a])).toStrictEqual(a);
   });
 
   // Caso NESTLE: albarán y factura comparten el mismo set de productos, con

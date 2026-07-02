@@ -96,7 +96,85 @@ FORMATOS DE TABLA — IMPORTANTE:
   Si no cuadra ni de lejos (orden de magnitud mal), has leído mal alguna columna o
   no aplicaste el denominador del precio: vuelve a mirarla. Esto es especialmente
   importante cuando el resultado se desvía en factor 10, 100 o 1000 — suele ser
-  señal de que el precio venía "por N unidades" y no lo dividiste.`;
+  señal de que el precio venía "por N unidades" y no lo dividiste.
+
+NÚMEROS PEGADOS SIN ESPACIO — IMPORTANTE:
+- Cuando en el texto veas un número seguido inmediatamente por otro que empieza con
+  1-2 dígitos y termina con "%" (sin espacio de separación), son DOS números
+  distintos que hay que separar: el primero es un importe/precio, el segundo es un
+  descuento. Ejemplo real:
+    "61,6230,00%"       → importe = 61,62   +   descuento = 30,00%
+    "10,275,50%"        → precio  = 10,27   +   descuento = 5,50%
+    "1.234,5620%"       → importe = 1.234,56 +  descuento = 20%
+  Regla de corte: localiza el "%" y retrocede hasta encontrar un dígito con "," o
+  "." decimal que forme un porcentaje razonable (0-100). Lo anterior es el otro
+  número.
+- La misma regla aplica a números pegados a "€" o "$" al final.
+
+DESCUENTOS EN LÍNEA APILADA (formato FAES FARMA, DENTAID y muchos otros) — CRÍTICO:
+- Muchos proveedores imprimen cada artículo en DOS líneas visuales apiladas:
+    Línea A (superior):  N  código  /  DESCRIPCIÓN  cant UN  precio  subtotal
+    Línea B (inferior, indentada bajo las columnas de dto/importe):  dto%  -importe_dto
+  Ejemplo textual literal:
+    "20 2140929 / ARCID COMPRIMIDOS, 24 COMPRIMIDOS 2 UN 9,40 18,80"
+    "                                                   30,00% -5,64"
+  La línea B pertenece al artículo de la línea A inmediatamente anterior — el 30,00%
+  es el "discount" de ARCID. NUNCA generes una línea separada para el fragmento B:
+  fusiónalo con la línea A anterior.
+- Cómo reconocer una línea B "huérfana":
+  * Empieza con un porcentaje (X,XX% o X.XX%) posiblemente precedido por espacios.
+  * NO tiene código de artículo ni descripción al principio.
+  * Suele ir seguida de un importe negativo (-Y,YY) que es el importe del descuento.
+  * Puede haber varias líneas B seguidas (descuentos compuestos): súmalas todas al
+    "discount" del artículo anterior — mismo criterio que la sección de descuentos
+    compuestos de Nestlé (arriba).
+
+LÍNEAS PARTIDAS POR SALTO DE PÁGINA — MUY IMPORTANTE:
+- El salto de página puede caer entre la línea A y la línea B del formato apilado
+  de arriba: entonces la línea A queda al final de la página N (sin descuento
+  visible) y la línea B ("30,00% -5,64") queda al inicio de la página N+1 (sin
+  código de artículo delante). SIGUEN SIENDO EL MISMO ARTÍCULO: asigna el
+  descuento a la última línea de la página anterior.
+- Regla dura: si al INICIO de una página aparece un fragmento cuya primera cosa es
+  un porcentaje o un importe negativo, SIN código de artículo delante, ese
+  fragmento pertenece a la ÚLTIMA línea que emitiste de la página anterior.
+- El salto también puede caer entre código+descripción y unidades+precio de una
+  misma línea A. Mismo criterio: fusiona los fragmentos, devuelve UNA línea.
+- Aplica también la regla de "números pegados sin espacio" (arriba) tras la fusión.
+
+CABECERA REPETIDA EN CADA PÁGINA — MUY IMPORTANTE:
+- Muchos proveedores (FAES FARMA entre ellos) REPITEN la cabecera completa de la
+  tabla ("Posición Código Nacional/Descripción Cantidad Precio unitario Importe")
+  al inicio de CADA página del documento. Esa repetición es un artefacto de la
+  maquetación: NO significa que empiece una tabla nueva ni que el flujo de líneas
+  se reinicie. Ignórala como "cabecera decorativa" y sigue el flujo continuo de
+  artículos de la página anterior.
+- La consecuencia práctica: si acabas la página N con la fila de un artículo
+  (línea A) SIN descuento, y la página N+1 empieza con esta secuencia:
+    "Posición Código Nacional/Descripción ... Importe"   ← cabecera repetida
+    "                                                   30,00% -90,15"   ← línea B huérfana
+    "Lote: Z03/1 / Caducidad: 11.2027"                                   ← lote del artículo cortado
+    " 130  ...                                          "                ← siguiente artículo
+  ese 30,00% -90,15 ES el descuento del último artículo de la página N (línea A),
+  NO es un artículo nuevo. Igual con el "Lote:" siguiente (pertenece al artículo
+  cortado, no al 130).
+
+EJEMPLO REAL de tu PDF (FAES FARMA factura multi-página), transición página 2 → 3:
+    Final página 2:
+      "120  2085848 / CANNAFAES FORTE CREMA 60ML  25 UN  12,02  300,50"
+    Inicio página 3:
+      "Posición Código Nacional/Descripción Cantidad Precio unitario Importe"
+      "                                                   30,00% -90,15"
+      "Lote: Z03/1 / Caducidad: 11.2027"
+      "130  2130555 / RICOLA CARAM.50g MIEL Y HIERBAS  40 UN  1,90  76,00"
+      ...
+  Salida correcta:
+    - artículo 120 CANNAFAES: quantity=25, unitPrice=12,02, discount=30 (¡no 0!)
+    - artículo 130 RICOLA: quantity=40, unitPrice=1,90, discount=10 (su propia línea B)
+  Salida INCORRECTA (a evitar):
+    - artículo 120 CANNAFAES con discount=0 (perdiste su línea B por el salto de página)
+    - una línea extra con solo 30% -90,15 y sin código (sería una línea "huérfana"
+      que rompe la reconciliación con el pedido)`;
 
 const RESPONSE_SCHEMA = {
   type: 'object',

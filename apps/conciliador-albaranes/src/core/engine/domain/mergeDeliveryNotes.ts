@@ -1,3 +1,4 @@
+import { absorbOrphanDiscountLines } from './absorbOrphanDiscountLines';
 import { cleanAlt, cleanNationalCode } from './numbers';
 import type { DeliveryNoteData, DeliveryNoteLine } from './types';
 
@@ -6,12 +7,14 @@ export function mergeDeliveryNotes(deliveryNotes: DeliveryNoteData[]): DeliveryN
   if (deliveryNotes.length === 0) {
     return { deliveryNoteNumber: '', lines: [] };
   }
-  if (deliveryNotes.length === 1) {
-    return deliveryNotes[0];
+  // NOTE: absorbe líneas huérfanas de descuento generadas por saltos de página antes de cualquier fusión (aplica también con 1 PDF).
+  const preCleaned = deliveryNotes.map(absorbOrphanDiscountLines);
+  if (preCleaned.length === 1) {
+    return preCleaned[0];
   }
 
   const items: Source[] = [];
-  for (const a of deliveryNotes) {
+  for (const a of preCleaned) {
     for (const line of a.lines) {
       items.push({ kind: a.documentKind ?? 'other', line });
     }
