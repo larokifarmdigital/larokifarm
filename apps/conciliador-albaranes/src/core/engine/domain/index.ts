@@ -1,10 +1,3 @@
-/**
- * Reconciliation domain: pure engine. No Next, no Prisma, no auth, no fetch
- * (with the documented exception of `extractDeliveryNote`, which calls
- * Gemini — strictly speaking it would be an adapter, but the team treats it
- * as part of the engine since it is the only external dependency and is
- * mocked in tests).
- */
 export { reconcile, statusText, TOL_PRICE, TOL_QUANTITY, TOL_DISCOUNT } from './reconcile';
 export { extractDeliveryNote } from './extractDeliveryNote';
 export type { ExtractionResult, UsageMetadata } from './extractDeliveryNote';

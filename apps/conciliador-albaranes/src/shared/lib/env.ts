@@ -1,40 +1,25 @@
-/**
- * Acceso a variables de entorno / secrets.
- *
- * Histórico: la app corría sobre Cloudflare Workers (OpenNext), donde las vars
- * llegan por el binding del request. A partir de la Fase 1 del plan multi-tenant
- * (ver docs/FASES.md) la app se despliega en Node sobre un VPS, así que las
- * vars se leen directamente de `process.env`.
- *
- * Se conserva la lectura asíncrona para minimizar el diff en los call-sites
- * existentes (ReconcilerView, route handlers).
- */
+// NOTE: se conserva async para no cambiar los call-sites; se lee de process.env desde que la app corre en Node.
 export interface AppEnv {
-  // App
   AUTH_SECRET?: string;
   GEMINI_API_KEY?: string;
 
-  // Base de datos (Fase 1)
   DATABASE_URL?: string;
   DIRECT_DATABASE_URL?: string;
 
-  // Seed (Fase 1)
   SEED_SUPER_ADMIN_EMAIL?: string;
   SEED_SUPER_ADMIN_PASSWORD?: string;
   SEED_SUPER_ADMIN_NAME?: string;
 
-  // Fase 2 — cifrado BYOK + storage
   ENCRYPTION_KEY?: string;
   STORAGE_DRIVER?: 'local' | 'spaces';
   STORAGE_LOCAL_DIR?: string;
 
-  // Fase 2 (driver spaces, no usado en dev)
   SPACES_ENDPOINT?: string;
   SPACES_KEY?: string;
   SPACES_SECRET?: string;
   SPACES_BUCKET?: string;
 
-  // Legacy (se elimina al terminar Fase 1; sustituido por login con Auth.js)
+  // TODO: eliminar ACCESO_CLAVE cuando termine la Fase 1 (sustituido por Auth.js).
   ACCESO_CLAVE?: string;
 }
 

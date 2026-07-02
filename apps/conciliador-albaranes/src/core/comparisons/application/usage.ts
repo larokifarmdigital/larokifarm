@@ -1,15 +1,4 @@
-/**
- * Use case for the usage dashboard (Phase 5).
- *
- * RBAC:
- *  - SUPER_ADMIN sees platform-wide aggregates + breakdown by business.
- *  - BUSINESS_ADMIN sees aggregates of THEIR business + breakdown by user.
- *  - USER does not enter (the page redirects earlier).
- *
- * Returns pre-built data (monthly evolution + current-month KPIs + top users
- * + breakdown by business when applicable). The view just renders — no
- * recomputation.
- */
+// NOTE: SUPER_ADMIN ve todo + breakdown por negocio; BUSINESS_ADMIN ve solo su negocio + breakdown por usuario.
 import type { Session } from 'next-auth';
 import { ForbiddenError, scopeFromSession } from '@/core/shared';
 import {
@@ -19,6 +8,7 @@ import {
   type BusinessBucket,
   type ComparisonRepository,
   type MonthlyBucket,
+  type MonthlyBusinessBucket,
   type UsageMetrics,
   type UserBucket,
 } from '../domain';
@@ -31,6 +21,8 @@ export interface UsageStats {
   currentMonth: UsageMetrics;
   /** Monthly evolution, with gaps filled (no missing periods). */
   monthly: MonthlyBucket[];
+  /** Same evolution but split by business (SUPER_ADMIN sin filtro; vacío en el resto). */
+  monthlyByBusiness: MonthlyBusinessBucket[];
   /** Top N users this month by tokens consumed. */
   topUsers: UserBucket[];
   /** Breakdown by business for the current month (SUPER_ADMIN only; empty otherwise). */
@@ -48,13 +40,19 @@ export class GetUsageStatsUseCase {
 
   async execute(
     actor: Session,
-    opts: { monthsHistory?: number; topUsersLimit?: number } = {},
+    opts: {
+      monthsHistory?: number;
+      topUsersLimit?: number;
+      /** Filter (SUPER_ADMIN only). BUSINESS_ADMIN ya está limitado por scope. */
+      businessSlug?: string;
+    } = {},
   ): Promise<UsageStats> {
     if (actor.user.role === 'USER') {
       throw new ForbiddenError('Only administrators can access the usage dashboard.');
     }
     const monthsHistory = opts.monthsHistory ?? MONTHS_HISTORY_DEFAULT;
     const topUsersLimit = opts.topUsersLimit ?? TOP_USERS_LIMIT_DEFAULT;
+    const businessSlug = opts.businessSlug || undefined;
 
     const now = new Date();
     const startCurrent = startOfMonthUTC(now);
@@ -62,18 +60,30 @@ export class GetUsageStatsUseCase {
 
     const scope = scopeFromSession(actor);
 
-    const [monthlyRaw, currentMonthly, usersThisMonth, businessThisMonth] = await Promise.all([
-      this.repo.aggregateByMonth(scope, { from: startHistory }),
-      this.repo.aggregateByMonth(scope, { from: startCurrent }),
-      this.repo.aggregateByUser(scope, { from: startCurrent }),
-      actor.user.role === 'SUPER_ADMIN'
+    const showByBusiness = actor.user.role === 'SUPER_ADMIN' && !businessSlug;
+
+    const [
+      monthlyRaw,
+      currentMonthly,
+      usersThisMonth,
+      businessThisMonth,
+      monthlyByBusinessRaw,
+    ] = await Promise.all([
+      this.repo.aggregateByMonth(scope, { from: startHistory, businessSlug }),
+      this.repo.aggregateByMonth(scope, { from: startCurrent, businessSlug }),
+      this.repo.aggregateByUser(scope, { from: startCurrent, businessSlug }),
+      showByBusiness
         ? this.repo.aggregateByBusiness(scope, { from: startCurrent })
         : Promise.resolve([] as BusinessBucket[]),
+      showByBusiness
+        ? this.repo.aggregateByMonthAndBusiness(scope, { from: startHistory })
+        : Promise.resolve([] as MonthlyBusinessBucket[]),
     ]);
 
     return {
       currentMonth: currentMonthly[0]?.metrics ?? { ...EMPTY_METRICS },
       monthly: fillMonthlyGaps(monthlyRaw, startHistory, startCurrent),
+      monthlyByBusiness: monthlyByBusinessRaw,
       topUsers: usersThisMonth.slice(0, topUsersLimit),
       byBusiness: businessThisMonth,
       context: {
@@ -86,15 +96,10 @@ export class GetUsageStatsUseCase {
 }
 
 function monthLabel(d: Date): string {
-  // UI is in Spanish, so the month label stays in Spanish.
   const fmt = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' });
   return fmt.format(d);
 }
 
-/**
- * Fills months with no data with an empty bucket so the chart has no visual
- * gaps. Range is [startInclusive, endInclusive] both at first-of-month UTC.
- */
 function fillMonthlyGaps(
   buckets: MonthlyBucket[],
   startInclusive: Date,

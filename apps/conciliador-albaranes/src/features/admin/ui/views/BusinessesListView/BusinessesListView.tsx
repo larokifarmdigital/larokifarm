@@ -1,10 +1,3 @@
-/**
- * Vista de /admin/negocios.
- *
- * SUPER_ADMIN ve y gestiona todos los negocios (crear, editar, borrar, BYOK).
- * BUSINESS_ADMIN ve solo el suyo y puede editar nombre + BYOK (no crear/borrar).
- * USER → redirige a /.
- */
 import { redirect } from 'next/navigation';
 import { auth } from '@/core/auth';
 import { ListBusinessesUseCase, getBusinessRepository } from '@/core/businesses';

@@ -2,20 +2,7 @@ import * as XLSX from 'xlsx';
 import { parseNumber } from './numbers';
 import type { OrderData } from './types';
 
-/**
- * Reads the client's order Excel (§8). SheetJS works in Node and Workers.
- * Header row is row 1. Column mapping based on the client's real Excel:
- *   C.N.            → CodigoArticulo
- *   units           → Unidades         (used to look for "UnidadesPedidas" — wrong)
- *   price           → Precio (base PVL)
- *   discount        → %Descuento       (comes as 21, not as a fraction)
- *   description     → DescripcionArticulo
- *   supplier number → CodigoProveedor
- *   supplier name   → RazonSocial
- * Lookup is tolerant (case/diacritics) and accepts alternative names.
- */
-
-/** Normalizes a header key for tolerant matching. */
+// NOTE: descuento viene como 21 (no como 0,21).
 function normalizeKey(s: string): string {
   return s
     .toLowerCase()

@@ -1,14 +1,3 @@
-/**
- * Vista de /admin/usuarios.
- *
- * Server Component: obtiene sesión, llama a los use cases con scoping RBAC,
- * y renderiza la tabla. El botón "Nuevo usuario" y el modal de creación
- * viven dentro de `UsersTable`. La page solo importa esta view.
- *
- * Roles asignables por rol del actor:
- *   - SUPER_ADMIN    → cualquier rol
- *   - BUSINESS_ADMIN → solo USER (no puede crear otros admins)
- */
 import { redirect } from 'next/navigation';
 import { auth } from '@/core/auth';
 import type { Role } from '@/core/shared';

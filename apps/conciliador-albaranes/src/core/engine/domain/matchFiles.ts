@@ -1,10 +1,4 @@
-/**
- * Auto-matching of files by name (Mode B). Pairs a PDF (delivery note) with
- * an Excel (order) when they share a filename "key": the basename without
- * extension, normalized and with role words (delivery-note / order / …)
- * removed. So "DENTAID_albaran.pdf" pairs with "DENTAID_pedido.xlsx".
- */
-
+// NOTE: empareja PDF+XLSX por "key" del filename (sin extensión, sin role words) — "DENTAID_albaran.pdf" ↔ "DENTAID_pedido.xlsx".
 const ROLE_WORDS = new Set([
   'albaran', 'albaranes', 'alb', 'pedido', 'pedidos', 'ped', 'order', 'orders',
   'factura', 'conciliacion',
@@ -18,7 +12,6 @@ export function fileKindFromName(name: string): UploadKind | null {
   return null;
 }
 
-/** Matching key: basename, without diacritics, role words or separators. */
 export function fileKey(name: string): string {
   const base = name
     .replace(/\.[^.]+$/, '')
@@ -45,12 +38,7 @@ export interface MatchedPair<T> {
   key: string;
 }
 
-/**
- * Pairs PDFs with Excels by filename key. Several PDFs with the SAME key
- * (e.g. `NESTLE_albaran.pdf` + `NESTLE_factura.pdf`) go into the same pair.
- * An Excel can only belong to one pair; if two Excels share a key, the
- * second one stays unmatched. Whatever is not paired goes to `unmatched`.
- */
+// NOTE: si 2 XLSX comparten key, el segundo queda unmatched (un Excel solo pertenece a un pair).
 export function matchFiles<T extends FileItem>(
   items: T[],
 ): { pairs: Array<MatchedPair<T>>; unmatched: T[] } {

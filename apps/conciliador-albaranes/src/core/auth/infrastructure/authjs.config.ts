@@ -1,11 +1,6 @@
 import type { NextAuthConfig } from 'next-auth';
 
-/**
- * Configuración edge-safe de Auth.js (sin Prisma, sin bcrypt).
- *
- * Se usa en el middleware (que corre en runtime edge). El callback `authorized`
- * decide si la request continúa o se redirige a /login.
- */
+// NOTE: config edge-safe (sin Prisma ni bcrypt) usada por el middleware.
 export const authConfig = {
   pages: {
     signIn: '/login',

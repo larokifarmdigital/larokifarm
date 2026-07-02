@@ -1,10 +1,4 @@
-/**
- * Modelo de User.
- *
- * El `passwordHash` solo aparece en queries internas de auth — NUNCA en las
- * shapes públicas (`UserRow`). Para verificar credenciales se usa
- * `UserRepository.findByEmailForAuth` que sí lo devuelve.
- */
+// NOTE: passwordHash solo se expone en `UserForAuth`, no en las shapes públicas.
 import type { Role } from '@/core/shared';
 
 export interface UserRow {
@@ -25,6 +19,7 @@ export interface UserForAuth {
   name: string;
   role: Role;
   businessId: string | null;
+  businessSlug: string | null;
   passwordHash: string;
   active: boolean;
 }

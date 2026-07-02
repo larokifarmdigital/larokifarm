@@ -1,9 +1,3 @@
-/**
- * Port: contract for reading and writing comparisons.
- *
- * The domain has no knowledge of Prisma. The adapter lives in
- * `core/comparisons/infrastructure/ComparisonRepositoryPrisma.ts`.
- */
 import type { Scope } from '@/core/shared';
 import type {
   ComparisonDetail,
@@ -16,6 +10,7 @@ import type {
   AggregateOptions,
   BusinessBucket,
   MonthlyBucket,
+  MonthlyBusinessBucket,
   UserBucket,
 } from '../models/Usage';
 
@@ -60,4 +55,9 @@ export interface ComparisonRepository {
   aggregateByMonth(scope: Scope, opts: AggregateOptions): Promise<MonthlyBucket[]>;
   aggregateByUser(scope: Scope, opts: AggregateOptions): Promise<UserBucket[]>;
   aggregateByBusiness(scope: Scope, opts: AggregateOptions): Promise<BusinessBucket[]>;
+  /** Breakdown mes × negocio para gráficos apilados. */
+  aggregateByMonthAndBusiness(
+    scope: Scope,
+    opts: AggregateOptions,
+  ): Promise<MonthlyBusinessBucket[]>;
 }

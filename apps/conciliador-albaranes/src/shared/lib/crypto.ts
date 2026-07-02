@@ -1,15 +1,4 @@
-/**
- * Cifrado simétrico AES-256-GCM para secretos sensibles guardados en BD.
- *
- * Uso principal (Fase 2 / Fase 4): cifrar la `gemini_api_key` por negocio antes
- * de persistirla en `Business.geminiKeyEnc`.
- *
- * Formato del ciphertext almacenado en BD (string base64):
- *   [12 bytes IV][N bytes ciphertext+authTag]
- *
- * La master key viene de `ENCRYPTION_KEY` (32 bytes base64). Si se rota, todos
- * los `geminiKeyEnc` quedan ilegibles — habría que reencriptarlos.
- */
+// NOTE: AES-256-GCM; formato base64 = [12B IV][ciphertext+authTag]. Rotar ENCRYPTION_KEY invalida todos los geminiKeyEnc existentes.
 import { webcrypto } from 'node:crypto';
 
 const ALGO = 'AES-GCM';

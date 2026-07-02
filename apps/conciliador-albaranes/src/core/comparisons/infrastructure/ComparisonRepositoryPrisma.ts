@@ -1,10 +1,3 @@
-/**
- * Prisma adapter for the ComparisonRepository port.
- *
- * The only file in the app that translates the domain `Scope` and `ListFilters`
- * into a Prisma WHERE clause. If we change ORM tomorrow, only this file is
- * rewritten — the rest of the feature is unaffected.
- */
 import { FileKind, type Prisma } from '@prisma/client';
 import { prisma } from '@/shared/lib/prisma';
 import type { Scope } from '@/core/shared';
@@ -20,6 +13,7 @@ import {
   type AggregateOptions,
   type BusinessBucket,
   type MonthlyBucket,
+  type MonthlyBusinessBucket,
   type UsageMetrics,
   type UserBucket,
 } from '../domain/models/Usage';
@@ -177,14 +171,7 @@ export class ComparisonRepositoryPrisma implements ComparisonRepository {
     });
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Aggregations — Phase 5
-  //
-  // Pragmatic implementation: narrow `select` + JS reduce. Enough for
-  // 5 pharmacies × hundreds of comparisons / month. If it grows, switch
-  // to raw SQL with date_trunc + GROUP BY.
-  // ──────────────────────────────────────────────────────────────
-
+  // NOTE: narrow select + JS reduce; si crece, migrar a SQL con date_trunc + GROUP BY.
   private whereForAggregate(
     scope: Scope,
     opts: AggregateOptions,
@@ -194,6 +181,9 @@ export class ComparisonRepositoryPrisma implements ComparisonRepository {
       where.createdAt = {};
       if (opts.from) where.createdAt.gte = opts.from;
       if (opts.to) where.createdAt.lte = opts.to;
+    }
+    if (opts.businessSlug) {
+      where.business = { slug: opts.businessSlug };
     }
     return where;
   }
@@ -267,11 +257,35 @@ export class ComparisonRepositoryPrisma implements ComparisonRepository {
     }
     return [...groups.values()].sort((a, b) => b.metrics.geminiCostUsd - a.metrics.geminiCostUsd);
   }
-}
 
-// ──────────────────────────────────────────────────────────────
-// Aggregation helpers
-// ──────────────────────────────────────────────────────────────
+  async aggregateByMonthAndBusiness(
+    scope: Scope,
+    opts: AggregateOptions,
+  ): Promise<MonthlyBusinessBucket[]> {
+    const rows = await prisma.comparison.findMany({
+      where: this.whereForAggregate(scope, opts),
+      select: {
+        ...AGG_SELECT,
+        business: { select: { id: true, slug: true, name: true } },
+      },
+    });
+    const groups = new Map<string, MonthlyBusinessBucket>();
+    for (const r of rows) {
+      const period = periodFromDate(r.createdAt);
+      const key = `${period.year}-${period.month}-${r.business.id}`;
+      const bucket =
+        groups.get(key) ??
+        { period, business: r.business, metrics: { ...EMPTY_METRICS } };
+      addMetrics(bucket.metrics, r);
+      groups.set(key, bucket);
+    }
+    return [...groups.values()].sort((a, b) => {
+      if (a.period.year !== b.period.year) return a.period.year - b.period.year;
+      if (a.period.month !== b.period.month) return a.period.month - b.period.month;
+      return a.business.name.localeCompare(b.business.name);
+    });
+  }
+}
 
 const AGG_SELECT = {
   createdAt: true,

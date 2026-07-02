@@ -1,12 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
-/**
- * Cliente Prisma singleton.
- *
- * En desarrollo Next.js reemplaza módulos en caliente. Sin el singleton, cada
- * recarga abre un PrismaClient nuevo y se agotan conexiones contra Postgres.
- * En producción solo se instancia una vez (por proceso del contenedor).
- */
+// NOTE: singleton para no agotar conexiones a Postgres durante el HMR de Next.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma =

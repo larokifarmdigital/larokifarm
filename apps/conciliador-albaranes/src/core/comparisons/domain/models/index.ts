@@ -13,6 +13,7 @@ export type {
   AggregateOptions,
   BusinessBucket,
   MonthlyBucket,
+  MonthlyBusinessBucket,
   PeriodKey,
   UsageMetrics,
   UserBucket,

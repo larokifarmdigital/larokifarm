@@ -77,11 +77,11 @@ async function main() {
 
   // RBAC
   const sessionSuper = {
-    user: { id: erick.id, email: erick.email, name: erick.name, role: 'SUPER_ADMIN' as const, businessId: null },
+    user: { id: erick.id, email: erick.email, name: erick.name, role: 'SUPER_ADMIN' as const, businessId: null, businessSlug: null },
     expires: '2099-01-01',
   };
   const sessionBA = {
-    user: { id: admin.id, email: admin.email, name: admin.name, role: 'BUSINESS_ADMIN' as const, businessId: admin.businessId },
+    user: { id: admin.id, email: admin.email, name: admin.name, role: 'BUSINESS_ADMIN' as const, businessId: admin.businessId, businessSlug: business.slug },
     expires: '2099-01-01',
   };
 

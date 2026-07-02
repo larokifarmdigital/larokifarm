@@ -1,10 +1,4 @@
-/**
- * Genera una contraseña aleatoria fácil de leer y copiar.
- *
- * Excluye caracteres ambiguos (`0/O`, `1/l/I`) y siempre incluye al menos
- * una letra en mayúscula, una minúscula, un dígito y un símbolo — cumple
- * con `passwordHash`/validación de 8+ caracteres del use case.
- */
+// NOTE: excluye chars ambiguos (0/O, 1/l/I) y garantiza al menos 1 lower + 1 upper + 1 digit + 1 symbol.
 const LOWER = 'abcdefghjkmnpqrstuvwxyz';
 const UPPER = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const DIGIT = '23456789';
@@ -28,7 +22,6 @@ export function generatePassword(length = 14): string {
   for (let i = chars.length; i < length; i++) {
     chars.push(randomChar(ALL));
   }
-  // Shuffle
   for (let i = chars.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [chars[i], chars[j]] = [chars[j], chars[i]];

@@ -1,23 +1,4 @@
-/**
- * Use case: process a pair (PDFs + Excel) and persist the comparison.
- *
- * Atomic unit of the reconciler flow:
- *   1. Extract each PDF with Gemini (`core/engine/domain/extractDeliveryNote`).
- *   2. Merge delivery notes, read the order, reconcile (`core/engine/domain`).
- *   3. Generate the `.xlsx` report.
- *   4. Pre-generate the comparison id → compute storage keys → upload every
- *      file to storage.
- *   5. Persist the `Comparison` + `ComparisonFile[]` in a single repository
- *      transaction (storage first, DB after: if the DB fails we leave bytes
- *      orphaned in storage; the reverse would be worse — rows pointing to
- *      missing bytes).
- *
- * Returns the public `PairResult` shape (the API contract consumed by the
- * UI) with `reportBase64` so the client can build the ZIP.
- *
- * The use case knows nothing about auth or sessions — collaborators are
- * passed in by constructor, input by argument.
- */
+// NOTE: storage-first, DB-after — un fallo de DB deja bytes huérfanos; al revés dejaría filas apuntando a bytes que faltan.
 import { createId as cuid } from '@paralleldrive/cuid2';
 import { ComparisonStatus } from '@prisma/client';
 import type {
@@ -40,7 +21,7 @@ import {
 } from '../domain';
 import type { PairResult } from './contract';
 
-// Current gemini-2.5-flash prices (USD per 1M tokens). Update if they change.
+// NOTE: gemini-2.5-flash prices (USD per 1M tokens).
 const GEMINI_PRICE_INPUT_PER_1M_USD = 0.3;
 const GEMINI_PRICE_OUTPUT_PER_1M_USD = 2.5;
 
@@ -173,6 +154,8 @@ export class ProcessAndPersistPairUseCase {
           deliveryNoteNumber: reconciliation.deliveryNoteNumber,
           numDiscrepancies: reconciliation.totalDiscrepancies,
           reportFilename: reportName,
+          // NOTE: guardamos la conciliación completa para renderizar /historial/[id] sin re-parsear el XLSX.
+          lines: reconciliation.lines,
         },
         files: fileInputs,
       });

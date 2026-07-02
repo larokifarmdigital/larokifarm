@@ -32,6 +32,7 @@ async function main() {
       name: superAdmin.name,
       role: 'SUPER_ADMIN' as const,
       businessId: null,
+      businessSlug: null,
     },
     expires: '2099-01-01',
   };
@@ -42,6 +43,7 @@ async function main() {
       name: businessAdmin.name,
       role: 'BUSINESS_ADMIN' as const,
       businessId: businessAdmin.businessId,
+      businessSlug: negocio.slug,
     },
     expires: '2099-01-01',
   };

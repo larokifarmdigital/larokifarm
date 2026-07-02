@@ -9,8 +9,7 @@ export function base64ToBytes(b64: string): Uint8Array {
   return bytes;
 }
 
-/** Construye un Blob desde bytes, copiando a un ArrayBuffer propio (evita el
- *  conflicto de tipos Uint8Array<ArrayBufferLike> ↔ BlobPart de TS 5.9). */
+// HACK: copiamos a ArrayBuffer propio para sortear el clash Uint8Array<ArrayBufferLike> ↔ BlobPart de TS 5.9.
 function aBlob(bytes: Uint8Array, type: string): Blob {
   const ab = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(ab).set(bytes);
@@ -32,7 +31,6 @@ export function descargarXlsx(nombre: string, base64: string): void {
   descargarBlob(nombre, aBlob(base64ToBytes(base64), MIME_XLSX));
 }
 
-/** Construye el ZIP en el navegador (fflate) con todos los informes. */
 export function descargarZip(
   archivos: Array<{ nombre: string; base64: string }>,
   nombreZip = 'conciliacion.zip',

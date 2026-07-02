@@ -63,9 +63,12 @@ export class UserRepositoryPrisma implements UserRepository {
         businessId: true,
         passwordHash: true,
         active: true,
+        business: { select: { slug: true } },
       },
     });
-    return row;
+    if (!row) return null;
+    const { business, ...rest } = row;
+    return { ...rest, businessSlug: business?.slug ?? null };
   }
 
   async create(input: CreateUserInput): Promise<UserRow> {

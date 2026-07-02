@@ -1,8 +1,3 @@
-/**
- * Use cases for the Comparison domain (read + aggregates). Admin CRUD that
- * affects comparisons also lives here; frontend handlers/actions invoke them
- * via the module barrel.
- */
 export {
   GetComparisonDetailUseCase,
   type ComparisonDetailWithUrls,

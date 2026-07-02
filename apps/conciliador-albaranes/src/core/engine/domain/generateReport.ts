@@ -2,12 +2,6 @@ import XLSX from 'xlsx-js-style';
 import { statusText } from './reconcile';
 import type { ReconciledLine, Reconciliation } from './types';
 
-/**
- * Generates the .xlsx report of a reconciliation (§10) with styles:
- * coloured header, discrepant rows in red and the specific cells that
- * don't match (units / price / discount) highlighted. Uses `xlsx-js-style`.
- */
-
 const HEADERS = [
   'Código',
   'Descripción',
@@ -21,12 +15,10 @@ const HEADERS = [
   'Estado / motivo',
 ] as const;
 
-// Index of the status column and range of numeric columns (right-aligned).
 const COL_STATUS = HEADERS.length - 1;
 const NUM_FROM = 2;
 const NUM_TO = COL_STATUS - 1;
 
-// Colours (RGB without #).
 const HEADER_BG = '1E293B'; // slate-800
 const HEADER_FG = 'FFFFFF';
 const BAD_ROW = 'FEE2E2'; // red-100
@@ -42,7 +34,7 @@ const border = {
 };
 
 function cellDiscrepant(l: ReconciledLine, col: number): boolean {
-  // 2,3 = units · 4 = freeUnits · 5,6 = price · 7,8 = discount
+  // NOTE: 2,3=units · 4=freeUnits · 5,6=price · 7,8=discount.
   if (col === 2 || col === 3) return l.discrepancies.includes('units');
   if (col === 5 || col === 6) return l.discrepancies.includes('price');
   if (col === 7 || col === 8) return l.discrepancies.includes('discount');
@@ -83,7 +75,6 @@ export function generateReport(c: Reconciliation): Uint8Array {
     if (ws[addr]) ws[addr].s = style;
   };
 
-  // Document headers (rows 0-2).
   for (let r = 0; r <= 2; r++) set(r, 0, { font: { bold: true, sz: 12 } });
 
   const HEADER_ROW = 4;
@@ -110,7 +101,6 @@ export function generateReport(c: Reconciliation): Uint8Array {
       } else if (badRow) {
         style.fill = { patternType: 'solid', fgColor: { rgb: BAD_ROW } };
       } else if (i % 2 === 1) {
-        // Banding: alternating OK rows in a very soft grey → table look.
         style.fill = { patternType: 'solid', fgColor: { rgb: BAND } };
       }
       if (col === COL_STATUS && badRow) style.font = { bold: true, color: { rgb: '991B1B' } };
@@ -118,7 +108,6 @@ export function generateReport(c: Reconciliation): Uint8Array {
     }
   });
 
-  // Header filters (dropdowns) → the sheet behaves like a table.
   const lastRow = HEADER_ROW + c.lines.length;
   ws['!autofilter'] = {
     ref: `${XLSX.utils.encode_cell({ r: HEADER_ROW, c: 0 })}:${XLSX.utils.encode_cell({
@@ -134,7 +123,6 @@ export function generateReport(c: Reconciliation): Uint8Array {
   return new Uint8Array(buf);
 }
 
-/** Output filename (§10). With no reliable supplier number → name only. */
 export function reportFilename(c: Reconciliation, supplierNumber?: string): string {
   const clean = (s: string) => s.replace(/[\\/:*?"<>|]+/g, '').trim() || 'albaran';
   const base = supplierNumber

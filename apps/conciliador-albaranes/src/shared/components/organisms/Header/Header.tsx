@@ -1,15 +1,7 @@
-import Link from 'next/link';
 import { auth } from '@/core/auth';
-import { logoutAction } from '@/features/auth';
-import { roleLabel } from '@/features/admin/lib/roleLabel';
+import type { Role } from '@/core/shared';
+import { HeaderClient, type NavItem } from './HeaderClient';
 
-/**
- * Cabecera común para páginas autenticadas.
- *
- * Server Component: lee la sesión en render y oculta el header si no hay sesión
- * (para que la /login no muestre nav). Añade links de admin si el rol los
- * permite.
- */
 export async function Header() {
   const session = await auth();
   if (!session?.user) return null;
@@ -18,69 +10,29 @@ export async function Header() {
     session.user.role === 'SUPER_ADMIN' || session.user.role === 'BUSINESS_ADMIN';
   const isSuperAdmin = session.user.role === 'SUPER_ADMIN';
 
-  return (
-    <header className="border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        <nav className="flex items-center gap-6">
-          <Link href="/" className="text-base font-semibold text-gray-900">
-            Conciliador
-          </Link>
-          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
-            Conciliar
-          </Link>
-          <Link
-            href="/historial"
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
-            Historial
-          </Link>
-          {isAdmin && (
-            <Link
-              href="/admin/usuarios"
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              Usuarios
-            </Link>
-          )}
-          {isAdmin && (
-            <Link
-              href="/admin/negocios"
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              {isSuperAdmin ? 'Negocios' : 'Mi negocio'}
-            </Link>
-          )}
-          {isAdmin && (
-            <Link
-              href="/admin/uso"
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              Uso
-            </Link>
-          )}
-        </nav>
+  const navItems: NavItem[] = [
+    { href: '/', label: 'Conciliar' },
+    { href: '/historial', label: 'Historial' },
+    ...(isAdmin
+      ? ([
+          { href: '/admin/usuarios', label: 'Usuarios' },
+          {
+            href: '/admin/negocios',
+            label: isSuperAdmin ? 'Negocios' : 'Mi negocio',
+          },
+          { href: '/admin/uso', label: 'Uso' },
+        ] as NavItem[])
+      : []),
+  ];
 
-        <div className="flex items-center gap-4">
-          <Link
-            href="/perfil"
-            className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
-            title="Ir a mi perfil"
-          >
-            <span>{session.user.name}</span>
-            <span className="text-xs text-gray-400">
-              ({roleLabel(session.user.role, { short: true })})
-            </span>
-          </Link>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              Salir
-            </button>
-          </form>
-        </div>
-      </div>
-    </header>
+  return (
+    <HeaderClient
+      user={{
+        name: session.user.name ?? session.user.email ?? 'Usuario',
+        email: session.user.email ?? '',
+        role: session.user.role as Role,
+      }}
+      navItems={navItems}
+    />
   );
 }

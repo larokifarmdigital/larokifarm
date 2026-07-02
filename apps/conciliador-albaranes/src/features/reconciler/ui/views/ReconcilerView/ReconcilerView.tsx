@@ -1,13 +1,46 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { ReconciliationTable } from '@/shared/components/organisms/ReconciliationTable';
 import { reconcilePairs, ReconcileError, type PairToSend } from '../../lib/reconcile';
+
+// NOTE: dynamic + ssr:false — xlsx (~300KB) y react-pdf (~1.5MB) fuera del bundle inicial y ambos dependen del DOM.
+const PdfViewer = dynamic(
+  () => import('../../components/FilePreview/PdfViewer'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center gap-2 text-sm text-slate-500">
+        <span
+          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"
+          aria-hidden
+        />
+        Cargando visor…
+      </div>
+    ),
+  },
+);
+
+const ExcelViewer = dynamic(
+  () => import('../../components/FilePreview/ExcelViewer'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center gap-2 text-sm text-slate-500">
+        <span
+          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"
+          aria-hidden
+        />
+        Cargando visor…
+      </div>
+    ),
+  },
+);
 import {
   fileKey,
   matchFiles,
-  statusText,
   fileKindFromName,
-  type ReconciledLine,
   type PairResult,
   type UploadKind,
 } from '@/core/engine';
@@ -23,14 +56,13 @@ interface LoadedFile {
 interface Pair {
   id: string;
   label: string;
-  /** 1..N PDFs del MISMO envío (albarán + factura + …). Vacío = par incompleto. */
+  /** 1..N PDFs del mismo envío (albarán + factura + …). Vacío = incompleto. */
   pdfs: LoadedFile[];
   excel: LoadedFile | null;
 }
 
 const uid = () => crypto.randomUUID();
 
-/** Clave de acceso recordada en el navegador del cliente (persiste tras F5 / reabrir). */
 const ACCESS_KEY_STORAGE = 'conciliador.acceso_clave';
 
 function toLoadedFile(file: File): LoadedFile | null {
@@ -39,7 +71,6 @@ function toLoadedFile(file: File): LoadedFile | null {
   return { id: uid(), file, name: file.name, kind };
 }
 
-/** Nombre por defecto del par: clave compartida, o nombre del primer archivo sin extensión. */
 function defaultLabel(pdfs: LoadedFile[], excel: LoadedFile | null): string {
   const base = pdfs[0]?.name ?? excel?.name ?? '';
   const key = fileKey(base);
@@ -55,13 +86,14 @@ export function ReconcilerView() {
   const [unmatched, setUnmatched] = useState<LoadedFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<PairResult[] | null>(null);
+  /** Snapshot de los pares enviados en compare() — sobrevive aunque el usuario edite después. */
+  const [resultPairs, setResultPairs] = useState<Pair[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [accessKey, setAccessKey] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
-  // Cargar la clave guardada tras el montaje (en useEffect, no en el initializer,
-  // para no provocar un desajuste de hidratación con el render del servidor).
+  // NOTE: cargamos la clave en useEffect (no en initializer) para no romper la hidratación.
   useEffect(() => {
     const saved = localStorage.getItem(ACCESS_KEY_STORAGE);
     if (saved) setAccessKey(saved);
@@ -76,18 +108,28 @@ export function ReconcilerView() {
     const added = files.map(toLoadedFile).filter((c): c is LoadedFile => c !== null);
     if (added.length === 0) return;
 
-    // Se calcula fuera de los updaters (nunca un setState dentro de otro: React
-    // ejecuta los updaters dos veces en dev y duplicaría los pares).
+    // NOTE: cálculo fuera de setState — Strict Mode reejecuta updaters y duplicaría pares.
     let { pairs: np, unmatched: ns } = matchFiles([...unmatched, ...added]);
 
-    // Conveniencia: si lo que queda suelto es N PDFs y exactamente 1 Excel sin
-    // pareja por nombre, los agrupamos en un único par (caso típico: subes los
-    // 2 PDFs de un proveedor + su Excel con nombres que no comparten clave).
-    const unmatchedPdfs = ns.filter((s) => s.kind === 'pdf');
-    const unmatchedExcels = ns.filter((s) => s.kind === 'excel');
+    // NOTE: conveniencia — N PDFs + 1 Excel sin pareja por nombre se agrupan en un único par.
+    let unmatchedPdfs = ns.filter((s) => s.kind === 'pdf');
+    let unmatchedExcels = ns.filter((s) => s.kind === 'excel');
     if (unmatchedPdfs.length >= 1 && unmatchedExcels.length === 1) {
       np = [...np, { pdfs: unmatchedPdfs, excel: unmatchedExcels[0], key: '' }];
       ns = [];
+      unmatchedPdfs = [];
+      unmatchedExcels = [];
+    }
+
+    // NOTE: si hay 1 par completo + PDFs sueltos sin Excel suelto, los absorbemos (caso NESTLE.pdf + NESTLE_factura.pdf con keys distintas).
+    if (
+      np.length === 1 &&
+      np[0].excel &&
+      unmatchedPdfs.length > 0 &&
+      unmatchedExcels.length === 0
+    ) {
+      np = [{ ...np[0], pdfs: [...np[0].pdfs, ...unmatchedPdfs] }];
+      ns = ns.filter((s) => s.kind !== 'pdf');
     }
 
     if (np.length > 0) {
@@ -108,7 +150,6 @@ export function ReconcilerView() {
     setPairs((prev) => prev.filter((p) => p.id !== id));
   }
 
-  // Sacar un PDF concreto de un par → vuelve a "sueltos".
   function takePdfFromPair(pairId: string, pdfId: string) {
     const pair = pairs.find((p) => p.id === pairId);
     const taken = pair?.pdfs.find((p) => p.id === pdfId);
@@ -119,7 +160,6 @@ export function ReconcilerView() {
     setUnmatched((prev) => (prev.some((s) => s.id === taken.id) ? prev : [...prev, taken]));
   }
 
-  // Sacar el Excel de un par → vuelve a "sueltos".
   function takeExcelFromPair(pairId: string) {
     const pair = pairs.find((p) => p.id === pairId);
     const taken = pair?.excel;
@@ -165,29 +205,29 @@ export function ReconcilerView() {
     setPairs([]);
     setUnmatched([]);
     setResults(null);
+    setResultPairs([]);
     setError(null);
   }
 
-  // Ejecuta la conciliación con la clave indicada. Devuelve el desenlace para que
-  // quien llama decida la UI (abrir el modal, mostrar error en el modal, etc.).
   async function runCompare(keyToUse?: string): Promise<'ok' | 'unauthorized' | 'error'> {
     setLoading(true);
     setError(null);
     setResults(null);
+    // NOTE: snapshot para que los índices del resultado sigan coincidiendo si el usuario edita.
+    const snapshot = complete;
     try {
-      const envio: PairToSend[] = complete.map((p) => ({
+      const envio: PairToSend[] = snapshot.map((p) => ({
         label: p.label.trim() || defaultLabel(p.pdfs, p.excel) || 'Par',
         pdfs: p.pdfs.map((pdf) => pdf.file),
         xlsx: p.excel!.file,
       }));
       const { summary } = await reconcilePairs(envio);
       setResults(summary);
-      // La clave funcionó (no hubo 401) → recordarla para no volver a pedirla.
+      setResultPairs(snapshot);
       if (keyToUse) localStorage.setItem(ACCESS_KEY_STORAGE, keyToUse);
       return 'ok';
     } catch (e) {
       if (e instanceof ReconcileError && e.status === 401) {
-        // La clave guardada ya no sirve (o no había): bórrala y pídela.
         localStorage.removeItem(ACCESS_KEY_STORAGE);
         return 'unauthorized';
       }
@@ -207,7 +247,6 @@ export function ReconcilerView() {
     }
   }
 
-  // Reintenta con la clave tecleada en el modal.
   async function confirmKey(keyEntered: string) {
     const clean = keyEntered.trim();
     if (!clean) return;
@@ -218,7 +257,6 @@ export function ReconcilerView() {
     } else if (r === 'unauthorized') {
       setModalError('Clave incorrecta. Inténtalo de nuevo.');
     } else {
-      // Error distinto (red, servidor): cierra el modal y muestra el error general.
       setModalOpen(false);
     }
   }
@@ -226,12 +264,30 @@ export function ReconcilerView() {
   const reports = (results ?? []).filter((r) => r.reportBase64);
 
   return (
-    <main className="mx-auto max-w-[1440px] px-6 py-12">
-      <header className="mb-8">
-        <h1 className="text-3xl font-extrabold tracking-tight">Conciliador de Albaranes</h1>
-        <p className="mt-2 text-slate-600">
-          Sube los albaranes (PDF) y los pedidos (Excel), empareja y compara.
-        </p>
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <header className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Nueva conciliación
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Sube los albaranes (PDF) y los pedidos (Excel). Se emparejan solos
+            por nombre.
+          </p>
+        </div>
+        {complete.length > 0 && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset"
+            style={{
+              background: 'var(--brand-primary-soft)',
+              color: 'var(--brand-accent)',
+              ['--tw-ring-color' as string]: 'var(--brand-primary-ring)',
+            }}
+          >
+            {complete.length} par{complete.length === 1 ? '' : 'es'} listo
+            {complete.length === 1 ? '' : 's'}
+          </span>
+        )}
       </header>
 
       <Dropzone onArchivos={add} />
@@ -239,8 +295,11 @@ export function ReconcilerView() {
       {(pairs.length > 0 || unmatched.length > 0) && (
         <section className="mt-8 space-y-6">
           <div className="space-y-3">
-            <h2 className="text-sm font-bold tracking-wide text-slate-500 uppercase">
-              Pares ({complete.length} listo{complete.length === 1 ? '' : 's'})
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Pares detectados
+              <span className="ml-2 font-normal text-slate-400">
+                ({complete.length} de {pairs.length} listos)
+              </span>
             </h2>
             {pairs.map((p) => (
               <PairRow
@@ -252,13 +311,18 @@ export function ReconcilerView() {
                 onRename={rename}
               />
             ))}
-            {pairs.length === 0 && <p className="text-sm text-slate-500">Aún no hay pares.</p>}
+            {pairs.length === 0 && (
+              <p className="text-sm text-slate-500">Aún no hay pares.</p>
+            )}
           </div>
 
           {unmatched.length > 0 && (
             <div className="space-y-2 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <h2 className="text-sm font-bold text-amber-700">
-                Sin emparejar ({unmatched.length}) — asígnalos a un par o crea uno nuevo
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-amber-800">
+                Sin emparejar ({unmatched.length}){' '}
+                <span className="ml-1 font-normal normal-case text-amber-700">
+                  — asígnalos a un par o crea uno nuevo
+                </span>
               </h2>
               {unmatched.map((s) => (
                 <UnmatchedRow
@@ -273,23 +337,51 @@ export function ReconcilerView() {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-4 border-t border-slate-200 pt-4">
-            <button
-              type="button"
-              onClick={compare}
-              disabled={loading || complete.length === 0}
-              className="rounded-lg bg-sky-600 px-5 py-2.5 font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {loading ? 'Comparando…' : `Comparar ${complete.length} par${complete.length === 1 ? '' : 'es'}`}
-            </button>
-            <button type="button" onClick={clear} className="text-sm text-slate-500 hover:text-slate-700">
-              Limpiar todo
-            </button>
-            {incompleteCount > 0 && (
-              <span className="text-sm text-amber-600">
-                {incompleteCount} par(es) incompleto(s) no se compararán.
-              </span>
-            )}
+          <div className="sticky bottom-4 z-20 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur-sm">
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={compare}
+                disabled={loading || complete.length === 0}
+                className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                style={{
+                  background: 'var(--brand-primary)',
+                  color: 'var(--brand-foreground)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading && complete.length > 0)
+                    (e.currentTarget as HTMLButtonElement).style.background =
+                      'var(--brand-primary-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background =
+                    'var(--brand-primary)';
+                }}
+              >
+                {loading && (
+                  <span
+                    className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                    aria-hidden
+                  />
+                )}
+                {loading
+                  ? 'Comparando…'
+                  : `Comparar ${complete.length} par${complete.length === 1 ? '' : 'es'}`}
+              </button>
+              <button
+                type="button"
+                onClick={clear}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                Limpiar todo
+              </button>
+              {incompleteCount > 0 && (
+                <span className="text-xs text-amber-700">
+                  {incompleteCount} par{incompleteCount === 1 ? '' : 'es'}{' '}
+                  incompleto{incompleteCount === 1 ? '' : 's'} no se comparan.
+                </span>
+              )}
+            </div>
           </div>
         </section>
       )}
@@ -301,9 +393,15 @@ export function ReconcilerView() {
       )}
 
       {results && (
-        <section className="mt-10 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold">Resultados</h2>
+        <section className="mt-10 space-y-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Resultados</h2>
+              <p className="text-xs text-slate-500">
+                {results.length} par{results.length === 1 ? '' : 'es'} procesado
+                {results.length === 1 ? '' : 's'}.
+              </p>
+            </div>
             {reports.length > 1 && (
               <button
                 type="button"
@@ -315,15 +413,34 @@ export function ReconcilerView() {
                     })),
                   )
                 }
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" x2="12" y1="15" y2="3" />
+                </svg>
                 Descargar todo (ZIP)
               </button>
             )}
           </div>
           <ul className="space-y-2">
             {results.map((r) => (
-              <ResultRow key={r.id} r={r} />
+              <ResultRow
+                key={r.id}
+                r={r}
+                sourcePair={resultPairs[r.id]}
+              />
             ))}
           </ul>
         </section>
@@ -354,7 +471,6 @@ function KeyModal({
 }) {
   const [value, setValue] = useState('');
 
-  // Cerrar con Escape.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -380,18 +496,38 @@ function KeyModal({
         className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
       >
         <div className="mb-4 flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <span
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+            style={{
+              background: 'var(--brand-primary-soft)',
+              color: 'var(--brand-primary)',
+            }}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </span>
           <div className="min-w-0">
-            <h2 id="modal-clave-titulo" className="text-lg font-bold text-slate-900">
+            <h2
+              id="modal-clave-titulo"
+              className="text-lg font-semibold text-slate-900"
+            >
               Clave de acceso
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Introduce la clave para usar el conciliador. Se recordará en este equipo.
+              Introduce la clave para usar el conciliador. Se recordará en este
+              equipo.
             </p>
           </div>
         </div>
@@ -404,10 +540,15 @@ function KeyModal({
           aria-label="Clave de acceso"
           autoFocus
           autoComplete="current-password"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-100 focus:outline-none"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-transparent focus:outline-none focus:ring-2"
+          style={{
+            ['--tw-ring-color' as string]: 'var(--brand-primary-ring)',
+          }}
         />
 
-        {error && <p className="mt-2 text-sm font-medium text-red-600">{error}</p>}
+        {error && (
+          <p className="mt-2 text-sm font-medium text-red-600">{error}</p>
+        )}
 
         <div className="mt-5 flex justify-end gap-3">
           <button
@@ -420,8 +561,27 @@ function KeyModal({
           <button
             type="submit"
             disabled={loading || value.trim().length === 0}
-            className="rounded-lg bg-sky-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-semibold shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              background: 'var(--brand-primary)',
+              color: 'var(--brand-foreground)',
+            }}
+            onMouseEnter={(e) => {
+              if (!loading && value.trim().length > 0)
+                (e.currentTarget as HTMLButtonElement).style.background =
+                  'var(--brand-primary-hover)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background =
+                'var(--brand-primary)';
+            }}
           >
+            {loading && (
+              <span
+                className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                aria-hidden
+              />
+            )}
             {loading ? 'Comprobando…' : 'Entrar y comparar'}
           </button>
         </div>
@@ -474,7 +634,12 @@ function PairRow({
         <span className="text-lg" aria-hidden="true">
           {isComplete ? '🔗' : '⚠️'}
         </span>
-        <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-1.5 focus-within:border-sky-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-sky-100">
+        <label
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-1.5 focus-within:border-transparent focus-within:bg-white focus-within:ring-2"
+          style={{
+            ['--tw-ring-color' as string]: 'var(--brand-primary-ring)',
+          }}
+        >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-slate-400" aria-hidden="true">
             <path d="M12 20h9" />
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
@@ -543,7 +708,7 @@ function UnmatchedRow({
   onNew: (unmatchedId: string) => void;
   onRemove: (unmatchedId: string) => void;
 }) {
-  // Para PDFs: cualquier par (puede llevar varios). Para Excels: solo pares sin Excel.
+  // NOTE: para Excels solo pares sin Excel; PDFs pueden ir a cualquier par.
   const available = pairs.filter((p) => (unmatched.kind === 'pdf' ? true : !p.excel));
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -575,8 +740,9 @@ function UnmatchedRow({
   );
 }
 
-function ResultRow({ r }: { r: PairResult }) {
+function ResultRow({ r, sourcePair }: { r: PairResult; sourcePair?: Pair }) {
   const [open, setOpen] = useState(false);
+  const [filesOpen, setFilesOpen] = useState(false);
   const style =
     r.status === 'OK'
       ? 'bg-green-100 text-green-700'
@@ -592,6 +758,21 @@ function ResultRow({ r }: { r: PairResult }) {
 
   const downloadName = `${sanitize(r.label) || 'informe'}.xlsx`;
 
+  const sourceFiles = sourcePair
+    ? [
+        ...sourcePair.pdfs.map((p) => ({ name: p.name, file: p.file, kind: 'pdf' as const })),
+        ...(sourcePair.excel
+          ? [
+              {
+                name: sourcePair.excel.name,
+                file: sourcePair.excel.file,
+                kind: 'excel' as const,
+              },
+            ]
+          : []),
+      ]
+    : [];
+
   return (
     <li className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
       <div className="flex flex-wrap items-center gap-3 px-4 py-3">
@@ -602,6 +783,30 @@ function ResultRow({ r }: { r: PairResult }) {
           )}
         </div>
         <span className={`rounded-full px-3 py-1 text-sm font-semibold ${style}`}>{text}</span>
+        {sourceFiles.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setFilesOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            title="Ver los PDFs y el Excel que se subieron"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            Ver archivos ({sourceFiles.length})
+          </button>
+        )}
         {r.detail && (
           <button
             type="button"
@@ -621,6 +826,13 @@ function ResultRow({ r }: { r: PairResult }) {
           </button>
         )}
       </div>
+
+      {filesOpen && sourceFiles.length > 0 && (
+        <FilePreviewModal
+          files={sourceFiles}
+          onClose={() => setFilesOpen(false)}
+        />
+      )}
       {r.error && (
         <div className="border-t border-red-100 bg-red-50 px-4 py-3">
           <div className="flex items-start gap-2.5">
@@ -644,7 +856,7 @@ function ResultRow({ r }: { r: PairResult }) {
           </div>
         </div>
       )}
-      {open && r.detail && <DetailTable lines={r.detail.lines} />}
+      {open && r.detail && <ReconciliationTable lines={r.detail.lines} />}
       {open && r.detail?.rawLines && r.detail.rawLines.length > 0 && (
         <ExtractionDebug lines={r.detail.rawLines} />
       )}
@@ -691,68 +903,204 @@ function ExtractionDebug({ lines }: { lines: NonNullable<PairResult['detail']>['
   );
 }
 
-function cell(v: number | null): string {
-  return v === null ? '—' : String(v);
+
+interface PreviewFile {
+  name: string;
+  file: File;
+  kind: UploadKind;
 }
 
-const TH = 'px-3 py-2.5 font-semibold whitespace-nowrap';
+function FilePreviewModal({
+  files,
+  onClose,
+}: {
+  files: PreviewFile[];
+  onClose: () => void;
+}) {
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const selected = files[selectedIdx];
 
-function DetailTable({ lines }: { lines: ReconciledLine[] }) {
-  // Resalta el par de celdas (pedido/albarán) cuando ese campo es la discrepancia.
-  const mark = (l: ReconciledLine, field: 'units' | 'price' | 'discount') =>
-    l.discrepancies.includes(field) ? 'bg-red-200 font-bold text-red-800' : '';
+  useEffect(() => {
+    if (!selected) return;
+    const url = URL.createObjectURL(selected.file);
+    setBlobUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [selected]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  function downloadCurrent() {
+    if (!selected || !blobUrl) return;
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = selected.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function openInNewTab() {
+    if (!blobUrl) return;
+    window.open(blobUrl, '_blank', 'noopener,noreferrer');
+  }
 
   return (
-    <div className="overflow-x-auto border-t border-slate-200">
-      <table className="w-full min-w-[820px] text-sm">
-        <thead>
-          <tr className="bg-slate-800 text-left text-xs tracking-wide text-white uppercase">
-            <th className={TH}>Código</th>
-            <th className={TH}>Descripción</th>
-            <th className={`${TH} text-right`}>Uds ped.</th>
-            <th className={`${TH} text-right`}>Uds alb.</th>
-            <th className={`${TH} text-right`}>Bonif.</th>
-            <th className={`${TH} text-right`}>Precio ped.</th>
-            <th className={`${TH} text-right`}>Precio alb.</th>
-            <th className={`${TH} text-right`}>Dto ped.</th>
-            <th className={`${TH} text-right`}>Dto alb.</th>
-            <th className={TH}>Estado / motivo</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {lines.map((l) => {
-            const badRow = l.status !== 'OK';
-            return (
-              <tr key={l.nationalCode} className={badRow ? 'bg-red-50' : 'odd:bg-white even:bg-slate-50/60'}>
-                <td className="px-3 py-2 font-medium">{l.nationalCode}</td>
-                <td className="px-3 py-2">{l.description}</td>
-                <td className={`px-3 py-2 text-right ${mark(l, 'units')}`}>{cell(l.unitsOrdered)}</td>
-                <td className={`px-3 py-2 text-right ${mark(l, 'units')}`}>{cell(l.unitsDelivered)}</td>
-                <td className="px-3 py-2 text-right text-emerald-700">
-                  {l.freeUnitsDelivered ? `+${l.freeUnitsDelivered}` : '—'}
-                </td>
-                <td className={`px-3 py-2 text-right ${mark(l, 'price')}`}>{cell(l.priceOrdered)}</td>
-                <td className={`px-3 py-2 text-right ${mark(l, 'price')}`}>{cell(l.priceDelivered)}</td>
-                <td className={`px-3 py-2 text-right ${mark(l, 'discount')}`}>{cell(l.discountOrdered)}</td>
-                <td className={`px-3 py-2 text-right ${mark(l, 'discount')}`}>{cell(l.discountDelivered)}</td>
-                <td className="px-3 py-2 whitespace-nowrap">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="file-preview-title"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="flex h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+          <h2
+            id="file-preview-title"
+            className="truncate text-sm font-semibold text-slate-900"
+          >
+            {selected?.name}
+          </h2>
+          <div className="flex shrink-0 items-center gap-2">
+            {selected?.kind === 'pdf' && (
+              <button
+                type="button"
+                onClick={openInNewTab}
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                title="Abrir en pestaña nueva"
+              >
+                Abrir en pestaña
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={downloadCurrent}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Descargar
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              aria-label="Cerrar"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {files.length > 1 && (
+          <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-2 py-2 md:hidden">
+            {files.map((f, i) => {
+              const active = i === selectedIdx;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setSelectedIdx(i)}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs ${
+                    active
+                      ? 'border-slate-300 bg-white text-slate-900 shadow-sm'
+                      : 'border-transparent text-slate-500 hover:bg-white/50'
+                  }`}
+                >
                   <span
-                    className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      l.status === 'OK'
-                        ? 'bg-green-100 text-green-700'
-                        : l.status === 'DISCREPANCY'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-red-100 text-red-700'
+                    className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                      f.kind === 'pdf'
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-green-100 text-green-700'
                     }`}
                   >
-                    {statusText(l)}
+                    {f.kind === 'pdf' ? 'PDF' : 'XLS'}
                   </span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  <span className="max-w-[140px] truncate">{f.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="flex flex-1 overflow-hidden">
+          {files.length > 1 && (
+            <aside className="hidden w-52 shrink-0 overflow-y-auto border-r border-slate-200 bg-slate-50 p-2 md:block">
+              <p className="mb-1 px-2 pt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Archivos ({files.length})
+              </p>
+              {files.map((f, i) => {
+                const active = i === selectedIdx;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedIdx(i)}
+                    className={`flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs ${
+                      active ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+                    }`}
+                  >
+                    <span
+                      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                        f.kind === 'pdf'
+                          ? 'bg-red-100 text-red-600'
+                          : 'bg-green-100 text-green-700'
+                      }`}
+                    >
+                      {f.kind === 'pdf' ? 'PDF' : 'XLS'}
+                    </span>
+                    <span className="min-w-0 truncate text-slate-700">
+                      {f.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </aside>
+          )}
+
+          <div className="flex-1 overflow-hidden bg-slate-100">
+            {selected?.kind === 'pdf' ? (
+              <PdfViewer key={selected.name} file={selected.file} />
+            ) : selected?.kind === 'excel' ? (
+              <ExcelViewer key={selected.name} file={selected.file} />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                Cargando…
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+

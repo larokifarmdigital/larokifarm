@@ -1,11 +1,4 @@
-/**
- * Output shape of `ProcessAndPersistPairUseCase` and, by coincidence, the
- * HTTP contract for `POST /api/conciliar`. Keeping them compatible lets the
- * route handler forward without transformation.
- *
- * The fetch client in `features/reconciler` also consumes these types when
- * parsing the response — it imports them directly from `@/core/engine`.
- */
+// NOTE: shape compartida entre ProcessAndPersistPairUseCase, `POST /api/conciliar` y el fetch client de `features/reconciler`.
 import type { DeliveryNoteLine, ReconciledLine } from '../domain/types';
 
 export interface ReconciliationDetail {

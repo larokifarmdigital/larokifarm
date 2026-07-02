@@ -4,15 +4,7 @@ import type {
   UpdateBusinessInput,
 } from '../models/Business';
 
-/**
- * Port: contrato para CRUD de negocios (farmacias).
- *
- * Operaciones administrativas — solo SUPER_ADMIN debería invocarlas. El check
- * de rol vive en el use case / action, no en el repo.
- *
- * `getDecryptedGeminiKey` devuelve la API key descifrada al vuelo (o `null` si
- * el negocio no tiene una propia). Se usa al resolver la key en `/api/conciliar`.
- */
+// NOTE: los checks de rol viven en los use cases, no aquí.
 export interface BusinessRepository {
   list(): Promise<BusinessRow[]>;
   findById(id: string): Promise<BusinessRow | null>;

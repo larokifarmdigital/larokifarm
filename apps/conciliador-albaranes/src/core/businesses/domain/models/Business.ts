@@ -1,11 +1,4 @@
-/**
- * Modelo de Business (farmacia).
- *
- * El campo `geminiKeyEnc` está cifrado con AES-GCM (`shared/lib/crypto`).
- * Las shapes públicas nunca exponen el ciphertext — los handlers/use cases
- * lo descifran al vuelo cuando hace falta.
- */
-
+// NOTE: geminiKeyEnc va cifrado con AES-GCM y no se expone en shapes públicas.
 export interface BusinessRow {
   id: string;
   slug: string;

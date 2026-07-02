@@ -1,15 +1,9 @@
-/**
- * Vista de /admin/uso (Fase 5).
- *
- * Server Component: obtiene la sesión, invoca `GetUsageStatsUseCase` y pinta:
- *  - KPIs del mes en curso
- *  - Gráfico de evolución 12 meses (Recharts en client)
- *  - Top usuarios del mes
- *  - Desglose por negocio (solo SUPER_ADMIN)
- */
 import { redirect } from 'next/navigation';
 import { auth } from '@/core/auth';
-import { GetUsageStatsUseCase, getComparisonRepository } from '@/core/comparisons';
+import {
+  GetUsageStatsUseCase,
+  getComparisonRepository,
+} from '@/core/comparisons';
 import { KpiCards } from '../../components/KpiCards';
 import { MonthlyChart } from '../../components/MonthlyChart';
 import { TopUsersTable } from '../../components/TopUsersTable';
@@ -20,33 +14,50 @@ export async function UsageView() {
   if (!session?.user) redirect('/login');
   if (session.user.role === 'USER') redirect('/');
 
-  const useCase = new GetUsageStatsUseCase(getComparisonRepository());
-  const stats = await useCase.execute(session);
-
   const isSuperAdmin = session.user.role === 'SUPER_ADMIN';
 
+  const stats = await new GetUsageStatsUseCase(
+    getComparisonRepository(),
+  ).execute(session);
+
   return (
-    <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-xl font-semibold text-gray-900">Uso de la plataforma</h1>
-        <p className="text-sm text-gray-500">
-          Mes en curso: <strong className="text-gray-700">{stats.context.currentMonthLabel}</strong>
-        </p>
-      </div>
+    <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
+      <header className="flex flex-wrap items-baseline justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Uso de la plataforma
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Métricas del mes en curso y evolución histórica.
+          </p>
+        </div>
+        <span
+          className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset"
+          style={{
+            background: 'var(--brand-primary-soft)',
+            color: 'var(--brand-accent)',
+            ['--tw-ring-color' as string]: 'var(--brand-primary-ring)',
+          }}
+        >
+          {stats.context.currentMonthLabel}
+        </span>
+      </header>
 
       <KpiCards metrics={stats.currentMonth} />
 
       <MonthlyChart buckets={stats.monthly} />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="space-y-6">
         <TopUsersTable rows={stats.topUsers} showBusiness={isSuperAdmin} />
         {isSuperAdmin && <BusinessUsageTable rows={stats.byBusiness} />}
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-[11px] text-slate-400">
         Los costes son estimados según los precios actuales de Gemini 2.5 Flash
-        (input $0.30 / 1M tokens, output $2.50 / 1M tokens). Actualiza los valores
-        en <code>core/motor/application/procesarYPersistirParUseCase.ts</code>
+        (input $0.30 / 1M tokens, output $2.50 / 1M tokens). Se actualizan en{' '}
+        <code className="rounded bg-slate-100 px-1 py-0.5 text-[10px]">
+          core/engine/application/processAndPersistPair.ts
+        </code>{' '}
         cuando cambien.
       </p>
     </main>

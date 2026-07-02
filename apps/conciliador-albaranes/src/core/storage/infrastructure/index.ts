@@ -31,5 +31,3 @@ function requireEnv(name: string): string {
   if (!v) throw new Error(`Falta variable de entorno: ${name}`);
   return v;
 }
-
-export { verifyDownloadToken } from './downloadToken';

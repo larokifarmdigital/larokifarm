@@ -1,12 +1,3 @@
-/**
- * View for /historial.
- *
- * Receives typed `searchParams` and orchestrates: parse filters → call the
- * repository (no use case because it's pure passthrough) → render.
- *
- * Server Component: the session is obtained here (not in the page) so the
- * page stays a thin routing wrapper.
- */
 import { redirect } from 'next/navigation';
 import { auth } from '@/core/auth';
 import { scopeFromSession } from '@/core/shared';
@@ -14,8 +5,13 @@ import {
   getComparisonRepository,
   type ComparisonStatus,
 } from '@/core/comparisons';
+import {
+  ListBusinessesUseCase,
+  getBusinessRepository,
+} from '@/core/businesses';
 import { HistoryFilters } from '../components/HistoryFilters';
 import { HistoryTable } from '../components/HistoryTable';
+import { HistoryQuickFilters } from '../components/HistoryQuickFilters';
 import { Pagination } from '../components/Pagination';
 
 export interface HistoryListParams {
@@ -57,35 +53,66 @@ function buildHrefBuilder(sp: HistoryListParams) {
   };
 }
 
-export async function HistoryListView({ params }: { params: HistoryListParams }) {
+export async function HistoryListView({
+  params,
+}: {
+  params: HistoryListParams;
+}) {
   const session = await auth();
   if (!session?.user) redirect('/login');
 
+  const isSuperAdmin = session.user.role === 'SUPER_ADMIN';
   const repo = getComparisonRepository();
   const toRaw = parseDate(params.to);
 
-  const result = await repo.list(
-    scopeFromSession(session),
-    {
-      from: parseDate(params.from),
-      to: toRaw ? endOfDay(toRaw) : undefined,
-      status: parseStatus(params.status),
-      supplier: params.supplier?.trim() || undefined,
-      businessSlug: params.business?.trim() || undefined,
-    },
-    { page: Math.max(1, Number(params.page) || 1) },
-  );
+  const [result, businesses] = await Promise.all([
+    repo.list(
+      scopeFromSession(session),
+      {
+        from: parseDate(params.from),
+        to: toRaw ? endOfDay(toRaw) : undefined,
+        status: parseStatus(params.status),
+        supplier: params.supplier?.trim() || undefined,
+        businessSlug: params.business?.trim() || undefined,
+      },
+      { page: Math.max(1, Number(params.page) || 1) },
+    ),
+    isSuperAdmin
+      ? new ListBusinessesUseCase(getBusinessRepository()).execute(session)
+      : Promise.resolve([]),
+  ]);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">
-          Historial de comparaciones
-        </h1>
-      </div>
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+      <header className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Historial de comparaciones
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Consulta las conciliaciones anteriores y descarga sus archivos.
+          </p>
+        </div>
+        {result.total > 0 && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset"
+            style={{
+              background: 'var(--brand-primary-soft)',
+              color: 'var(--brand-accent)',
+              ['--tw-ring-color' as string]: 'var(--brand-primary-ring)',
+            }}
+          >
+            {result.total} {result.total === 1 ? 'resultado' : 'resultados'}
+          </span>
+        )}
+      </header>
 
-      <div className="mb-4">
-        <HistoryFilters showBusinessFilter={session.user.role === 'SUPER_ADMIN'} />
+      <div className="mb-4 space-y-3">
+        <HistoryQuickFilters />
+        <HistoryFilters
+          showBusinessFilter={isSuperAdmin}
+          businesses={businesses.map((b) => ({ slug: b.slug, name: b.name }))}
+        />
       </div>
 
       <HistoryTable rows={result.items} role={session.user.role} />

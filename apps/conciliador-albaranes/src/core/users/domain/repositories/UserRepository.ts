@@ -6,15 +6,7 @@ import type {
   UserRow,
 } from '../models/User';
 
-/**
- * Port: contrato para CRUD de usuarios.
- *
- * El scoping por negocio se aplica en `list`/`findById` para que
- * BUSINESS_ADMIN solo vea su negocio.
- *
- * `findByEmailForAuth` es la única operación que devuelve `passwordHash` —
- * la usa exclusivamente Auth.js al verificar credenciales.
- */
+// NOTE: findByEmailForAuth es la única operación que devuelve passwordHash — solo la usa Auth.js.
 export interface UserRepository {
   list(scope: Scope): Promise<UserRow[]>;
   findById(scope: Scope, id: string): Promise<UserRow | null>;

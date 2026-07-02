@@ -1,15 +1,3 @@
-/**
- * POST /api/conciliar
- *
- * Thin handler: only handles HTTP transport and authorization. All the
- * logic is in `ProcessAndPersistPairUseCase` (core/engine).
- *
- *   1. Verifies the session (Auth.js).
- *   2. Resolves the user's business.
- *   3. Resolves the Gemini API key (business BYOK or global fallback).
- *   4. For each pair in the form, invokes the use case.
- *   5. Returns `{ summary: PairResult[] }`.
- */
 import { NextResponse } from 'next/server';
 import { auth } from '@/core/auth';
 import { getComparisonRepository } from '@/core/comparisons';

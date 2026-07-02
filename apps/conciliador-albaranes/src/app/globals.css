@@ -1,11 +1,173 @@
 @import 'tailwindcss';
 
+/* -------------------------------------------------------------------------- */
+/* Tokens                                                                     */
+/*                                                                            */
+/* `--brand-*` es la marca activa. El default es NEUTRO (slate) para pantallas*/
+/* sin contexto de negocio (login). Después de autenticar, el layout raíz     */
+/* seteará `data-business="<slug>"` en el <html> y se aplicarán los colores   */
+/* del negocio del usuario (ver overrides abajo).                             */
+/*                                                                            */
+/* Reemplaza los hex por los oficiales cuando el cliente te pase la paleta.  */
+/* -------------------------------------------------------------------------- */
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+
+  /* Marca por defecto: NEUTRA (slate). Sin negocio, sin pantalla logueada. */
+  --brand-primary: #334155;         /* slate-700 */
+  --brand-primary-hover: #1e293b;   /* slate-800 */
+  --brand-primary-soft: #f1f5f9;    /* slate-100 */
+  --brand-primary-ring: #cbd5e1;    /* slate-300 */
+  --brand-foreground: #ffffff;
+  --brand-accent: #0f172a;          /* slate-900 */
+}
+
+/* Overrides por negocio.
+ * Aplícalos en el <html> o en cualquier contenedor:
+ *   <html data-business="laguna">…</html>
+ * Los hex son placeholders; cámbialos por los oficiales cuando los tengas.
+ */
+[data-business='larokifarm'] {
+  --brand-primary: #16a34a;
+  --brand-primary-hover: #15803d;
+  --brand-primary-soft: #dcfce7;
+  --brand-primary-ring: #86efac;
+}
+[data-business='laguna'] {
+  --brand-primary: #dc2626;         /* red-600 */
+  --brand-primary-hover: #b91c1c;
+  --brand-primary-soft: #fee2e2;
+  --brand-primary-ring: #fca5a5;
+}
+[data-business='torrents'] {
+  --brand-primary: #0d9488;         /* teal-600 */
+  --brand-primary-hover: #0f766e;
+  --brand-primary-soft: #ccfbf1;
+  --brand-primary-ring: #5eead4;
+}
+[data-business='chamarro'] {
+  --brand-primary: #64748b;         /* slate-500 */
+  --brand-primary-hover: #475569;
+  --brand-primary-soft: #f1f5f9;
+  --brand-primary-ring: #cbd5e1;
+}
+[data-business='broggi'] {
+  --brand-primary: #d97706;         /* amber-600 */
+  --brand-primary-hover: #b45309;
+  --brand-primary-soft: #fef3c7;
+  --brand-primary-ring: #fcd34d;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  /* Debajo de 375px la UI hace scroll horizontal en vez de romperse. */
+  min-width: 375px;
 }
+
+/* -------------------------------------------------------------------------- */
+/* react-day-picker — overrides con tokens de marca.                          */
+/* -------------------------------------------------------------------------- */
+.rdp-brand {
+  --rdp-accent-color: var(--brand-primary);
+  --rdp-accent-background-color: var(--brand-primary-soft);
+  --rdp-day-height: 2rem;
+  --rdp-day-width: 2rem;
+  --rdp-day_button-height: 2rem;
+  --rdp-day_button-width: 2rem;
+  --rdp-day_button-border-radius: 6px;
+  --rdp-selected-border: 0;
+  --rdp-today-color: var(--brand-primary);
+  --rdp-outside-opacity: 0.35;
+  --rdp-nav-height: 2rem;
+  --rdp-weekday-padding: 0.25rem 0;
+  --rdp-months-gap: 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* Cabecera del mes: más compacta, botones de nav pequeños con hover suave. */
+.rdp-brand .rdp-month_caption {
+  padding: 0 0 0.25rem;
+}
+.rdp-brand .rdp-caption_label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgb(15 23 42); /* slate-900 */
+  text-transform: capitalize;
+}
+.rdp-brand .rdp-nav {
+  gap: 0.25rem;
+}
+.rdp-brand .rdp-button_previous,
+.rdp-brand .rdp-button_next {
+  height: 1.75rem;
+  width: 1.75rem;
+  border-radius: 6px;
+  color: rgb(100 116 139); /* slate-500 */
+  transition: background 120ms ease;
+}
+.rdp-brand .rdp-button_previous:hover,
+.rdp-brand .rdp-button_next:hover {
+  background: rgb(241 245 249); /* slate-100 */
+  color: rgb(15 23 42);
+}
+.rdp-brand .rdp-chevron {
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: currentColor;
+}
+
+/* Cabecera de días de la semana. */
+.rdp-brand .rdp-weekday {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgb(148 163 184); /* slate-400 */
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Botón de día: siempre el mismo tamaño (evita el "salto" al seleccionar). */
+.rdp-brand .rdp-day_button {
+  height: 2rem;
+  width: 2rem;
+  padding: 0;
+  border-radius: 6px;
+  font-weight: 400;
+  font-size: 0.8125rem;
+  line-height: 1;
+  color: rgb(51 65 85); /* slate-700 */
+  border: 0;
+  transition: background 100ms ease, color 100ms ease;
+}
+
+/* Día "hoy" en color de marca sin fondo, peso normal. */
+.rdp-brand .rdp-today .rdp-day_button {
+  color: var(--brand-primary);
+  font-weight: 500;
+}
+
+/* Extremos del rango: fondo de marca sólido + número blanco. Peso 500 (nada de bold). */
+.rdp-brand .rdp-range_start .rdp-day_button,
+.rdp-brand .rdp-range_end .rdp-day_button,
+.rdp-brand .rdp-selected:not(.rdp-range_middle) .rdp-day_button {
+  background: var(--brand-primary);
+  color: var(--brand-foreground);
+  font-weight: 500;
+}
+
+/* Día central del rango: fondo suave + accent, sin cambiar peso ni tamaño. */
+.rdp-brand .rdp-range_middle .rdp-day_button {
+  background: var(--brand-primary-soft);
+  color: var(--brand-accent);
+  border-radius: 0;
+  font-weight: 400;
+}
+
+/* Hover suave en días no seleccionados. */
+.rdp-brand
+  .rdp-day:not(.rdp-selected):not(.rdp-range_middle)
+  .rdp-day_button:hover {
+  background: rgb(241 245 249); /* slate-100 */
+}
+

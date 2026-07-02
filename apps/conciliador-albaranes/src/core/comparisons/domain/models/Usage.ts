@@ -1,11 +1,3 @@
-/**
- * Usage metrics and aggregations for the reconciler.
- *
- * Built by grouping `Comparison` rows by dimension (month, user, business).
- * USD cost calculation happens in the use case using current Gemini prices
- * (`core/engine/application/...`).
- */
-
 export interface UsageMetrics {
   numComparisons: number;
   numOk: number;
@@ -55,10 +47,19 @@ export interface BusinessBucket {
   metrics: UsageMetrics;
 }
 
+/** Métrica por (mes, negocio) — para el gráfico apilado por negocio. */
+export interface MonthlyBusinessBucket {
+  period: PeriodKey;
+  business: { id: string; slug: string; name: string };
+  metrics: UsageMetrics;
+}
+
 export interface AggregateOptions {
   /** If provided, restricts the aggregation to this range (UTC). */
   from?: Date;
   to?: Date;
+  /** Optional filter: only include comparisons of the business with this slug. */
+  businessSlug?: string;
 }
 
 export function startOfMonthUTC(d: Date): Date {

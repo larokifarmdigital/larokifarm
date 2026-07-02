@@ -1,12 +1,4 @@
-/**
- * Adapter R2 (Cloudflare) del puerto StorageRepository.
- *
- * R2 es S3-compatible → usamos `@aws-sdk/client-s3` con `endpoint` custom.
- * Las URLs de descarga siguen pasando por `/api/files/[...key]?token=…` para
- * preservar el control de acceso por sesión + scoping por business slug
- * (mismo flujo que `StorageLocal`). Cuando convenga ahorrarse ese proxy se
- * puede emitir URLs pre-firmadas de R2; por ahora no merece la pena.
- */
+// NOTE: R2 es S3-compatible; usamos aws-sdk con endpoint custom y proxy `/api/files/[...key]` en lugar de URLs pre-firmadas.
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -14,7 +6,6 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import type { StorageRepository } from '../domain/repositories/StorageRepository';
-import { signDownloadToken } from './downloadToken';
 
 export interface StorageR2Config {
   endpoint: string;
@@ -69,12 +60,7 @@ export class StorageR2 implements StorageRepository {
     );
   }
 
-  async getDownloadUrl(
-    key: string,
-    filename: string,
-    expiresInSec = 300,
-  ): Promise<string> {
-    const token = signDownloadToken(key, filename, expiresInSec);
-    return `/api/files/${encodeURI(key)}?token=${token}`;
+  async getDownloadUrl(key: string): Promise<string> {
+    return `/api/files/${encodeURI(key)}`;
   }
 }

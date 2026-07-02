@@ -1,7 +1,3 @@
-/**
- * Helpers de formato consistentes para fechas, números y bytes en la UI.
- */
-
 const DATE_FORMATTER = new Intl.DateTimeFormat('es-ES', {
   day: '2-digit',
   month: '2-digit',
@@ -10,11 +6,22 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('es-ES', {
   minute: '2-digit',
 });
 
+const DATE_ONLY_FORMATTER = new Intl.DateTimeFormat('es-ES', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
 const NUMBER_FORMATTER = new Intl.NumberFormat('es-ES');
 
 export function formatDate(d: Date | string): string {
   const date = typeof d === 'string' ? new Date(d) : d;
   return DATE_FORMATTER.format(date);
+}
+
+export function formatDateOnly(d: Date | string): string {
+  const date = typeof d === 'string' ? new Date(d) : d;
+  return DATE_ONLY_FORMATTER.format(date);
 }
 
 export function formatNumber(n: number): string {

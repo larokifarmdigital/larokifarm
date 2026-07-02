@@ -1,9 +1,3 @@
-/**
- * Vista de la página /historial/[id].
- *
- * Usa el use case `GetComparisonDetailUseCase` (combina repo + storage para
- * generar URLs firmadas). La page solo importa esta view.
- */
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/core/auth';
@@ -14,14 +8,23 @@ import {
   type FileKind,
 } from '@/core/comparisons';
 import { getStorage } from '@/core/storage';
+import type { ReconciledLine } from '@/core/engine';
 import { StatusBadge } from '../components/StatusBadge';
+import { ComparisonFiles } from '../components/ComparisonFiles';
 import {
-  formatBytes,
   formatDate,
   formatDuration,
   formatNumber,
   formatUsd,
 } from '@/shared/lib/format';
+
+// NOTE: comparaciones antiguas no traen líneas en summary → undefined → la vista cae al preview XLSX.
+function extractLines(summary: unknown): ReconciledLine[] | undefined {
+  if (!summary || typeof summary !== 'object') return undefined;
+  const lines = (summary as { lines?: unknown }).lines;
+  if (!Array.isArray(lines)) return undefined;
+  return lines as ReconciledLine[];
+}
 
 const KIND_LABEL: Record<FileKind, string> = {
   PDF_INPUT: 'PDF (entrada)',
@@ -29,117 +32,289 @@ const KIND_LABEL: Record<FileKind, string> = {
   REPORT_OUTPUT: 'Informe generado',
 };
 
+function fileKindFor(
+  kind: FileKind,
+  filename: string,
+): 'pdf' | 'excel' | 'other' {
+  if (kind === 'PDF_INPUT') return 'pdf';
+  if (kind === 'XLSX_INPUT' || kind === 'REPORT_OUTPUT') return 'excel';
+  if (/\.pdf$/i.test(filename)) return 'pdf';
+  if (/\.(xlsx?|xlsm)$/i.test(filename)) return 'excel';
+  return 'other';
+}
+
 export async function ComparisonDetailView({ id }: { id: string }) {
   const session = await auth();
   if (!session?.user) redirect('/login');
 
-  const useCase = new GetComparisonDetailUseCase(getComparisonRepository(), getStorage());
+  const useCase = new GetComparisonDetailUseCase(
+    getComparisonRepository(),
+    getStorage(),
+  );
   const comparison = await useCase.execute(scopeFromSession(session), id);
   if (!comparison) notFound();
 
-  const totalTokens = comparison.geminiInputTokens + comparison.geminiOutputTokens;
+  const totalTokens =
+    comparison.geminiInputTokens + comparison.geminiOutputTokens;
+  const reconciliationLines = extractLines(comparison.summary);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-6">
+    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
       <div className="mb-4">
-        <Link href="/historial" className="text-sm text-blue-600 hover:text-blue-800">
-          ← Volver al historial
+        <Link
+          href="/historial"
+          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900"
+        >
+          <ArrowLeftIcon />
+          Volver al historial
         </Link>
       </div>
 
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-xl font-semibold text-gray-900">
-          {comparison.supplier ?? 'Comparación sin proveedor'}
-          {comparison.label && (
-            <span className="ml-2 text-sm font-normal text-gray-500">
-              ({comparison.label})
+      <header className="mb-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="truncate text-2xl font-semibold tracking-tight text-slate-900">
+            {comparison.supplier ?? 'Comparación sin proveedor'}
+          </h1>
+          <StatusBadge status={comparison.status} />
+        </div>
+        {comparison.label && (
+          <p className="mt-1 text-sm text-slate-500">
+            Etiqueta:{' '}
+            <span className="font-medium text-slate-700">
+              {comparison.label}
             </span>
-          )}
-        </h1>
-        <StatusBadge status={comparison.status} />
-      </div>
+          </p>
+        )}
+      </header>
 
-      <section className="mb-6 grid grid-cols-2 gap-3 rounded-md border border-gray-200 bg-white p-4 text-sm sm:grid-cols-4">
-        <Kpi label="Fecha" value={formatDate(comparison.createdAt)} />
-        <Kpi label="Duración" value={formatDuration(comparison.durationMs)} />
-        <Kpi label="PDFs procesados" value={String(comparison.numPdfs)} />
-        <Kpi label="Discrepancias" value={String(comparison.numDiscrepancies)} />
-        <Kpi label="Tokens (input)" value={formatNumber(comparison.geminiInputTokens)} />
+      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Kpi
-          label="Tokens (output)"
-          value={formatNumber(comparison.geminiOutputTokens)}
+          label="Fecha"
+          value={formatDate(comparison.createdAt)}
+          icon={<CalendarIcon />}
         />
-        <Kpi label="Tokens totales" value={formatNumber(totalTokens)} />
-        <Kpi label="Coste estimado" value={formatUsd(comparison.geminiCostUsd)} />
+        <Kpi
+          label="Duración"
+          value={formatDuration(comparison.durationMs)}
+          icon={<ClockIcon />}
+        />
+        <Kpi
+          label="PDFs"
+          value={String(comparison.numPdfs)}
+          icon={<DocumentIcon />}
+        />
+        <Kpi
+          label="Discrepancias"
+          value={String(comparison.numDiscrepancies)}
+          icon={<AlertIcon />}
+          highlight={comparison.numDiscrepancies > 0}
+        />
       </section>
 
-      <section className="mb-6 rounded-md border border-gray-200 bg-white p-4 text-sm">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">
-          Contexto
+      <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm">
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Contexto y consumo
         </h2>
-        <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
           <DescItem label="Negocio" value={comparison.business.name} />
+          <DescItem label="Usuario" value={comparison.user.name} />
+          <DescItem label="Email" value={comparison.user.email} mono />
           <DescItem
-            label="Usuario"
-            value={`${comparison.user.name} (${comparison.user.email})`}
+            label="Tokens (input)"
+            value={formatNumber(comparison.geminiInputTokens)}
+            mono
+          />
+          <DescItem
+            label="Tokens (output)"
+            value={formatNumber(comparison.geminiOutputTokens)}
+            mono
+          />
+          <DescItem
+            label="Coste estimado"
+            value={formatUsd(comparison.geminiCostUsd)}
+            mono
           />
         </dl>
-      </section>
-
-      <section className="rounded-md border border-gray-200 bg-white">
-        <h2 className="border-b border-gray-200 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-gray-500">
-          Archivos ({comparison.files.length})
-        </h2>
-        {comparison.files.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-gray-500">
-            No hay archivos asociados (probablemente esta comparación falló antes de
-            generar el informe).
-          </p>
-        ) : (
-          <ul className="divide-y divide-gray-100">
-            {comparison.files.map((f) => (
-              <li
-                key={f.id}
-                className="flex items-center justify-between gap-3 px-4 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm text-gray-900">{f.filename}</p>
-                  <p className="text-xs text-gray-500">
-                    {KIND_LABEL[f.kind]} · {formatBytes(f.sizeBytes)}
-                  </p>
-                </div>
-                <a
-                  href={f.downloadUrl}
-                  className="rounded-md bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                  Descargar
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="border-t border-gray-100 px-4 py-2 text-xs text-gray-400">
-          Las URLs de descarga expiran a los 5 minutos. Si caducan, recarga la página.
+        <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
+          Total de tokens Gemini:{' '}
+          <span className="font-medium text-slate-700">
+            {formatNumber(totalTokens)}
+          </span>
         </p>
       </section>
+
+      <ComparisonFiles
+        files={comparison.files.map((f) => ({
+          id: f.id,
+          filename: f.filename,
+          kindLabel: KIND_LABEL[f.kind],
+          kind: fileKindFor(f.kind, f.filename),
+          sizeBytes: f.sizeBytes,
+          downloadUrl: f.downloadUrl,
+          isReport: f.kind === 'REPORT_OUTPUT',
+        }))}
+        reconciliationLines={reconciliationLines}
+      />
     </main>
   );
 }
 
-function Kpi({ label, value }: { label: string; value: string }) {
+function Kpi({
+  label,
+  value,
+  icon,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  highlight?: boolean;
+}) {
   return (
-    <div>
-      <p className="text-xs uppercase tracking-wider text-gray-500">{label}</p>
-      <p className="mt-0.5 font-medium text-gray-900">{value}</p>
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-500">
+        <span
+          className="flex h-6 w-6 items-center justify-center rounded-md"
+          style={{
+            background: highlight
+              ? '#fef3c7'
+              : 'var(--brand-primary-soft)',
+            color: highlight ? '#b45309' : 'var(--brand-primary)',
+          }}
+          aria-hidden
+        >
+          {icon}
+        </span>
+        {label}
+      </div>
+      <p
+        className={`mt-2 text-xl font-semibold tabular-nums ${
+          highlight ? 'text-amber-700' : 'text-slate-900'
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
 
-function DescItem({ label, value }: { label: string; value: string }) {
+function DescItem({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wider text-gray-500">{label}</dt>
-      <dd className="mt-0.5 text-gray-900">{value}</dd>
+      <dt className="text-xs font-medium uppercase tracking-wider text-slate-500">
+        {label}
+      </dt>
+      <dd
+        className={`mt-0.5 text-sm text-slate-900 ${
+          mono ? 'font-mono tabular-nums' : ''
+        }`}
+      >
+        {value}
+      </dd>
     </div>
+  );
+}
+
+function ArrowLeftIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="m12 19-7-7 7-7" />
+      <path d="M19 12H5" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect width="18" height="18" x="3" y="4" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  );
+}
+
+function DocumentIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+      <polyline points="14 2 14 8 20 8" />
+    </svg>
+  );
+}
+
+function AlertIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="m10.29 3.86-8.4 14.5A2 2 0 0 0 3.62 21h16.76a2 2 0 0 0 1.73-2.64l-8.4-14.5a2 2 0 0 0-3.46 0Z" />
+      <line x1="12" x2="12" y1="9" y2="13" />
+      <line x1="12" x2="12.01" y1="17" y2="17" />
+    </svg>
   );
 }

@@ -1,16 +1,25 @@
 import type { ComparisonStatus } from '@/core/comparisons';
 
-const STYLES: Record<ComparisonStatus, { bg: string; text: string; label: string }> = {
-  OK: { bg: 'bg-green-100', text: 'text-green-800', label: 'OK' },
-  DISCREPANCIES: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Discrepancias' },
-  ERROR: { bg: 'bg-red-100', text: 'text-red-800', label: 'Error' },
+const STYLES: Record<ComparisonStatus, { classes: string; label: string }> = {
+  OK: {
+    classes: 'bg-green-50 text-green-700 ring-green-200',
+    label: 'OK',
+  },
+  DISCREPANCIES: {
+    classes: 'bg-amber-50 text-amber-800 ring-amber-200',
+    label: 'Discrepancias',
+  },
+  ERROR: {
+    classes: 'bg-red-50 text-red-700 ring-red-200',
+    label: 'Error',
+  },
 };
 
 export function StatusBadge({ status }: { status: ComparisonStatus }) {
   const s = STYLES[status];
   return (
     <span
-      className={`inline-flex items-center rounded-full ${s.bg} ${s.text} px-2 py-0.5 text-xs font-medium`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${s.classes}`}
     >
       {s.label}
     </span>

@@ -1,9 +1,3 @@
-/**
- * Comparison domain models (history read/write).
- *
- * Re-exports Prisma enums (pure types, no client logic). The cross-core
- * `Scope` type lives in `core/shared`.
- */
 import type { ComparisonStatus, FileKind } from '@prisma/client';
 
 export { type ComparisonStatus, type FileKind };
@@ -35,6 +29,8 @@ export interface ComparisonFileRow {
 export interface ComparisonDetail extends ComparisonRow {
   business: { id: string; slug: string; name: string };
   files: ComparisonFileRow[];
+  /** JSON con la conciliación persistido por el engine (líneas, etiqueta, filename, etc). */
+  summary: unknown;
 }
 
 export interface ListFilters {

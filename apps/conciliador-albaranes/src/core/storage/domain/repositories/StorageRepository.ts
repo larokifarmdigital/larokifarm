@@ -1,24 +1,10 @@
-/**
- * Port: contrato para subir / leer / borrar archivos del historial.
- *
- * Implementaciones (adapters):
- *   - `StorageLocal`  → disco local (dev).
- *   - `StorageSpaces` → DigitalOcean Spaces (prod, se añade en Fase 6).
- *
- * Layout del key (mismo en todos los adapters):
- *   <businessSlug>/<YYYY-MM>/<comparisonId>/<kind>/<filename>
- */
-
+// NOTE: layout de key: <businessSlug>/<YYYY-MM>/<comparisonId>/<kind>/<filename>.
 export type FileKindKey = 'PDF_INPUT' | 'XLSX_INPUT' | 'REPORT_OUTPUT';
 
 export interface StorageRepository {
   upload(key: string, data: Buffer, contentType: string): Promise<void>;
   read(key: string): Promise<{ data: Buffer; contentType: string }>;
-  getDownloadUrl(
-    key: string,
-    filename: string,
-    expiresInSec?: number,
-  ): Promise<string>;
+  getDownloadUrl(key: string): Promise<string>;
   delete(key: string): Promise<void>;
 }
 

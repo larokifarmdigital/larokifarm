@@ -1,9 +1,4 @@
-/**
- * Use cases del CRUD de negocios.
- *
- * Solo SUPER_ADMIN puede crear/borrar negocios. BUSINESS_ADMIN puede editar
- * SU negocio (cambiar nombre, configurar BYOK). USER no entra.
- */
+// NOTE: SUPER_ADMIN puede crear/borrar; BUSINESS_ADMIN solo edita su propio negocio; USER no entra.
 import type { Session } from 'next-auth';
 import { ForbiddenError, ValidationError } from '@/core/shared';
 import type {
@@ -80,10 +75,7 @@ export class DeleteBusinessUseCase {
   }
 }
 
-/**
- * Convenience use case: configurar/limpiar la API key Gemini de un negocio.
- * Centraliza la regla "string vacío = limpiar".
- */
+// NOTE: string vacío = limpiar la key (vuelve al fallback global).
 export class SetGeminiApiKeyUseCase {
   constructor(private readonly repo: BusinessRepository) {}
   async execute(

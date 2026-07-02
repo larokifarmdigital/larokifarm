@@ -1,18 +1,10 @@
 import { z } from 'zod';
 import type { DeliveryNoteData } from './types';
 
-/**
- * Delivery-note PDF extraction with Gemini (§7). Done via `fetch` (no SDK)
- * so it runs on the Workers runtime. The API key is passed explicitly
- * (it comes from a secret, never from code).
- */
-
+// NOTE: usamos fetch (no SDK) para poder correr en Workers.
 const MODEL = 'gemini-2.5-flash';
 
-// The prompt is kept in Spanish on purpose: it describes Spanish pharma
-// business concepts and operates on Spanish PDFs. Translating it could
-// degrade extraction quality. Field names ARE in English (they match the
-// output schema below).
+// NOTE: prompt en español a propósito — describe conceptos de farmacia ES y opera sobre PDFs ES.
 const PROMPT = `Eres un extractor de albaranes y facturas de proveedores farmacéuticos.
 Vienen en muchos formatos; adáptate. Extrae cabecera y TODAS las líneas
 (puede haber varias páginas: no te dejes ninguna).
@@ -86,7 +78,6 @@ FORMATOS DE TABLA — IMPORTANTE:
   importante cuando el resultado se desvía en factor 10, 100 o 1000 — suele ser
   señal de que el precio venía "por N unidades" y no lo dividiste.`;
 
-// Schema passed to Gemini to force the output (OpenAPI subset).
 const RESPONSE_SCHEMA = {
   type: 'object',
   properties: {
@@ -116,7 +107,6 @@ const RESPONSE_SCHEMA = {
   required: ['deliveryNoteNumber', 'lines'],
 } as const;
 
-// Response validation (defence against the LLM).
 const lineSchema = z.object({
   code: z.string().optional(),
   nationalCode: z.string().optional(),
@@ -153,7 +143,6 @@ export interface ExtractionResult {
   usage: UsageMetadata;
 }
 
-/** Sends the PDF (base64) to Gemini and returns the structured delivery note + token usage. */
 export async function extractDeliveryNote(
   pdfBase64: string,
   { apiKey, fetchImpl = fetch }: ExtractionOptions,
@@ -228,15 +217,7 @@ export async function extractDeliveryNote(
   return { data: parsed.data, usage };
 }
 
-/**
- * Translates the Gemini API HTTP errors into messages the client can
- * understand. Gemini's response is usually a JSON `{error: {code, message,
- * status}}`; we parse it to extract the message only when it adds useful
- * context; otherwise we return a fixed Spanish message focused on the
- * action the user can take.
- */
 function geminiErrorMessage(status: number, detail: string): string {
-  // Original Gemini message (if any), in case we want to add it as a hint.
   let geminiMsg = '';
   try {
     const j = JSON.parse(detail) as { error?: { message?: string } };

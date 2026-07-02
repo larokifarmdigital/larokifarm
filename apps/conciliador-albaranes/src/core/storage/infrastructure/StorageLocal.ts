@@ -1,15 +1,7 @@
-/**
- * Adapter local del puerto StorageRepository.
- *
- * Guarda en disco bajo `STORAGE_LOCAL_DIR` con el layout estándar. Genera
- * URLs firmadas con HMAC sobre `AUTH_SECRET` (token corto que expira en
- * segundos) — la verificación vive en `verifyDownloadToken`.
- */
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import type { StorageRepository } from '../domain/repositories/StorageRepository';
-import { signDownloadToken } from './downloadToken';
 
 export class StorageLocal implements StorageRepository {
   private root: string;
@@ -21,7 +13,7 @@ export class StorageLocal implements StorageRepository {
   }
 
   private fullPath(key: string): string {
-    // Defensa anti path-traversal.
+    // NOTE: defensa anti path-traversal.
     const target = resolve(this.root, key);
     if (!target.startsWith(this.root + '/') && target !== this.root) {
       throw new Error(`Storage key inválido: ${key}`);
@@ -48,17 +40,10 @@ export class StorageLocal implements StorageRepository {
     if (existsSync(path)) await unlink(path);
   }
 
-  async getDownloadUrl(
-    key: string,
-    filename: string,
-    expiresInSec = 300,
-  ): Promise<string> {
-    const token = signDownloadToken(key, filename, expiresInSec);
-    return `/api/files/${encodeURI(key)}?token=${token}`;
+  async getDownloadUrl(key: string): Promise<string> {
+    return `/api/files/${encodeURI(key)}`;
   }
 
-  // Mapa key → contentType en un .json en el root del storage.
-  // En el adapter `Spaces` esto lo guarda S3 como object metadata.
   private async readMap(): Promise<Record<string, string>> {
     if (!existsSync(this.contentTypesPath)) return {};
     try {
