@@ -66,6 +66,20 @@ describe('reconcile', () => {
     expect(r.lines[0].status).toBe('OK');
   });
 
+  // Caso real (AVENE): el PDF trae el C.N. con sufijo de letra ("192332.P").
+  // Aunque Gemini lo meta en `code` en vez de `nationalCode`, rescueCn detecta
+  // el patrón "6 dígitos + .X" y lo trata como C.N. → cruza con el "192332"
+  // del pedido.
+  it('C.N. con sufijo de letra: rescata "192332.P" aunque llegue en code', () => {
+    const r = reconcile(
+      deliveryNote([{ code: '192332.P', description: 'AVENE HYDRANCE', quantity: 3, unitPrice: 12, discount: 21.5 }]),
+      order([{ productCode: '192332', description: 'AVENE HYDRANCE', units: 3, price: 12, discount: 21.5 }]),
+    );
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].nationalCode).toBe('192332');
+    expect(r.lines[0].status).toBe('OK');
+  });
+
   it('ordena las filas con problema primero', () => {
     const r = reconcile(
       deliveryNote([

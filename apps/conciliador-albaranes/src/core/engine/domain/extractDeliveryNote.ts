@@ -46,13 +46,33 @@ Vienen en muchos formatos; adáptate. Extrae cabecera y TODAS las líneas
   una LÍNEA APARTE del mismo producto con precio 0 (o 100% de descuento). En ese caso
   extrae esa línea tal cual: su "quantity" = sus unidades y "unitPrice" = 0. NO
   la fusiones con la línea facturada; el sistema la reconocerá como bonificación.
-- "nationalCode" = columna C.N. (Código Nacional español, formato XXXXXX.X o similar)
-  si existe; si no, "".
+- "nationalCode" = Código Nacional español (columna C.N., "Cód. Nacional", "CN",
+  "C. Nacional"). FORMATO OBLIGATORIO DE SALIDA: EXACTAMENTE 6 DÍGITOS numéricos,
+  sin punto, sin dígito de control, sin espacios, sin sufijos. El C.N. español se
+  imprime habitualmente como "XXXXXX.X" (6 dígitos base + 1 dígito de control) —
+  DESCARTA el punto y el dígito de control y devuelve los 6 primeros. Ejemplos
+  OBLIGATORIOS (aplícalos siempre):
+    "159259.0"  → "159259"
+    "369694.4"  → "369694"
+    "192332.P"  → "192332"   (sufijos con letras como .P/.S/.R son formato del proveedor, IGNÓRALOS)
+    "159259 0"  → "159259"
+    "1592590"   → "159259"   (si vienen 7 dígitos pegados, quédate con los 6 primeros)
+    "1.59259E+05" → "159259"  (notación científica de Excel: reconstruye y toma 6 dígitos)
+    "159259"    → "159259"   (si ya vienen 6, déjalos igual)
+  Si en la línea NO hay C.N., devuelve "". NUNCA devuelvas más de 6 dígitos ni
+  incluyas puntos ni letras en este campo.
 - "ean" = código de barras / EAN / GTIN del artículo si aparece (solo el código,
   normalmente 8-13 dígitos); si no, "".
 - "code" = código interno del proveedor (ej. "UN14080", "12578223", "5000036689").
   Es el identificador que el proveedor usa internamente y suele aparecer en TODOS los
   documentos del mismo envío (albarán + factura). NO lo confundas con C.N. ni EAN.
+  REGLA DURA: si el valor parece un C.N. español (numérico de 6-7 dígitos con o sin
+  punto/dígito de control/sufijo de letra, ej. "159259.0", "369694", "1592590",
+  "192332.P"), NO lo pongas en "code" — va en "nationalCode" (aplicando las reglas
+  de extracción de 6 dígitos). "code" es para identificadores alfanuméricos propios
+  del proveedor (con letras al principio o intercaladas, con guiones, o numéricos de
+  longitud claramente distinta a 6-7 como los EAN de 13 dígitos o los internos
+  largos como "5000036689" o "UN14080").
 - "supplier" = nombre del proveedor que emite el documento (ej. "DENTAID", "NESTLÉ",
   "PEROXFARMA").
 - Fechas en formato YYYY-MM-DD.

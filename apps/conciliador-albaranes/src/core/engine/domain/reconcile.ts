@@ -113,6 +113,15 @@ function visibleCode(p: Item | null, a: Item | null): string {
   return p?.cn || a?.cn || p?.alt || a?.alt || p?.cod || a?.cod || '';
 }
 
+// NOTE: rescata el C.N. español cuando Gemini lo mete por error en "code" (ej. "192332.P" o "159259.0"). Patrón estricto: EXACTAMENTE 6 dígitos + opcional punto + 1 letra o dígito. No toca códigos internos largos tipo "5000036689" (bug Marvis).
+const CN_LIKE = /^(\d{6})(?:\.[A-Z0-9])?$/i;
+function rescueCn(nationalCode: string | undefined, code: string | undefined): string {
+  if (nationalCode && nationalCode.trim() !== '') return nationalCode;
+  const c = (code ?? '').trim();
+  const m = CN_LIKE.exec(c);
+  return m ? m[1] : '';
+}
+
 function compareFields(p: Item, a: Item): DiscrepancyKind[] {
   const d: DiscrepancyKind[] = [];
   if (Math.abs(p.units - a.units) > TOL_QUANTITY) d.push('units');
@@ -139,7 +148,7 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
 
   const deliveryItems = group(
     deliveryNote.lines.map((l) => ({
-      cnRaw: l.nationalCode || '',
+      cnRaw: rescueCn(l.nationalCode, l.code),
       altRaw: l.ean || '',
       codRaw: l.code || '',
       description: l.description ?? '',
