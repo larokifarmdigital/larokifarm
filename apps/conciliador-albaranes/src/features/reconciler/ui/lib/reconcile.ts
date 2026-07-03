@@ -7,14 +7,25 @@ export interface PairToSend {
   xlsx: File;
 }
 
+export interface BudgetBlockedDetail {
+  supportEmail: string | null;
+  spentUsd: number;
+  budgetUsd: number | null;
+}
+
 /** API error that preserves the HTTP status (to distinguish 401 unauthorized). */
 export class ReconcileError extends Error {
+  /** Solo definido cuando el status es 402 (budget alcanzado). */
+  readonly budgetBlocked?: BudgetBlockedDetail;
+
   constructor(
     message: string,
     readonly status: number,
+    budgetBlocked?: BudgetBlockedDetail,
   ) {
     super(message);
     this.name = 'ReconcileError';
+    this.budgetBlocked = budgetBlocked;
   }
 }
 
@@ -35,8 +46,22 @@ export async function reconcilePairs(
   });
 
   if (!res.ok) {
-    const j = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new ReconcileError(j.error ?? `Error ${res.status}`, res.status);
+    const j = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      budgetBlocked?: boolean;
+      supportEmail?: string | null;
+      spentUsd?: number;
+      budgetUsd?: number | null;
+    };
+    const detail =
+      res.status === 402 && j.budgetBlocked
+        ? {
+            supportEmail: j.supportEmail ?? null,
+            spentUsd: j.spentUsd ?? 0,
+            budgetUsd: j.budgetUsd ?? null,
+          }
+        : undefined;
+    throw new ReconcileError(j.error ?? `Error ${res.status}`, res.status, detail);
   }
   return res.json() as Promise<ReconciliationResponse>;
 }

@@ -63,6 +63,15 @@ export class UpdateBusinessUseCase {
     if (input.name !== undefined && !input.name.trim()) {
       throw new ValidationError('El nombre no puede estar vacío.');
     }
+    // NOTE: budget y supportEmail solo SUPER_ADMIN. BUSINESS_ADMIN los recibiría en el form pero no debe poder tocarlos.
+    if (
+      (input.monthlyBudgetUsd !== undefined || input.supportEmail !== undefined) &&
+      actor.user.role !== 'SUPER_ADMIN'
+    ) {
+      throw new ForbiddenError(
+        'Solo SUPER_ADMIN puede modificar el presupuesto y el email de soporte.',
+      );
+    }
     return this.repo.update(id, input);
   }
 }

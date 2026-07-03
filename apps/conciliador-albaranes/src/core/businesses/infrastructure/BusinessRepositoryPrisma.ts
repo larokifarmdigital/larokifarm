@@ -15,6 +15,8 @@ const BUSINESS_SELECT = {
   createdAt: true,
   updatedAt: true,
   geminiKeyEnc: true,
+  monthlyBudgetUsd: true,
+  supportEmail: true,
 } satisfies Prisma.BusinessSelect;
 
 function toRow(row: {
@@ -24,12 +26,16 @@ function toRow(row: {
   createdAt: Date;
   updatedAt: Date;
   geminiKeyEnc: string | null;
+  monthlyBudgetUsd: Prisma.Decimal | null;
+  supportEmail: string | null;
 }): BusinessRow {
   return {
     id: row.id,
     slug: row.slug,
     name: row.name,
     hasGeminiKey: !!row.geminiKeyEnc,
+    monthlyBudgetUsd: row.monthlyBudgetUsd ? Number(row.monthlyBudgetUsd) : null,
+    supportEmail: row.supportEmail,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -75,6 +81,12 @@ export class BusinessRepositoryPrisma implements BusinessRepository {
       data.geminiKeyEnc = input.geminiApiKey
         ? await encrypt(input.geminiApiKey)
         : null;
+    }
+    if (input.monthlyBudgetUsd !== undefined) {
+      data.monthlyBudgetUsd = input.monthlyBudgetUsd;
+    }
+    if (input.supportEmail !== undefined) {
+      data.supportEmail = input.supportEmail;
     }
     const row = await prisma.business.update({
       where: { id },

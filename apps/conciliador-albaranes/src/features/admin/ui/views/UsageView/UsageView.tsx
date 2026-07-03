@@ -1,13 +1,19 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/core/auth';
 import {
+  GetBudgetStatusUseCase,
   GetUsageStatsUseCase,
   getComparisonRepository,
 } from '@/core/comparisons';
+import {
+  ListBusinessesUseCase,
+  getBusinessRepository,
+} from '@/core/businesses';
 import { KpiCards } from '../../components/KpiCards';
 import { MonthlyChart } from '../../components/MonthlyChart';
 import { TopUsersTable } from '../../components/TopUsersTable';
 import { BusinessUsageTable } from '../../components/BusinessUsageTable';
+import { BudgetStatusCard } from '../../components/BudgetStatusCard';
 
 export async function UsageView() {
   const session = await auth();
@@ -16,9 +22,26 @@ export async function UsageView() {
 
   const isSuperAdmin = session.user.role === 'SUPER_ADMIN';
 
-  const stats = await new GetUsageStatsUseCase(
-    getComparisonRepository(),
-  ).execute(session);
+  const comparisonRepo = getComparisonRepository();
+  const businessRepo = getBusinessRepository();
+
+  const [stats, businesses, budgetStatus] = await Promise.all([
+    new GetUsageStatsUseCase(comparisonRepo).execute(session),
+    // NOTE: solo SUPER_ADMIN necesita el mapa slug→budget para pintar la columna Límite en BusinessUsageTable.
+    isSuperAdmin
+      ? new ListBusinessesUseCase(businessRepo).execute(session)
+      : Promise.resolve([]),
+    // NOTE: BUSINESS_ADMIN ve una card de su propio budget. SUPER_ADMIN lo ve en la tabla, no en card.
+    !isSuperAdmin && session.user.businessId
+      ? new GetBudgetStatusUseCase(businessRepo, comparisonRepo).execute(
+          session.user.businessId,
+        )
+      : Promise.resolve(null),
+  ]);
+
+  const budgetBySlug = new Map(
+    businesses.map((b) => [b.slug, b.monthlyBudgetUsd]),
+  );
 
   return (
     <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
@@ -45,11 +68,18 @@ export async function UsageView() {
 
       <KpiCards metrics={stats.currentMonth} />
 
+      {budgetStatus && <BudgetStatusCard status={budgetStatus} />}
+
       <MonthlyChart buckets={stats.monthly} />
 
       <div className="space-y-6">
         <TopUsersTable rows={stats.topUsers} showBusiness={isSuperAdmin} />
-        {isSuperAdmin && <BusinessUsageTable rows={stats.byBusiness} />}
+        {isSuperAdmin && (
+          <BusinessUsageTable
+            rows={stats.byBusiness}
+            budgetBySlug={budgetBySlug}
+          />
+        )}
       </div>
 
       <p className="text-[11px] text-slate-400">

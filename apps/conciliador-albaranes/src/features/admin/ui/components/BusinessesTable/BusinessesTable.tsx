@@ -302,6 +302,7 @@ export function BusinessesTable({
         >
           <NameForm
             business={editingName}
+            canManageBudget={canDelete}
             onSuccess={() => setEditingName(null)}
             onCancel={() => setEditingName(null)}
           />
@@ -412,10 +413,12 @@ function IconAction({
 
 function NameForm({
   business,
+  canManageBudget,
   onSuccess,
   onCancel,
 }: {
   business: BusinessRow;
+  canManageBudget: boolean;
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
@@ -457,6 +460,54 @@ function NameForm({
           style={inputStyle}
         />
       </FormField>
+
+      {canManageBudget && (
+        <>
+          <div className="border-t border-slate-100 pt-4">
+            <p className="mb-3 text-xs font-medium uppercase tracking-wider text-slate-500">
+              Presupuesto y soporte
+            </p>
+            <FormField
+              label="Presupuesto mensual (USD)"
+              hint="Vacío = sin límite"
+            >
+              <input
+                type="number"
+                name="monthlyBudgetUsd"
+                min={0}
+                step={0.01}
+                defaultValue={
+                  business.monthlyBudgetUsd !== null
+                    ? String(business.monthlyBudgetUsd)
+                    : ''
+                }
+                placeholder="20.00"
+                className={`${inputClass} tabular-nums`}
+                style={inputStyle}
+              />
+              <p className="mt-1 text-[11px] text-slate-400">
+                Al 80% del gasto mensual aparece aviso amarillo. Al 100%, la
+                conciliación se bloquea hasta el siguiente mes calendario.
+              </p>
+            </FormField>
+            <div className="mt-4">
+              <FormField
+                label="Email de soporte"
+                hint="Para mostrar en el modal de bloqueo"
+              >
+                <input
+                  type="email"
+                  name="supportEmail"
+                  defaultValue={business.supportEmail ?? ''}
+                  placeholder="soporte@empresa.com"
+                  className={inputClass}
+                  style={inputStyle}
+                />
+              </FormField>
+            </div>
+          </div>
+        </>
+      )}
 
       <FormFooter
         pending={pending}

@@ -57,9 +57,33 @@ export async function updateBusinessAction(
     const id = String(form.get('id') ?? '');
     if (!id) return { error: 'Falta id del negocio.' };
 
+    let monthlyBudgetUsd: number | null | undefined = undefined;
+    const rawBudget = form.get('monthlyBudgetUsd');
+    if (rawBudget !== null) {
+      const s = String(rawBudget).trim();
+      if (s === '') {
+        monthlyBudgetUsd = null;
+      } else {
+        const n = Number(s.replace(',', '.'));
+        if (!Number.isFinite(n) || n < 0) {
+          return { error: 'El presupuesto mensual debe ser un número ≥ 0.' };
+        }
+        monthlyBudgetUsd = n;
+      }
+    }
+
+    let supportEmail: string | null | undefined = undefined;
+    const rawEmail = form.get('supportEmail');
+    if (rawEmail !== null) {
+      const s = String(rawEmail).trim();
+      supportEmail = s === '' ? null : s;
+    }
+
     const useCase = new UpdateBusinessUseCase(getBusinessRepository());
     await useCase.execute(session, id, {
       name: form.get('name') !== null ? String(form.get('name')).trim() : undefined,
+      monthlyBudgetUsd,
+      supportEmail,
     });
     revalidatePath('/admin/negocios');
     return { ok: true };

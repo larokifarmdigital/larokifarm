@@ -2,7 +2,17 @@ import type { BusinessBucket } from '@/core/comparisons';
 import { businessColor } from '@/features/history/lib/businessColor';
 import { formatNumber, formatUsd } from '@/shared/lib/format';
 
-export function BusinessUsageTable({ rows }: { rows: BusinessBucket[] }) {
+interface BusinessUsageTableProps {
+  rows: BusinessBucket[];
+  /** slug → monthlyBudgetUsd (null = sin límite). Vacío = no mostrar columna. */
+  budgetBySlug?: Map<string, number | null>;
+}
+
+export function BusinessUsageTable({
+  rows,
+  budgetBySlug,
+}: BusinessUsageTableProps) {
+  const showBudget = !!budgetBySlug && budgetBySlug.size > 0;
   const totals = rows.reduce(
     (acc, r) => {
       acc.comparisons += r.metrics.numComparisons;
@@ -41,6 +51,9 @@ export function BusinessUsageTable({ rows }: { rows: BusinessBucket[] }) {
                   <th className="px-3 py-2.5 text-right">PDFs</th>
                   <th className="px-3 py-2.5 text-right">Discrep.</th>
                   <th className="px-3 py-2.5 text-right">Coste</th>
+                  {showBudget && (
+                    <th className="px-3 py-2.5 text-right">Límite</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -49,6 +62,10 @@ export function BusinessUsageTable({ rows }: { rows: BusinessBucket[] }) {
                   const tokens =
                     r.metrics.geminiInputTokens + r.metrics.geminiOutputTokens;
                   const costTooltip = `${formatNumber(tokens)} tokens · ${formatUsd(r.metrics.geminiCostUsd)}`;
+                  const budget = budgetBySlug?.get(r.business.slug) ?? null;
+                  const spent = Number(r.metrics.geminiCostUsd);
+                  const budgetPct =
+                    budget !== null && budget > 0 ? spent / budget : 0;
                   return (
                     <tr key={r.business.id} className="hover:bg-slate-50/70">
                       <td
@@ -89,6 +106,11 @@ export function BusinessUsageTable({ rows }: { rows: BusinessBucket[] }) {
                       >
                         {formatUsd(r.metrics.geminiCostUsd)}
                       </td>
+                      {showBudget && (
+                        <td className="px-3 py-2.5 text-right tabular-nums">
+                          <BudgetCell budget={budget} percent={budgetPct} />
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -108,6 +130,7 @@ export function BusinessUsageTable({ rows }: { rows: BusinessBucket[] }) {
                   <td className="px-3 py-2.5 text-right tabular-nums">
                     {formatUsd(totals.cost)}
                   </td>
+                  {showBudget && <td />}
                 </tr>
               </tfoot>
             </table>
@@ -119,6 +142,7 @@ export function BusinessUsageTable({ rows }: { rows: BusinessBucket[] }) {
               const bColor = businessColor(r.business.slug);
               const tokens =
                 r.metrics.geminiInputTokens + r.metrics.geminiOutputTokens;
+              const budget = budgetBySlug?.get(r.business.slug) ?? null;
               return (
                 <li
                   key={r.business.id}
@@ -138,7 +162,7 @@ export function BusinessUsageTable({ rows }: { rows: BusinessBucket[] }) {
                     >
                       {r.business.slug}
                     </p>
-                    <dl className="mt-3 grid grid-cols-4 gap-2 border-t border-slate-100 pt-3 text-xs">
+                    <dl className={`mt-3 grid ${showBudget ? 'grid-cols-5' : 'grid-cols-4'} gap-2 border-t border-slate-100 pt-3 text-xs`}>
                       <MetaCell
                         label="Comp."
                         value={formatNumber(r.metrics.numComparisons)}
@@ -157,6 +181,12 @@ export function BusinessUsageTable({ rows }: { rows: BusinessBucket[] }) {
                         value={formatUsd(r.metrics.geminiCostUsd)}
                         tooltip={`${formatNumber(tokens)} tokens · ${formatUsd(r.metrics.geminiCostUsd)}`}
                       />
+                      {showBudget && (
+                        <MetaCell
+                          label="Límite"
+                          value={budget !== null ? formatUsd(budget) : '—'}
+                        />
+                      )}
                     </dl>
                   </div>
                 </li>
@@ -205,6 +235,32 @@ function MetaCell({
       >
         {value}
       </dd>
+    </div>
+  );
+}
+
+function BudgetCell({
+  budget,
+  percent,
+}: {
+  budget: number | null;
+  percent: number;
+}) {
+  if (budget === null) {
+    return <span className="text-xs text-slate-400">Sin límite</span>;
+  }
+  const pct = Math.min(100, Math.round(percent * 100));
+  const isBlocked = percent >= 1;
+  const isWarn = percent >= 0.8;
+  const color = isBlocked ? 'text-red-700' : isWarn ? 'text-amber-700' : 'text-slate-700';
+  return (
+    <div className="inline-flex flex-col items-end gap-1">
+      <span className={`text-sm tabular-nums ${color}`} title={`${pct}% consumido`}>
+        {formatUsd(budget)}
+      </span>
+      <span className="text-[10px] font-medium tabular-nums text-slate-400">
+        {pct}%
+      </span>
     </div>
   );
 }

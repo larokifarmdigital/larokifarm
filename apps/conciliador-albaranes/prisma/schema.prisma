@@ -22,12 +22,14 @@ enum Role {
 }
 
 model Business {
-  id           String   @id @default(cuid())
-  slug         String   @unique
-  name         String
-  geminiKeyEnc String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  geminiKeyEnc     String?
+  monthlyBudgetUsd Decimal? @db.Decimal(10, 4)
+  supportEmail     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   users       User[]
   comparisons Comparison[]

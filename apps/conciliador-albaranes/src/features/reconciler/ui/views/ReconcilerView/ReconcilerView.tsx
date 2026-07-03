@@ -2,8 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
+import type { BudgetStatus } from '@/core/comparisons';
 import { ReconciliationTable } from '@/shared/components/organisms/ReconciliationTable';
-import { reconcilePairs, ReconcileError, type PairToSend } from '../../lib/reconcile';
+import {
+  reconcilePairs,
+  ReconcileError,
+  type BudgetBlockedDetail,
+  type PairToSend,
+} from '../../lib/reconcile';
 
 // NOTE: dynamic + ssr:false — xlsx (~300KB) y react-pdf (~1.5MB) fuera del bundle inicial y ambos dependen del DOM.
 const PdfViewer = dynamic(
@@ -81,7 +87,12 @@ function sanitize(s: string): string {
   return s.replace(/[\\/:*?"<>|]+/g, '').trim();
 }
 
-export function ReconcilerView() {
+interface ReconcilerViewProps {
+  /** null = sin límite configurado o usuario sin negocio (SUPER_ADMIN pool). */
+  budgetStatus: BudgetStatus | null;
+}
+
+export function ReconcilerView({ budgetStatus }: ReconcilerViewProps) {
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [unmatched, setUnmatched] = useState<LoadedFile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -92,6 +103,18 @@ export function ReconcilerView() {
   const [accessKey, setAccessKey] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  // NOTE: si el server devuelve 402, guardamos el detalle para pintar el modal de "límite alcanzado".
+  const [budgetBlocked, setBudgetBlocked] = useState<BudgetBlockedDetail | null>(
+    budgetStatus?.level === 'blocked'
+      ? {
+          supportEmail: budgetStatus.supportEmail,
+          spentUsd: budgetStatus.spentUsd,
+          budgetUsd: budgetStatus.budgetUsd,
+        }
+      : null,
+  );
+  const isBudgetBlocked = budgetStatus?.level === 'blocked' || !!budgetBlocked;
+  const isBudgetWarning = budgetStatus?.level === 'warning';
 
   // NOTE: cargamos la clave en useEffect (no en initializer) para no romper la hidratación.
   useEffect(() => {
@@ -209,7 +232,9 @@ export function ReconcilerView() {
     setError(null);
   }
 
-  async function runCompare(keyToUse?: string): Promise<'ok' | 'unauthorized' | 'error'> {
+  async function runCompare(
+    keyToUse?: string,
+  ): Promise<'ok' | 'unauthorized' | 'blocked' | 'error'> {
     setLoading(true);
     setError(null);
     setResults(null);
@@ -231,6 +256,14 @@ export function ReconcilerView() {
         localStorage.removeItem(ACCESS_KEY_STORAGE);
         return 'unauthorized';
       }
+      if (
+        e instanceof ReconcileError &&
+        e.status === 402 &&
+        e.budgetBlocked
+      ) {
+        setBudgetBlocked(e.budgetBlocked);
+        return 'blocked';
+      }
       setError(e instanceof Error ? e.message : 'Error al conciliar');
       return 'error';
     } finally {
@@ -240,6 +273,17 @@ export function ReconcilerView() {
 
   async function compare() {
     if (complete.length === 0) return;
+    if (isBudgetBlocked) {
+      // NOTE: si ya sabemos server-side que está bloqueado, ni llamamos a la API.
+      if (!budgetBlocked && budgetStatus) {
+        setBudgetBlocked({
+          supportEmail: budgetStatus.supportEmail,
+          spentUsd: budgetStatus.spentUsd,
+          budgetUsd: budgetStatus.budgetUsd,
+        });
+      }
+      return;
+    }
     const r = await runCompare(accessKey || undefined);
     if (r === 'unauthorized') {
       setModalError(null);
@@ -289,6 +333,10 @@ export function ReconcilerView() {
           </span>
         )}
       </header>
+
+      {isBudgetWarning && budgetStatus && (
+        <BudgetWarningBanner status={budgetStatus} />
+      )}
 
       <Dropzone onArchivos={add} />
 
@@ -342,14 +390,15 @@ export function ReconcilerView() {
               <button
                 type="button"
                 onClick={compare}
-                disabled={loading || complete.length === 0}
+                disabled={loading || complete.length === 0 || isBudgetBlocked}
+                title={isBudgetBlocked ? 'Se alcanzó el límite de uso mensual.' : undefined}
                 className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 style={{
                   background: 'var(--brand-primary)',
                   color: 'var(--brand-foreground)',
                 }}
                 onMouseEnter={(e) => {
-                  if (!loading && complete.length > 0)
+                  if (!loading && complete.length > 0 && !isBudgetBlocked)
                     (e.currentTarget as HTMLButtonElement).style.background =
                       'var(--brand-primary-hover)';
                 }}
@@ -366,7 +415,9 @@ export function ReconcilerView() {
                 )}
                 {loading
                   ? 'Comparando…'
-                  : `Comparar ${complete.length} par${complete.length === 1 ? '' : 'es'}`}
+                  : isBudgetBlocked
+                    ? 'Límite mensual alcanzado'
+                    : `Comparar ${complete.length} par${complete.length === 1 ? '' : 'es'}`}
               </button>
               <button
                 type="button"
@@ -454,7 +505,130 @@ export function ReconcilerView() {
           onClose={() => setModalOpen(false)}
         />
       )}
+
+      {budgetBlocked && (
+        <BudgetBlockedModal
+          detail={budgetBlocked}
+          onClose={() => setBudgetBlocked(null)}
+        />
+      )}
     </main>
+  );
+}
+
+function BudgetWarningBanner({ status }: { status: BudgetStatus }) {
+  const percent = Math.round(status.percent * 100);
+  return (
+    <div
+      role="status"
+      className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+    >
+      <span aria-hidden className="mt-0.5 shrink-0 text-amber-600">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m10.29 3.86-8.4 14.5A2 2 0 0 0 3.62 21h16.76a2 2 0 0 0 1.73-2.64l-8.4-14.5a2 2 0 0 0-3.46 0Z" />
+          <line x1="12" x2="12" y1="9" y2="13" />
+          <line x1="12" x2="12.01" y1="17" y2="17" />
+        </svg>
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">
+          Estás cerca del límite de uso mensual ({percent}%).
+        </p>
+        <p className="mt-0.5 text-xs text-amber-800">
+          Gastado ${status.spentUsd.toFixed(2)} de $
+          {status.budgetUsd?.toFixed(2) ?? '—'}. Al llegar al 100% la
+          conciliación se pausará hasta el siguiente mes.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function BudgetBlockedModal({
+  detail,
+  onClose,
+}: {
+  detail: BudgetBlockedDetail;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+      role="alertdialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-2xl bg-white shadow-2xl"
+      >
+        <div className="px-6 pt-6">
+          <div className="flex items-start gap-4">
+            <span
+              aria-hidden
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base font-semibold text-slate-900">
+                Se alcanzó el límite de uso permitido
+              </h3>
+              <p className="mt-1.5 text-sm text-slate-600">
+                Este mes tu negocio ha consumido{' '}
+                <strong className="tabular-nums text-slate-900">
+                  ${detail.spentUsd.toFixed(2)}
+                </strong>
+                {detail.budgetUsd !== null && (
+                  <>
+                    {' '}
+                    de{' '}
+                    <strong className="tabular-nums text-slate-900">
+                      ${detail.budgetUsd.toFixed(2)}
+                    </strong>{' '}
+                    disponibles
+                  </>
+                )}
+                . Comunícate con el administrador para ampliar el límite o
+                espera al próximo mes.
+              </p>
+              {detail.supportEmail && (
+                <p className="mt-3 text-sm">
+                  <span className="text-slate-500">Contacto:</span>{' '}
+                  <a
+                    href={`mailto:${detail.supportEmail}`}
+                    className="font-medium underline decoration-slate-300 underline-offset-2 hover:decoration-slate-600"
+                    style={{ color: 'var(--brand-primary)' }}
+                  >
+                    {detail.supportEmail}
+                  </a>
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="mt-5 flex justify-end gap-2 rounded-b-2xl border-t border-slate-100 bg-slate-50 px-6 py-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Entendido
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

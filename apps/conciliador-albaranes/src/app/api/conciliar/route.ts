@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/core/auth';
-import { getComparisonRepository } from '@/core/comparisons';
+import {
+  GetBudgetStatusUseCase,
+  getComparisonRepository,
+} from '@/core/comparisons';
 import { getBusinessRepository } from '@/core/businesses';
 import { getStorage } from '@/core/storage';
 import { ProcessAndPersistPairUseCase } from '@/core/engine/application';
@@ -118,6 +121,24 @@ export async function POST(req: Request) {
   const ctxResult = await resolveContext();
   if (!ctxResult.ok) return ctxResult.response;
   const { ctx } = ctxResult;
+
+  // NOTE: hard-block cuando el gasto del mes ya supera el budget del negocio. 402 = Payment Required, semánticamente correcto.
+  const budgetStatus = await new GetBudgetStatusUseCase(
+    getBusinessRepository(),
+    getComparisonRepository(),
+  ).execute(ctx.business.id);
+  if (budgetStatus.level === 'blocked') {
+    return NextResponse.json(
+      {
+        error: 'Se alcanzó el límite de uso permitido este mes.',
+        budgetBlocked: true,
+        supportEmail: budgetStatus.supportEmail,
+        spentUsd: budgetStatus.spentUsd,
+        budgetUsd: budgetStatus.budgetUsd,
+      },
+      { status: 402 },
+    );
+  }
 
   const form = await req.formData();
   const pairs = await pairsFromForm(form);
