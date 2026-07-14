@@ -2,7 +2,7 @@
 const BUSINESS_COLORS: Record<string, { solid: string; soft: string }> = {
   larokifarm: { solid: '#16a34a', soft: '#dcfce7' }, // green
   laguna: { solid: '#dc2626', soft: '#fee2e2' }, // red
-  torrents: { solid: '#0d9488', soft: '#ccfbf1' }, // teal
+  torrents: { solid: '#1265B5', soft: '#E5F0FC' }, // azul torrents
   chamarro: { solid: '#64748b', soft: '#f1f5f9' }, // slate
   broggi: { solid: '#d97706', soft: '#fef3c7' }, // amber
 };

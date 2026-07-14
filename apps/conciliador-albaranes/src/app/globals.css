@@ -14,13 +14,13 @@
   --background: #f8fafc;
   --foreground: #0f172a;
 
-  /* Marca por defecto: NEUTRA (slate). Sin negocio, sin pantalla logueada. */
-  --brand-primary: #334155;         /* slate-700 */
-  --brand-primary-hover: #1e293b;   /* slate-800 */
-  --brand-primary-soft: #f1f5f9;    /* slate-100 */
-  --brand-primary-ring: #cbd5e1;    /* slate-300 */
+  /* Marca por defecto: índigo (modo gestión — SUPER_ADMIN sin negocio activo, login). */
+  --brand-primary: #4f46e5;         /* indigo-600 */
+  --brand-primary-hover: #4338ca;   /* indigo-700 */
+  --brand-primary-soft: #eef2ff;    /* indigo-50 */
+  --brand-primary-ring: #a5b4fc;    /* indigo-300 */
   --brand-foreground: #ffffff;
-  --brand-accent: #0f172a;          /* slate-900 */
+  --brand-accent: #3730a3;          /* indigo-800 */
 }
 
 /* Overrides por negocio.
@@ -41,10 +41,11 @@
   --brand-primary-ring: #fca5a5;
 }
 [data-business='torrents'] {
-  --brand-primary: #0d9488;         /* teal-600 */
-  --brand-primary-hover: #0f766e;
-  --brand-primary-soft: #ccfbf1;
-  --brand-primary-ring: #5eead4;
+  --brand-primary: #1265B5;
+  --brand-primary-hover: #0F5399;
+  --brand-primary-soft: #E5F0FC;
+  --brand-primary-ring: #82B4E1;
+  --brand-accent: #0A4478;
 }
 [data-business='chamarro'] {
   --brand-primary: #64748b;         /* slate-500 */
