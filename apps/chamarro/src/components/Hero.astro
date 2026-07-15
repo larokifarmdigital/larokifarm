@@ -1,0 +1,247 @@
+---
+import { localizar, type ImagenConAlt, type LocalizedString, type TarjetaFlotante } from '@/lib/sanity';
+import { t, type Locale } from '@/lib/i18n';
+import IconoServicio from '@/components/IconoServicio.astro';
+
+interface Props {
+  nombre: string;
+  ciudad?: string;
+  imagenes?: ImagenConAlt[];
+  telefono?: string;
+  chip?: LocalizedString;
+  titulo?: LocalizedString;
+  claim?: string;
+  tarjetasFlotantes?: TarjetaFlotante[];
+  lang: Locale;
+}
+
+const { nombre, ciudad, imagenes, telefono, chip, titulo, claim, tarjetasFlotantes, lang } = Astro.props;
+
+const listaImagenes = (imagenes ?? []).filter((i) => i?.url).slice(0, 6);
+const tieneCarrusel = listaImagenes.length > 1;
+
+const chipTexto =
+  localizar(chip, lang) ||
+  (ciudad
+    ? t('hero.chip.conCiudad', lang, { ciudad })
+    : t('hero.chip.sinCiudad', lang));
+
+const tituloTexto = localizar(titulo, lang) || t('hero.tituloDefecto', lang);
+const subtituloTexto = claim;
+
+/* Tarjetas flotantes del hero. Si Sanity trae al menos una, usamos las de Sanity.
+   Si no, caemos a los 3 defaults i18n. Filtramos las que no tengan título traducido. */
+const tarjetasSanity = (tarjetasFlotantes ?? [])
+  .map((tj) => ({
+    icono: tj.icono,
+    titulo: localizar(tj.titulo, lang),
+    subtitulo: localizar(tj.subtitulo, lang),
+  }))
+  .filter((tj) => Boolean(tj.titulo));
+
+const tarjetasDefault = [
+  { icono: 'shield', titulo: t('hero.trust.colegiados', lang), subtitulo: t('hero.trust.colegiadosSub', lang) },
+  { icono: 'clock', titulo: t('hero.trust.horario', lang), subtitulo: t('hero.trust.horarioSub', lang) },
+  { icono: 'heart-pulse', titulo: t('hero.trust.consejo', lang), subtitulo: t('hero.trust.consejoSub', lang) },
+] as const;
+
+const tarjetasFinal = tarjetasSanity.length > 0 ? tarjetasSanity : tarjetasDefault;
+---
+
+<section
+  class='relative isolate min-h-[clamp(520px,80vh,720px)] flex items-center py-[clamp(4rem,8vw,6rem)] text-white border-b border-[color:var(--border)] overflow-hidden'
+  aria-label={t('hero.altInterior', lang, { nombre })}
+>
+  {listaImagenes.length > 0 ? (
+    <div class='hero-slider absolute inset-0 -z-10 bg-[color:var(--foreground)]' aria-hidden='true' data-hero-slider={tieneCarrusel ? 'true' : undefined}>
+      {listaImagenes.map((img, i) => (
+        <img
+          src={img.url}
+          alt=''
+          loading={i === 0 ? 'eager' : 'lazy'}
+          fetchpriority={i === 0 ? 'high' : undefined}
+          class={`hero-slide absolute inset-0 w-full h-full object-cover block ${i === 0 ? 'is-active' : ''}`}
+          data-idx={String(i)}
+        />
+      ))}
+      <div
+        class='absolute inset-0'
+        style='background: linear-gradient(90deg, rgb(15 23 42 / 0.85) 0%, rgb(15 23 42 / 0.55) 50%, rgb(15 23 42 / 0.3) 100%), linear-gradient(180deg, rgb(15 23 42 / 0.2) 0%, transparent 40%, rgb(15 23 42 / 0.55) 100%);'
+      ></div>
+    </div>
+  ) : (
+    <div
+      class='absolute inset-0 -z-10'
+      style='background: linear-gradient(135deg, var(--foreground) 0%, var(--primary-hover) 100%);'
+      aria-hidden='true'
+    ></div>
+  )}
+
+  <div class='container-app relative flex flex-col gap-6 max-w-[720px]'>
+    <span class='chip self-start bg-white/15 text-white backdrop-blur-md border border-white/20'>
+      <svg width='12' height='12' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
+        <circle cx='12' cy='12' r='4' />
+      </svg>
+      {chipTexto}
+    </span>
+
+    <h1 class='h-display hero-titulo m-0 max-w-[22ch] text-white'>
+      {tituloTexto}
+    </h1>
+
+    {subtituloTexto && (
+      <p class='hero-subtitulo m-0 text-white/90 text-[1.05rem] leading-[1.65] max-w-[52ch]'>{subtituloTexto}</p>
+    )}
+
+    <div class='inline-flex gap-3 flex-wrap'>
+      <a
+        href='#servicios'
+        class='btn hero-btn-primary bg-white text-[color:var(--foreground)] border-white'
+      >
+        {t('hero.btnServicios', lang)}
+        <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+          <path d='M5 12h14M13 6l6 6-6 6' />
+        </svg>
+      </a>
+      {telefono && (
+        <a
+          href={`tel:${telefono.replace(/\s+/g, '')}`}
+          class='btn hero-btn-secundario bg-transparent text-white border border-white/40 backdrop-blur-md'
+        >
+          <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+            <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
+          </svg>
+          {t('hero.btnLlamar', lang)}
+        </a>
+      )}
+    </div>
+
+    {tarjetasFinal.length > 0 && (
+      <ul class='hero-trust list-none pt-6 mt-2 mb-0 border-t border-white/20 grid grid-cols-1 min-[500px]:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 min-[500px]:gap-5'>
+        {tarjetasFinal.map((tj) => (
+          <li class='flex items-start gap-3 text-white'>
+            <span class='inline-flex items-center justify-center w-9 h-9 rounded-[var(--radius)] bg-white/15 backdrop-blur-md border border-white/20 shrink-0'>
+              <IconoServicio nombre={tj.icono ?? 'shield'} size={18} class='text-white' />
+            </span>
+            <div class='flex flex-col leading-tight min-w-0'>
+              <span class='text-[0.9rem] font-semibold text-white'>{tj.titulo}</span>
+              {tj.subtitulo && (
+                <span class='text-[0.78rem] text-white/75 mt-0.5'>{tj.subtitulo}</span>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+
+  </div>
+
+  {tieneCarrusel && (
+    <div
+      class='absolute bottom-5 right-5 sm:bottom-7 sm:right-7 inline-flex gap-2 z-10 rounded-full bg-black/30 backdrop-blur-md px-3 py-2'
+      role='tablist'
+      aria-label='Cambiar imagen del hero'
+    >
+      {listaImagenes.map((_, i) => (
+        <button
+          type='button'
+          class={`hero-dot h-2 rounded-full bg-white/40 border-none cursor-pointer transition-all duration-300 ${i === 0 ? 'is-active' : ''}`}
+          data-hero-dot={String(i)}
+          aria-label={`Imagen ${i + 1} de ${listaImagenes.length}`}
+          aria-selected={i === 0 ? 'true' : 'false'}
+          role='tab'
+        ></button>
+      ))}
+    </div>
+  )}
+</section>
+
+<style>
+  /* Text-shadow */
+  .hero-titulo { text-shadow: 0 2px 20px rgb(0 0 0 / 0.35); }
+  .hero-subtitulo { text-shadow: 0 1px 8px rgb(0 0 0 / 0.35); }
+
+  /* Overrides de hover para los botones del hero (fondo oscuro). */
+  .hero-btn-primary:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary-soft);
+  }
+  .hero-btn-secundario:hover {
+    background: rgb(255 255 255 / 0.12);
+    border-color: rgb(255 255 255 / 0.7);
+  }
+
+  /* Slider — cross-fade entre imágenes. */
+  .hero-slide {
+    opacity: 0;
+    transition: opacity 1000ms ease-in-out;
+  }
+  .hero-slide.is-active { opacity: 1; }
+
+  /* Dots del slider — pill que crece al estar activo. */
+  .hero-dot { width: 8px; }
+  .hero-dot.is-active {
+    background: rgb(255 255 255 / 0.95);
+    width: 22px;
+  }
+  .hero-dot:hover { background: rgb(255 255 255 / 0.7); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-slide { transition: none; }
+  }
+</style>
+
+<script>
+  /* Carrusel del hero: cross-fade automático cada 6s + dots clicables.
+     Se pausa si el usuario cambia de pestaña (visibilitychange). */
+  const slider = document.querySelector<HTMLElement>('[data-hero-slider]');
+  if (slider) {
+    const slides = Array.from(slider.querySelectorAll<HTMLImageElement>('.hero-slide'));
+    const dots = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-hero-dot]'));
+    if (slides.length > 1) {
+      let indice = 0;
+      let timerId: number | undefined;
+      const INTERVALO = 6000;
+
+      function mostrar(i: number) {
+        indice = ((i % slides.length) + slides.length) % slides.length;
+        slides.forEach((s, idx) => s.classList.toggle('is-active', idx === indice));
+        dots.forEach((d, idx) => {
+          const activo = idx === indice;
+          d.classList.toggle('is-active', activo);
+          d.setAttribute('aria-selected', activo ? 'true' : 'false');
+        });
+      }
+
+      function siguiente() { mostrar(indice + 1); }
+
+      function iniciar() {
+        detener();
+        timerId = window.setInterval(siguiente, INTERVALO);
+      }
+      function detener() {
+        if (timerId !== undefined) {
+          window.clearInterval(timerId);
+          timerId = undefined;
+        }
+      }
+
+      dots.forEach((d, i) => {
+        d.addEventListener('click', () => {
+          mostrar(i);
+          iniciar(); // reinicia el ciclo tras clic manual
+        });
+      });
+
+      // Respeta reduced-motion: sin auto-avance, solo permite navegación por dots.
+      const preferSinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!preferSinMovimiento) {
+        iniciar();
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) detener();
+          else iniciar();
+        });
+      }
+    }
+  }
+</script>

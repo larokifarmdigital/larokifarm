@@ -1,0 +1,170 @@
+{
+  "html": { "lang": "es" },
+  "dias": {
+    "Mo": "lunes",
+    "Tu": "martes",
+    "We": "miércoles",
+    "Th": "jueves",
+    "Fr": "viernes",
+    "Sa": "sábado",
+    "Su": "domingo",
+    "a": "a"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Inicio",
+      "servicios": "Servicios",
+      "sobreNosotros": "La farmacia",
+      "faqs": "Preguntas",
+      "resenas": "Opiniones",
+      "contacto": "Contacto",
+      "aria": "Principal"
+    },
+    "cta": {
+      "llamanos": "Llamar",
+      "llamarA": "Llamar al {telefono}"
+    },
+    "menu": {
+      "abrir": "Menú",
+      "cerrar": "Cerrar"
+    },
+    "idioma": {
+      "aria": "Cambiar idioma"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Farmacia · {ciudad}",
+      "sinCiudad": "Tu farmacia de confianza"
+    },
+    "tituloDefecto": "Atención farmacéutica cercana, con criterio profesional.",
+    "btnLlamar": "Llamar ahora",
+    "btnServicios": "Ver servicios",
+    "altInterior": "Interior de {nombre}",
+    "trust": {
+      "colegiados": "Farmacéuticos colegiados",
+      "colegiadosSub": "Consejo experto",
+      "horario": "Horario amplio",
+      "horarioSub": "Cuando lo necesitas",
+      "consejo": "Consejo sin cita",
+      "consejoSub": "Sin esperas"
+    }
+  },
+  "about": {
+    "chip": "La farmacia",
+    "tituloDefecto": "Un lugar de referencia en el barrio",
+    "cuerpoFallback": "Llevamos años ofreciendo atención farmacéutica cercana, con productos seleccionados y el consejo que solo un equipo profesional cercano puede dar.",
+    "puntosDefecto": [
+      "Atención personalizada",
+      "Equipo profesional",
+      "Productos seleccionados",
+      "Consejo cercano"
+    ],
+    "badge": {
+      "anyos": "años",
+      "experiencia": "de experiencia"
+    }
+  },
+  "servicios": {
+    "chip": "Servicios",
+    "titulo": "Lo que ofrecemos",
+    "subtitulo": "Servicios farmacéuticos y de salud para toda la familia. Consulta a nuestro equipo si necesitas más información.",
+    "placeholder": "Servicios en preparación."
+  },
+  "faqs": {
+    "chip": "Preguntas frecuentes",
+    "titulo": "Antes de venir",
+    "subtitulo": "Respuestas a las dudas más habituales."
+  },
+  "cta": {
+    "chip": "Contacto",
+    "tituloConCiudad": "Nos encuentras en {ciudad}",
+    "tituloSinCiudad": "Aquí estamos",
+    "subtitulo": "Pásate por la farmacia o llámanos si prefieres una consulta rápida.",
+    "labelTelefono": "Teléfono",
+    "labelDireccion": "Dirección",
+    "labelHorario": "Horario",
+    "btnEscribenos": "Escríbenos",
+    "btnLlamar": "Llamar",
+    "ariaMapa": "Mapa de {nombre}",
+    "cargarMapa": "Ver mapa",
+    "cargarMapaAviso": "Al pulsar se cargará Google Maps, que instala cookies de Google.",
+    "comoLlegar": "Cómo llegar"
+  },
+  "footer": {
+    "servicios": "Servicios",
+    "informacion": "Información",
+    "contactanos": "Contacto",
+    "sobreNosotros": "La farmacia",
+    "preguntasFrecuentes": "Preguntas",
+    "resenas": "Opiniones",
+    "contacto": "Contacto",
+    "avisoLegal": "Aviso legal",
+    "politicaPrivacidad": "Política de privacidad",
+    "copyright": "© {anyo} {nombre}",
+    "titular": "Titular",
+    "badgeColegiada": "Farmacia colegiada · España",
+    "nCol": "Nº col.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok"
+  },
+  "features": {
+    "atencionTitulo": "Atención personalizada",
+    "atencionDesc": "Cada cliente es único",
+    "calidadTitulo": "Productos seleccionados",
+    "calidadDesc": "Con criterio profesional",
+    "equipoTitulo": "Equipo cualificado",
+    "equipoDesc": "Formación continua",
+    "horarioTitulo": "Horario amplio",
+    "horarioDescFallback": "Lunes a sábado"
+  },
+  "legal": {
+    "volver": "Volver al inicio",
+    "avisoTitulo": "Aviso legal",
+    "privacidadTitulo": "Política de privacidad",
+    "avisoMeta": "Aviso legal e información del titular de {nombre}.",
+    "privacidadMeta": "Política de privacidad y tratamiento de datos personales de {nombre}."
+  },
+  "resenas": {
+    "chip": "Opiniones",
+    "titulo": "Lo que dicen los clientes",
+    "subtitulo": "{total} opiniones en Google · valoración media {media} / 5.",
+    "subtituloSinNumero": "Opiniones reales de personas que han pasado por la farmacia.",
+    "destacada": "Destacada",
+    "verEnGoogle": "Ver todas en Google",
+    "respuestaFarmacia": "Respuesta de la farmacia",
+    "anonimo": "Cliente",
+    "hace": {
+      "diasUno": "hace {n} día",
+      "diasN": "hace {n} días",
+      "semanasUno": "hace {n} semana",
+      "semanasN": "hace {n} semanas",
+      "mesesUno": "hace {n} mes",
+      "mesesN": "hace {n} meses",
+      "anyosUno": "hace {n} año",
+      "anyosN": "hace {n} años",
+      "ahora": "hace un momento"
+    },
+    "ariaEstrellas": "{rating} de 5 estrellas",
+    "verTodas": "Todas las opiniones",
+    "anterior": "Anterior",
+    "siguiente": "Siguiente",
+    "ariaSlider": "Opiniones",
+    "tituloPagina": "Opiniones",
+    "metaDescripcion": "Todas las opiniones de Google de {nombre}. Testimonios reales de clientes.",
+    "rangoNota": "{media} · {total} opiniones",
+    "filtroTodas": "Todas",
+    "filtroEstrellas": "{n} estrellas"
+  },
+  "p404": {
+    "tituloMeta": "Página no encontrada · {nombre}",
+    "descMeta": "La página que buscas no existe o se ha movido.",
+    "chip": "404",
+    "subtitulo1": "Página no",
+    "subtitulo2": "encontrada",
+    "texto": "El enlace puede estar roto o la página se ha movido.",
+    "btnInicio": "Volver al inicio",
+    "buscas": "¿Buscas algo concreto?"
+  }
+}

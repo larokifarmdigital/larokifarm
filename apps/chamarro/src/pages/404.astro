@@ -1,0 +1,9 @@
+---
+import Pagina404 from '@/components/Pagina404.astro';
+import { obtenerFarmaciaPorSlug, SLUG_FARMACIA } from '@/lib/sanity';
+import { LOCALE_DEFECTO } from '@/lib/i18n';
+
+const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
+---
+
+<Pagina404 farmacia={farmacia} lang={LOCALE_DEFECTO} />

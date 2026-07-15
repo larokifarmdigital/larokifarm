@@ -1,0 +1,203 @@
+---
+import {
+  localizar,
+  portableTextAHtml,
+  type ImagenConAlt,
+  type LocalizedString,
+  type LocalizedPortableText,
+} from '@/lib/sanity';
+import { t, tArray, type Locale } from '@/lib/i18n';
+
+interface Props {
+  imagenes?: ImagenConAlt[];
+  titulo?: LocalizedString;
+  descripcionLarga?: LocalizedPortableText;
+  puntos?: LocalizedString[];
+  anyosExperiencia?: number;
+  chip?: LocalizedString;
+  lang: Locale;
+}
+
+const { imagenes, titulo, descripcionLarga, puntos, anyosExperiencia, chip, lang } = Astro.props;
+
+const listaImagenes = (imagenes ?? []).filter((i) => i?.url).slice(0, 6);
+const tieneCarrusel = listaImagenes.length > 1;
+const chipTexto = localizar(chip, lang) || t('about.chip', lang);
+const tituloTexto = localizar(titulo, lang) || t('about.tituloDefecto', lang);
+const cuerpoHtml = portableTextAHtml(localizar(descripcionLarga, lang));
+
+const puntosResueltos = (() => {
+  const lista = (puntos ?? [])
+    .map((p) => localizar(p, lang))
+    .filter((s): s is string => Boolean(s?.trim()));
+  return lista.length > 0 ? lista : tArray('about.puntosDefecto', lang);
+})();
+---
+
+<section
+  id='sobre'
+  class='py-[clamp(4rem,7vw,6rem)] bg-[color:var(--surface)] border-y border-[color:var(--border)]'
+>
+  <div class='container-app grid grid-cols-1 min-[900px]:grid-cols-[1fr_1.2fr] gap-[clamp(2rem,4vw,4rem)] min-[900px]:gap-16 items-start'>
+    <div class='about-slider relative' data-about-slider={tieneCarrusel ? 'true' : undefined}>
+      {listaImagenes.length > 0 ? (
+        <figure class='m-0 aspect-[4/5] overflow-hidden rounded-[var(--radius-lg)] bg-[color:var(--primary-soft)] border border-[color:var(--border)] relative'>
+          {listaImagenes.map((img, i) => (
+            <img
+              src={img.url}
+              alt={i === 0 ? (localizar(img.alt, lang) || tituloTexto) : ''}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              class={`about-slide absolute inset-0 w-full h-full object-cover block ${i === 0 ? 'is-active' : ''}`}
+              data-idx={String(i)}
+            />
+          ))}
+        </figure>
+      ) : (
+        <div
+          class='aspect-[4/5] bg-[color:var(--primary-soft)] border border-[color:var(--border)] rounded-[var(--radius-lg)]'
+          aria-hidden='true'
+        ></div>
+      )}
+
+      {/* Badge de años flotando en la esquina inferior izquierda de la imagen */}
+      {anyosExperiencia && (
+        <div
+          class='absolute bottom-4 left-4 z-10 inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur-md px-3 py-1.5 shadow-[0_8px_24px_-8px_rgb(15_23_42_/_0.25)] border border-white/60 max-w-[calc(100%-2rem)]'
+        >
+          <span class='text-[1.25rem] font-bold tracking-tight leading-none tabular-nums text-[color:var(--accent)] shrink-0'>{anyosExperiencia}+</span>
+          <span class='text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-[color:var(--muted-foreground)] leading-tight whitespace-nowrap'>
+            {t('about.badge.anyos', lang)} {t('about.badge.experiencia', lang)}
+          </span>
+        </div>
+      )}
+
+      {tieneCarrusel && (
+        <div
+          class='absolute bottom-4 right-4 inline-flex gap-2 z-10 rounded-full bg-black/30 backdrop-blur-md px-3 py-2'
+          role='tablist'
+          aria-label='Cambiar imagen'
+        >
+          {listaImagenes.map((_, i) => (
+            <button
+              type='button'
+              class={`about-dot h-2 rounded-full bg-white/40 border-none cursor-pointer transition-all duration-300 ${i === 0 ? 'is-active' : ''}`}
+              data-about-dot={String(i)}
+              aria-label={`Imagen ${i + 1} de ${listaImagenes.length}`}
+              aria-selected={i === 0 ? 'true' : 'false'}
+              role='tab'
+            ></button>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <div class='flex flex-col gap-5'>
+      <span class='section-eyebrow'>{chipTexto}</span>
+      <h2 class='h-section mt-1'>{tituloTexto}</h2>
+
+      {cuerpoHtml ? (
+        <div class='about-corp__cuerpo text-[color:var(--muted-foreground)] leading-[1.7] text-base' set:html={cuerpoHtml} />
+      ) : (
+        <p class='text-[color:var(--muted-foreground)] leading-[1.7] text-base'>{t('about.cuerpoFallback', lang)}</p>
+      )}
+
+      {puntosResueltos.length > 0 && (
+        <ul class='list-none p-0 mt-2 grid grid-cols-1 min-[500px]:grid-cols-2 gap-[0.6rem] min-[500px]:gap-x-6'>
+          {puntosResueltos.map((p) => (
+            <li class='inline-flex items-start gap-[0.6rem] text-[0.9rem] text-[color:var(--foreground)] leading-[1.5]'>
+              <span
+                class='inline-flex items-center justify-center w-5 h-5 bg-[color:var(--success-soft)] text-[color:var(--success)] rounded-full shrink-0 mt-[1px]'
+                aria-hidden='true'
+              >
+                <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>
+                  <path d='M20 6 9 17l-5-5' />
+                </svg>
+              </span>
+              {p}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* CMS content injected via set:html — necesita selectores :global() para alcanzar los
+     <p> y <strong> que vienen del portable text. Tailwind no puede tocarlos inline. */
+  .about-corp__cuerpo :global(p) { margin: 0 0 1rem; }
+  .about-corp__cuerpo :global(p:last-child) { margin-bottom: 0; }
+  .about-corp__cuerpo :global(strong) { color: var(--foreground); font-weight: 600; }
+
+  /* Slider — cross-fade entre imágenes, dots pill. */
+  .about-slide {
+    opacity: 0;
+    transition: opacity 1000ms ease-in-out;
+  }
+  .about-slide.is-active { opacity: 1; }
+
+  .about-dot { width: 8px; }
+  .about-dot.is-active {
+    background: rgb(255 255 255 / 0.95);
+    width: 22px;
+  }
+  .about-dot:hover { background: rgb(255 255 255 / 0.7); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .about-slide { transition: none; }
+  }
+</style>
+
+<script>
+  /* Slider About — cross-fade automático cada 6s. Pausa al cambiar de pestaña.
+     Respeta prefers-reduced-motion. */
+  const slider = document.querySelector<HTMLElement>('[data-about-slider]');
+  if (slider) {
+    const slides = Array.from(slider.querySelectorAll<HTMLImageElement>('.about-slide'));
+    const dots = Array.from(slider.querySelectorAll<HTMLButtonElement>('[data-about-dot]'));
+    if (slides.length > 1) {
+      let indice = 0;
+      let timerId: number | undefined;
+      const INTERVALO = 6000;
+
+      function mostrar(i: number) {
+        indice = ((i % slides.length) + slides.length) % slides.length;
+        slides.forEach((s, idx) => s.classList.toggle('is-active', idx === indice));
+        dots.forEach((d, idx) => {
+          const activo = idx === indice;
+          d.classList.toggle('is-active', activo);
+          d.setAttribute('aria-selected', activo ? 'true' : 'false');
+        });
+      }
+
+      function siguiente() { mostrar(indice + 1); }
+
+      function iniciar() {
+        detener();
+        timerId = window.setInterval(siguiente, INTERVALO);
+      }
+      function detener() {
+        if (timerId !== undefined) {
+          window.clearInterval(timerId);
+          timerId = undefined;
+        }
+      }
+
+      dots.forEach((d, i) => {
+        d.addEventListener('click', () => {
+          mostrar(i);
+          iniciar();
+        });
+      });
+
+      const preferSinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!preferSinMovimiento) {
+        iniciar();
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) detener();
+          else iniciar();
+        });
+      }
+    }
+  }
+</script>

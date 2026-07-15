@@ -1,0 +1,272 @@
+---
+import type { Contacto, Direccion, GrupoHorario } from '@/lib/sanity';
+import WhatsappIcon from '@/assets/svg/whatsapp.svg';
+import { t, type Locale } from '@/lib/i18n';
+
+interface Props {
+  nombre: string;
+  telefono?: string;
+  whatsapp?: string;
+  contacto?: Contacto;
+  direccion?: Direccion;
+  mapaUrl?: string;
+  urlGoogleMaps?: string;
+  horarios?: GrupoHorario[];
+  lang: Locale;
+}
+
+const { nombre, telefono, whatsapp, contacto, direccion, mapaUrl, urlGoogleMaps, horarios, lang } = Astro.props;
+
+const email = contacto?.email;
+const web = contacto?.web;
+const ciudad = direccion?.ciudad;
+const titulo = ciudad
+  ? t('cta.tituloConCiudad', lang, { ciudad })
+  : t('cta.tituloSinCiudad', lang);
+
+const partesDireccion = [
+  direccion?.calle,
+  direccion?.codigoPostal && direccion?.ciudad
+    ? `${direccion.codigoPostal} ${direccion.ciudad}`
+    : direccion?.ciudad,
+  direccion?.provincia,
+].filter((p): p is string => Boolean(p));
+
+/* Fallback: si no hay urlGoogleMaps definido en Sanity, generamos uno a partir
+   de la dirección textual, para que el botón "Cómo llegar" siempre funcione. */
+const googleMapsQuery = urlGoogleMaps
+  || (partesDireccion.length > 0
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        `${nombre} ${partesDireccion.join(' ')}`,
+      )}`
+    : undefined);
+---
+
+<section
+  id='contacto'
+  class='py-[clamp(4rem,7vw,6rem)] bg-[color:var(--surface)] border-t border-[color:var(--border)]'
+>
+  <div class='container-app'>
+    <header class='max-w-[60ch] mx-auto mb-[clamp(2.5rem,4vw,3.5rem)] text-center flex flex-col gap-3 items-center'>
+      <span class='section-eyebrow'>{t('cta.chip', lang)}</span>
+      <h2 class='h-section mt-1'>{titulo}</h2>
+      <p class='m-0 text-[color:var(--muted-foreground)] max-w-[42ch]'>{t('cta.subtitulo', lang, { nombre })}</p>
+    </header>
+
+    <div class='grid grid-cols-1 min-[900px]:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] gap-6 min-[900px]:gap-8 items-stretch'>
+      {/* -------- CARD DE INFORMACIÓN -------- */}
+      <div class='card flex flex-col gap-0 bg-[color:var(--card)] overflow-hidden !p-0'>
+        {/* Dirección */}
+        <div class='flex gap-4 p-6 items-start'>
+          <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent)] shrink-0'>
+            <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+              <path d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' />
+              <circle cx='12' cy='10' r='3' />
+            </svg>
+          </span>
+          <div class='flex flex-col gap-1 min-w-0 flex-1'>
+            <h3 class='text-[0.72rem] font-bold tracking-[0.14em] uppercase text-[color:var(--muted-foreground)] m-0'>
+              {t('cta.labelDireccion', lang)}
+            </h3>
+            <address class='not-italic text-[color:var(--foreground)] text-[0.95rem] leading-[1.55] font-medium'>
+              {partesDireccion.map((p, i) => (
+                <span class={i === partesDireccion.length - 1 && direccion?.provincia
+                  ? 'block text-[color:var(--muted-foreground)] font-normal text-[0.85rem] mt-0.5'
+                  : 'block'}>{p}</span>
+              ))}
+            </address>
+          </div>
+        </div>
+
+        <div class='h-px bg-[color:var(--border)] mx-6'></div>
+
+        {/* Horario */}
+        <div class='flex gap-4 p-6 items-start'>
+          <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent)] shrink-0'>
+            <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+              <circle cx='12' cy='12' r='10' />
+              <polyline points='12 6 12 12 16 14' />
+            </svg>
+          </span>
+          <div class='flex flex-col gap-2 min-w-0 flex-1'>
+            <h3 class='text-[0.72rem] font-bold tracking-[0.14em] uppercase text-[color:var(--muted-foreground)] m-0'>
+              {t('cta.labelHorario', lang)}
+            </h3>
+            {horarios && horarios.length > 0 ? (
+              <ul class='list-none p-0 m-0 flex flex-col divide-y divide-[color:var(--border)]'>
+                {horarios.map((g) => (
+                  <li class='flex items-center justify-between gap-4 py-2 text-[0.9rem]'>
+                    <span class='text-[color:var(--muted-foreground)]'>{g.etiqueta}</span>
+                    <span class='text-[color:var(--foreground)] font-semibold tabular-nums text-right'>{g.horario}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class='m-0 text-[color:var(--muted-foreground)] text-[0.85rem]'>—</p>
+            )}
+          </div>
+        </div>
+
+        <div class='h-px bg-[color:var(--border)] mx-6'></div>
+
+        {/* Contacto */}
+        <div class='flex gap-4 p-6 items-start'>
+          <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent)] shrink-0'>
+            <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+              <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
+            </svg>
+          </span>
+          <div class='flex flex-col gap-1.5 min-w-0 flex-1'>
+            <h3 class='text-[0.72rem] font-bold tracking-[0.14em] uppercase text-[color:var(--muted-foreground)] m-0'>
+              {t('cta.labelTelefono', lang)}
+            </h3>
+            <div class='text-[color:var(--foreground)] text-[0.95rem] leading-[1.5] flex flex-col gap-1'>
+              {telefono && (
+                <p class='m-0'>
+                  <a href={`tel:${telefono.replace(/\s+/g, '')}`} class='link font-bold text-[1.1rem] tabular-nums'>{telefono}</a>
+                </p>
+              )}
+              {email && (
+                <p class='m-0 text-[0.9rem]'>
+                  <a href={`mailto:${email}`} class='link'>{email}</a>
+                </p>
+              )}
+              {web && (
+                <p class='m-0 text-[0.9rem]'>
+                  <a href={web} target='_blank' rel='noopener noreferrer' class='link inline-flex items-center gap-1'>
+                    {web.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                    <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                      <path d='M7 17 17 7M9 7h8v8' />
+                    </svg>
+                  </a>
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Botones CTA */}
+        {(telefono || whatsapp) && (
+          <div class='mt-auto flex flex-wrap gap-2 p-6 pt-4 bg-[color:var(--primary-soft)] border-t border-[color:var(--border)]'>
+            {telefono && (
+              <a href={`tel:${telefono.replace(/\s+/g, '')}`} class='btn btn-tel flex-1 min-w-[140px]'>
+                <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                  <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
+                </svg>
+                {t('cta.btnLlamar', lang)}
+              </a>
+            )}
+            {whatsapp && (
+              <a
+                href={`https://wa.me/${whatsapp.replace(/[^0-9]/g, '')}`}
+                target='_blank'
+                rel='noopener noreferrer'
+                class='btn btn-wa flex-1 min-w-[140px]'
+                aria-label='Contactar por WhatsApp'
+              >
+                <WhatsappIcon width='18' height='18' aria-hidden='true' />
+                WhatsApp
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* -------- MAPA -------- */}
+      <div
+        class='mapa-wrap relative w-full min-h-[420px] min-[900px]:min-h-full bg-[color:var(--primary-soft)] border border-[color:var(--border)] rounded-[var(--radius-lg)] overflow-hidden'
+        data-mapa-wrap
+      >
+        {/* Botón flotante "Cómo llegar" — visible siempre, incluso tras cargar el mapa */}
+        {googleMapsQuery && (
+          <a
+            href={googleMapsQuery}
+            target='_blank'
+            rel='noopener noreferrer'
+            class='mapa-comollegar absolute top-4 right-4 z-20 inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur-md border border-white/60 text-[color:var(--foreground)] text-[0.8rem] font-semibold py-2 px-3.5 shadow-[0_6px_20px_-6px_rgb(15_23_42_/_0.25)] no-underline transition-all duration-200 hover:bg-white hover:-translate-y-0.5'
+          >
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' class='text-[color:var(--accent)]'>
+              <path d='M9 18l6-6-6-6' />
+              <circle cx='4' cy='12' r='2' />
+            </svg>
+            {t('cta.comoLlegar', lang)}
+          </a>
+        )}
+
+        {mapaUrl ? (
+          <button
+            type='button'
+            class='mapa-btn group absolute inset-0 w-full h-full bg-transparent border-none p-0 cursor-pointer'
+            data-mapa-cargar
+            data-src={mapaUrl}
+            data-aria={t('cta.ariaMapa', lang, { nombre })}
+          >
+            <span class='mapa-placeholder absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 text-center transition-colors duration-300'>
+              {/* Pattern de fondo decorativo */}
+              <span class='mapa-pattern absolute inset-0 opacity-40' aria-hidden='true'></span>
+
+              {/* Contenido en primer plano */}
+              <span class='relative inline-flex items-center justify-center w-16 h-16 rounded-full bg-[color:var(--accent)] text-white shadow-[0_12px_28px_-8px_rgb(51_65_85_/_0.45)] transition-transform duration-300 group-hover:scale-110'>
+                <svg width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                  <path d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' />
+                  <circle cx='12' cy='10' r='3' />
+                </svg>
+              </span>
+              <span class='relative font-bold text-[1.05rem] text-[color:var(--foreground)] mt-1'>{t('cta.cargarMapa', lang)}</span>
+              <small class='relative text-[0.75rem] max-w-[32ch] leading-[1.5] text-[color:var(--muted-foreground)]'>{t('cta.cargarMapaAviso', lang)}</small>
+            </span>
+          </button>
+        ) : (
+          <div class='absolute inset-0 flex items-center justify-center text-[color:var(--muted-foreground)] text-[0.85rem]' aria-hidden='true'>—</div>
+        )}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Pattern decorativo del placeholder del mapa — gradiente radial suave + grid sutil,
+     evoca la textura de un mapa sin coste de red. */
+  .mapa-pattern {
+    background-image:
+      radial-gradient(circle at 20% 30%, rgb(51 65 85 / 0.08), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgb(51 65 85 / 0.08), transparent 40%),
+      linear-gradient(to right, rgb(51 65 85 / 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(51 65 85 / 0.04) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+  }
+
+  /* Hover del botón-mapa: el fondo se tinta ligeramente en accent-soft para
+     reforzar la sensación de "clic aquí". */
+  .mapa-btn:hover .mapa-placeholder {
+    background: color-mix(in oklab, var(--accent-soft) 45%, transparent);
+  }
+</style>
+
+<script>
+  /* Al pulsar el placeholder: retiramos el <button> (los iframes dentro de <button>
+     no cargan bien en algunos navegadores) e insertamos el <iframe> directamente
+     en el wrapper con overflow hidden y stretch full. El botón flotante "Cómo llegar"
+     permanece porque vive fuera del <button>. */
+  const boton = document.querySelector<HTMLElement>('[data-mapa-cargar]');
+  const wrap = document.querySelector<HTMLElement>('[data-mapa-wrap]');
+  if (boton && wrap) {
+    boton.addEventListener('click', () => {
+      const src = boton.dataset.src;
+      const aria = boton.dataset.aria ?? '';
+      if (!src) return;
+      const iframe = document.createElement('iframe');
+      iframe.src = src;
+      iframe.title = aria;
+      iframe.loading = 'lazy';
+      iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+      iframe.setAttribute('allowfullscreen', '');
+      // Estilos inline: el <style> scoped de Astro no aplica a elementos
+      // creados dinámicamente por JS.
+      iframe.style.cssText =
+        'position:absolute;inset:0;width:100%;height:100%;border:0;display:block;';
+      boton.remove();
+      wrap.appendChild(iframe);
+    });
+  }
+</script>

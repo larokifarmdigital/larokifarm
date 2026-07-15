@@ -1,0 +1,109 @@
+---
+import { localizar, type Faq, type TextosCabecera } from '@/lib/sanity';
+import { t, type Locale } from '@/lib/i18n';
+
+interface Props {
+  faqs?: Faq[];
+  textos?: TextosCabecera;
+  lang: Locale;
+}
+
+const { faqs, textos, lang } = Astro.props;
+const lista = (faqs ?? []).filter((f) => localizar(f.pregunta, lang) && localizar(f.respuesta, lang));
+
+const chip = localizar(textos?.chip, lang) || t('faqs.chip', lang);
+const titulo = localizar(textos?.titulo, lang) || t('faqs.titulo', lang);
+const subtitulo = localizar(textos?.subtitulo, lang) || t('faqs.subtitulo', lang);
+
+if (lista.length === 0) return null;
+---
+
+<section id='faqs' class='py-[clamp(4rem,7vw,6rem)]'>
+  <div class='container-app grid grid-cols-1 min-[900px]:grid-cols-[1fr_1.8fr] gap-[clamp(2rem,4vw,3rem)] min-[900px]:gap-16'>
+    <header class='flex flex-col gap-3 min-[900px]:sticky min-[900px]:top-20 min-[900px]:self-start'>
+      <span class='section-eyebrow'>{chip}</span>
+      <h2 class='h-section mt-1'>{titulo}</h2>
+      {subtitulo && (
+        <p class='mt-2 text-[color:var(--muted-foreground)] leading-relaxed max-w-[36ch]'>{subtitulo}</p>
+      )}
+    </header>
+
+    <div class='flex flex-col gap-3'>
+      {lista.map((f, i) => (
+        <details
+          class='faq-item group bg-[color:var(--card)] border border-[color:var(--border)] rounded-[var(--radius-lg)] transition-colors duration-200'
+          name='faqs'
+          open={i === 0}
+        >
+          <summary class='faq-summary cursor-pointer flex items-center justify-between gap-6 py-[1.15rem] px-5 text-[color:var(--foreground)] select-none'>
+            <span class='faq-pregunta font-semibold text-[0.95rem] leading-[1.4] transition-colors duration-200'>
+              {localizar(f.pregunta, lang)}
+            </span>
+            <span
+              class='faq-signo inline-flex items-center justify-center w-7 h-7 bg-[color:var(--primary-soft)] text-[color:var(--muted-foreground)] rounded-[var(--radius-sm)] transition-all duration-300 shrink-0'
+              aria-hidden='true'
+            >
+              <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>
+                <path d='M12 5v14M5 12h14' />
+              </svg>
+            </span>
+          </summary>
+          {/* Wrapper con grid-rows animado: 0fr (cerrado) → 1fr (abierto). Trick puro CSS. */}
+          <div class='faq-anim grid grid-rows-[0fr] transition-[grid-template-rows] duration-[350ms] ease-[cubic-bezier(0.32,0.72,0,1)]'>
+            <div class='faq-anim-inner overflow-hidden min-h-0'>
+              <div class='faq-respuesta px-5 pb-5 pt-4 text-[color:var(--muted-foreground)] leading-[1.65] text-[0.92rem] border-t border-[color:var(--border)] opacity-0 -translate-y-1 transition-[opacity,transform] duration-[300ms] ease-out delay-[80ms]'>
+                <p class='m-0 max-w-[62ch]'>{localizar(f.respuesta, lang)}</p>
+              </div>
+            </div>
+          </div>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Reset marker nativo + estilos base. */
+  .faq-summary { list-style: none; }
+  .faq-summary::-webkit-details-marker { display: none; }
+
+  /* Estado abierto — Tailwind 4 no expone variante `open:` que cascade a hijos
+     dentro de <details>. Se declara aquí lo que depende de [open]. */
+  .faq-item[open] { border-color: var(--border-strong); }
+  .faq-item[open] .faq-signo {
+    transform: rotate(135deg);
+    background: var(--accent);
+    color: #fff;
+  }
+  .faq-item[open] .faq-pregunta {
+    color: var(--accent);
+  }
+
+  /* Animación de apertura — grid-rows trick (0fr → 1fr) permite animar altura
+     desde 0 hasta "auto" real sin JS. Combina con fade y translate del contenido. */
+  .faq-item[open] .faq-anim {
+    grid-template-rows: 1fr;
+  }
+  .faq-item[open] .faq-respuesta {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Hover sutil en items cerrados. */
+  .faq-item:not([open]):hover {
+    border-color: var(--border-strong);
+  }
+  .faq-item:not([open]):hover .faq-signo {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .faq-item:not([open]):hover .faq-pregunta {
+    color: var(--accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faq-anim { transition: none; }
+    .faq-respuesta { transition: none; }
+    .faq-signo { transition: none; }
+  }
+</style>

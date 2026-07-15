@@ -1,0 +1,248 @@
+---
+import { LOCALES_DISPONIBLES, rutaConLocale, t, type Locale } from '@/lib/i18n';
+import type { IdiomaActivo } from '@/lib/sanity';
+
+interface Props {
+  nombre: string;
+  ciudad?: string;
+  telefono?: string;
+  logo?: string;
+  mostrarFaqs?: boolean;
+  mostrarResenas?: boolean;
+  lang: Locale;
+  rutaActual: string;
+  idiomasActivos?: IdiomaActivo[];
+  masthead?: boolean;
+}
+
+const {
+  nombre,
+  telefono,
+  logo,
+  mostrarFaqs = true,
+  mostrarResenas = true,
+  lang,
+  rutaActual,
+  idiomasActivos,
+} = Astro.props;
+
+// Sanity trae logo si el cliente lo subió al CMS; si no, cae al logo local /logo.png que el equipo puso en public/.
+const logoUrl = logo || '/logo.png';
+
+const home = rutaConLocale('/', lang);
+const codigosActivos = new Set(
+  (idiomasActivos ?? []).map((i) => i.codigo).filter((c) => LOCALES_DISPONIBLES.includes(c as Locale)),
+);
+if (codigosActivos.size === 0) codigosActivos.add('es');
+const idiomasVisibles = LOCALES_DISPONIBLES.filter((l) => codigosActivos.has(l));
+const idiomaLabel: Record<Locale, string> = {
+  es: 'Español',
+  en: 'English',
+  ca: 'Català',
+};
+
+const enlaces = [
+  { href: `${home}#servicios`, label: t('header.nav.servicios', lang) },
+  { href: `${home}#sobre`, label: t('header.nav.sobreNosotros', lang) },
+  mostrarFaqs ? { href: `${home}#faqs`, label: t('header.nav.faqs', lang) } : null,
+  mostrarResenas ? { href: rutaConLocale('/resenas', lang), label: t('header.nav.resenas', lang) } : null,
+  { href: `${home}#contacto`, label: t('header.nav.contacto', lang) },
+].filter((e): e is { href: string; label: string } => e !== null);
+---
+
+<header class='corp-header sticky top-0 z-40 backdrop-blur-md backdrop-saturate-150 border-b border-[color:var(--border)] relative'>
+  <div class='container-app flex justify-between items-center gap-[clamp(0.75rem,2vw,2rem)] py-[0.85rem] min-[960px]:grid min-[960px]:grid-cols-[auto_1fr_auto]'>
+    <a href={home} class='inline-flex items-center gap-[0.6rem] no-underline text-[color:var(--foreground)] min-w-0' aria-label={nombre}>
+      <img
+        src={logoUrl}
+        alt={nombre}
+        class='block w-9 h-9 object-contain shrink-0'
+        width='72'
+        height='72'
+        loading='eager'
+      />
+      <span class='font-bold text-base -tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis'>{nombre}</span>
+    </a>
+
+    <nav class='hidden min-[960px]:inline-flex justify-self-center gap-7' aria-label={t('header.nav.aria', lang)}>
+      {enlaces.map((e) => (
+        <a href={e.href} class='header-link text-[0.88rem] font-medium text-[color:var(--muted-foreground)] no-underline whitespace-nowrap transition-colors duration-200'>{e.label}</a>
+      ))}
+    </nav>
+
+    <div class='inline-flex items-center gap-2'>
+      {idiomasVisibles.length > 1 && (
+        <details class='lang-details relative' data-lang>
+          <summary
+            class='lang-trigger cursor-pointer inline-flex items-center gap-[0.35rem] h-10 py-0 px-3 bg-[color:var(--card)] border border-[color:var(--border-strong)] rounded-[var(--radius)] text-[0.78rem] font-semibold tracking-[0.06em] text-[color:var(--muted-foreground)] transition-colors duration-200 leading-none'
+            aria-label={t('header.idioma.aria', lang)}
+          >
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+              <circle cx='12' cy='12' r='10' />
+              <path d='M2 12h20' />
+              <path d='M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z' />
+            </svg>
+            <span class='hidden min-[400px]:inline'>{lang.toUpperCase()}</span>
+            <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' class='lang-chev text-[color:var(--muted)] transition-transform duration-200'>
+              <path d='m6 9 6 6 6-6' />
+            </svg>
+          </summary>
+          <ul class='lang-menu absolute right-0 list-none p-[0.35rem] m-0 bg-[color:var(--card)] border border-[color:var(--border)] rounded-[var(--radius-lg)] min-w-[180px] z-50' role='menu'>
+            {idiomasVisibles.map((l) => (
+              <li role='none'>
+                <a
+                  role='menuitem'
+                  href={rutaConLocale(rutaActual, l)}
+                  class={`lang-item grid grid-cols-[auto_1fr_auto] items-center gap-3 py-[0.55rem] px-3 rounded-[var(--radius-sm)] no-underline text-[color:var(--foreground)] text-[0.85rem] transition-colors duration-200 ${l === lang ? 'is-active' : ''}`}
+                  aria-current={l === lang ? 'true' : undefined}
+                  lang={l}
+                >
+                  <span class='lang-code font-bold tracking-[0.08em] text-[0.72rem] text-[color:var(--muted-foreground)]'>{l.toUpperCase()}</span>
+                  <span class='font-medium text-left'>{idiomaLabel[l]}</span>
+                  {l === lang && (
+                    <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' class='text-[color:var(--accent)]'>
+                      <path d='M20 6 9 17l-5-5' />
+                    </svg>
+                  )}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      {telefono && (
+        <a
+          href={`tel:${telefono.replace(/\s+/g, '')}`}
+          class='btn btn-tel header-cta hidden min-[500px]:inline-flex h-10 py-0 px-4 text-[0.85rem] leading-none'
+          aria-label={t('header.cta.llamarA', lang, { telefono })}
+        >
+          <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+            <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
+          </svg>
+          <span class='hidden min-[760px]:inline whitespace-nowrap'>{telefono}</span>
+          <span class='inline min-[760px]:hidden'>{t('header.cta.llamanos', lang)}</span>
+        </a>
+      )}
+
+      <button
+        type='button'
+        class='burger min-[960px]:hidden inline-flex flex-col justify-center gap-1 w-10 h-10 bg-[color:var(--card)] border border-[color:var(--border-strong)] rounded-[var(--radius)] cursor-pointer py-0 px-[10px] shrink-0'
+        aria-controls='mobile-menu'
+        aria-expanded='false'
+        aria-label={t('header.menu.abrir', lang)}
+        data-menu-toggle
+      >
+        <span aria-hidden='true'></span>
+        <span aria-hidden='true'></span>
+        <span aria-hidden='true'></span>
+      </button>
+    </div>
+  </div>
+
+  <div class='mobile-menu absolute left-0 right-0 top-full z-50 border-t border-[color:var(--border)] bg-[color:var(--card)] shadow-lg max-h-[calc(100vh-100%)] overflow-y-auto' id='mobile-menu' hidden data-menu>
+    <nav class='container-app flex flex-col py-3 pb-6 gap-0' aria-label={t('header.nav.aria', lang)}>
+      {enlaces.map((e) => (
+        <a href={e.href} class='block py-4 text-base font-medium text-[color:var(--foreground)] no-underline border-b border-[color:var(--border)]'>{e.label}</a>
+      ))}
+
+      {telefono && (
+        <a
+          href={`tel:${telefono.replace(/\s+/g, '')}`}
+          class='btn btn-tel mt-4 justify-center w-full tabular-nums'
+        >
+          <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+            <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
+          </svg>
+          {telefono}
+        </a>
+      )}
+    </nav>
+  </div>
+</header>
+
+<style>
+  /* Fondo con color-mix (transparencia adaptativa según tema) — no expresable en utility inline. */
+  .corp-header {
+    background: color-mix(in oklch, var(--background) 96%, transparent);
+  }
+
+  /* Hover del link de nav — token custom, más simple mantenerlo global. */
+  .header-link:hover { color: var(--foreground); }
+
+  /* Estados de <details open> — variante `open:` en Tailwind 4 aún no cubre todos los
+     casos (chevron rotado, cambio de fondo del trigger). Se mantiene lo mínimo aquí. */
+  .lang-trigger:hover { border-color: var(--border-strong); color: var(--foreground); }
+  .lang-trigger::-webkit-details-marker,
+  .lang-trigger::marker { display: none; content: ''; }
+  .lang-details[open] .lang-trigger {
+    background: var(--primary-soft);
+    color: var(--foreground);
+    border-color: var(--border-strong);
+  }
+  .lang-details[open] .lang-chev { transform: rotate(180deg); }
+  .lang-menu {
+    top: calc(100% + 6px);
+    box-shadow: 0 10px 30px -10px rgb(15 23 42 / 0.18), 0 4px 12px -6px rgb(15 23 42 / 0.08);
+    animation: langMenuIn 160ms ease-out;
+  }
+  @keyframes langMenuIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .lang-item:hover { background: var(--primary-soft); }
+  .lang-item.is-active { background: var(--accent-soft); color: var(--accent); }
+  .lang-item.is-active .lang-code { color: var(--accent); }
+
+  /* Burger animado según aria-expanded — no expresable con clases inline sin JS extra. */
+  .burger span {
+    display: block;
+    height: 1.5px;
+    background: var(--foreground);
+    transition: transform 220ms ease, opacity 220ms ease;
+  }
+  .burger[aria-expanded='true'] span:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
+  .burger[aria-expanded='true'] span:nth-child(2) { opacity: 0; }
+  .burger[aria-expanded='true'] span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
+
+  /* Menú móvil */
+  .mobile-menu { animation: menuIn 200ms ease-out; }
+  @keyframes menuIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .mobile-menu[hidden] { display: none; }
+</style>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const menu = document.querySelector<HTMLElement>('[data-menu]');
+  const langDetails = document.querySelector<HTMLDetailsElement>('[data-lang]');
+
+  if (toggle && menu) {
+    toggle.addEventListener('click', () => {
+      const abierto = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', abierto ? 'false' : 'true');
+      if (abierto) menu.setAttribute('hidden', '');
+      else menu.removeAttribute('hidden');
+    });
+    menu.querySelectorAll('a').forEach((a) =>
+      a.addEventListener('click', () => {
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.setAttribute('hidden', '');
+      }),
+    );
+  }
+
+  // Cerrar dropdown de idiomas al hacer clic fuera o presionar Escape
+  if (langDetails) {
+    document.addEventListener('click', (e) => {
+      if (!langDetails.contains(e.target as Node)) {
+        langDetails.open = false;
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') langDetails.open = false;
+    });
+  }
+</script>

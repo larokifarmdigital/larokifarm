@@ -1,0 +1,72 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import type { Farmacia } from '@/lib/sanity';
+import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
+import { rutaConLocale, t, type Locale } from '@/lib/i18n';
+
+interface Props {
+  farmacia: Farmacia | null;
+  lang: Locale;
+}
+
+const { farmacia: farmaciaCargada, lang } = Astro.props as Props;
+const farmacia: Farmacia = farmaciaCargada ?? {
+  _id: 'placeholder',
+  nombre: 'Farmacia Chamarro',
+  slug: 'chamarro',
+};
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const home = rutaConLocale('/', lang);
+---
+
+<BaseLayout
+  titulo={t('p404.tituloMeta', lang, { nombre: farmacia.nombre })}
+  descripcion={t('p404.descMeta', lang)}
+  canonical={`${siteUrl}${home}`}
+  lang={lang}
+  rutaActual='/'
+>
+  <Header
+    nombre={farmacia.nombre}
+    telefono={farmacia.contacto?.telefono}
+    logo={farmacia.logo}
+    mostrarFaqs={false}
+    mostrarResenas={MOSTRAR_RESENAS}
+    lang={lang}
+    rutaActual='/'
+    idiomasActivos={farmacia.idiomasActivos}
+  />
+
+  <main
+    id='contenido'
+    class='container-app py-[clamp(5rem,10vw,8rem)] max-w-[640px] text-center flex flex-col gap-5 items-center mx-auto'
+  >
+    <span class='chip m-0'>{t('p404.chip', lang)}</span>
+    <h1 class='h-display m-0'>
+      {t('p404.subtitulo1', lang)} {t('p404.subtitulo2', lang)}
+    </h1>
+    <p class='text-[color:var(--muted-foreground)] max-w-[42ch] m-0'>{t('p404.texto', lang)}</p>
+    <a href={home} class='btn btn-primary mt-4'>
+      {t('p404.btnInicio', lang)}
+      <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+        <path d='M5 12h14M13 6l6 6-6 6' />
+      </svg>
+    </a>
+  </main>
+
+  <Footer
+    nombre={farmacia.nombre}
+    titular={farmacia.titular}
+    numeroColegiado={farmacia.numeroColegiado}
+    logo={farmacia.logo}
+    contacto={farmacia.contacto}
+    redes={farmacia.redesSociales}
+    direccion={farmacia.direccion}
+    mostrarFaqs={false}
+    lang={lang}
+    rutaActual='/'
+  />
+</BaseLayout>

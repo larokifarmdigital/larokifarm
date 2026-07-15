@@ -1,0 +1,85 @@
+---
+import { localizar, type FeatureItem } from '@/lib/sanity';
+import IconoServicio from './IconoServicio.astro';
+import { t, type Locale } from '@/lib/i18n';
+
+interface Props {
+  lista?: FeatureItem[];
+  lang: Locale;
+  horarioTexto?: string;
+}
+
+const { lista, lang, horarioTexto } = Astro.props;
+
+const featuresSanity = (lista ?? [])
+  .map((f) => ({
+    icono: f.icono,
+    titulo: localizar(f.titulo, lang),
+    descripcion: localizar(f.descripcion, lang),
+  }))
+  .filter((f) => f.titulo);
+
+const featuresFallback = [
+  {
+    icono: 'users' as const,
+    titulo: t('features.atencionTitulo', lang),
+    descripcion: t('features.atencionDesc', lang),
+  },
+  {
+    icono: 'shield' as const,
+    titulo: t('features.calidadTitulo', lang),
+    descripcion: t('features.calidadDesc', lang),
+  },
+  {
+    icono: 'stethoscope' as const,
+    titulo: t('features.equipoTitulo', lang),
+    descripcion: t('features.equipoDesc', lang),
+  },
+  {
+    icono: 'clock' as const,
+    titulo: t('features.horarioTitulo', lang),
+    descripcion: horarioTexto || t('features.horarioDescFallback', lang),
+  },
+];
+
+const items = featuresSanity.length > 0 ? featuresSanity : featuresFallback;
+
+if (items.length === 0) return null;
+---
+
+<section
+  class='py-[clamp(4rem,7vw,6rem)] bg-[color:var(--background)] border-b border-[color:var(--border)]'
+  aria-label='Nuestras ventajas'
+>
+  <div class='container-app'>
+    <ul class='list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 min-[960px]:grid-cols-4 gap-x-6 gap-y-10'>
+      {items.map((f) => (
+        <li class='feature-item flex flex-col items-center text-center gap-4 px-2'>
+          <div
+            class='feature-item-icon inline-flex items-center justify-center w-14 h-14 bg-[color:var(--accent-soft)] text-[color:var(--accent)] rounded-full shrink-0 transition-all duration-300'
+            aria-hidden='true'
+          >
+            <IconoServicio nombre={f.icono} size={26} />
+          </div>
+          <div class='flex flex-col gap-1.5 max-w-[28ch]'>
+            <h3 class='m-0 text-[1.05rem] font-semibold text-[color:var(--foreground)] leading-tight tracking-tight'>
+              {f.titulo}
+            </h3>
+            {f.descripcion && (
+              <p class='m-0 text-sm text-[color:var(--muted-foreground)] leading-[1.55]'>{f.descripcion}</p>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  /* Hover coordinado padre → hijo: al pasar sobre la columna, el icono se rellena. */
+  .feature-item:hover .feature-item-icon {
+    background: var(--accent);
+    color: #fff;
+    transform: scale(1.05);
+  }
+</style>

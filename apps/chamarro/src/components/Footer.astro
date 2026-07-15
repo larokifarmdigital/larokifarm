@@ -1,0 +1,286 @@
+---
+import { rutaConLocale, t, type Locale } from '@/lib/i18n';
+import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
+import type { Contacto, Direccion, RedesSociales } from '@/lib/sanity';
+
+interface Props {
+  nombre: string;
+  titular?: string;
+  numeroColegiado?: string;
+  logo?: string;
+  contacto?: Contacto;
+  redes?: RedesSociales;
+  direccion?: Direccion;
+  mostrarFaqs?: boolean;
+  lang: Locale;
+  rutaActual: string;
+}
+
+const {
+  nombre,
+  titular,
+  numeroColegiado,
+  logo,
+  contacto,
+  redes,
+  direccion,
+  mostrarFaqs = true,
+  lang,
+} = Astro.props;
+
+const logoUrl = logo || '/logo.png';
+
+const anyo = new Date().getFullYear();
+const home = rutaConLocale('/', lang);
+
+const lineasDireccion = [
+  direccion?.calle,
+  direccion?.codigoPostal && direccion?.ciudad
+    ? `${direccion.codigoPostal} ${direccion.ciudad}`
+    : direccion?.ciudad,
+  direccion?.provincia,
+].filter((s): s is string => Boolean(s?.trim()));
+
+const tieneRedes = redes && (redes.instagram || redes.facebook || redes.tiktok);
+---
+
+<footer class='relative bg-[color:var(--foreground)] text-[#cbd5e1] border-t border-[color:var(--border-strong)] overflow-hidden'>
+  {/* Sutil gradiente de acento en el borde superior */}
+  <div
+    class='absolute inset-x-0 top-0 h-px'
+    style='background: linear-gradient(90deg, transparent, rgb(203 213 225 / 0.4), transparent);'
+    aria-hidden='true'
+  ></div>
+
+  <div class='container-app py-[clamp(3rem,5vw,4.5rem)]'>
+    <div class='grid grid-cols-1 sm:grid-cols-2 min-[960px]:grid-cols-[1.6fr_1fr_1.1fr_0.9fr] gap-x-10 gap-y-12'>
+      {/* -------- BRAND -------- */}
+      <div class='flex flex-col gap-5 max-w-[36ch]'>
+        <a href={home} class='inline-flex items-center gap-3 no-underline text-white' aria-label={nombre}>
+          <img
+            src={logoUrl}
+            alt={nombre}
+            class='block w-11 h-11 object-contain [filter:brightness(0)_invert(1)]'
+            width='72'
+            height='72'
+            loading='lazy'
+          />
+          <span class='font-bold text-[1.15rem] -tracking-[0.01em] text-white leading-tight'>{nombre}</span>
+        </a>
+
+        {lineasDireccion.length > 0 && (
+          <div class='flex items-start gap-3 text-[#94a3b8] text-[0.9rem] leading-relaxed'>
+            <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' class='mt-[3px] shrink-0 text-[#64748b]'>
+              <path d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' />
+              <circle cx='12' cy='10' r='3' />
+            </svg>
+            <div class='flex flex-col'>
+              {lineasDireccion.map((l) => <span>{l}</span>)}
+            </div>
+          </div>
+        )}
+
+        {tieneRedes && (
+          <div class='footer-redes inline-flex gap-2 mt-1'>
+            {redes.instagram && (
+              <a
+                href={redes.instagram}
+                target='_blank'
+                rel='noopener noreferrer'
+                aria-label={t('footer.ariaInstagram', lang)}
+                class='inline-flex items-center justify-center w-10 h-10 text-[#94a3b8] bg-[#1e293b] rounded-[var(--radius)] border border-[#334155] transition-all duration-200'
+              >
+                <svg width='17' height='17' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                  <rect x='2' y='2' width='20' height='20' rx='5' />
+                  <path d='M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z' />
+                  <line x1='17.5' y1='6.5' x2='17.51' y2='6.5' />
+                </svg>
+              </a>
+            )}
+            {redes.facebook && (
+              <a
+                href={redes.facebook}
+                target='_blank'
+                rel='noopener noreferrer'
+                aria-label={t('footer.ariaFacebook', lang)}
+                class='inline-flex items-center justify-center w-10 h-10 text-[#94a3b8] bg-[#1e293b] rounded-[var(--radius)] border border-[#334155] transition-all duration-200'
+              >
+                <svg width='17' height='17' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                  <path d='M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z' />
+                </svg>
+              </a>
+            )}
+            {redes.tiktok && (
+              <a
+                href={redes.tiktok}
+                target='_blank'
+                rel='noopener noreferrer'
+                aria-label={t('footer.ariaTiktok', lang)}
+                class='inline-flex items-center justify-center w-10 h-10 text-[#94a3b8] bg-[#1e293b] rounded-[var(--radius)] border border-[#334155] transition-all duration-200'
+              >
+                <svg width='17' height='17' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                  <path d='M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5' />
+                </svg>
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* -------- NAVEGACIÓN -------- */}
+      <div>
+        <h3 class='text-[0.72rem] tracking-[0.16em] uppercase text-white m-0 mb-5 font-bold'>{t('footer.informacion', lang)}</h3>
+        <ul class='list-none p-0 m-0 flex flex-col gap-3'>
+          <li><a href={`${home}#servicios`} class='footer-link inline-flex items-center gap-2 text-[#cbd5e1] no-underline text-[0.9rem] transition-colors duration-200'>
+            <span class='footer-arrow text-[#64748b] transition-all duration-200'>→</span>
+            {t('footer.servicios', lang)}
+          </a></li>
+          <li><a href={`${home}#sobre`} class='footer-link inline-flex items-center gap-2 text-[#cbd5e1] no-underline text-[0.9rem] transition-colors duration-200'>
+            <span class='footer-arrow text-[#64748b] transition-all duration-200'>→</span>
+            {t('footer.sobreNosotros', lang)}
+          </a></li>
+          {mostrarFaqs && <li><a href={`${home}#faqs`} class='footer-link inline-flex items-center gap-2 text-[#cbd5e1] no-underline text-[0.9rem] transition-colors duration-200'>
+            <span class='footer-arrow text-[#64748b] transition-all duration-200'>→</span>
+            {t('footer.preguntasFrecuentes', lang)}
+          </a></li>}
+          {MOSTRAR_RESENAS && <li><a href={rutaConLocale('/resenas', lang)} class='footer-link inline-flex items-center gap-2 text-[#cbd5e1] no-underline text-[0.9rem] transition-colors duration-200'>
+            <span class='footer-arrow text-[#64748b] transition-all duration-200'>→</span>
+            {t('footer.resenas', lang)}
+          </a></li>}
+          <li><a href={`${home}#contacto`} class='footer-link inline-flex items-center gap-2 text-[#cbd5e1] no-underline text-[0.9rem] transition-colors duration-200'>
+            <span class='footer-arrow text-[#64748b] transition-all duration-200'>→</span>
+            {t('footer.contacto', lang)}
+          </a></li>
+        </ul>
+      </div>
+
+      {/* -------- CONTACTO -------- */}
+      <div>
+        <h3 class='text-[0.72rem] tracking-[0.16em] uppercase text-white m-0 mb-5 font-bold'>{t('footer.contactanos', lang)}</h3>
+        <ul class='list-none p-0 m-0 flex flex-col gap-3'>
+          {contacto?.telefono && (
+            <li class='flex items-start gap-3'>
+              <span class='inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius)] bg-[#1e293b] text-[#94a3b8] shrink-0 mt-[-2px]'>
+                <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                  <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
+                </svg>
+              </span>
+              <a href={`tel:${contacto.telefono.replace(/\s+/g, '')}`} class='footer-link text-[#cbd5e1] no-underline text-[0.9rem] leading-[1.35] font-medium tabular-nums transition-colors duration-200'>
+                {contacto.telefono}
+              </a>
+            </li>
+          )}
+          {contacto?.whatsapp && (
+            <li class='flex items-start gap-3'>
+              <span class='inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius)] bg-[#1e293b] text-[#94a3b8] shrink-0 mt-[-2px]'>
+                <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
+                  <path d='M20.5 3.5A11 11 0 0 0 3.4 17l-1.4 5 5.1-1.3A11 11 0 1 0 20.5 3.5zM12 20a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20zm4.5-5.9c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1c-.2.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.6-1.2a.4.4 0 0 0 0-.4c0-.1-.6-1.4-.8-1.9s-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-1 2.3 5.4 5.4 0 0 0 1.1 2.9c.1.2 2 3 4.8 4.2a15.9 15.9 0 0 0 1.6.6 3.9 3.9 0 0 0 1.7.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.2-1.2-.2-.2-.4-.3z' />
+                </svg>
+              </span>
+              <a
+                href={`https://wa.me/${contacto.whatsapp.replace(/[^0-9]/g, '')}`}
+                target='_blank'
+                rel='noopener noreferrer'
+                class='footer-link text-[#cbd5e1] no-underline text-[0.9rem] leading-[1.35] transition-colors duration-200'
+              >
+                WhatsApp
+              </a>
+            </li>
+          )}
+          {contacto?.email && (
+            <li class='flex items-start gap-3'>
+              <span class='inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius)] bg-[#1e293b] text-[#94a3b8] shrink-0 mt-[-2px]'>
+                <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                  <rect x='2' y='4' width='20' height='16' rx='2' />
+                  <path d='m22 7-10 5L2 7' />
+                </svg>
+              </span>
+              <a href={`mailto:${contacto.email}`} class='footer-link text-[#cbd5e1] no-underline text-[0.9rem] leading-[1.35] break-all transition-colors duration-200'>
+                {contacto.email}
+              </a>
+            </li>
+          )}
+          {contacto?.web && (
+            <li class='flex items-start gap-3'>
+              <span class='inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius)] bg-[#1e293b] text-[#94a3b8] shrink-0 mt-[-2px]'>
+                <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                  <circle cx='12' cy='12' r='10' />
+                  <path d='M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20' />
+                </svg>
+              </span>
+              <a
+                href={contacto.web}
+                target='_blank'
+                rel='noopener noreferrer'
+                class='footer-link text-[#cbd5e1] no-underline text-[0.9rem] leading-[1.35] break-all transition-colors duration-200'
+              >
+                {contacto.web.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+              </a>
+            </li>
+          )}
+        </ul>
+      </div>
+
+      {/* -------- LEGAL -------- */}
+      <div>
+        <h3 class='text-[0.72rem] tracking-[0.16em] uppercase text-white m-0 mb-5 font-bold'>Legal</h3>
+        <ul class='list-none p-0 m-0 flex flex-col gap-3'>
+          <li><a href={rutaConLocale('/aviso-legal', lang)} class='footer-link text-[#cbd5e1] no-underline text-[0.9rem] transition-colors duration-200'>{t('footer.avisoLegal', lang)}</a></li>
+          <li><a href={rutaConLocale('/politica-privacidad', lang)} class='footer-link text-[#cbd5e1] no-underline text-[0.9rem] transition-colors duration-200'>{t('footer.politicaPrivacidad', lang)}</a></li>
+        </ul>
+
+        {(titular || numeroColegiado) && (
+          <div class='mt-6 pt-5 border-t border-[#1e293b]'>
+            <p class='m-0 text-[#64748b] text-[0.68rem] font-semibold tracking-[0.14em] uppercase mb-2'>
+              {t('footer.titular', lang)}
+            </p>
+            {titular && <p class='m-0 text-[#cbd5e1] text-[0.82rem] leading-[1.4]'>{titular}</p>}
+            {numeroColegiado && (
+              <p class='m-0 text-[#94a3b8] text-[0.78rem] mt-1 tabular-nums'>
+                {t('footer.nCol', lang)} {numeroColegiado}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* -------- BOTTOM BAR -------- */}
+  <div class='border-t border-[#1e293b] bg-[#0a0f1c]'>
+    <div class='container-app py-4 flex flex-wrap gap-4 justify-between items-center'>
+      <p class='m-0 text-[#64748b] text-[0.78rem]'>{t('footer.copyright', lang, { anyo, nombre })}</p>
+      <div class='inline-flex items-center gap-2 text-[#64748b] text-[0.72rem] tracking-[0.06em]'>
+        <span class='relative inline-flex items-center justify-center w-2 h-2'>
+          <span class='absolute inset-0 rounded-full bg-[color:var(--success)] animate-ping opacity-60'></span>
+          <span class='relative w-2 h-2 rounded-full bg-[color:var(--success)]'></span>
+        </span>
+        <span>{t('footer.badgeColegiada', lang)}</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  /* Hover en enlaces y redes — hidratamos con :hover, imposible expresar en
+     class list de origen porque los colores destino no son tokens del @theme. */
+  .footer-link { position: relative; }
+  .footer-link:hover { color: #ffffff; }
+  .footer-link:hover .footer-arrow {
+    color: var(--accent-soft);
+    transform: translateX(2px);
+  }
+  .footer-redes a:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  /* Respeta reduced-motion — el pulso del dot y el translate del hover no deben
+     ejecutarse si el usuario lo pidió. */
+  @media (prefers-reduced-motion: reduce) {
+    .footer-link:hover .footer-arrow { transform: none; }
+    .footer-redes a:hover { transform: none; }
+  }
+</style>

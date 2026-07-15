@@ -1,0 +1,390 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import {
+  obtenerFarmaciaPorSlug,
+  obtenerResenasGoogle,
+  listarResenasGoogle,
+  localizar,
+  SLUG_FARMACIA,
+  type Farmacia,
+} from '@/lib/sanity';
+import {
+  esLocaleValido,
+  rutaConLocale,
+  t,
+  type Locale,
+} from '@/lib/i18n';
+import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
+
+export async function getStaticPaths() {
+  if (!MOSTRAR_RESENAS) return [];
+  const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
+  const codigos = (farmacia?.idiomasActivos ?? [{ codigo: 'es', nombre: 'Español' }])
+    .map((i) => i.codigo)
+    .filter(esLocaleValido);
+  const lista = codigos.length > 0 ? codigos : (['es'] as Locale[]);
+  return lista.map((c) => ({
+    params: { lang: c === 'es' ? undefined : c },
+    props: { farmacia, lang: c },
+  }));
+}
+
+interface Props { farmacia: Farmacia | null; lang: Locale; }
+const { farmacia: farmaciaCargada, lang } = Astro.props as Props;
+
+const farmacia: Farmacia = farmaciaCargada ?? {
+  _id: 'placeholder',
+  nombre: 'Farmacia Chamarro',
+  slug: SLUG_FARMACIA,
+};
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const canonical = `${siteUrl}${rutaConLocale('/resenas', lang)}`;
+
+const [resumen, todas] = await Promise.all([
+  obtenerResenasGoogle(SLUG_FARMACIA, 0),
+  listarResenasGoogle(SLUG_FARMACIA),
+]);
+
+const mostrarFaqs = (farmacia.faqs ?? []).some(
+  (f) => localizar(f.pregunta, lang) && localizar(f.respuesta, lang),
+);
+
+const tituloPagina = t('resenas.tituloPagina', lang, { nombre: farmacia.nombre });
+const descripcion = t('resenas.metaDescripcion', lang, { nombre: farmacia.nombre });
+const mediaFormateada = resumen.media > 0 ? resumen.media.toFixed(1) : '—';
+const home = rutaConLocale('/', lang);
+
+function relativo(fechaIso: string): string {
+  const ahora = Date.now();
+  const fecha = new Date(fechaIso).getTime();
+  const diff = Math.max(0, ahora - fecha);
+  const dia = 1000 * 60 * 60 * 24;
+  const dias = Math.round(diff / dia);
+  if (dias < 1) return t('resenas.hace.ahora', lang);
+  if (dias < 14) return t(dias === 1 ? 'resenas.hace.diasUno' : 'resenas.hace.diasN', lang, { n: dias });
+  const semanas = Math.round(dias / 7);
+  if (dias < 60) return t(semanas === 1 ? 'resenas.hace.semanasUno' : 'resenas.hace.semanasN', lang, { n: semanas });
+  const meses = Math.round(dias / 30);
+  if (dias < 365) return t(meses === 1 ? 'resenas.hace.mesesUno' : 'resenas.hace.mesesN', lang, { n: meses });
+  const anyos = Math.round(dias / 365);
+  return t(anyos === 1 ? 'resenas.hace.anyosUno' : 'resenas.hace.anyosN', lang, { n: anyos });
+}
+
+const filtros = [5, 4, 3, 2, 1];
+---
+
+<BaseLayout
+  titulo={`${tituloPagina} · ${farmacia.nombre}`}
+  descripcion={descripcion}
+  canonical={canonical}
+  lang={lang}
+  rutaActual='/resenas'
+>
+  <Header
+    nombre={farmacia.nombre}
+    telefono={farmacia.contacto?.telefono}
+    logo={farmacia.logo}
+    mostrarFaqs={mostrarFaqs}
+    mostrarResenas={MOSTRAR_RESENAS}
+    lang={lang}
+    rutaActual='/resenas'
+    idiomasActivos={farmacia.idiomasActivos}
+  />
+
+  <main id='contenido' class='container-app resenas-page'>
+    <a href={home} class='resenas-page__volver'>
+      <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+        <path d='m15 18-6-6 6-6' />
+      </svg>
+      {t('legal.volver', lang)}
+    </a>
+
+    <header class='resenas-page__cabecera'>
+      <span class='section-eyebrow'>{t('resenas.chip', lang)}</span>
+      <h1 class='h-display resenas-page__titulo'>{tituloPagina}</h1>
+      {resumen.total > 0 && (
+        <p class='resenas-page__nota'>
+          <span class='resenas-page__estrellas' aria-hidden='true'>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <svg
+                width='18'
+                height='18'
+                viewBox='0 0 24 24'
+                fill={i < Math.round(resumen.media) ? 'currentColor' : 'none'}
+                stroke='currentColor'
+                stroke-width='1.5'
+                stroke-linejoin='round'
+              >
+                <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
+              </svg>
+            ))}
+          </span>
+          <strong>{t('resenas.rangoNota', lang, { media: mediaFormateada, total: resumen.total })}</strong>
+        </p>
+      )}
+    </header>
+
+    <hr class='rule' />
+
+    {todas.length === 0 ? (
+      <p class='resenas-page__vacio'>{t('resenas.subtituloSinNumero', lang)}</p>
+    ) : (
+      <>
+        <div class='resenas-page__filtros' role='tablist'>
+          <button
+            type='button'
+            class='resenas-page__filtro is-active'
+            role='tab'
+            data-filtro='todas'
+            aria-selected='true'
+          >
+            {t('resenas.filtroTodas', lang)} · {todas.length}
+          </button>
+          {filtros.map((n) => {
+            const cuenta = todas.filter((r) => r.rating === n).length;
+            if (cuenta === 0) return null;
+            return (
+              <button
+                type='button'
+                class='resenas-page__filtro'
+                role='tab'
+                data-filtro={String(n)}
+                aria-selected='false'
+              >
+                {t('resenas.filtroEstrellas', lang, { n })} · {cuenta}
+              </button>
+            );
+          })}
+        </div>
+
+        <ul class='resenas-page__lista'>
+          {todas.map((r) => {
+            const estrellas = Math.max(0, Math.min(5, r.rating ?? 0));
+            return (
+              <li class='resenas-page__item' data-rating={String(estrellas)}>
+                <div class='resenas-page__meta'>
+                  <div class='resenas-page__meta-estrellas'>
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <svg
+                        width='13'
+                        height='13'
+                        viewBox='0 0 24 24'
+                        fill={j < estrellas ? 'currentColor' : 'none'}
+                        stroke='currentColor'
+                        stroke-width='1.5'
+                        stroke-linejoin='round'
+                      >
+                        <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
+                      </svg>
+                    ))}
+                  </div>
+                  <p class='resenas-page__autor'>{r.autorNombre ?? t('resenas.anonimo', lang)}</p>
+                  <time datetime={r.fechaPublicacion} class='resenas-page__fecha'>
+                    {relativo(r.fechaPublicacion)}
+                  </time>
+                </div>
+                <div class='resenas-page__contenido'>
+                  {r.comentario && <p class='resenas-page__texto'>{r.comentario}</p>}
+                  {r.respuestaOwner && (
+                    <div class='resenas-page__respuesta'>
+                      <p class='resenas-page__respuesta-label'>{t('resenas.respuestaFarmacia', lang)}</p>
+                      <p>{r.respuestaOwner}</p>
+                    </div>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        {farmacia.googleMapsUrl && (
+          <p class='resenas-page__cta'>
+            <a href={farmacia.googleMapsUrl} target='_blank' rel='noopener noreferrer' class='btn btn-secondary'>
+              {t('resenas.verEnGoogle', lang)}
+              <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                <path d='M7 17L17 7M9 7h8v8' />
+              </svg>
+            </a>
+          </p>
+        )}
+      </>
+    )}
+  </main>
+
+  <Footer
+    nombre={farmacia.nombre}
+    titular={farmacia.titular}
+    numeroColegiado={farmacia.numeroColegiado}
+    logo={farmacia.logo}
+    contacto={farmacia.contacto}
+    redes={farmacia.redesSociales}
+    direccion={farmacia.direccion}
+    mostrarFaqs={mostrarFaqs}
+    lang={lang}
+    rutaActual='/resenas'
+  />
+</BaseLayout>
+
+<style>
+  .resenas-page {
+    padding-block: clamp(3rem, 6vw, 6rem);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .resenas-page__volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    align-self: flex-start;
+  }
+  .resenas-page__volver:hover { color: var(--foreground); }
+
+  .resenas-page__cabecera {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 60ch;
+  }
+  .resenas-page__titulo { margin: 0.5rem 0 0; }
+  .resenas-page__nota {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--muted-foreground);
+    margin: 0;
+  }
+  .resenas-page__estrellas { display: inline-flex; color: var(--warning); gap: 1px; }
+
+  .resenas-page__vacio {
+    padding: 2rem 0;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .resenas-page__filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .resenas-page__filtro {
+    background: var(--card);
+    border: 1px solid var(--border-strong);
+    color: var(--foreground);
+    padding: 0.5rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: background 200ms ease, color 200ms ease, border-color 200ms ease;
+  }
+  .resenas-page__filtro:hover { border-color: var(--accent); color: var(--accent); }
+  .resenas-page__filtro.is-active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  .resenas-page__lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+  }
+  .resenas-page__item {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .resenas-page__item[hidden] { display: none; }
+  @media (min-width: 700px) {
+    .resenas-page__item {
+      grid-template-columns: 200px 1fr;
+      gap: 2.5rem;
+      align-items: start;
+    }
+  }
+  .resenas-page__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .resenas-page__meta-estrellas {
+    display: inline-flex;
+    color: var(--warning);
+    gap: 1px;
+    margin-bottom: 0.35rem;
+  }
+  .resenas-page__autor {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+  .resenas-page__fecha {
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .resenas-page__contenido { min-width: 0; }
+  .resenas-page__texto {
+    margin: 0;
+    color: var(--muted-foreground);
+    line-height: 1.65;
+    font-size: 0.95rem;
+    max-width: 65ch;
+  }
+  .resenas-page__respuesta {
+    margin-top: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+  }
+  .resenas-page__respuesta-label {
+    margin: 0 0 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+  .resenas-page__respuesta p { margin: 0; color: var(--muted-foreground); font-size: 0.9rem; }
+
+  .resenas-page__cta {
+    margin: 2rem 0 0;
+    text-align: center;
+  }
+</style>
+
+<script>
+  const filtros = Array.from(document.querySelectorAll<HTMLButtonElement>('.resenas-page__filtro'));
+  const items = Array.from(document.querySelectorAll<HTMLElement>('.resenas-page__item'));
+  filtros.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const valor = btn.dataset.filtro;
+      filtros.forEach((b) => {
+        b.classList.toggle('is-active', b === btn);
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+      items.forEach((it) => {
+        if (valor === 'todas' || it.dataset.rating === valor) it.hidden = false;
+        else it.hidden = true;
+      });
+    });
+  });
+</script>

@@ -1,0 +1,170 @@
+{
+  "html": { "lang": "ca" },
+  "dias": {
+    "Mo": "dilluns",
+    "Tu": "dimarts",
+    "We": "dimecres",
+    "Th": "dijous",
+    "Fr": "divendres",
+    "Sa": "dissabte",
+    "Su": "diumenge",
+    "a": "a"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Inici",
+      "servicios": "Serveis",
+      "sobreNosotros": "La farmàcia",
+      "faqs": "Preguntes",
+      "resenas": "Opinions",
+      "contacto": "Contacte",
+      "aria": "Principal"
+    },
+    "cta": {
+      "llamanos": "Truca",
+      "llamarA": "Trucar al {telefono}"
+    },
+    "menu": {
+      "abrir": "Menú",
+      "cerrar": "Tancar"
+    },
+    "idioma": {
+      "aria": "Canviar idioma"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Farmàcia · {ciudad}",
+      "sinCiudad": "La teva farmàcia de confiança"
+    },
+    "tituloDefecto": "Atenció farmacèutica propera, amb criteri professional.",
+    "btnLlamar": "Truca ara",
+    "btnServicios": "Veure serveis",
+    "altInterior": "Interior de {nombre}",
+    "trust": {
+      "colegiados": "Farmacèutics col·legiats",
+      "colegiadosSub": "Consell expert",
+      "horario": "Horari ampli",
+      "horarioSub": "Quan ho necessites",
+      "consejo": "Consell sense cita",
+      "consejoSub": "Sense esperes"
+    }
+  },
+  "about": {
+    "chip": "La farmàcia",
+    "tituloDefecto": "Un referent al barri",
+    "cuerpoFallback": "Fa anys que oferim atenció farmacèutica propera, amb productes seleccionats i el consell que només un equip professional proper pot donar.",
+    "puntosDefecto": [
+      "Atenció personalitzada",
+      "Equip professional",
+      "Productes seleccionats",
+      "Consell proper"
+    ],
+    "badge": {
+      "anyos": "anys",
+      "experiencia": "d'experiència"
+    }
+  },
+  "servicios": {
+    "chip": "Serveis",
+    "titulo": "El que oferim",
+    "subtitulo": "Serveis farmacèutics i de salut per a tota la família. Pregunta al nostre equip si necessites més informació.",
+    "placeholder": "Serveis en preparació."
+  },
+  "faqs": {
+    "chip": "Preguntes freqüents",
+    "titulo": "Abans de venir",
+    "subtitulo": "Respostes als dubtes més habituals."
+  },
+  "cta": {
+    "chip": "Contacte",
+    "tituloConCiudad": "Ens trobes a {ciudad}",
+    "tituloSinCiudad": "Aquí som",
+    "subtitulo": "Passa per la farmàcia o truca'ns si prefereixes una consulta ràpida.",
+    "labelTelefono": "Telèfon",
+    "labelDireccion": "Adreça",
+    "labelHorario": "Horari",
+    "btnEscribenos": "Escriu-nos",
+    "btnLlamar": "Truca",
+    "ariaMapa": "Mapa de {nombre}",
+    "cargarMapa": "Veure mapa",
+    "cargarMapaAviso": "En prémer es carregarà Google Maps, que instal·la galetes de Google.",
+    "comoLlegar": "Com arribar"
+  },
+  "footer": {
+    "servicios": "Serveis",
+    "informacion": "Informació",
+    "contactanos": "Contacte",
+    "sobreNosotros": "La farmàcia",
+    "preguntasFrecuentes": "Preguntes",
+    "resenas": "Opinions",
+    "contacto": "Contacte",
+    "avisoLegal": "Avís legal",
+    "politicaPrivacidad": "Política de privacitat",
+    "copyright": "© {anyo} {nombre}",
+    "titular": "Titular",
+    "badgeColegiada": "Farmàcia col·legiada · Espanya",
+    "nCol": "Núm. col.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok"
+  },
+  "features": {
+    "atencionTitulo": "Atenció personalitzada",
+    "atencionDesc": "Cada client és únic",
+    "calidadTitulo": "Productes seleccionats",
+    "calidadDesc": "Amb criteri professional",
+    "equipoTitulo": "Equip qualificat",
+    "equipoDesc": "Formació contínua",
+    "horarioTitulo": "Horari ampli",
+    "horarioDescFallback": "Dilluns a dissabte"
+  },
+  "legal": {
+    "volver": "Tornar a l'inici",
+    "avisoTitulo": "Avís legal",
+    "privacidadTitulo": "Política de privacitat",
+    "avisoMeta": "Avís legal i informació del titular de {nombre}.",
+    "privacidadMeta": "Política de privacitat i tractament de dades personals de {nombre}."
+  },
+  "resenas": {
+    "chip": "Opinions",
+    "titulo": "El que diuen els clients",
+    "subtitulo": "{total} opinions a Google · valoració mitjana {media} / 5.",
+    "subtituloSinNumero": "Opinions reals de persones que han passat per la farmàcia.",
+    "destacada": "Destacada",
+    "verEnGoogle": "Veure totes a Google",
+    "respuestaFarmacia": "Resposta de la farmàcia",
+    "anonimo": "Client",
+    "hace": {
+      "diasUno": "fa {n} dia",
+      "diasN": "fa {n} dies",
+      "semanasUno": "fa {n} setmana",
+      "semanasN": "fa {n} setmanes",
+      "mesesUno": "fa {n} mes",
+      "mesesN": "fa {n} mesos",
+      "anyosUno": "fa {n} any",
+      "anyosN": "fa {n} anys",
+      "ahora": "ara mateix"
+    },
+    "ariaEstrellas": "{rating} de 5 estrelles",
+    "verTodas": "Totes les opinions",
+    "anterior": "Anterior",
+    "siguiente": "Següent",
+    "ariaSlider": "Opinions",
+    "tituloPagina": "Opinions",
+    "metaDescripcion": "Totes les opinions de Google de {nombre}. Testimonis reals de clients.",
+    "rangoNota": "{media} · {total} opinions",
+    "filtroTodas": "Totes",
+    "filtroEstrellas": "{n} estrelles"
+  },
+  "p404": {
+    "tituloMeta": "Pàgina no trobada · {nombre}",
+    "descMeta": "La pàgina que busques no existeix o s'ha mogut.",
+    "chip": "404",
+    "subtitulo1": "Pàgina no",
+    "subtitulo2": "trobada",
+    "texto": "L'enllaç pot estar trencat o la pàgina s'ha mogut.",
+    "btnInicio": "Tornar a l'inici",
+    "buscas": "Busques alguna cosa concreta?"
+  }
+}

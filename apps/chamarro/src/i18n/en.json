@@ -1,0 +1,170 @@
+{
+  "html": { "lang": "en" },
+  "dias": {
+    "Mo": "Monday",
+    "Tu": "Tuesday",
+    "We": "Wednesday",
+    "Th": "Thursday",
+    "Fr": "Friday",
+    "Sa": "Saturday",
+    "Su": "Sunday",
+    "a": "to"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Home",
+      "servicios": "Services",
+      "sobreNosotros": "About",
+      "faqs": "FAQs",
+      "resenas": "Reviews",
+      "contacto": "Contact",
+      "aria": "Main"
+    },
+    "cta": {
+      "llamanos": "Call",
+      "llamarA": "Call {telefono}"
+    },
+    "menu": {
+      "abrir": "Menu",
+      "cerrar": "Close"
+    },
+    "idioma": {
+      "aria": "Change language"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Pharmacy · {ciudad}",
+      "sinCiudad": "Your trusted pharmacy"
+    },
+    "tituloDefecto": "Close pharmaceutical care with professional judgment.",
+    "btnLlamar": "Call us",
+    "btnServicios": "See services",
+    "altInterior": "Inside {nombre}",
+    "trust": {
+      "colegiados": "Licensed pharmacists",
+      "colegiadosSub": "Expert advice",
+      "horario": "Extended hours",
+      "horarioSub": "When you need us",
+      "consejo": "Walk-in advice",
+      "consejoSub": "No appointment needed"
+    }
+  },
+  "about": {
+    "chip": "About",
+    "tituloDefecto": "A local reference",
+    "cuerpoFallback": "For years we have offered close pharmaceutical care with carefully selected products and the advice only a professional team can give.",
+    "puntosDefecto": [
+      "Personal attention",
+      "Professional team",
+      "Curated products",
+      "Straight advice"
+    ],
+    "badge": {
+      "anyos": "years",
+      "experiencia": "of experience"
+    }
+  },
+  "servicios": {
+    "chip": "Services",
+    "titulo": "What we offer",
+    "subtitulo": "Pharmacy and health services for the whole family. Ask our team if you need more information.",
+    "placeholder": "Services coming soon."
+  },
+  "faqs": {
+    "chip": "FAQs",
+    "titulo": "Before you come",
+    "subtitulo": "Answers to the most common questions."
+  },
+  "cta": {
+    "chip": "Contact",
+    "tituloConCiudad": "Find us in {ciudad}",
+    "tituloSinCiudad": "We're here",
+    "subtitulo": "Drop by the pharmacy or call us for a quick consultation.",
+    "labelTelefono": "Phone",
+    "labelDireccion": "Address",
+    "labelHorario": "Hours",
+    "btnEscribenos": "Write to us",
+    "btnLlamar": "Call",
+    "ariaMapa": "Map of {nombre}",
+    "cargarMapa": "Show map",
+    "cargarMapaAviso": "Clicking will load Google Maps, which installs Google cookies.",
+    "comoLlegar": "Get directions"
+  },
+  "footer": {
+    "servicios": "Services",
+    "informacion": "Info",
+    "contactanos": "Contact",
+    "sobreNosotros": "About",
+    "preguntasFrecuentes": "FAQs",
+    "resenas": "Reviews",
+    "contacto": "Contact",
+    "avisoLegal": "Legal notice",
+    "politicaPrivacidad": "Privacy policy",
+    "copyright": "© {anyo} {nombre}",
+    "titular": "Owner",
+    "badgeColegiada": "Registered pharmacy · Spain",
+    "nCol": "Reg. no.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok"
+  },
+  "features": {
+    "atencionTitulo": "Personal attention",
+    "atencionDesc": "Every client is unique",
+    "calidadTitulo": "Curated products",
+    "calidadDesc": "Chosen with criteria",
+    "equipoTitulo": "Qualified team",
+    "equipoDesc": "Continuous training",
+    "horarioTitulo": "Extended hours",
+    "horarioDescFallback": "Monday to Saturday"
+  },
+  "legal": {
+    "volver": "Back to home",
+    "avisoTitulo": "Legal notice",
+    "privacidadTitulo": "Privacy policy",
+    "avisoMeta": "Legal notice and owner details of {nombre}.",
+    "privacidadMeta": "Privacy policy and personal data processing of {nombre}."
+  },
+  "resenas": {
+    "chip": "Reviews",
+    "titulo": "What our clients say",
+    "subtitulo": "{total} Google reviews · average rating {media} / 5.",
+    "subtituloSinNumero": "Real opinions from people who have visited the pharmacy.",
+    "destacada": "Featured",
+    "verEnGoogle": "See all on Google",
+    "respuestaFarmacia": "Pharmacy reply",
+    "anonimo": "Client",
+    "hace": {
+      "diasUno": "{n} day ago",
+      "diasN": "{n} days ago",
+      "semanasUno": "{n} week ago",
+      "semanasN": "{n} weeks ago",
+      "mesesUno": "{n} month ago",
+      "mesesN": "{n} months ago",
+      "anyosUno": "{n} year ago",
+      "anyosN": "{n} years ago",
+      "ahora": "just now"
+    },
+    "ariaEstrellas": "{rating} out of 5 stars",
+    "verTodas": "All reviews",
+    "anterior": "Previous",
+    "siguiente": "Next",
+    "ariaSlider": "Reviews",
+    "tituloPagina": "Reviews",
+    "metaDescripcion": "All Google reviews of {nombre}. Real client testimonials.",
+    "rangoNota": "{media} · {total} reviews",
+    "filtroTodas": "All",
+    "filtroEstrellas": "{n} stars"
+  },
+  "p404": {
+    "tituloMeta": "Page not found · {nombre}",
+    "descMeta": "The page you're looking for doesn't exist or has moved.",
+    "chip": "404",
+    "subtitulo1": "Page not",
+    "subtitulo2": "found",
+    "texto": "The link may be broken or the page may have moved.",
+    "btnInicio": "Back to home",
+    "buscas": "Looking for something specific?"
+  }
+}

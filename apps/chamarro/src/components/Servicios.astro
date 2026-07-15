@@ -1,0 +1,161 @@
+---
+import { localizar, type Servicio, type TextosCabecera } from '@/lib/sanity';
+import IconoServicio from './IconoServicio.astro';
+import { t, type Locale } from '@/lib/i18n';
+
+interface Props {
+  servicios?: Servicio[];
+  lang: Locale;
+  textos?: TextosCabecera;
+}
+
+const { servicios, lang, textos } = Astro.props;
+const lista = (servicios ?? []).filter((s) => localizar(s.nombre, lang));
+
+const chip = localizar(textos?.chip, lang) || t('servicios.chip', lang);
+const titulo = localizar(textos?.titulo, lang) || t('servicios.titulo', lang);
+const subtitulo = localizar(textos?.subtitulo, lang) || t('servicios.subtitulo', lang);
+
+// Patrón bento: cada 3 posiciones una "grande" (col-span-4 sobre 6 cols).
+function esGrande(idx: number): boolean {
+  return idx % 3 === 0;
+}
+---
+
+<section id='servicios' class='py-[clamp(4rem,7vw,6rem)]'>
+  <div class='container-app'>
+    <header class='max-w-[60ch] mb-[clamp(2.5rem,4vw,3.5rem)] flex flex-col gap-3'>
+      <span class='section-eyebrow'>{chip}</span>
+      <h2 class='h-section mt-1'>{titulo}</h2>
+      {subtitulo && <p class='mt-2 text-[color:var(--muted-foreground)] text-base leading-relaxed'>{subtitulo}</p>}
+    </header>
+
+    {lista.length === 0 ? (
+      <p class='py-12 px-4 text-center text-[color:var(--muted)] bg-[color:var(--surface)] border border-dashed border-[color:var(--border-strong)] rounded-[var(--radius-lg)]'>
+        {t('servicios.placeholder', lang)}
+      </p>
+    ) : (
+      <ul class='list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 min-[960px]:grid-cols-6 gap-3 sm:gap-4 min-[960px]:auto-rows-[minmax(180px,auto)]'>
+        {lista.map((s, i) => {
+          const nombre = localizar(s.nombre, lang);
+          const descripcion = localizar(s.descripcion, lang);
+          const url = s.enlace?.url;
+          const externo = s.enlace?.nuevaPestana;
+          const grande = esGrande(i);
+
+          const contenido = (
+            <>
+              <div class='flex items-start justify-between gap-3'>
+                <div
+                  class={`bento-icon inline-flex items-center justify-center ${grande ? 'w-14 h-14' : 'w-11 h-11'} rounded-[var(--radius)] shrink-0 transition-colors duration-200 ${
+                    url
+                      ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent)]'
+                      : 'bg-[color:var(--card)] text-[color:var(--muted)] border border-[color:var(--border)]'
+                  }`}
+                  aria-hidden='true'
+                >
+                  <IconoServicio nombre={s.icono} size={grande ? 26 : 20} />
+                </div>
+                <span
+                  class={`inline-flex items-center gap-1 text-[0.65rem] font-semibold tracking-[0.14em] uppercase shrink-0 ${
+                    url ? 'text-[color:var(--accent)]' : 'text-[color:var(--muted)]'
+                  }`}
+                  aria-hidden='true'
+                >
+                  {url ? (
+                    <>
+                      <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>
+                        {externo ? <path d='M7 17L17 7M9 7h8v8' /> : <path d='M5 12h14M13 6l6 6-6 6' />}
+                      </svg>
+                    </>
+                  ) : (
+                    <>
+                      <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+                        <circle cx='12' cy='12' r='10' />
+                        <path d='M12 8v4M12 16h.01' />
+                      </svg>
+                      <span class='hidden min-[960px]:inline'>En farmacia</span>
+                    </>
+                  )}
+                </span>
+              </div>
+
+              <div class='flex flex-col gap-1.5 mt-auto pt-4'>
+                <h3
+                  class={`bento-titulo m-0 font-semibold tracking-tight text-[color:var(--foreground)] leading-tight ${
+                    grande ? 'text-[clamp(1.25rem,1.4vw+0.5rem,1.6rem)]' : 'text-[1.05rem]'
+                  }`}
+                >
+                  {nombre}
+                </h3>
+                {descripcion && (
+                  <p
+                    class={`m-0 text-[color:var(--muted-foreground)] leading-[1.55] ${
+                      grande ? 'text-[0.95rem]' : 'text-[0.85rem]'
+                    } ${grande ? 'line-clamp-3' : 'line-clamp-2'}`}
+                  >
+                    {descripcion}
+                  </p>
+                )}
+              </div>
+            </>
+          );
+
+          const spanClass = grande
+            ? 'sm:col-span-2 min-[960px]:col-span-4'
+            : 'sm:col-span-1 min-[960px]:col-span-2';
+          const bgClass = url
+            ? 'bg-[color:var(--card)]'
+            : 'bg-[color:var(--surface)]';
+
+          return (
+            <li class={`contents ${spanClass}`}>
+              {url ? (
+                <a
+                  href={url}
+                  target={externo ? '_blank' : undefined}
+                  rel={externo ? 'noopener noreferrer' : undefined}
+                  class={`bento-card ${spanClass} card ${bgClass} flex flex-col no-underline text-[color:var(--foreground)] cursor-pointer transition-all duration-200 min-h-[180px]`}
+                >
+                  {contenido}
+                </a>
+              ) : (
+                <div class={`bento-card ${spanClass} card ${bgClass} flex flex-col min-h-[180px]`}>
+                  {contenido}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    )}
+  </div>
+</section>
+
+<style>
+  a.bento-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -12px rgb(51 65 85 / 0.25);
+  }
+  a.bento-card:hover .bento-titulo {
+    color: var(--accent);
+  }
+  a.bento-card:hover .bento-icon {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
