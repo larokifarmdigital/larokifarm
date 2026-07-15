@@ -9,6 +9,7 @@ import {
   ListBusinessesUseCase,
   getBusinessRepository,
 } from '@/core/businesses';
+import { getReportRepository } from '@/core/reports';
 import { HistoryFilters } from '../components/HistoryFilters';
 import { HistoryTable } from '../components/HistoryTable';
 import { HistoryQuickFilters } from '../components/HistoryQuickFilters';
@@ -82,6 +83,10 @@ export async function HistoryListView({
       : Promise.resolve([]),
   ]);
 
+  const reportsCount = await getReportRepository().countByComparisonIds(
+    result.items.map((r) => r.id),
+  );
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
       <header className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
@@ -115,7 +120,11 @@ export async function HistoryListView({
         />
       </div>
 
-      <HistoryTable rows={result.items} role={session.user.role} />
+      <HistoryTable
+        rows={result.items}
+        role={session.user.role}
+        reportsCount={reportsCount}
+      />
       <Pagination
         page={result.page}
         totalPages={result.totalPages}

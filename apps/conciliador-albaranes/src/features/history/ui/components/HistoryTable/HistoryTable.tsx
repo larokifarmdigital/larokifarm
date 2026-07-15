@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ComparisonRow } from '@/core/comparisons';
+import type { ReportCounts } from '@/core/reports';
 import type { Role } from '@/core/shared';
 import {
   formatDateOnly,
@@ -9,12 +10,28 @@ import {
 import { businessColor } from '../../../lib/businessColor';
 import { StatusBadge } from '../StatusBadge';
 
+/* Decide qué estado visual gana en una fila con reports:
+   - OPEN ≥1  → ámbar (necesita atención, incluso si también hay RESOLVED)
+   - solo RESOLVED  → verde suave (ya se solucionó, contexto informativo)
+   - sin reports  → null */
+type ReportHighlight = 'open' | 'resolved' | null;
+
+function highlightFor(counts?: ReportCounts): ReportHighlight {
+  if (!counts) return null;
+  if (counts.open > 0) return 'open';
+  if (counts.resolved > 0) return 'resolved';
+  return null;
+}
+
 export function HistoryTable({
   rows,
   role,
+  reportsCount = {},
 }: {
   rows: ComparisonRow[];
   role: Role;
+  /** Map comparisonId → {open, resolved} counts. Vacío si nadie reportó nada. */
+  reportsCount?: Record<string, ReportCounts>;
 }) {
   if (rows.length === 0) {
     return (
@@ -69,8 +86,16 @@ export function HistoryTable({
               const tokens = r.geminiInputTokens + r.geminiOutputTokens;
               const bColor = businessColor(r.business.slug);
               const costTooltip = `${formatNumber(tokens)} tokens · ${formatUsd(r.geminiCostUsd)}`;
+              const counts = reportsCount[r.id];
+              const highlight = highlightFor(counts);
+              const rowClass =
+                highlight === 'open'
+                  ? 'bg-amber-50/60 hover:bg-amber-50'
+                  : highlight === 'resolved'
+                    ? 'bg-emerald-50/50 hover:bg-emerald-50'
+                    : 'hover:bg-slate-50/70';
               return (
-                <tr key={r.id} className="hover:bg-slate-50/70">
+                <tr key={r.id} className={rowClass}>
                   <td
                     className="whitespace-nowrap py-2.5 pl-3 pr-3 text-slate-700"
                     style={{
@@ -83,7 +108,11 @@ export function HistoryTable({
                   <td className="px-3 py-2.5">
                     <StatusBadge status={r.status} />
                   </td>
-                  <TruncatedCell text={r.supplier ?? '—'} bold />
+                  <TruncatedCell
+                    text={r.supplier ?? '—'}
+                    bold
+                    badge={counts ? <ReportBadge counts={counts} /> : undefined}
+                  />
                   {showBusiness && <TruncatedCell text={r.business.name} />}
                   <TruncatedCell
                     text={r.user.name}
@@ -132,20 +161,31 @@ export function HistoryTable({
           const tokens = r.geminiInputTokens + r.geminiOutputTokens;
           const bColor = businessColor(r.business.slug);
           const costTooltip = `${formatNumber(tokens)} tokens · ${formatUsd(r.geminiCostUsd)}`;
+          const counts = reportsCount[r.id];
+          const highlight = highlightFor(counts);
+          const cardBg =
+            highlight === 'open'
+              ? 'bg-amber-50/60 border-amber-200'
+              : highlight === 'resolved'
+                ? 'bg-emerald-50/50 border-emerald-200'
+                : 'bg-white border-slate-200';
           return (
             <li
               key={r.id}
-              className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4"
+              className={`overflow-hidden rounded-2xl border p-4 ${cardBg}`}
               style={{ borderLeft: `4px solid ${bColor}` }}
             >
               <div className="mb-2 flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p
-                    className="truncate font-semibold text-slate-900"
-                    title={r.supplier ?? undefined}
-                  >
-                    {r.supplier ?? 'Proveedor desconocido'}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p
+                      className="truncate font-semibold text-slate-900"
+                      title={r.supplier ?? undefined}
+                    >
+                      {r.supplier ?? 'Proveedor desconocido'}
+                    </p>
+                    {counts ? <ReportBadge counts={counts} /> : null}
+                  </div>
                   <p className="mt-0.5 text-xs text-slate-500">
                     {formatDateOnly(r.createdAt)}
                   </p>
@@ -205,20 +245,77 @@ function TruncatedCell({
   text,
   subText,
   bold = false,
+  badge,
 }: {
   text: string;
   subText?: string;
   bold?: boolean;
+  badge?: React.ReactNode;
 }) {
   return (
     <td className="max-w-[220px] px-3 py-2.5">
-      <span
-        className={`block truncate ${bold ? 'font-medium text-slate-900' : 'text-slate-700'}`}
-        title={subText ?? text}
-      >
-        {text}
-      </span>
+      <div className="flex items-center gap-2">
+        <span
+          className={`block truncate ${bold ? 'font-medium text-slate-900' : 'text-slate-700'}`}
+          title={subText ?? text}
+        >
+          {text}
+        </span>
+        {badge}
+      </div>
     </td>
+  );
+}
+
+function ReportBadge({ counts }: { counts: ReportCounts }) {
+  /* Pintamos DOS chips distintos si hay tanto abiertos como resueltos, para que el
+     usuario vea de un vistazo que aún queda algo pendiente aunque el resto se cerró. */
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      {counts.open > 0 && (
+        <span
+          className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 ring-1 ring-inset ring-amber-300"
+          title={`${counts.open} ${counts.open === 1 ? 'reporte abierto' : 'reportes abiertos'}`}
+        >
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+            <line x1="4" x2="4" y1="22" y2="15" />
+          </svg>
+          {counts.open}
+        </span>
+      )}
+      {counts.resolved > 0 && (
+        <span
+          className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-300"
+          title={`${counts.resolved} ${counts.resolved === 1 ? 'reporte solucionado' : 'reportes solucionados'}`}
+        >
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+          {counts.resolved}
+        </span>
+      )}
+    </span>
   );
 }
 

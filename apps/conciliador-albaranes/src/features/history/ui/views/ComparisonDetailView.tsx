@@ -8,9 +8,14 @@ import {
   type FileKind,
 } from '@/core/comparisons';
 import { getStorage } from '@/core/storage';
+import {
+  ListReportsByComparisonUseCase,
+  getReportRepository,
+} from '@/core/reports';
 import type { ReconciledLine } from '@/core/engine';
 import { StatusBadge } from '../components/StatusBadge';
 import { ComparisonFiles } from '../components/ComparisonFiles';
+import { ReportsSection, type ReportView } from '../components/ReportsSection';
 import {
   formatDate,
   formatDuration,
@@ -47,16 +52,33 @@ export async function ComparisonDetailView({ id }: { id: string }) {
   const session = await auth();
   if (!session?.user) redirect('/login');
 
+  const scope = scopeFromSession(session);
   const useCase = new GetComparisonDetailUseCase(
     getComparisonRepository(),
     getStorage(),
   );
-  const comparison = await useCase.execute(scopeFromSession(session), id);
+  const comparison = await useCase.execute(scope, id);
   if (!comparison) notFound();
 
   const totalTokens =
     comparison.geminiInputTokens + comparison.geminiOutputTokens;
   const reconciliationLines = extractLines(comparison.summary);
+
+  const reports = await new ListReportsByComparisonUseCase(
+    getReportRepository(),
+    getComparisonRepository(),
+  ).execute({ scope, comparisonId: id });
+
+  const reportsForClient: ReportView[] = reports.map((r) => ({
+    id: r.id,
+    note: r.note,
+    status: r.status,
+    createdAt: r.createdAt.toISOString(),
+    author: r.author,
+    resolvedNote: r.resolvedNote,
+    resolvedAt: r.resolvedAt ? r.resolvedAt.toISOString() : null,
+    resolvedBy: r.resolvedBy,
+  }));
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
@@ -154,6 +176,12 @@ export async function ComparisonDetailView({ id }: { id: string }) {
           isReport: f.kind === 'REPORT_OUTPUT',
         }))}
         reconciliationLines={reconciliationLines}
+      />
+
+      <ReportsSection
+        comparisonId={id}
+        initialReports={reportsForClient}
+        currentUser={{ id: session.user.id, role: session.user.role }}
       />
     </main>
   );

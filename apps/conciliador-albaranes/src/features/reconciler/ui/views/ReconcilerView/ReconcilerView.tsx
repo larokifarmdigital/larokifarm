@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { BudgetStatus } from '@/core/comparisons';
+import type { Role } from '@/core/shared';
 import { ReconciliationTable } from '@/shared/components/organisms/ReconciliationTable';
+// NOTE: import directo al componente para no arrastrar HistoryListView/ComparisonDetailView
+// (server components que usan Prisma y romperían el bundle client con `node:crypto`).
+import { ReportsSection } from '@/features/history/ui/components/ReportsSection';
 import {
   reconcilePairs,
   ReconcileError,
@@ -90,9 +94,11 @@ function sanitize(s: string): string {
 interface ReconcilerViewProps {
   /** null = sin límite configurado o usuario sin negocio (SUPER_ADMIN pool). */
   budgetStatus: BudgetStatus | null;
+  /** null = no autenticado; sin él no se puede reportar (los CTAs de reporte no se renderizan). */
+  currentUser: { id: string; role: Role } | null;
 }
 
-export function ReconcilerView({ budgetStatus }: ReconcilerViewProps) {
+export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProps) {
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [unmatched, setUnmatched] = useState<LoadedFile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -491,6 +497,7 @@ export function ReconcilerView({ budgetStatus }: ReconcilerViewProps) {
                 key={r.id}
                 r={r}
                 sourcePair={resultPairs[r.id]}
+                currentUser={currentUser}
               />
             ))}
           </ul>
@@ -914,7 +921,15 @@ function UnmatchedRow({
   );
 }
 
-function ResultRow({ r, sourcePair }: { r: PairResult; sourcePair?: Pair }) {
+function ResultRow({
+  r,
+  sourcePair,
+  currentUser,
+}: {
+  r: PairResult;
+  sourcePair?: Pair;
+  currentUser: { id: string; role: Role } | null;
+}) {
   const [open, setOpen] = useState(false);
   const [filesOpen, setFilesOpen] = useState(false);
   const style =
@@ -1033,6 +1048,18 @@ function ResultRow({ r, sourcePair }: { r: PairResult; sourcePair?: Pair }) {
       {open && r.detail && <ReconciliationTable lines={r.detail.lines} />}
       {open && r.detail?.rawLines && r.detail.rawLines.length > 0 && (
         <ExtractionDebug lines={r.detail.rawLines} />
+      )}
+
+      {/* Reportes de esta conciliación — visible en cuanto la comparación se persiste.
+          El botón deja una nota que el super admin verá y podrá resolver. */}
+      {r.comparisonId && currentUser && (
+        <div className="border-t border-slate-100 bg-slate-50/40 px-4 py-4">
+          <ReportsSection
+            comparisonId={r.comparisonId}
+            initialReports={[]}
+            currentUser={currentUser}
+          />
+        </div>
       )}
     </li>
   );

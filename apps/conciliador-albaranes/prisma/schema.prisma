@@ -48,8 +48,10 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  business    Business?    @relation(fields: [businessId], references: [id])
-  comparisons Comparison[]
+  business         Business?          @relation(fields: [businessId], references: [id])
+  comparisons      Comparison[]
+  reportsCreated   ComparisonReport[] @relation("reportsCreated")
+  reportsResolved  ComparisonReport[] @relation("reportsResolved")
 
   @@index([businessId])
   @@map("users")
@@ -85,9 +87,10 @@ model Comparison {
   geminiCostUsd      Decimal          @default(0) @db.Decimal(10, 6)
   summary            Json
 
-  business Business         @relation(fields: [businessId], references: [id])
-  user     User             @relation(fields: [userId], references: [id])
+  business Business           @relation(fields: [businessId], references: [id])
+  user     User               @relation(fields: [userId], references: [id])
   files    ComparisonFile[]
+  reports  ComparisonReport[]
 
   @@index([businessId, createdAt])
   @@index([userId, createdAt])
@@ -108,4 +111,31 @@ model ComparisonFile {
 
   @@index([comparisonId])
   @@map("comparison_files")
+}
+
+// Phase 3: user-submitted reports for false/missed discrepancies.
+// SUPER_ADMIN reviews and resolves; the reporting user sees the resolution in their history.
+enum ReportStatus {
+  OPEN
+  RESOLVED
+}
+
+model ComparisonReport {
+  id           String       @id @default(cuid())
+  comparisonId String
+  userId       String
+  note         String
+  status       ReportStatus @default(OPEN)
+  resolvedById String?
+  resolvedNote String?
+  resolvedAt   DateTime?
+  createdAt    DateTime     @default(now())
+
+  comparison Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  user       User       @relation("reportsCreated", fields: [userId], references: [id])
+  resolvedBy User?      @relation("reportsResolved", fields: [resolvedById], references: [id])
+
+  @@index([comparisonId, status])
+  @@index([status, createdAt])
+  @@map("comparison_reports")
 }

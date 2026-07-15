@@ -166,6 +166,7 @@ export class ProcessAndPersistPairUseCase {
         supplier: reconciliation.supplier,
         status: status === ComparisonStatus.OK ? 'OK' : 'DISCREPANCIES',
         numDiscrepancies: reconciliation.totalDiscrepancies,
+        comparisonId,
         reportFilename: reportName,
         reportBase64: toBase64(reportBytes),
         detail: {
@@ -175,8 +176,11 @@ export class ProcessAndPersistPairUseCase {
         },
       };
     } catch (e) {
+      let persistedId: string | undefined;
       try {
+        const errorId = cuid();
         await this.repo.create({
+          id: errorId,
           businessId: business.id,
           userId,
           durationMs: Date.now() - t0,
@@ -196,6 +200,7 @@ export class ProcessAndPersistPairUseCase {
           },
           files: [],
         });
+        persistedId = errorId;
       } catch {
         /* best-effort */
       }
@@ -206,6 +211,7 @@ export class ProcessAndPersistPairUseCase {
         supplier: '',
         status: 'ERROR',
         numDiscrepancies: 0,
+        comparisonId: persistedId,
         error: e instanceof Error ? e.message : 'Unknown error',
       };
     }

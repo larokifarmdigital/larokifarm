@@ -15,5 +15,8 @@ export default async function Home() {
       getComparisonRepository(),
     ).execute(session.user.businessId);
   }
-  return <ReconcilerView budgetStatus={budgetStatus} />;
+  const currentUser = session?.user
+    ? { id: session.user.id, role: session.user.role }
+    : null;
+  return <ReconcilerView budgetStatus={budgetStatus} currentUser={currentUser} />;
 }

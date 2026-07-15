@@ -14,6 +14,8 @@ export interface PairResult {
   supplier: string;
   status: 'OK' | 'DISCREPANCIES' | 'ERROR';
   numDiscrepancies: number;
+  /** ID de la Comparison persistida — permite reportar errores desde la vista de conciliar. */
+  comparisonId?: string;
   reportFilename?: string;
   /** Report .xlsx as base64 (the browser assembles the ZIP). */
   reportBase64?: string;
