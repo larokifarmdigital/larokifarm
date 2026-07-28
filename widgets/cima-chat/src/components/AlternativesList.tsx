@@ -67,12 +67,12 @@ export function AlternativesList({
             return (
               <li key={m.nregistro}>
                 <button
-                  class={`cima-result compact${inStock ? ' in-stock' : ''}`}
+                  class="cima-result compact"
                   onClick={() => onPick(m)}
                 >
                   <div class="cima-result-name">
                     {m.nombre}
-                    {inStock && <span class="cima-badge stock">⭐ En stock</span>}
+                    {inStock && <span class="cima-badge stock">Disponible</span>}
                   </div>
                   <div class="cima-result-meta">
                     {m.labtitular && <span>{m.labtitular}</span>}

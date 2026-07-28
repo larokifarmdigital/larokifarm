@@ -79,3 +79,11 @@ studio/
     ├── cataluna-2026.ndjson
     └── esqueletos-ccaa.ndjson
 ```
+
+
+<script async src="https://cse.google.com/cse.js?cx=f44c6cce9dd604c0a">
+</script>
+<div class="gcse-search"></div>
+
+
+AIzaSyC3XFk08chVhE7KjgZ6a12WPAyc078BRO4

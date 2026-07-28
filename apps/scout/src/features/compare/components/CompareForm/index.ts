@@ -1,0 +1,1 @@
+export { CompareForm } from './CompareForm';

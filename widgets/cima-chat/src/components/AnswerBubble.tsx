@@ -25,7 +25,10 @@ export function AnswerBubble({ question, answer, tipo, seccion, loading, med }: 
         ) : answer.trim().length === 0 ? (
           <span class="cima-empty-answer">La sección está vacía o no disponible.</span>
         ) : (
-          <p class="cima-answer-text">{answer}</p>
+          <div
+            class="cima-answer-text cima-rich"
+            dangerouslySetInnerHTML={{ __html: answer }}
+          />
         )}
         <div class="cima-bubble-source">
           Fuente: AEMPS · {tipoLabel} · sección {seccion}

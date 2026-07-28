@@ -1,4 +1,4 @@
-import type { ParsedRow } from './excel';
+import type { ParsedRow } from './excel.js';
 
 const CIMA_BASE = 'https://cima.aemps.es/cima/rest';
 const CHUNK_SIZE = 10;
@@ -31,58 +31,11 @@ interface CimaList {
   resultados: CimaListItem[];
 }
 
-interface CimaAtc {
-  codigo: string;
-  nombre: string;
-  nivel: number;
-}
-
-interface CimaPrincipioActivo {
-  nombre: string;
-}
-
-interface CimaDetail {
-  nregistro: string;
-  nombre: string;
-  labtitular?: string;
-  receta?: boolean;
-  atcs?: CimaAtc[];
-  principiosActivos?: CimaPrincipioActivo[];
-  pactivos?: string;
-}
-
 async function fetchByCn(cn: string): Promise<CimaListItem | null> {
   const res = await fetch(`${CIMA_BASE}/medicamentos?cn=${encodeURIComponent(cn)}&pagesize=1`);
   if (!res.ok) throw new Error(`CIMA cn=${cn} ${res.status}`);
   const json = (await res.json()) as CimaList;
   return json.resultados?.[0] ?? null;
-}
-
-async function fetchDetail(nregistro: string): Promise<CimaDetail | null> {
-  const res = await fetch(
-    `${CIMA_BASE}/medicamento?nregistro=${encodeURIComponent(nregistro)}`,
-  );
-  if (!res.ok) return null;
-  return (await res.json()) as CimaDetail;
-}
-
-function dedupeAtcs(detail: CimaDetail | null): string[] {
-  const set = new Set<string>();
-  for (const a of detail?.atcs ?? []) if (a.codigo) set.add(a.codigo);
-  return [...set];
-}
-
-function principiosOf(detail: CimaDetail | null): string[] {
-  if (!detail) return [];
-  const arr = detail.principiosActivos?.map((p) => p.nombre).filter(Boolean);
-  if (arr && arr.length) return arr.map((s) => s.toLowerCase());
-  if (detail.pactivos) {
-    return detail.pactivos
-      .split(',')
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  return [];
 }
 
 async function enrichOne(row: ParsedRow): Promise<
@@ -97,17 +50,16 @@ async function enrichOne(row: ParsedRow): Promise<
         notFound: { cn: row.cn, descripcion: row.descripcion, reason: 'not-in-cima' },
       };
     }
-    const detail = await fetchDetail(listItem.nregistro);
     return {
       ok: true,
       item: {
         cn: row.cn,
         nregistro: listItem.nregistro,
-        nombre: detail?.nombre ?? listItem.nombre,
-        atcs: dedupeAtcs(detail),
-        principios: principiosOf(detail),
-        labtitular: detail?.labtitular ?? listItem.labtitular,
-        receta: detail?.receta ?? listItem.receta,
+        nombre: listItem.nombre,
+        atcs: [],
+        principios: [],
+        labtitular: listItem.labtitular,
+        receta: listItem.receta,
       },
     };
   } catch {
@@ -120,7 +72,10 @@ async function enrichOne(row: ParsedRow): Promise<
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-export async function enrichRows(rows: ParsedRow[]): Promise<{
+export async function enrichRows(
+  rows: ParsedRow[],
+  onProgress?: (done: number, total: number) => void,
+): Promise<{
   items: InventoryItem[];
   notFound: NotFound[];
 }> {
@@ -133,6 +88,7 @@ export async function enrichRows(rows: ParsedRow[]): Promise<{
       if (r.ok) items.push(r.item);
       else notFound.push(r.notFound);
     }
+    if (onProgress) onProgress(Math.min(i + CHUNK_SIZE, rows.length), rows.length);
     if (i + CHUNK_SIZE < rows.length) await sleep(CHUNK_DELAY_MS);
   }
   return { items, notFound };

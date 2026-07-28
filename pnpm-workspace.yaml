@@ -4,3 +4,7 @@ packages:
   - "widgets/*"
   - "workers/*"
   - "studio"
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

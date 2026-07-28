@@ -10,7 +10,7 @@ interface Props {
   onShowAlternatives: (atc: string, label: string) => void;
 }
 
-const INDICACION_PREVIEW = 260;
+const INDICACION_PREVIEW_MAX_HEIGHT = 120;
 
 function docLabel(tipo: number) {
   return tipo === 1 ? 'Ficha técnica' : tipo === 2 ? 'Prospecto' : 'Documento';
@@ -25,10 +25,6 @@ export function MedDetail({ med, indicacion, onBack, onShowAlternatives }: Props
   const [expanded, setExpanded] = useState(false);
 
   const indicacionTrim = (indicacion || '').trim();
-  const tooLong = indicacionTrim.length > INDICACION_PREVIEW;
-  const visible = expanded || !tooLong
-    ? indicacionTrim
-    : `${indicacionTrim.slice(0, INDICACION_PREVIEW).trimEnd()}…`;
   const ftUrl = fullFtUrl(med);
 
   return (
@@ -42,16 +38,18 @@ export function MedDetail({ med, indicacion, onBack, onShowAlternatives }: Props
             <strong>¿Para qué se utiliza?</strong>
             <span class="cima-indicacion-source">FT 4.1 · AEMPS</span>
           </header>
-          <p class="cima-indicacion-body">{visible}</p>
-          {tooLong && (
-            <button
-              class="cima-indicacion-toggle"
-              onClick={() => setExpanded((v) => !v)}
-              aria-expanded={expanded}
-            >
-              {expanded ? 'Ver menos' : 'Ver más'}
-            </button>
-          )}
+          <div
+            class={`cima-indicacion-body cima-rich${expanded ? ' expanded' : ''}`}
+            style={expanded ? undefined : { maxHeight: `${INDICACION_PREVIEW_MAX_HEIGHT}px` }}
+            dangerouslySetInnerHTML={{ __html: indicacionTrim }}
+          />
+          <button
+            class="cima-indicacion-toggle"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+          >
+            {expanded ? 'Ver menos' : 'Ver más'}
+          </button>
           {ftUrl && (
             <a
               class="cima-indicacion-link"

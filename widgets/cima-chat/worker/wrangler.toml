@@ -1,23 +1,16 @@
 name = "cima-inventory-sync"
 main = "src/index.ts"
 compatibility_date = "2025-05-01"
-compatibility_flags = ["nodejs_compat"]
 
-[vars]
-AZURE_TENANT_ID = ""
-AZURE_CLIENT_ID = ""
-
-# Secrets configured via wrangler secret put:
-#   - AZURE_CLIENT_SECRET     (Azure App Registration client secret)
-#   - SHAREPOINT_SHARE_URL    (link contains a sharing token, keep secret)
-
-[triggers]
-crons = ["0 */6 * * *"]
+# This worker only serves inventory from KV.
+# The sync (download from SharePoint, parse, enrich against CIMA, write to KV)
+# runs in GitHub Actions — see apps/inventory-sync/ and
+# .github/workflows/inventory-sync.yml.
 
 [[kv_namespaces]]
 binding = "INVENTORY_KV"
-id = "REPLACE_WITH_KV_ID"
-preview_id = "REPLACE_WITH_PREVIEW_KV_ID"
+id = "c187e8b4574e41378f72add5f2a7e813"
+preview_id = "bf100d9b1231485c87cbf808dd34cbcd"
 
 [observability]
 enabled = true

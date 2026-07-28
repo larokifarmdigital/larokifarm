@@ -140,16 +140,45 @@ export function listSecciones(
   );
 }
 
-export function getSeccionContenido(
+interface CimaSectionContent {
+  seccion: string;
+  titulo?: string;
+  contenido?: string;
+}
+
+function cleanCimaHtml(html: string): string {
+  return html
+    .replace(/\s(style|class|type|lang|dir|align)="[^"]*"/gi, '')
+    .replace(/<span[^>]*>/gi, '')
+    .replace(/<\/span>/gi, '')
+    .replace(/&#160;|&nbsp;/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+export async function getSeccionContenido(
   nregistro: string,
   tipo: DocTipo,
   seccion: string,
   signal?: AbortSignal,
 ): Promise<string> {
-  return getText(
+  const raw = await getText(
     `${BASE}/docSegmentado/contenido/${tipo}?nregistro=${encodeURIComponent(nregistro)}&seccion=${encodeURIComponent(seccion)}`,
     signal,
   );
+  if (!raw) return '';
+  try {
+    const parsed = JSON.parse(raw) as CimaSectionContent[] | CimaSectionContent;
+    const arr = Array.isArray(parsed) ? parsed : [parsed];
+    return arr
+      .map((s) => s?.contenido ?? '')
+      .filter(Boolean)
+      .map(cleanCimaHtml)
+      .join('\n');
+  } catch {
+    return raw.trim();
+  }
 }
 
 export function shortName(nombre: string): string {

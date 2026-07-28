@@ -36,12 +36,12 @@ export function ResultList({ items, onSelect, loading, total, query, inventory }
           return (
             <li key={m.nregistro}>
               <button
-                class={`cima-result${inStock ? ' in-stock' : ''}`}
+                class="cima-result"
                 onClick={() => onSelect(m)}
               >
                 <div class="cima-result-name">
                   {m.nombre}
-                  {inStock && <span class="cima-badge stock">⭐ En stock</span>}
+                  {inStock && <span class="cima-badge stock">Disponible</span>}
                 </div>
                 <div class="cima-result-meta">
                   {m.labtitular && <span>{m.labtitular}</span>}

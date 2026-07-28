@@ -34,10 +34,7 @@ export async function getAccessToken(cfg: GraphConfig): Promise<string> {
 }
 
 function encodeShareUrl(url: string): string {
-  const utf8 = new TextEncoder().encode(url);
-  let binary = '';
-  for (const b of utf8) binary += String.fromCharCode(b);
-  const b64 = btoa(binary);
+  const b64 = Buffer.from(url, 'utf8').toString('base64');
   const b64url = b64.replace(/=+$/g, '').replace(/\//g, '_').replace(/\+/g, '-');
   return `u!${b64url}`;
 }

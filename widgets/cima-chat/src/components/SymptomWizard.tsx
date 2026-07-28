@@ -434,12 +434,12 @@ function ResultsBlock({
               return (
                 <button
                   key={m.nregistro}
-                  class={`cima-result compact${inStock ? ' in-stock' : ''}`}
+                  class="cima-result compact"
                   onClick={() => onPick(m)}
                 >
                   <div class="cima-result-name">
                     {m.nombre}
-                    {inStock && <span class="cima-badge stock">⭐ En stock</span>}
+                    {inStock && <span class="cima-badge stock">Disponible</span>}
                   </div>
                   <div class="cima-result-meta">
                     {m.labtitular && <span>{m.labtitular}</span>}
@@ -477,12 +477,12 @@ function ResultsBlock({
                   return (
                     <button
                       key={m.nregistro}
-                      class={`cima-result compact rx${inStock ? ' in-stock' : ''}`}
+                      class="cima-result compact rx"
                       onClick={() => onPick(m)}
                     >
                       <div class="cima-result-name">
                         {m.nombre}
-                        {inStock && <span class="cima-badge stock">⭐ En stock</span>}
+                        {inStock && <span class="cima-badge stock">Disponible</span>}
                       </div>
                       <div class="cima-result-meta">
                         {m.labtitular && <span>{m.labtitular}</span>}
