@@ -157,8 +157,6 @@ export type Farmacia = {
   servicios?: Servicio[];
   redesSociales?: RedesSociales;
   seo?: SeoCampos;
-  /** Slug de la CCAA cuyo calendario de vacunación destaca esta farmacia. */
-  comunidadPredeterminadaSlug?: string;
   /** Resource name de Google Business Profile (accounts/X/locations/Y). */
   googleLocationName?: string;
   /** URL pública del negocio en Google Maps. */
@@ -203,7 +201,6 @@ const FARMACIA_PROJECTION = `
     titulo,
     imagenOg { asset->{ url } }
   },
-  "comunidadPredeterminadaSlug": comunidadPredeterminada->slug.current,
   googleLocationName,
   googleMapsUrl,
   heroChip,

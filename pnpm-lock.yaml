@@ -12,31 +12,6 @@ importers:
         specifier: ^2.5.0
         version: 2.9.14
 
-  apps/calendario-vacunas:
-    dependencies:
-      '@larokifarm/calendario-vacunas':
-        specifier: workspace:*
-        version: link:../../packages/calendario-vacunas
-      '@larokifarm/i18n-utils':
-        specifier: workspace:*
-        version: link:../../packages/i18n-utils
-      '@sanity/client':
-        specifier: ^6.22.0
-        version: 6.29.1
-      astro:
-        specifier: ^5.1.0
-        version: 5.18.1(@types/node@24.12.4)(aws4fetch@1.0.20)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.16.9)(tsx@4.22.4)(typescript@5.9.3)(yaml@2.9.0)
-    devDependencies:
-      '@astrojs/check':
-        specifier: ^0.9.0
-        version: 0.9.9(prettier@3.8.3)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.2
-        version: 5.9.3
-      vite:
-        specifier: ^8.0.12
-        version: 8.0.14(@types/node@24.12.4)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.16.9)(tsx@4.22.4)(yaml@2.9.0)
-
   apps/chamarro:
     dependencies:
       '@astrojs/sitemap':
@@ -235,9 +210,6 @@ importers:
       '@astrojs/sitemap':
         specifier: ^3.2.0
         version: 3.7.2
-      '@larokifarm/calendario-vacunas':
-        specifier: workspace:*
-        version: link:../../packages/calendario-vacunas
       '@larokifarm/i18n-utils':
         specifier: workspace:*
         version: link:../../packages/i18n-utils
@@ -269,21 +241,6 @@ importers:
       vite:
         specifier: ^8.0.12
         version: 8.0.14(@types/node@24.12.4)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.16.9)(tsx@4.22.4)(yaml@2.9.0)
-
-  packages/calendario-vacunas:
-    dependencies:
-      '@larokifarm/i18n-utils':
-        specifier: workspace:*
-        version: link:../i18n-utils
-      '@larokifarm/sanity-client':
-        specifier: workspace:*
-        version: link:../sanity-client
-      '@sanity/client':
-        specifier: ^6.22.0
-        version: 6.29.1
-      astro:
-        specifier: ^5.1.0
-        version: 5.18.1(@types/node@24.12.4)(aws4fetch@1.0.20)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.16.9)(tsx@4.22.4)(typescript@5.9.3)(yaml@2.9.0)
 
   packages/i18n-utils: {}
 

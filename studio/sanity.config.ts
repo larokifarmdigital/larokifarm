@@ -4,10 +4,9 @@ import { structureTool } from 'sanity/structure';
 import { visionTool } from '@sanity/vision';
 import { internationalizedArray } from 'sanity-plugin-internationalized-array';
 import { cimaSchemaTypes } from './schemas/cima';
-import { calendarioSchemaTypes } from './schemas/calendario';
 import { farmaciasSchemaTypes } from './schemas/farmacias';
 import { idiomasSchemaTypes } from './schemas/idiomas';
-import { calendarioStructure } from './structure';
+import { farmaciasStructure } from './structure';
 
 const projectId = process.env.SANITY_STUDIO_PROJECT_ID || 'yovi040n';
 
@@ -54,14 +53,14 @@ export default defineConfig([
     schema: { types: cimaSchemaTypes },
   },
   {
-    name: 'calendario-vacunas',
-    title: 'Contenido editorial',
-    subtitle: 'Calendarios de vacunación y fichas de farmacia',
-    basePath: '/calendario',
+    name: 'farmacias',
+    title: 'Farmacias',
+    subtitle: 'Fichas y reseñas',
+    basePath: '/farmacias',
     projectId,
     dataset: 'calendario',
     plugins: [
-      structureTool({ structure: calendarioStructure }),
+      structureTool({ structure: farmaciasStructure }),
       internationalizedArray({
         languages: cargarIdiomas,
         // Cuando se haga "Add language" en un campo i18n vacío, el plugin
@@ -89,7 +88,6 @@ export default defineConfig([
     schema: {
       types: [
         ...idiomasSchemaTypes,
-        ...calendarioSchemaTypes,
         ...farmaciasSchemaTypes,
       ],
     },

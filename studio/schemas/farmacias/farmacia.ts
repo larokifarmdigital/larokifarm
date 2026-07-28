@@ -133,16 +133,6 @@ export const farmacia = defineType({
       type: 'string',
       group: 'identidad',
     }),
-    defineField({
-      name: 'comunidadPredeterminada',
-      title: 'Comunidad autónoma del calendario',
-      type: 'reference',
-      group: 'identidad',
-      to: [{ type: 'comunidad' }],
-      description:
-        'CCAA cuyo calendario de vacunación se destaca por defecto en /calendario-vacunacion de esta farmacia. Si se deja vacío, se muestra solo el índice.',
-    }),
-
     // ── Hero ─────────────────────────────────────────────────────────
     defineField({
       name: 'heroChip',
