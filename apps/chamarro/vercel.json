@@ -17,7 +17,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; img-src 'self' data: https://cdn.sanity.io https://larokifarm-cima-chat-5f3.pages.dev; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://larokifarm-cima-chat-5f3.pages.dev; frame-src https://www.google.com https://maps.google.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdn.sanity.io https://larokifarm-cima-chat-5f3.pages.dev; manifest-src 'self'; base-uri 'self'; form-action 'self'"
+          "value": "default-src 'self'; img-src 'self' data: https://cdn.sanity.io https://larokifarm-cima-chat-5f3.pages.dev; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://larokifarm-cima-chat-5f3.pages.dev; frame-src https://www.google.com https://maps.google.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdn.sanity.io https://larokifarm-cima-chat-5f3.pages.dev https://cima.aemps.es; manifest-src 'self'; base-uri 'self'; form-action 'self'"
         }
       ]
     },
