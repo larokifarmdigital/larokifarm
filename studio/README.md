@@ -1,11 +1,13 @@
 # larokifarm-studio
 
-Sanity Studio compartido entre los mini-proyectos de `larokifarm/`. Dos workspaces dentro del mismo proyecto Sanity (`yovi040n`):
+Sanity Studio compartido entre los proyectos de `larokifarm/`. Dos workspaces dentro del mismo proyecto Sanity (`yovi040n`):
 
 | Workspace | Dataset | Usado por |
 |---|---|---|
 | `cima-chat` | `cima` | `widgets/cima-chat` |
-| `calendario-vacunas` | `calendario` | `apps/calendario-vacunas` |
+| `farmacias` | `calendario` | `apps/torrents`, `apps/chamarro` |
+
+> El dataset sigue llamándose `calendario` por herencia histórica. Renombrarlo a `farmacias` es un cambio cosmético pendiente (`sanity dataset copy` + actualizar clientes de las apps).
 
 ## Primer arranque (una sola vez)
 
@@ -16,16 +18,13 @@ npm install
 # Login en Sanity (la primera vez)
 npx sanity login
 
-# Preparar los dos datasets (cima + calendario)
+# Preparar los dos datasets
 # Sanity crea automáticamente "production" al hacer un proyecto.
-# El plan free permite 2 datasets total, así que liberamos el slot de production.
 npx sanity dataset delete production       # vacío, lo creó Sanity solo
 npx sanity dataset create cima --visibility public
 npx sanity dataset create calendario --visibility public
-npx sanity dataset list                    # verificar que están y son public
+npx sanity dataset list                    # verificar
 ```
-
-> Si algún `delete`/`visibility` falla por la versión del CLI (3.x), entra en sanity.io/manage → proyecto → Datasets y haz la misma operación desde la UI en 30 segundos.
 
 ## Día a día
 
@@ -38,15 +37,12 @@ npm run deploy       # despliega a {nombre}.sanity.studio
 ## Importar el seed inicial (una sola vez)
 
 ```bash
-# Catálogo CIMA: 28 principios activos + 12 síntomas + 7 perfiles
+# Catálogo CIMA: principios activos + síntomas + perfiles
 node seed/build-cima.mjs   # regenera el NDJSON si modificas el script
 npm run seed:cima
-
-# Calendarios de vacunación
-npm run seed:calendario
 ```
 
-> ⚠️ Los comandos `seed:*` usan `--replace` en el primer fichero. Si el dataset ya tiene datos editados, **NO ejecutes seed** otra vez sin confirmar primero (borrarías el trabajo del cliente).
+> ⚠️ `seed:cima` usa `--replace`. Si el dataset `cima` ya tiene datos editados, **NO** lo ejecutes otra vez sin confirmar primero.
 
 ## Variable de entorno opcional
 
@@ -62,28 +58,17 @@ Por defecto usa `yovi040n` (larokifarm).
 
 ```
 studio/
-├── sanity.config.ts        # 2 workspaces (cima-chat + calendario-vacunas)
+├── sanity.config.ts        # 2 workspaces (cima-chat + farmacias)
 ├── sanity.cli.ts           # default dataset = cima
+├── structure.ts            # menú del workspace farmacias
 ├── schemas/
 │   ├── cima/               # síntomas, perfiles, principios activos
-│   │   ├── sintoma.ts
-│   │   ├── perfil.ts
-│   │   ├── principioActivo.ts
-│   │   └── index.ts
-│   └── calendario/         # comunidad, vacuna, entrada, etc.
-│       └── index.ts
+│   ├── farmacias/          # farmacia, resenaGoogle, iconoLucide
+│   ├── idiomas/            # catálogo de idiomas
+│   └── lib/                # helpers (validaciones i18n, iconoLucide)
+├── scripts/                # utilities de mantenimiento
+├── migrations/             # migraciones de datos
 └── seed/
-    ├── build-cima.mjs      # regenera cima-initial.ndjson
-    ├── cima-initial.ndjson
-    ├── comun-estatal-2026.ndjson
-    ├── cataluna-2026.ndjson
-    └── esqueletos-ccaa.ndjson
+    ├── build-cima.mjs
+    └── cima-initial.ndjson
 ```
-
-
-<script async src="https://cse.google.com/cse.js?cx=f44c6cce9dd604c0a">
-</script>
-<div class="gcse-search"></div>
-
-
-AIzaSyC3XFk08chVhE7KjgZ6a12WPAyc078BRO4
