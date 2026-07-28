@@ -129,15 +129,20 @@ export function getProblemasSuministro(
   );
 }
 
-export function listSecciones(
+export async function listSecciones(
   nregistro: string,
   tipo: DocTipo,
   signal?: AbortSignal,
 ): Promise<CimaSeccion[]> {
-  return getJSON(
+  const raw = await getJSON<unknown>(
     `${BASE}/docSegmentado/secciones/${tipo}?nregistro=${encodeURIComponent(nregistro)}`,
     signal,
   );
+  if (Array.isArray(raw)) return raw as CimaSeccion[];
+  if (raw && typeof raw === 'object' && Array.isArray((raw as { resultados?: unknown }).resultados)) {
+    return (raw as { resultados: CimaSeccion[] }).resultados;
+  }
+  return [];
 }
 
 interface CimaSectionContent {

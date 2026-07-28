@@ -11,7 +11,7 @@ interface Props {
 }
 
 function has(list: CimaSeccion[], seccion: string): boolean {
-  return list.some((s) => s.seccion === seccion);
+  return Array.isArray(list) && list.some((s) => s.seccion === seccion);
 }
 
 export function QuestionChips({
