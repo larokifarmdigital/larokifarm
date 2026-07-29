@@ -272,4 +272,17 @@ describe('reconcile', () => {
     expect(r.lines[0].unitsOrdered).toBe(10);
     expect(r.lines[0].status).toBe('OK');
   });
+
+  it('suma cantidades cuando la factura repite el C.N. en dos lotes SIN descuento (no son bonificación)', () => {
+    const r = reconcile(
+      deliveryNote([
+        { nationalCode: '2049949', description: 'ARCID STICKS', quantity: 3, unitPrice: 7.37, discount: 0 },
+        { nationalCode: '2049949', description: 'ARCID STICKS', quantity: 72, unitPrice: 7.37, discount: 0 },
+      ]),
+      order([{ productCode: '2049949', description: 'ARCID STICKS', units: 75, price: 7.37, discount: 0 }]),
+    );
+    expect(r.lines[0].unitsDelivered).toBe(75);
+    expect(r.lines[0].freeUnitsDelivered).toBe(0);
+    expect(r.lines[0].status).toBe('OK');
+  });
 });

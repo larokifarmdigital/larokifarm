@@ -40,8 +40,12 @@ interface NormLine {
   freeUnits: number;
 }
 
+// Una línea es regalo si el proveedor no cobra por ella: precio a 0 o
+// descuento del 100 %. `discount === 0` es la venta normal (sin descuento),
+// no un regalo — antes lo confundíamos y comíamos líneas de venta cuando el
+// mismo producto venía en dos lotes distintos sin descuento.
 function looksLikeFreebie(l: NormLine): boolean {
-  return l.price === 0 || l.discount === 0 || l.discount === 100;
+  return l.price === 0 || l.discount === 100;
 }
 
 function mostUnits(ls: NormLine[]): NormLine {
