@@ -9,6 +9,13 @@ export interface DeliveryNoteLine {
   quantity: number;
   unitPrice: number;
   discount?: number;
+  /**
+   * Importe absoluto del descuento en € (línea B "10,00% -7,60" → 7.60,
+   * siempre positivo). Sirve como señal redundante para reconstruir el
+   * `discount` porcentual si Gemini se lo come. Post-proceso lo consume
+   * en `extractDeliveryNote` y luego se puede ignorar downstream.
+   */
+  discountAmount?: number;
   /** Free / bonus units (from the BONIF. column, if any). */
   freeUnits?: number;
 }

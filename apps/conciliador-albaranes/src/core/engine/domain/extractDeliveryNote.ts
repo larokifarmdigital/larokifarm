@@ -34,6 +34,24 @@ Vienen en muchos formatos; adáptate. Extrae cabecera y TODAS las líneas
   Si NO ves una línea aclaratoria con denominador, asume N=1 y deja el precio como está.
 - "discount" = porcentaje de descuento de ESA línea (solo el número, ej. 21 ó 21,5).
   El descuento NO es la bonificación: son cosas distintas.
+- "discountAmount" = importe absoluto en € del descuento de ESA línea, siempre
+  positivo (aunque en el PDF venga con signo -). Es el número que aparece a la
+  derecha del porcentaje en la línea B ("10,00% -7,60" → discountAmount = 7,60).
+  Si el descuento va compuesto en varias filas (Nestlé), suma los importes
+  igual que sumas los porcentajes. Si no hay descuento, deja discountAmount
+  en 0. Este campo es una SEÑAL REDUNDANTE de "discount": rellénalo aunque ya
+  hayas rellenado "discount", nunca es "o uno o el otro".
+- EDGE CASE CRÍTICO — colisión posición N + descuento N,00 %: cuando la fila
+  del artículo empieza con un número de posición (10, 20, 30…) y su línea B
+  de descuento es exactamente ese mismo número seguido de coma cero cero por
+  ciento (ej. posición "10" con dto "10,00%"), es fácil confundirse y perder
+  el descuento. NO son el mismo número: el primero es un ordinal de línea; el
+  segundo es un porcentaje. Rellena SIEMPRE "discount" y "discountAmount" en
+  estos casos. Ejemplo real del PDF:
+    "10    1734051 / RICOLA CARAM.S/AZ 50g REGALIZ   40 UN   1,90   76,00"
+    "                                                       10,00%  -7,60"
+    "     Lote: 2000217140 / Caducidad: 04.2028"
+  Salida correcta: quantity=40, unitPrice=1,90, discount=10, discountAmount=7,60.
 - IMPORTANTE sobre descuentos compuestos: algunos proveedores (ej. Nestlé) aplican
   VARIOS descuentos % a la misma línea en filas separadas ("Descuento del 20.00%",
   "Descuento del 1.50%"). En ese caso devuelve la SUMA de los porcentajes explícitos
@@ -196,6 +214,7 @@ const RESPONSE_SCHEMA = {
           quantity: { type: 'number' },
           unitPrice: { type: 'number' },
           discount: { type: 'number' },
+          discountAmount: { type: 'number' },
           freeUnits: { type: 'number' },
         },
         required: ['description', 'quantity', 'unitPrice'],
@@ -213,6 +232,7 @@ const lineSchema = z.object({
   quantity: z.number(),
   unitPrice: z.number(),
   discount: z.number().optional(),
+  discountAmount: z.number().optional(),
   freeUnits: z.number().optional(),
 });
 const deliveryNoteSchema = z.object({
@@ -312,7 +332,35 @@ export async function extractDeliveryNote(
     totalTokens: data.usageMetadata?.totalTokenCount ?? 0,
   };
 
-  return { data: parsed.data, usage };
+  return { data: reconstructMissingDiscounts(parsed.data), usage };
+}
+
+// NOTE: Gemini a veces omite el porcentaje de descuento aunque haya visto el
+// importe del descuento (o al revés). Si tenemos el importe absoluto y el
+// resto de datos, reconstruimos el % matemáticamente. Es una red de seguridad
+// determinista para los one-offs del modelo (ej. edge case "posición 10 con
+// dto 10,00%" que Gemini se come). No sobreescribe descuentos ya presentes.
+export function reconstructMissingDiscounts(data: DeliveryNoteData): DeliveryNoteData {
+  return {
+    ...data,
+    lines: data.lines.map((line) => {
+      const dto = line.discount ?? 0;
+      const amt = line.discountAmount ?? 0;
+      const subtotal = line.quantity * line.unitPrice;
+      if (dto === 0 && amt > 0 && subtotal > 0) {
+        const reconstructed = (amt / subtotal) * 100;
+        // Solo aceptamos porcentajes en un rango razonable de descuento comercial.
+        if (reconstructed > 0 && reconstructed <= 100) {
+          return { ...line, discount: round2(reconstructed) };
+        }
+      }
+      return line;
+    }),
+  };
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
 }
 
 function geminiErrorMessage(status: number, detail: string): string {

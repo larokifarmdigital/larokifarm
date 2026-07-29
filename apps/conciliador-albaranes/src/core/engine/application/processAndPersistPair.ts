@@ -156,6 +156,13 @@ export class ProcessAndPersistPairUseCase {
           reportFilename: reportName,
           // NOTE: guardamos la conciliación completa para renderizar /historial/[id] sin re-parsear el XLSX.
           lines: reconciliation.lines,
+          // DEBUG local — salida cruda de Gemini por PDF, antes de merge/reconcile. Sirve
+          // para diagnosticar problemas de extracción sin re-lanzar la comparación.
+          rawExtractions: extractions.map((r, i) => ({
+            filename: pair.pdfs[i]?.filename ?? `pdf-${i}`,
+            data: r.data,
+            usage: r.usage,
+          })),
         },
         files: fileInputs,
       });

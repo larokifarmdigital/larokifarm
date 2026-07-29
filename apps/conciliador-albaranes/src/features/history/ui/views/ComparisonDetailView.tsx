@@ -31,6 +31,37 @@ function extractLines(summary: unknown): ReconciledLine[] | undefined {
   return lines as ReconciledLine[];
 }
 
+// DEBUG local — extraccion cruda de Gemini por PDF, disponible solo en
+// comparaciones creadas tras persistir el campo. Para comparaciones antiguas
+// devuelve undefined y el panel no se renderiza.
+interface RawExtractionEntry {
+  filename: string;
+  data: {
+    deliveryNoteNumber?: string;
+    supplier?: string;
+    date?: string;
+    orderNumber?: string;
+    documentKind?: string;
+    lines: Array<{
+      code?: string;
+      nationalCode?: string;
+      ean?: string;
+      description?: string;
+      quantity?: number;
+      unitPrice?: number;
+      discount?: number;
+      freeUnits?: number;
+    }>;
+  };
+  usage?: { promptTokens?: number; candidatesTokens?: number };
+}
+function extractRawExtractions(summary: unknown): RawExtractionEntry[] | undefined {
+  if (!summary || typeof summary !== 'object') return undefined;
+  const raw = (summary as { rawExtractions?: unknown }).rawExtractions;
+  if (!Array.isArray(raw)) return undefined;
+  return raw as RawExtractionEntry[];
+}
+
 const KIND_LABEL: Record<FileKind, string> = {
   PDF_INPUT: 'PDF (entrada)',
   XLSX_INPUT: 'Excel del pedido',
@@ -63,6 +94,10 @@ export async function ComparisonDetailView({ id }: { id: string }) {
   const totalTokens =
     comparison.geminiInputTokens + comparison.geminiOutputTokens;
   const reconciliationLines = extractLines(comparison.summary);
+  const rawExtractions =
+    process.env.NODE_ENV !== 'production'
+      ? extractRawExtractions(comparison.summary)
+      : undefined;
 
   const reports = await new ListReportsByComparisonUseCase(
     getReportRepository(),
@@ -183,7 +218,130 @@ export async function ComparisonDetailView({ id }: { id: string }) {
         initialReports={reportsForClient}
         currentUser={{ id: session.user.id, role: session.user.role }}
       />
+
+      {rawExtractions && rawExtractions.length > 0 && (
+        <DebugRawExtractionsPanel entries={rawExtractions} />
+      )}
     </main>
+  );
+}
+
+function DebugRawExtractionsPanel({ entries }: { entries: RawExtractionEntry[] }) {
+  return (
+    <section className="mt-10 rounded-2xl border-2 border-dashed border-amber-400 bg-amber-50/50 p-5">
+      <header className="mb-4 flex items-center gap-2">
+        <span className="rounded-md bg-amber-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-900">
+          DEBUG · dev only
+        </span>
+        <h2 className="text-sm font-semibold text-slate-900">
+          Extracción cruda de Gemini (por PDF, antes de merge/reconcile)
+        </h2>
+      </header>
+      <p className="mb-4 text-xs text-slate-600">
+        Estos son los datos que Gemini devolvió para cada PDF, tal cual, antes
+        de fusionar múltiples PDFs o de aplicar la reconciliación. Sirve para
+        diagnosticar problemas de extracción (descuentos perdidos, CNs mal
+        clasificados, líneas duplicadas o faltantes). Solo visible en modo dev
+        (NODE_ENV !== production) y solo aparece en comparaciones creadas tras
+        activar la persistencia de rawExtractions.
+      </p>
+      {entries.map((entry, i) => (
+        <details
+          key={i}
+          className="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-white"
+          open={i === 0}
+        >
+          <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-slate-800 hover:bg-slate-50">
+            <span className="font-mono text-xs text-slate-500">#{i + 1}</span>{' '}
+            {entry.filename}
+            {entry.data.documentKind && (
+              <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-slate-600">
+                {entry.data.documentKind}
+              </span>
+            )}
+            <span className="ml-2 text-xs text-slate-400">
+              · {entry.data.lines?.length ?? 0} líneas
+            </span>
+          </summary>
+
+          <div className="border-t border-slate-100 px-4 py-3 text-xs">
+            <dl className="mb-3 grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-4">
+              {entry.data.deliveryNoteNumber && (
+                <DebugField label="Nº albarán/factura" value={entry.data.deliveryNoteNumber} />
+              )}
+              {entry.data.supplier && (
+                <DebugField label="Proveedor" value={entry.data.supplier} />
+              )}
+              {entry.data.date && (
+                <DebugField label="Fecha" value={entry.data.date} />
+              )}
+              {entry.data.orderNumber && (
+                <DebugField label="Nº pedido" value={entry.data.orderNumber} />
+              )}
+              {entry.usage && (
+                <DebugField
+                  label="Tokens (in / out)"
+                  value={`${entry.usage.promptTokens ?? '?'} / ${entry.usage.candidatesTokens ?? '?'}`}
+                />
+              )}
+            </dl>
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] border-collapse text-left font-mono text-[11px]">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
+                    <th className="px-2 py-1 text-right">#</th>
+                    <th className="px-2 py-1">code</th>
+                    <th className="px-2 py-1">CN</th>
+                    <th className="px-2 py-1">ean</th>
+                    <th className="px-2 py-1">description</th>
+                    <th className="px-2 py-1 text-right">qty</th>
+                    <th className="px-2 py-1 text-right">unitPrice</th>
+                    <th className="px-2 py-1 text-right">dto%</th>
+                    <th className="px-2 py-1 text-right">free</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(entry.data.lines ?? []).map((l, idx) => (
+                    <tr
+                      key={idx}
+                      className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
+                    >
+                      <td className="px-2 py-1 text-right text-slate-400">{idx + 1}</td>
+                      <td className="px-2 py-1">{l.code ?? '—'}</td>
+                      <td className="px-2 py-1">{l.nationalCode ?? '—'}</td>
+                      <td className="px-2 py-1">{l.ean ?? '—'}</td>
+                      <td className="px-2 py-1 max-w-[280px] truncate" title={l.description}>
+                        {l.description ?? '—'}
+                      </td>
+                      <td className="px-2 py-1 text-right tabular-nums">{l.quantity ?? 0}</td>
+                      <td className="px-2 py-1 text-right tabular-nums">
+                        {l.unitPrice != null ? l.unitPrice.toFixed(4) : '—'}
+                      </td>
+                      <td className="px-2 py-1 text-right tabular-nums">
+                        {l.discount != null ? l.discount : '—'}
+                      </td>
+                      <td className="px-2 py-1 text-right tabular-nums">{l.freeUnits ?? 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+      ))}
+    </section>
+  );
+}
+
+function DebugField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+        {label}
+      </dt>
+      <dd className="font-mono text-[11px] text-slate-800">{value}</dd>
+    </div>
   );
 }
 
