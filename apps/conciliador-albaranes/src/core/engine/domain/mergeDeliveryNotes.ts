@@ -1,6 +1,15 @@
 import { absorbOrphanDiscountLines } from './absorbOrphanDiscountLines';
-import { cleanAlt, cleanNationalCode } from './numbers';
+import { descriptionMatches } from './descriptionMatch';
+import { cleanAlt, cleanNationalCode, rescueNationalCode } from './numbers';
 import type { DeliveryNoteData, DeliveryNoteLine } from './types';
+
+function hasIdentifier(line: DeliveryNoteLine): boolean {
+  return Boolean(
+    cleanNationalCode(line.nationalCode) ||
+      cleanAlt(line.ean) ||
+      cleanAlt(line.code),
+  );
+}
 
 // NOTE: fusiona N PDFs del mismo envío (albarán+factura). Union-find sobre C.N./EAN/cód. interno. Prioridad por campo: qty/freeUnits/EAN ← albarán; unitPrice/discount/C.N. ← factura.
 export function mergeDeliveryNotes(deliveryNotes: DeliveryNoteData[]): DeliveryNoteData {
@@ -31,7 +40,9 @@ export function mergeDeliveryNotes(deliveryNotes: DeliveryNoteData[]): DeliveryN
 
   const indexByKey = new Map<string, number[]>();
   items.forEach((it, i) => {
-    const cn = cleanNationalCode(it.line.nationalCode);
+    // rescueNationalCode también dispara si el "code" es un CN de 6/7 dígitos
+    // — así "710177" (6d) y "7101772" (6d + control) caen al mismo grupo.
+    const cn = cleanNationalCode(rescueNationalCode(it.line.nationalCode, it.line.code));
     const ean = cleanAlt(it.line.ean);
     const cod = cleanAlt(it.line.code);
     const keys = [
@@ -48,6 +59,21 @@ export function mergeDeliveryNotes(deliveryNotes: DeliveryNoteData[]): DeliveryN
 
   for (const indices of indexByKey.values()) {
     for (let i = 1; i < indices.length; i++) union(indices[0], indices[i]);
+  }
+
+  // 4º nivel: cuando una línea NO tiene C.N./EAN/cód. interno (típico de
+  // pedidos-PDF de Zambon), intentamos vincularla por descripción con
+  // umbral estricto (marca + números iguales + overlap≥0.7). Sólo si al
+  // menos UN lado no tenía identificador — así no confundimos dos SKUs
+  // con identificadores distintos aunque tengan descripción parecida.
+  for (let i = 0; i < items.length; i++) {
+    for (let j = i + 1; j < items.length; j++) {
+      if (find(i) === find(j)) continue;
+      if (hasIdentifier(items[i].line) && hasIdentifier(items[j].line)) continue;
+      const descA = items[i].line.description ?? '';
+      const descB = items[j].line.description ?? '';
+      if (descriptionMatches(descA, descB)) union(i, j);
+    }
   }
 
   const groups = new Map<number, Source[]>();
@@ -135,7 +161,14 @@ function mergeLines(group: Source[]): DeliveryNoteLine[] {
       description: pickStr(deliveryNoteOrder, (l) => l.description) ?? '',
       quantity: pickNum(deliveryNoteOrder, (l) => l.quantity) ?? 0,
       unitPrice: pickNum(invoiceOrder, (l) => l.unitPrice) ?? 0,
-      discount: pickNumIncl0(invoiceOrder, (l) => l.discount),
+      // Prioridad: cualquier descuento no-cero de cualquier fuente > 0
+      // explícito. Antes se aceptaba el 0 de la factura aunque el pedido/
+      // albarán trajera un descuento real (caso Zambon: la factura totaliza
+      // el descuento al pie del documento, no lo desglosa por línea, y Gemini
+      // devuelve 0 → se comía el 20 % del pedido).
+      discount:
+        pickNum(anyOrder, (l) => l.discount) ??
+        pickNumIncl0(invoiceOrder, (l) => l.discount),
       freeUnits: pickNum(deliveryNoteOrder, (l) => l.freeUnits),
     },
   ];

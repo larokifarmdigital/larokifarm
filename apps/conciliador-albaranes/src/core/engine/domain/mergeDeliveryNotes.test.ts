@@ -231,9 +231,62 @@ describe('mergeDeliveryNotes', () => {
     expect(r.lines.every((l) => l.unitPrice === 7.37 && l.discount === 0)).toBe(true);
   });
 
-  // Si solo hay descuentos en la factura, el campo debe llegar al fusionado.
-  // Validamos también que descuento 0 explícito de la factura se respeta.
-  it('descuento 0 explícito de la factura se respeta (no se busca en el albarán)', () => {
+  // Caso Zambon: pedido-PDF sin códigos y factura con código interno. Se
+  // vinculan por descripción (fuzzy) como red de seguridad.
+  it('Zambon: pedido sin CN/EAN/code cruza con factura por descripcion', () => {
+    const pedido: DeliveryNoteData = {
+      deliveryNoteNumber: 'O-402234',
+      documentKind: 'other',
+      lines: [
+        line({ description: 'ULTRA-LEVURA 250MG 20 CAPS', quantity: 20, unitPrice: 9.77, discount: 20 }),
+        line({ description: 'ESPIDIFEN 600MG 40 SOB MENTA EFG', quantity: 48, unitPrice: 5.10, discount: 7 }),
+      ],
+    };
+    const factura: DeliveryNoteData = {
+      deliveryNoteNumber: '1026027419',
+      documentKind: 'invoice',
+      lines: [
+        line({ code: '7101772', description: 'ULTRA-LEVURA 250MG 20CPS -BL-', quantity: 20, unitPrice: 9.77 }),
+        line({ code: '6794272', description: 'ESPIDIFEN 600MG MENTA EFG 40SOB', quantity: 48, unitPrice: 5.10 }),
+      ],
+    };
+    const r = mergeDeliveryNotes([pedido, factura]);
+    expect(r.lines).toHaveLength(2);
+    // Cada línea fusionada mantiene el código de la factura y aporta el descuento del pedido.
+    const ultra = r.lines.find((l) => l.code === '7101772')!;
+    expect(ultra.discount).toBe(20);
+    expect(ultra.quantity).toBe(20);
+    const espidifen = r.lines.find((l) => l.code === '6794272')!;
+    expect(espidifen.discount).toBe(7);
+  });
+
+  it('NO cruza dos SKUs con codigos distintos aunque la descripcion se parezca', () => {
+    const dn: DeliveryNoteData = {
+      deliveryNoteNumber: 'A',
+      documentKind: 'deliveryNote',
+      lines: [
+        line({ code: 'X100', description: 'ULTRA-LEVURA 250MG 20 CAPS', quantity: 20, unitPrice: 10 }),
+      ],
+    };
+    const inv: DeliveryNoteData = {
+      deliveryNoteNumber: 'B',
+      documentKind: 'invoice',
+      lines: [
+        line({ code: 'X200', description: 'ULTRA-LEVURA 250MG 20CPS -BL-', quantity: 20, unitPrice: 10 }),
+      ],
+    };
+    // Aunque las descripciones matchean, ambos tienen code distinto → NO se cruzan.
+    const r = mergeDeliveryNotes([dn, inv]);
+    expect(r.lines).toHaveLength(2);
+  });
+
+  // Prioridad de descuento: cualquier valor no-cero > 0 explícito. Antes se
+  // respetaba el 0 de la factura, pero eso se comía descuentos reales cuando
+  // la factura totalizaba el descuento al pie (Zambon-style) y Gemini emitía
+  // 0 por línea. Ahora un 5 % del albarán gana al 0 de la factura — si la
+  // factura realmente cobra 0 % y el pedido/albarán decía 5, la discrepancia
+  // saldrá al comparar el merge contra el pedido de Excel.
+  it('descuento no-cero de cualquier fuente gana al 0 (evita perder 5% en Zambon-style)', () => {
     const deliveryNote: DeliveryNoteData = {
       deliveryNoteNumber: 'A1',
       documentKind: 'deliveryNote',
@@ -245,6 +298,38 @@ describe('mergeDeliveryNotes', () => {
       lines: [line({ ean: '1111', quantity: 10, unitPrice: 10, discount: 0 })],
     };
     const r = mergeDeliveryNotes([deliveryNote, invoice]);
-    expect(r.lines[0].discount).toBe(0); // factura manda, aunque sea 0
+    expect(r.lines[0].discount).toBe(5);
+  });
+
+  it('Zambon: pedido con dto 20% + factura sin dto por linea → merged discount=20', () => {
+    const pedido: DeliveryNoteData = {
+      deliveryNoteNumber: 'O-402234',
+      documentKind: 'other',
+      lines: [line({ description: 'ULTRA-LEVURA 250MG 20 CAPS', quantity: 20, unitPrice: 9.77, discount: 20 })],
+    };
+    const factura: DeliveryNoteData = {
+      deliveryNoteNumber: '1026027419',
+      documentKind: 'invoice',
+      lines: [line({ code: '7101772', description: 'ULTRA-LEVURA 250MG 20CPS -BL-', quantity: 20, unitPrice: 9.77, discount: 0 })],
+    };
+    const r = mergeDeliveryNotes([pedido, factura]);
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].discount).toBe(20); // recuperado del pedido, no el 0 de la factura
+    expect(r.lines[0].code).toBe('7101772'); // codigo de la factura persiste
+  });
+
+  it('si todas las fuentes tienen dto 0, el merged mantiene 0 (no se inventa nada)', () => {
+    const a: DeliveryNoteData = {
+      deliveryNoteNumber: 'A',
+      documentKind: 'deliveryNote',
+      lines: [line({ ean: '1111', quantity: 10, unitPrice: 10, discount: 0 })],
+    };
+    const b: DeliveryNoteData = {
+      deliveryNoteNumber: 'B',
+      documentKind: 'invoice',
+      lines: [line({ ean: '1111', quantity: 10, unitPrice: 10, discount: 0 })],
+    };
+    const r = mergeDeliveryNotes([a, b]);
+    expect(r.lines[0].discount).toBe(0);
   });
 });

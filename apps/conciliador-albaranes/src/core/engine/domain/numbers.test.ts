@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanNationalCode, parseNumber } from './numbers';
+import { cleanNationalCode, parseNumber, rescueNationalCode } from './numbers';
 
 describe('cleanNationalCode', () => {
   it('quita no numéricos y deja 6 dígitos', () => {
@@ -18,6 +18,44 @@ describe('cleanNationalCode', () => {
 
   it('acepta números', () => {
     expect(cleanNationalCode(154054)).toBe('154054');
+  });
+});
+
+describe('rescueNationalCode', () => {
+  it('devuelve el nationalCode si viene informado', () => {
+    expect(rescueNationalCode('159259', '')).toBe('159259');
+    expect(rescueNationalCode('159259.0', 'X')).toBe('159259.0');
+  });
+
+  it('rescata CN de 6 digitos desde el campo code', () => {
+    expect(rescueNationalCode('', '159259')).toBe('159259');
+    expect(rescueNationalCode(undefined, '369694')).toBe('369694');
+  });
+
+  it('rescata CN de 7 digitos (con digito de control) desde code (caso Zambon)', () => {
+    expect(rescueNationalCode('', '7101772')).toBe('710177');
+    expect(rescueNationalCode('', '1592590')).toBe('159259');
+    expect(rescueNationalCode('', '8844036')).toBe('884403');
+  });
+
+  it('rescata CN con sufijo .letra/digito', () => {
+    expect(rescueNationalCode('', '192332.P')).toBe('192332');
+    expect(rescueNationalCode('', '159259.0')).toBe('159259');
+  });
+
+  it('NO rescata codigos internos largos (Marvis/Perrigo)', () => {
+    expect(rescueNationalCode('', '5000036689')).toBe('');
+    expect(rescueNationalCode('', '5000036691')).toBe('');
+  });
+
+  it('NO rescata codigos alfanumericos', () => {
+    expect(rescueNationalCode('', 'UN14080')).toBe('');
+    expect(rescueNationalCode('', '12578223A')).toBe('');
+  });
+
+  it('devuelve vacio si no hay nada', () => {
+    expect(rescueNationalCode('', '')).toBe('');
+    expect(rescueNationalCode(undefined, undefined)).toBe('');
   });
 });
 

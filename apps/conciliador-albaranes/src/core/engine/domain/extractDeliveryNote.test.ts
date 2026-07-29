@@ -107,4 +107,52 @@ describe('reconstructMissingDiscounts', () => {
     );
     expect(r.lines[0].discount).toBe(21.45);
   });
+
+  it('reconstruye desde netUnitPrice (caso Hartmann Kneipp 163578)', () => {
+    const r = reconstructMissingDiscounts(
+      build([
+        {
+          nationalCode: '163578',
+          description: 'Kneipp Valeriana Classic 200mg 30Grg E',
+          quantity: 6,
+          unitPrice: 5.2,
+          netUnitPrice: 3.588,
+          discount: 0,
+        },
+      ]),
+    );
+    // (1 − 3.588 / 5.2) × 100 = 31
+    expect(r.lines[0].discount).toBe(31);
+  });
+
+  it('netUnitPrice tiene prioridad sobre discountAmount cuando ambos estan', () => {
+    const r = reconstructMissingDiscounts(
+      build([
+        {
+          description: 'X',
+          quantity: 10,
+          unitPrice: 10,
+          netUnitPrice: 7,   // implica 30 %
+          discountAmount: 20, // implica 20 % — ignorado
+          discount: 0,
+        },
+      ]),
+    );
+    expect(r.lines[0].discount).toBe(30);
+  });
+
+  it('no reconstruye desde netUnitPrice si es >= unitPrice (no hay descuento)', () => {
+    const r = reconstructMissingDiscounts(
+      build([
+        {
+          description: 'X',
+          quantity: 5,
+          unitPrice: 4,
+          netUnitPrice: 4, // igual → dto 0, no tocar
+          discount: 0,
+        },
+      ]),
+    );
+    expect(r.lines[0].discount).toBe(0);
+  });
 });

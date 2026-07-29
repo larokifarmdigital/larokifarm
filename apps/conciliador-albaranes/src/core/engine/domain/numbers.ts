@@ -4,6 +4,24 @@ export function cleanNationalCode(value: unknown): string {
   return String(value).replace(/\D/g, '').slice(0, 6);
 }
 
+// NOTE: detecta un C.N. español embebido en el campo "code" cuando Gemini
+// no lo clasificó como nationalCode. Acepta:
+//   - 6 dígitos exactos ("159259")
+//   - 6 dígitos + dígito de control ("7101772" → "710177", "1592590" → "159259")
+//   - 6 dígitos + "." + letra/dígito ("192332.P", "159259.0")
+// NO acepta 8+ dígitos (protege códigos internos largos tipo Marvis/Perrigo
+// "5000036689"), ni códigos con letras (tipo "UN14080").
+const CN_LIKE = /^(\d{6})(?:\d|\.[A-Z0-9])?$/i;
+export function rescueNationalCode(
+  nationalCode: string | undefined,
+  code: string | undefined,
+): string {
+  if (nationalCode && nationalCode.trim() !== '') return nationalCode;
+  const c = (code ?? '').trim();
+  const m = CN_LIKE.exec(c);
+  return m ? m[1] : '';
+}
+
 // NOTE: uppercase + alfanumérico, sin truncar; devuelve '' si length<4 para evitar joins espurios.
 export function cleanAlt(value: unknown): string {
   if (value === null || value === undefined) return '';

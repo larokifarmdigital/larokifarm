@@ -41,6 +41,13 @@ Vienen en muchos formatos; adáptate. Extrae cabecera y TODAS las líneas
   igual que sumas los porcentajes. Si no hay descuento, deja discountAmount
   en 0. Este campo es una SEÑAL REDUNDANTE de "discount": rellénalo aunque ya
   hayas rellenado "discount", nunca es "o uno o el otro".
+- "netUnitPrice" = precio NETO por unidad tras descuento, si el PDF trae la
+  columna (típico de Hartmann: "Precio Bruto Unit EUR" + "Precio Neto Unit EUR"
+  como dos columnas separadas por línea). Se aplica la misma regla del
+  denominador que a "unitPrice" (dividir si el precio es por N unidades).
+  Es OTRA señal redundante para reconstruir "discount" cuando falla:
+  discount% = (1 − netUnitPrice / unitPrice) × 100. Si el proveedor no
+  imprime precio neto, deja el campo vacío o 0.
 - EDGE CASE CRÍTICO — colisión posición N + descuento N,00 %: cuando la fila
   del artículo empieza con un número de posición (10, 20, 30…) y su línea B
   de descuento es exactamente ese mismo número seguido de coma cero cero por
@@ -177,6 +184,29 @@ CABECERA REPETIDA EN CADA PÁGINA — MUY IMPORTANTE:
   NO es un artículo nuevo. Igual con el "Lote:" siguiente (pertenece al artículo
   cortado, no al 130).
 
+LAYOUT HARTMANN (etiqueta "Dto. por articulo -XX,00%") — IMPORTANTE:
+- Otros proveedores (Hartmann/Peha-soft) usan un formato donde cada ítem trae
+  columnas "Precio Bruto Unit EUR" y "Precio Neto Unit EUR" separadas. El
+  descuento va debajo del ítem como líneas etiquetadas "Dto. por articulo
+  -XX,00%". Puede haber VARIAS por ítem (compuestos) y se SUMAN igual que en
+  Nestlé (no se componen).
+- Regla del salto de página aplica igual: si un ítem queda al final de una
+  página y su "Dto. por articulo" aparece al INICIO de la siguiente
+  (después de la cabecera repetida "CN / Código / Descripción..."), pertenece
+  al ÚLTIMO ítem de la página anterior, NO al primer ítem de la nueva.
+- Doble-verifica con la columna "Precio Neto Unit EUR": el discount que
+  emitas debe cuadrar con "1 − netUnitPrice / unitPrice". Ejemplo real
+  de este PDF Hartmann, transición pág 5 → pág 6:
+    Final página 5:
+      "163578    9032913    Kneipp Valeriana Classic 200mg 30Grg E    6    5,200    3,588    21,530    10,00"
+    Inicio página 6:
+      "CN / Código  Descripción Articulo ... Precio Bruto  Precio Neto  Importe  IVA"  ← cabecera
+      "                                                   Dto. por articulo    -31,00%"  ← ¡de 163578!
+      "163579    9032924    KNEIPP Valeriana Classic 200mg 60Grg E    6    8,850    6,106    36,640    10,00"
+  Salida correcta:
+    - 163578: unitPrice=5,200, netUnitPrice=3,588, discount=31 (¡NO 39!)
+    - 163579: unitPrice=8,850, netUnitPrice=6,106, discount=31
+
 EJEMPLO REAL de tu PDF (FAES FARMA factura multi-página), transición página 2 → 3:
     Final página 2:
       "120  2085848 / CANNAFAES FORTE CREMA 60ML  25 UN  12,02  300,50"
@@ -215,6 +245,7 @@ const RESPONSE_SCHEMA = {
           unitPrice: { type: 'number' },
           discount: { type: 'number' },
           discountAmount: { type: 'number' },
+          netUnitPrice: { type: 'number' },
           freeUnits: { type: 'number' },
         },
         required: ['description', 'quantity', 'unitPrice'],
@@ -233,6 +264,7 @@ const lineSchema = z.object({
   unitPrice: z.number(),
   discount: z.number().optional(),
   discountAmount: z.number().optional(),
+  netUnitPrice: z.number().optional(),
   freeUnits: z.number().optional(),
 });
 const deliveryNoteSchema = z.object({
@@ -335,25 +367,43 @@ export async function extractDeliveryNote(
   return { data: reconstructMissingDiscounts(parsed.data), usage };
 }
 
-// NOTE: Gemini a veces omite el porcentaje de descuento aunque haya visto el
-// importe del descuento (o al revés). Si tenemos el importe absoluto y el
-// resto de datos, reconstruimos el % matemáticamente. Es una red de seguridad
-// determinista para los one-offs del modelo (ej. edge case "posición 10 con
-// dto 10,00%" que Gemini se come). No sobreescribe descuentos ya presentes.
+// NOTE: Gemini a veces omite el porcentaje de descuento aunque haya visto
+// otras señales redundantes (importe del descuento en € o precio neto
+// unitario). Este post-proceso reconstruye el % matemáticamente cuando falta.
+// Es una red de seguridad determinista para los one-offs del modelo. No
+// sobreescribe descuentos ya presentes.
+//
+// Prioridad de señales (la primera que dispare gana):
+//   1. netUnitPrice (columna "Precio Neto" de Hartmann/similar):
+//        discount% = (1 − netUnitPrice / unitPrice) × 100
+//   2. discountAmount (línea B "10,00% -7,60" de Faes/DENTAID/etc.):
+//        discount% = discountAmount / (qty × unitPrice) × 100
+//
+// Descarta reconstrucciones fuera del rango razonable (0, 100].
 export function reconstructMissingDiscounts(data: DeliveryNoteData): DeliveryNoteData {
   return {
     ...data,
     lines: data.lines.map((line) => {
-      const dto = line.discount ?? 0;
-      const amt = line.discountAmount ?? 0;
-      const subtotal = line.quantity * line.unitPrice;
-      if (dto === 0 && amt > 0 && subtotal > 0) {
-        const reconstructed = (amt / subtotal) * 100;
-        // Solo aceptamos porcentajes en un rango razonable de descuento comercial.
+      if ((line.discount ?? 0) > 0) return line;
+
+      const bruto = line.unitPrice;
+      const neto = line.netUnitPrice ?? 0;
+      if (bruto > 0 && neto > 0 && neto < bruto) {
+        const reconstructed = (1 - neto / bruto) * 100;
         if (reconstructed > 0 && reconstructed <= 100) {
           return { ...line, discount: round2(reconstructed) };
         }
       }
+
+      const amt = line.discountAmount ?? 0;
+      const subtotal = line.quantity * bruto;
+      if (amt > 0 && subtotal > 0) {
+        const reconstructed = (amt / subtotal) * 100;
+        if (reconstructed > 0 && reconstructed <= 100) {
+          return { ...line, discount: round2(reconstructed) };
+        }
+      }
+
       return line;
     }),
   };

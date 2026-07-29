@@ -16,6 +16,14 @@ export interface DeliveryNoteLine {
    * en `extractDeliveryNote` y luego se puede ignorar downstream.
    */
   discountAmount?: number;
+  /**
+   * Precio neto por unidad tras aplicar el descuento (algunos proveedores
+   * como Hartmann imprimen columnas "Precio Bruto" + "Precio Neto" por
+   * línea). Segunda señal redundante: si `discount` se pierde y hay
+   * `netUnitPrice < unitPrice`, se reconstruye como
+   * `(1 − netUnitPrice / unitPrice) × 100`.
+   */
+  netUnitPrice?: number;
   /** Free / bonus units (from the BONIF. column, if any). */
   freeUnits?: number;
 }

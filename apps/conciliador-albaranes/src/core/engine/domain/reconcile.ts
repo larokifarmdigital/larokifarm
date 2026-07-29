@@ -1,4 +1,5 @@
-import { cleanAlt, cleanNationalCode, parseNumber } from './numbers';
+import { descriptionMatches } from './descriptionMatch';
+import { cleanAlt, cleanNationalCode, parseNumber, rescueNationalCode } from './numbers';
 import type {
   DeliveryNoteData,
   DiscrepancyKind,
@@ -59,12 +60,14 @@ function group(rows: RawRow[], detectFreebies: boolean): Item[] {
     { cn: string; alt: string; cod: string; description: string; lines: NormLine[] }
   >();
 
-  for (const f of rows) {
+  rows.forEach((f, idx) => {
     const cn = cleanNationalCode(f.cnRaw);
     const alt = cleanAlt(f.altRaw);
     const cod = cleanAlt(f.codRaw);
-    const key = cn || alt || cod;
-    if (!key) continue;
+    // Sin identificadores: sintético único por fila. Sigue existiendo como
+    // Item propio (para poder cruzarse por descripción en findMatch). Antes
+    // se descartaba aquí y las líneas de pedidos-PDF sin código se perdían.
+    const key = cn || alt || cod || `noid:${idx}`;
     let g = groups.get(key);
     if (!g) {
       g = { cn, alt, cod, description: f.description ?? '', lines: [] };
@@ -79,7 +82,7 @@ function group(rows: RawRow[], detectFreebies: boolean): Item[] {
       discount: parseNumber(f.discount),
       freeUnits: parseNumber(f.freeUnitsRaw),
     });
-  }
+  });
 
   const items: Item[] = [];
   for (const g of groups.values()) {
@@ -117,14 +120,7 @@ function visibleCode(p: Item | null, a: Item | null): string {
   return p?.cn || a?.cn || p?.alt || a?.alt || p?.cod || a?.cod || '';
 }
 
-// NOTE: rescata el C.N. español cuando Gemini lo mete por error en "code" (ej. "192332.P" o "159259.0"). Patrón estricto: EXACTAMENTE 6 dígitos + opcional punto + 1 letra o dígito. No toca códigos internos largos tipo "5000036689" (bug Marvis).
-const CN_LIKE = /^(\d{6})(?:\.[A-Z0-9])?$/i;
-function rescueCn(nationalCode: string | undefined, code: string | undefined): string {
-  if (nationalCode && nationalCode.trim() !== '') return nationalCode;
-  const c = (code ?? '').trim();
-  const m = CN_LIKE.exec(c);
-  return m ? m[1] : '';
-}
+const rescueCn = rescueNationalCode;
 
 function compareFields(p: Item, a: Item): DiscrepancyKind[] {
   const d: DiscrepancyKind[] = [];
@@ -166,6 +162,9 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
 
   const orderUsed = new Array<boolean>(orderItems.length).fill(false);
 
+  const itemHasIdentifier = (it: Item): boolean =>
+    Boolean(it.cn || it.alt || it.cod);
+
   const findMatch = (a: Item): number => {
     if (a.cn) {
       const i = orderItems.findIndex((p, idx) => !orderUsed[idx] && p.cn !== '' && p.cn === a.cn);
@@ -179,6 +178,17 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
       const i = orderItems.findIndex((p, idx) => !orderUsed[idx] && p.cod !== '' && p.cod === a.cod);
       if (i >= 0) return i;
     }
+    // Fallback por descripción: sólo si al menos un lado NO tiene ningún
+    // identificador. Evita cruzar dos SKUs con códigos distintos aunque la
+    // descripción se parezca (contexto Zambon: pedido-PDF sin códigos).
+    const aHasId = itemHasIdentifier(a);
+    const i = orderItems.findIndex(
+      (p, idx) =>
+        !orderUsed[idx] &&
+        (!aHasId || !itemHasIdentifier(p)) &&
+        descriptionMatches(a.description, p.description),
+    );
+    if (i >= 0) return i;
     return -1;
   };
 

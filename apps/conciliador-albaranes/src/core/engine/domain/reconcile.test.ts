@@ -273,6 +273,39 @@ describe('reconcile', () => {
     expect(r.lines[0].status).toBe('OK');
   });
 
+  it('Zambon: pedido con CN 6 digitos cruza con factura que trae CN + digito control en code', () => {
+    const r = reconcile(
+      deliveryNote([
+        // Zambon mete el CN + check digit en el campo "code", no en "nationalCode"
+        { code: '7101772', description: 'ULTRA-LEVURA 250MG 20CPS -BL-', quantity: 20, unitPrice: 9.77, discount: 20 },
+        { code: '8844036', description: 'FLUIMUCIL FORTE 600MG 20CPR EFV', quantity: 105, unitPrice: 5.19, discount: 20 },
+      ]),
+      order([
+        // Excel pedido con CN de 6 dígitos
+        { productCode: '710177', description: 'ULTRA-LEVURA 250MG 20 CAPS BLISTER', units: 20, price: 9.77, discount: 20 },
+        { productCode: '884403', description: 'FLUIMUCIL FORTE 600MG 20 COMP EFV', units: 105, price: 5.19, discount: 20 },
+      ]),
+    );
+    // Ambas líneas deben cruzarse por CN (rescatado de code), no aparecer duplicadas.
+    expect(r.lines).toHaveLength(2);
+    expect(r.lines.every((l) => l.status === 'OK')).toBe(true);
+  });
+
+  it('Zambon: cruza pedido sin codigo con factura por descripcion fuzzy', () => {
+    const r = reconcile(
+      deliveryNote([
+        { code: '7101772', description: 'ULTRA-LEVURA 250MG 20CPS -BL-', quantity: 20, unitPrice: 9.77, discount: 20 },
+      ]),
+      order([
+        // pedido: sin productCode (undefined), sólo descripción
+        { productCode: '', description: 'ULTRA-LEVURA 250MG 20 CAPS', units: 20, price: 9.77, discount: 20 },
+      ]),
+    );
+    expect(r.lines[0].status).toBe('OK');
+    expect(r.lines[0].unitsDelivered).toBe(20);
+    expect(r.lines[0].unitsOrdered).toBe(20);
+  });
+
   it('suma cantidades cuando la factura repite el C.N. en dos lotes SIN descuento (no son bonificación)', () => {
     const r = reconcile(
       deliveryNote([
