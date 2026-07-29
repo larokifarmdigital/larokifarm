@@ -177,8 +177,11 @@ describe('mergeDeliveryNotes', () => {
 
   // Una línea del albarán que comparte EAN con una de la factura, y otra
   // línea de la factura que comparte código interno con la primera del
-  // albarán → todas en un mismo grupo (transitividad por union-find).
-  it('union-find transitivo: A↔B por EAN, B↔C por código interno → todo un grupo', () => {
+  // albarán → todas en un mismo grupo (transitividad por union-find). Como
+  // el kind con más filas es la factura (2), preservamos las 2 líneas de la
+  // factura; sino perderíamos unidades cuando el mismo CN venga desglosado
+  // por lote.
+  it('union-find transitivo: A↔B por EAN, B↔C por código interno → 2 líneas (base = factura)', () => {
     const a: DeliveryNoteData = {
       deliveryNoteNumber: 'A1',
       documentKind: 'deliveryNote',
@@ -195,8 +198,37 @@ describe('mergeDeliveryNotes', () => {
       ],
     };
     const r = mergeDeliveryNotes([a, b]);
-    // 3 líneas de entrada, todas unidas por EAN o código → 1 línea fusionada
-    expect(r.lines).toHaveLength(1);
+    expect(r.lines).toHaveLength(2);
+    // ambos EAN/code se propagan desde el albarán al que falte
+    expect(r.lines.every((l) => l.ean === '1111' || l.code === 'XCOD')).toBe(true);
+  });
+
+  // Caso ARCID STICKS: la factura desglosa el mismo CN por lote (3 + 72 UN,
+  // sin descuento, ambos precio normal → NO son bonificación). El albarán
+  // trae la misma cantidad total en una sola línea. Antes se colapsaba a una
+  // única línea y se perdían las 3 UN del segundo lote.
+  it('factura con mismo CN en dos lotes → se preservan las dos líneas para no perder unidades', () => {
+    const deliveryNote: DeliveryNoteData = {
+      deliveryNoteNumber: 'A1',
+      documentKind: 'deliveryNote',
+      lines: [
+        line({ nationalCode: '2049949', description: 'ARCID STICKS', quantity: 75, unitPrice: 0 }),
+      ],
+    };
+    const invoice: DeliveryNoteData = {
+      deliveryNoteNumber: 'F1',
+      documentKind: 'invoice',
+      lines: [
+        line({ nationalCode: '2049949', description: 'ARCID STICKS', quantity: 3, unitPrice: 7.37, discount: 0 }),
+        line({ nationalCode: '2049949', description: 'ARCID STICKS', quantity: 72, unitPrice: 7.37, discount: 0 }),
+      ],
+    };
+    const r = mergeDeliveryNotes([deliveryNote, invoice]);
+    expect(r.lines).toHaveLength(2);
+    const cantidades = r.lines.map((l) => l.quantity).sort((a, b) => a - b);
+    expect(cantidades).toEqual([3, 72]);
+    // ambas conservan precio/descuento de la factura
+    expect(r.lines.every((l) => l.unitPrice === 7.37 && l.discount === 0)).toBe(true);
   });
 
   // Si solo hay descuentos en la factura, el campo debe llegar al fusionado.

@@ -60,7 +60,7 @@ export function mergeDeliveryNotes(deliveryNotes: DeliveryNoteData[]): DeliveryN
 
   const lines: DeliveryNoteLine[] = [];
   for (const group of groups.values()) {
-    lines.push(mergeLines(group));
+    lines.push(...mergeLines(group));
   }
 
   const deliveryNoteFirst = [...deliveryNotes].sort(
@@ -89,25 +89,56 @@ interface Source {
   line: DeliveryNoteLine;
 }
 
-function mergeLines(group: Source[]): DeliveryNoteLine {
+function mergeLines(group: Source[]): DeliveryNoteLine[] {
   const deliveryNote = group.filter((o) => o.kind === 'deliveryNote');
   const invoice = group.filter((o) => o.kind === 'invoice');
   const other = group.filter((o) => o.kind === 'other');
 
+  // Si algún PDF trae el mismo CN en varias filas (lotes distintos), NO
+  // podemos colapsarlas a una sola línea sin perder unidades. Preservamos
+  // las N filas del kind con más ocurrencias (típicamente la factura, que
+  // desglosa por lote); el otro kind se ignora en cantidades pero aporta
+  // metadatos (ean, descripción). reconcile.ts group() volverá a sumar por
+  // CN en la comparación final.
+  const maxCount = Math.max(deliveryNote.length, invoice.length, other.length);
+  if (maxCount > 1) {
+    const base =
+      invoice.length === maxCount
+        ? invoice
+        : deliveryNote.length === maxCount
+          ? deliveryNote
+          : other;
+    const commonEan = pickStr(group, (l) => l.ean);
+    const commonNationalCode = pickStr(group, (l) => l.nationalCode);
+    const commonDescription = pickStr(group, (l) => l.description) ?? '';
+    return base.map((o) => ({
+      code: o.line.code ?? pickStr(group, (l) => l.code),
+      nationalCode: o.line.nationalCode ?? commonNationalCode,
+      ean: o.line.ean ?? commonEan,
+      description: o.line.description ?? commonDescription,
+      quantity: o.line.quantity ?? 0,
+      unitPrice: o.line.unitPrice ?? 0,
+      discount: o.line.discount,
+      freeUnits: o.line.freeUnits ?? 0,
+    }));
+  }
+
+  // Caso normal: 1 línea por kind → fusión de campos complementarios.
   const deliveryNoteOrder = [...deliveryNote, ...other, ...invoice];
   const invoiceOrder = [...invoice, ...deliveryNote, ...other];
   const anyOrder = group;
-
-  return {
-    code: pickStr(anyOrder, (l) => l.code),
-    nationalCode: pickStr(invoiceOrder, (l) => l.nationalCode),
-    ean: pickStr(deliveryNoteOrder, (l) => l.ean),
-    description: pickStr(deliveryNoteOrder, (l) => l.description) ?? '',
-    quantity: pickNum(deliveryNoteOrder, (l) => l.quantity) ?? 0,
-    unitPrice: pickNum(invoiceOrder, (l) => l.unitPrice) ?? 0,
-    discount: pickNumIncl0(invoiceOrder, (l) => l.discount),
-    freeUnits: pickNum(deliveryNoteOrder, (l) => l.freeUnits),
-  };
+  return [
+    {
+      code: pickStr(anyOrder, (l) => l.code),
+      nationalCode: pickStr(invoiceOrder, (l) => l.nationalCode),
+      ean: pickStr(deliveryNoteOrder, (l) => l.ean),
+      description: pickStr(deliveryNoteOrder, (l) => l.description) ?? '',
+      quantity: pickNum(deliveryNoteOrder, (l) => l.quantity) ?? 0,
+      unitPrice: pickNum(invoiceOrder, (l) => l.unitPrice) ?? 0,
+      discount: pickNumIncl0(invoiceOrder, (l) => l.discount),
+      freeUnits: pickNum(deliveryNoteOrder, (l) => l.freeUnits),
+    },
+  ];
 }
 
 function pickStr(sources: Source[], get: (l: DeliveryNoteLine) => string | undefined): string | undefined {
