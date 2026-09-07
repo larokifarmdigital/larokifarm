@@ -1,4 +1,4 @@
-import { CompareView } from '@/features/compare';
+import { CompareView } from '@/ui/features/compare';
 
 export default function Home() {
   return <CompareView />;
