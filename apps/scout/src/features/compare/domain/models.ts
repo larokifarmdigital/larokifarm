@@ -1,8 +1,8 @@
-import type { Extraction, ProbeResult } from '@/features/price-probe/domain/models/Extraction';
+import type { ProbeResult } from '@/features/price-probe/domain/models/Extraction';
 
-/** Resultado por farmacia devuelto por el motor Gemini + Google Search. */
+/** Resultado por farmacia devuelto por el motor de scraping genérico. */
 export type ComparisonRow = {
-  /** ID sintético (dominio o nombre slug) para React keys y logs. */
+  /** ID sintético (dominio) para React keys y logs. */
   pharmacyId: string;
   pharmacyName: string;
   productUrl: string | null;
@@ -11,11 +11,11 @@ export type ComparisonRow = {
   precio?: number;
   moneda?: string;
   disponibilidad?: 'en_stock' | 'agotado' | 'desconocido';
-  /** true si productUrl coincide con una URL real que Google Search devolvió como fuente.
-      false → Gemini construyó/adaptó la URL: puede ser falsa (404) o correcta pero sin verificar. */
+  /** true si el URL sale del descubrimiento por Google (Serper) — es la ficha real de la farmacia. */
   urlVerificada?: boolean;
-  /** Nivel de confianza del precio según cómo lo interpretó Gemini del snippet.
-      alto = precio explícito en el resultado; medio = inferido; bajo = mencionado indirectamente. */
+  /** alto = strategy determinista extrajo el precio (JSON-LD, microdata, Shopify…).
+      medio = fallback Gemini extrajo el precio del HTML.
+      bajo = reservado, no se usa aún. */
   precioConfianza?: 'alto' | 'medio' | 'bajo';
 };
 
@@ -29,7 +29,7 @@ export type NormalizedInput = {
   nombreHint?: string;
 };
 
-/** Producto identificado por Gemini a partir de los snippets de Google Search. */
+/** Producto identificado. En el motor genérico se rellena con lo que devuelve CIMA (si aplica). */
 export type IdentifiedProduct = {
   nombre: string;
   presentacion?: string;
@@ -38,12 +38,9 @@ export type IdentifiedProduct = {
 
 export type ComparisonReport = {
   input: NormalizedInput;
-  /** Producto identificado por Gemini de los resultados de Google. Undefined si no se pudo. */
   product?: IdentifiedProduct;
   rows: ComparisonRow[];
   totalMs: number;
 };
 
-// Los tipos legacy de scraper (PharmacySearchOutcome, MatchStatus) se eliminaron
-// tras migrar a Gemini + Google Search como motor único.
 export type ExtractionOk = Extract<ProbeResult, { ok: true }>;
