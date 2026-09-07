@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { compareAction, type CompareActionState } from '@/ui/actions/compareAction';
+import { ThemeToggle } from '@/ui/components/ThemeToggle';
 import { CompareForm } from './CompareForm';
 import { ComparisonTable } from './ComparisonTable';
 import { RecentSearches } from './RecentSearches';
@@ -148,11 +149,12 @@ export function CompareView() {
               Comparador de precios farmacéuticos
             </p>
           </div>
-          <div className="ml-auto hidden items-center gap-4 text-xs text-zinc-500 sm:flex dark:text-zinc-500">
-            <span className="inline-flex items-center gap-1.5">
+          <div className="ml-auto flex items-center gap-3">
+            <span className="hidden items-center gap-1.5 text-xs text-zinc-500 sm:inline-flex dark:text-zinc-500">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               En tiempo real
             </span>
+            <ThemeToggle />
           </div>
         </header>
 

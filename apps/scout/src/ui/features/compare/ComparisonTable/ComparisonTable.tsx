@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { ComparisonReport, ComparisonRow } from '@/core/domain/models';
+import { PriceChart } from '../PriceChart';
 
 export type ComparisonTableProps = { report: ComparisonReport };
 
@@ -421,6 +422,9 @@ export function ComparisonTable({ report }: ComparisonTableProps) {
       {bestRow && (
         <BestPriceHero row={bestRow} moneda={moneda} savings={savings > 0 ? savings : undefined} />
       )}
+
+      {/* Gráfico visual de la distribución de precios */}
+      <PriceChart rows={okRows} moneda={moneda} />
 
       {/* Sort + Filter */}
       {okRows.length > 1 && (
