@@ -7,15 +7,15 @@
  * suben feed a Merchant Center; Web Search cubre TODAS las páginas indexadas.
  *
  * Endpoint: https://api.scraperapi.com/structured/google/search
- * Reutiliza el mismo helper resolveGotoUrl del pipeline generic para desenvolver
- * los links wrappeados del SERP mobile de google.es.
+ * Usa el helper vecino googleGotoResolver para desenvolver los links wrappeados
+ * del SERP mobile de google.es.
  */
 
 import type {
   WebProductFinder,
   WebProductHit,
 } from '@/core/domain/ports/WebProductFinder';
-import { resolveGotoUrl } from '../scraper/googleGotoResolver';
+import { isGoogleRedirect, resolveGotoUrl } from './googleGotoResolver';
 
 const ENDPOINT = 'https://api.scraperapi.com/structured/google/search';
 const REQUEST_TIMEOUT_MS = 20_000;
@@ -60,10 +60,6 @@ const EXCLUDED_DOMAINS = [
 
 function isExcludedDomain(domain: string): boolean {
   return EXCLUDED_DOMAINS.some((bad) => domain.includes(bad));
-}
-
-function isGoogleRedirect(url: string): boolean {
-  return /^https?:\/\/(?:www\.)?google\.[^/]+\/(?:goto|url|aclk)\?/i.test(url);
 }
 
 function extractDomain(url: string): string | null {
