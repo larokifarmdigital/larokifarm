@@ -11,7 +11,7 @@ import { MedicamentoInfoCard } from './MedicamentoInfoCard';
 import { PinnedComparison } from './PinnedComparison';
 import { RecentSearches } from './RecentSearches';
 import { ShareButton } from './ShareButton';
-import { pushSearchHistory } from './hooks/useSearchHistory';
+import { isStale, pushSearchHistory, relativeTime } from './hooks/useSearchHistory';
 import { readUrlSearchParams, replaceUrlSearchParams } from './hooks/useUrlParams';
 
 const initialState: CompareActionState = { status: 'idle' };
@@ -86,6 +86,15 @@ export function CompareView() {
   // Reportes fijados por el user para comparar múltiples productos lado a lado.
   const [pinnedReports, setPinnedReports] = useState<ComparisonReport[]>([]);
   const [scannerOpen, setScannerOpen] = useState(false);
+  /**
+   * Reporte cacheado que se muestra al abrir una búsqueda del historial SIN volver a
+   * llamar las APIs. Cuando el user hace click en "Actualizar" o hace una búsqueda
+   * nueva, este cache se limpia (null) y priorizamos state.status === 'done'.
+   */
+  const [cachedReport, setCachedReport] = useState<{
+    report: ComparisonReport;
+    timestamp: number;
+  } | null>(null);
   const autoSubmittedRef = useRef(false);
   const savedResultsRef = useRef<string | null>(null);
 
@@ -120,6 +129,8 @@ export function CompareView() {
       resultsCount: okRows.length,
       bestPrice: bestPrice != null && Number.isFinite(bestPrice) ? bestPrice : undefined,
       moneda,
+      // Guardamos el reporte completo para que al abrirlo desde el historial NO se re-consuma API.
+      report: state.result,
     });
 
     replaceUrlSearchParams({
@@ -127,6 +138,10 @@ export function CompareView() {
       ean: state.result.input.ean,
       nombre: state.result.input.nombreHint ?? state.result.input.nombre,
     });
+
+    // Si el nuevo reporte no coincide con el que está cacheado (ej: refresh o nueva búsqueda),
+    // limpiamos el cache para que se renderice el fresco.
+    setCachedReport((prev) => (prev && reportKey(prev.report) === key ? prev : null));
   }, [state]);
 
   function handleSuggestionClick(name: string) {
@@ -134,14 +149,55 @@ export function CompareView() {
     setTimeout(() => fillAndSubmit(undefined, undefined, name), 30);
   }
 
-  function handleHistoryPick(entry: { cn?: string; ean?: string; nombre?: string }) {
-    setPrefilled(entry);
+  function handleHistoryPick(entry: {
+    cn?: string;
+    ean?: string;
+    nombre?: string;
+    report?: ComparisonReport;
+    timestamp?: number;
+  }) {
+    setPrefilled({ cn: entry.cn, ean: entry.ean, nombre: entry.nombre });
+
+    if (entry.report && entry.timestamp) {
+      // Cache hit: mostramos el reporte guardado sin volver a llamar las APIs.
+      setCachedReport({ report: entry.report, timestamp: entry.timestamp });
+      // Rellenamos los inputs del form pero NO hacemos submit (evitamos consumir créditos).
+      setTimeout(() => {
+        const setInput = (id: string, v?: string) => {
+          const el = document.getElementById(id) as HTMLInputElement | null;
+          if (el) el.value = v ?? '';
+        };
+        setInput('cn', entry.cn);
+        setInput('ean', entry.ean);
+        setInput('nombre', entry.nombre);
+      }, 30);
+      // Sync URL para permitir compartir la búsqueda cacheada también
+      replaceUrlSearchParams({ cn: entry.cn, ean: entry.ean, nombre: entry.nombre });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // Sin cache disponible → fallback al comportamiento anterior (submit real)
+    setCachedReport(null);
     setTimeout(() => fillAndSubmit(entry.cn, entry.ean, entry.nombre), 30);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  /** Fuerza actualización del reporte cacheado — re-ejecuta la búsqueda contra las APIs. */
+  function handleRefreshCached() {
+    if (!cachedReport) return;
+    const { input } = cachedReport.report;
+    setCachedReport(null);
+    savedResultsRef.current = null;
+    setTimeout(
+      () => fillAndSubmit(input.cn, input.ean, input.nombreHint ?? input.nombre),
+      30,
+    );
+  }
+
   function handleNewSearch() {
     setPrefilled({});
+    setCachedReport(null);
     const form = document.querySelector<HTMLFormElement>('form');
     form?.reset();
     replaceUrlSearchParams({});
@@ -289,21 +345,66 @@ export function CompareView() {
           </div>
         )}
 
-        {/* Resultados */}
-        {!isPending && state.status === 'done' && (
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                Resultados
-              </h3>
-              <div className="flex items-center gap-2">
-                {(() => {
-                  const isPinned = isReportPinned(pinnedReports, state.result);
-                  return (
+        {/* Resultados: prioridad cachedReport > state.result. isPending oculta ambos. */}
+        {!isPending &&
+          (() => {
+            const activeReport = cachedReport?.report ?? (state.status === 'done' ? state.result : null);
+            if (!activeReport) return null;
+            const isCached = cachedReport !== null;
+            const cacheAge = cachedReport?.timestamp;
+            const stale = cacheAge != null && isStale(cacheAge);
+            const isPinned = isReportPinned(pinnedReports, activeReport);
+
+            return (
+              <div className="space-y-4">
+                {/* Banner de cache local */}
+                {isCached && cacheAge != null && (
+                  <div
+                    className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-xs ${
+                      stale
+                        ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200'
+                        : 'border-teal-200 bg-teal-50/70 text-teal-900 dark:border-teal-900/60 dark:bg-teal-950/30 dark:text-teal-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v6l4 2" />
+                      </svg>
+                      <span>
+                        {stale ? 'Precios posiblemente desactualizados' : 'Precios guardados en tu navegador'} · {relativeTime(cacheAge)}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRefreshCached}
+                      className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-semibold shadow-sm ${
+                        stale
+                          ? 'bg-amber-600 text-white hover:bg-amber-700'
+                          : 'bg-teal-600 text-white hover:bg-teal-700'
+                      }`}
+                      title="Volver a consultar las APIs para obtener precios actualizados"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 12a9 9 0 0 1 15.5-6.3L21 8" />
+                        <path d="M21 3v5h-5" />
+                        <path d="M21 12a9 9 0 0 1-15.5 6.3L3 16" />
+                        <path d="M3 21v-5h5" />
+                      </svg>
+                      Actualizar precios
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Resultados
+                  </h3>
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       disabled={isPinned}
-                      onClick={() => setPinnedReports((prev) => [...prev, state.result])}
+                      onClick={() => setPinnedReports((prev) => [...prev, activeReport])}
                       className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                         isPinned
                           ? 'cursor-not-allowed border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900/50 dark:bg-teal-950/30 dark:text-teal-400'
@@ -320,32 +421,31 @@ export function CompareView() {
                       </svg>
                       {isPinned ? 'Fijado' : 'Fijar para comparar'}
                     </button>
-                  );
-                })()}
-                <ShareButton
-                  input={{
-                    cn: state.result.input.cn,
-                    ean: state.result.input.ean,
-                    nombre: state.result.input.nombreHint ?? state.result.input.nombre,
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleNewSearch}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:border-teal-400 hover:text-teal-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-teal-600 dark:hover:text-teal-300"
-                >
-                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                  Nueva búsqueda
-                </button>
+                    <ShareButton
+                      input={{
+                        cn: activeReport.input.cn,
+                        ean: activeReport.input.ean,
+                        nombre: activeReport.input.nombreHint ?? activeReport.input.nombre,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleNewSearch}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:border-teal-400 hover:text-teal-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-teal-600 dark:hover:text-teal-300"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>
+                      Nueva búsqueda
+                    </button>
+                  </div>
+                </div>
+                {/* Info CIMA solo si el user buscó por CN */}
+                {activeReport.input.cn && <MedicamentoInfoCard cn={activeReport.input.cn} />}
+                <ComparisonTable report={activeReport} />
               </div>
-            </div>
-            {/* Info CIMA solo si el user buscó por CN */}
-            {state.result.input.cn && <MedicamentoInfoCard cn={state.result.input.cn} />}
-            <ComparisonTable report={state.result} />
-          </div>
-        )}
+            );
+          })()}
 
         {/* Empty state: productos sugeridos + historial */}
         {!isPending && state.status === 'idle' && (
