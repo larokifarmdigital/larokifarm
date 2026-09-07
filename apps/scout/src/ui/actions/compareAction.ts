@@ -6,6 +6,8 @@ import { productionDeps } from '@/core/composition';
 /**
  * Server Action: bridge entre el form del cliente y el use case comparePrice.
  * Aquí ocurre la inyección de las dependencias de infraestructura vía el composition root.
+ * Nota: maxDuration (60s) se declara en app/page.tsx — no se puede exportar constantes
+ * desde archivos 'use server' en Next 16.
  */
 export type CompareActionState =
   | { status: 'idle' }
