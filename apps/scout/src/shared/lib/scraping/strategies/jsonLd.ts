@@ -1,6 +1,6 @@
-import type { Extraction } from '../../domain/models/Extraction';
-import type { ExtractionStrategy, StrategyContext } from '../../domain/ports/ExtractionStrategy';
-import { parsePrice } from '../../lib/parsePrice';
+import type { Extraction } from '../domain/Extraction';
+import type { ExtractionStrategy, StrategyContext } from '../domain/ExtractionStrategy';
+import { parsePrice } from '../parsePrice';
 
 type Node = Record<string, unknown> & { '@type'?: unknown; '@graph'?: unknown };
 

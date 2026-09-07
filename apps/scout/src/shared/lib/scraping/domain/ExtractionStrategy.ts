@@ -1,5 +1,5 @@
 import type { CheerioAPI } from 'cheerio';
-import type { Extraction } from '../models/Extraction';
+import type { Extraction } from './Extraction';
 
 export type StrategyContext = {
   url: string;

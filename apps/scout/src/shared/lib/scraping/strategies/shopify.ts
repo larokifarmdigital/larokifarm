@@ -1,5 +1,5 @@
-import type { Extraction } from '../../domain/models/Extraction';
-import type { ExtractionStrategy, StrategyContext } from '../../domain/ports/ExtractionStrategy';
+import type { Extraction } from '../domain/Extraction';
+import type { ExtractionStrategy, StrategyContext } from '../domain/ExtractionStrategy';
 
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +

@@ -1,4 +1,4 @@
-import type { ProbeFailure } from '../domain/models/Extraction';
+import type { ProbeFailure } from './domain/Extraction';
 
 export const BROWSER_HEADERS: Record<string, string> = {
   'User-Agent':

@@ -11,10 +11,10 @@
  */
 
 import * as cheerio from 'cheerio';
-import { unlockedFetch } from '@/features/price-probe/infrastructure/unlockedFetch';
-import { STRATEGIES } from '@/features/price-probe/infrastructure/strategies';
-import type { FetchHtmlResult } from '@/features/price-probe/infrastructure/fetchHtml';
-import type { Extraction } from '@/features/price-probe/domain/models/Extraction';
+import { unlockedFetch } from '@/shared/lib/scraping/unlockedFetch';
+import { STRATEGIES } from '@/shared/lib/scraping/strategies';
+import type { FetchHtmlResult } from '@/shared/lib/scraping/fetchHtml';
+import type { Extraction } from '@/shared/lib/scraping/domain/Extraction';
 import type { ComparisonRow } from '../../domain/models';
 import {
   discoverProductUrl,

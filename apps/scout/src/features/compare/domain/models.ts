@@ -1,4 +1,4 @@
-import type { ProbeResult } from '@/features/price-probe/domain/models/Extraction';
+import type { ProbeResult } from '@/shared/lib/scraping/domain/Extraction';
 
 /** Resultado por farmacia devuelto por el motor de scraping genérico. */
 export type ComparisonRow = {
