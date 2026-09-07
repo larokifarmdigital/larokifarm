@@ -4,8 +4,10 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import type { ComparisonReport } from '@/core/domain/models';
 import { compareAction, type CompareActionState } from '@/ui/actions/compareAction';
 import { ThemeToggle } from '@/ui/components/ThemeToggle';
+import { BarcodeScanner } from './BarcodeScanner';
 import { CompareForm } from './CompareForm';
 import { ComparisonTable } from './ComparisonTable';
+import { MedicamentoInfoCard } from './MedicamentoInfoCard';
 import { PinnedComparison } from './PinnedComparison';
 import { RecentSearches } from './RecentSearches';
 import { ShareButton } from './ShareButton';
@@ -83,6 +85,7 @@ export function CompareView() {
   );
   // Reportes fijados por el user para comparar múltiples productos lado a lado.
   const [pinnedReports, setPinnedReports] = useState<ComparisonReport[]>([]);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const autoSubmittedRef = useRef(false);
   const savedResultsRef = useRef<string | null>(null);
 
@@ -163,14 +166,32 @@ export function CompareView() {
               Comparador de precios farmacéuticos
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-3">
-            <span className="hidden items-center gap-1.5 text-xs text-zinc-500 sm:inline-flex dark:text-zinc-500">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              En tiempo real
-            </span>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setScannerOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-teal-500 bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-400"
+              title="Escanear código de barras con la cámara"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 5v14M8 5v14M12 5v14M17 5v14M21 5v14" />
+              </svg>
+              <span className="hidden sm:inline">Escanear</span>
+            </button>
             <ThemeToggle />
           </div>
         </header>
+
+        {/* Modal escáner */}
+        <BarcodeScanner
+          isOpen={scannerOpen}
+          onClose={() => setScannerOpen(false)}
+          onDetected={(ean) => {
+            setScannerOpen(false);
+            setPrefilled({ ean });
+            setTimeout(() => fillAndSubmit(undefined, ean, undefined), 30);
+          }}
+        />
 
         {/* Card principal con introducción + form */}
         <section className="mb-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
@@ -320,6 +341,8 @@ export function CompareView() {
                 </button>
               </div>
             </div>
+            {/* Info CIMA solo si el user buscó por CN */}
+            {state.result.input.cn && <MedicamentoInfoCard cn={state.result.input.cn} />}
             <ComparisonTable report={state.result} />
           </div>
         )}

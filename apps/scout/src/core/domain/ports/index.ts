@@ -1,5 +1,6 @@
 export type { PharmacyPageScraper } from './PharmacyPageScraper';
 export type {
+  ProductFullInfoResult,
   ProductIdentifier,
   ProductIdentifierResult,
   ProductLookupResult,
