@@ -2,6 +2,7 @@
 
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/ui/components/Button';
+import { NombreAutocomplete } from '../NombreAutocomplete';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -90,11 +91,10 @@ export function CompareForm({ action, defaultCn, defaultEan, defaultNombre }: Co
           </svg>
           Nombre del producto
         </label>
-        <input
+        <NombreAutocomplete
+          key={defaultNombre ?? ''}
           id="nombre"
           name="nombre"
-          type="text"
-          autoComplete="off"
           defaultValue={defaultNombre}
           placeholder="Ej: Fisiocrem Gel Forte 50 ml"
           className={INPUT_CLASS}

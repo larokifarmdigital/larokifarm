@@ -1,10 +1,12 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
+import type { ComparisonReport } from '@/core/domain/models';
 import { compareAction, type CompareActionState } from '@/ui/actions/compareAction';
 import { ThemeToggle } from '@/ui/components/ThemeToggle';
 import { CompareForm } from './CompareForm';
 import { ComparisonTable } from './ComparisonTable';
+import { PinnedComparison } from './PinnedComparison';
 import { RecentSearches } from './RecentSearches';
 import { ShareButton } from './ShareButton';
 import { pushSearchHistory } from './hooks/useSearchHistory';
@@ -49,6 +51,16 @@ function ScoutLogo({ className = 'h-6 w-6' }: { className?: string }) {
   );
 }
 
+/** Clave de identidad de un reporte para dedup en el pinning. */
+function reportKey(r: ComparisonReport): string {
+  return `${r.input.cn ?? ''}|${r.input.ean ?? ''}|${(r.input.nombreHint ?? r.input.nombre ?? '').toLowerCase().trim()}`;
+}
+
+function isReportPinned(pinned: ComparisonReport[], candidate: ComparisonReport): boolean {
+  const k = reportKey(candidate);
+  return pinned.some((p) => reportKey(p) === k);
+}
+
 /** Fill the form inputs by ID and dispatch a submit. */
 function fillAndSubmit(cn?: string, ean?: string, nombre?: string): void {
   const setInput = (id: string, value: string | undefined) => {
@@ -69,6 +81,8 @@ export function CompareView() {
   const [prefilled, setPrefilled] = useState<{ cn?: string; ean?: string; nombre?: string }>(
     () => (typeof window !== 'undefined' ? readUrlSearchParams() : {}),
   );
+  // Reportes fijados por el user para comparar múltiples productos lado a lado.
+  const [pinnedReports, setPinnedReports] = useState<ComparisonReport[]>([]);
   const autoSubmittedRef = useRef(false);
   const savedResultsRef = useRef<string | null>(null);
 
@@ -243,6 +257,17 @@ export function CompareView() {
           </div>
         )}
 
+        {/* Comparativa de productos fijados (arriba de todo cuando hay 1+) */}
+        {pinnedReports.length > 0 && (
+          <div className="mb-6">
+            <PinnedComparison
+              reports={pinnedReports}
+              onRemove={(idx) => setPinnedReports((prev) => prev.filter((_, i) => i !== idx))}
+              onClear={() => setPinnedReports([])}
+            />
+          </div>
+        )}
+
         {/* Resultados */}
         {!isPending && state.status === 'done' && (
           <div className="space-y-4">
@@ -251,6 +276,31 @@ export function CompareView() {
                 Resultados
               </h3>
               <div className="flex items-center gap-2">
+                {(() => {
+                  const isPinned = isReportPinned(pinnedReports, state.result);
+                  return (
+                    <button
+                      type="button"
+                      disabled={isPinned}
+                      onClick={() => setPinnedReports((prev) => [...prev, state.result])}
+                      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                        isPinned
+                          ? 'cursor-not-allowed border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900/50 dark:bg-teal-950/30 dark:text-teal-400'
+                          : 'border-teal-500 bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-400'
+                      }`}
+                      title={isPinned ? 'Ya está en la comparativa' : 'Fijar este producto para comparar con otros'}
+                    >
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        {isPinned ? (
+                          <path d="M20 6 9 17l-5-5" />
+                        ) : (
+                          <path d="M12 17V3M12 3l4 4M12 3l-4 4M5 21h14" />
+                        )}
+                      </svg>
+                      {isPinned ? 'Fijado' : 'Fijar para comparar'}
+                    </button>
+                  );
+                })()}
                 <ShareButton
                   input={{
                     cn: state.result.input.cn,
