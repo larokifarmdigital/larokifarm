@@ -36,13 +36,14 @@ const puntosResueltos = (() => {
 
 <section
   id='sobre'
-  class='py-[clamp(4rem,7vw,6rem)] bg-[color:var(--surface)] border-y border-[color:var(--border)]'
+  class='py-[clamp(6rem,10vw,9rem)] bg-[color:var(--background)]'
 >
-  <div class='container-app grid grid-cols-1 min-[900px]:grid-cols-[1fr_1.2fr] gap-[clamp(2rem,4vw,4rem)] min-[900px]:gap-16 items-start'>
-    <div class='about-slider relative' data-about-slider={tieneCarrusel ? 'true' : undefined}>
-      {listaImagenes.length > 0 ? (
-        <figure class='m-0 aspect-[4/5] overflow-hidden rounded-[var(--radius-lg)] bg-[color:var(--primary-soft)] border border-[color:var(--border)] relative'>
-          {listaImagenes.map((img, i) => (
+  <div class='container-app grid grid-cols-1 min-[900px]:grid-cols-[1fr_1.15fr] gap-[clamp(2.5rem,5vw,5rem)] items-center'>
+    <div class='about-slider relative motion-float' data-about-slider={tieneCarrusel ? 'true' : undefined} data-reveal>
+      <div class='about-frame aspect-[4/5] relative overflow-hidden rounded-[var(--radius-xl)] bg-[color:var(--surface)] border border-[color:var(--border)]'
+           style='box-shadow: var(--shadow-lift);'>
+        {listaImagenes.length > 0 ? (
+          listaImagenes.map((img, i) => (
             <img
               src={img.url}
               alt={i === 0 ? (localizar(img.alt, lang) || tituloTexto) : ''}
@@ -50,24 +51,27 @@ const puntosResueltos = (() => {
               class={`about-slide absolute inset-0 w-full h-full object-cover block ${i === 0 ? 'is-active' : ''}`}
               data-idx={String(i)}
             />
-          ))}
-        </figure>
-      ) : (
-        <div
-          class='aspect-[4/5] bg-[color:var(--primary-soft)] border border-[color:var(--border)] rounded-[var(--radius-lg)]'
-          aria-hidden='true'
-        ></div>
-      )}
+          ))
+        ) : (
+          <div class='absolute inset-0' aria-hidden='true'></div>
+        )}
+      </div>
 
-      {/* Badge de años flotando en la esquina inferior izquierda de la imagen */}
+      {/* Badge años · con count-up animation al entrar en viewport */}
       {anyosExperiencia && (
-        <div
-          class='absolute bottom-4 left-4 z-10 inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur-md px-3 py-1.5 shadow-[0_8px_24px_-8px_rgb(15_23_42_/_0.25)] border border-white/60 max-w-[calc(100%-2rem)]'
-        >
-          <span class='text-[1.25rem] font-bold tracking-tight leading-none tabular-nums text-[color:var(--accent)] shrink-0'>{anyosExperiencia}+</span>
-          <span class='text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-[color:var(--muted-foreground)] leading-tight whitespace-nowrap'>
-            {t('about.badge.anyos', lang)} {t('about.badge.experiencia', lang)}
-          </span>
+        <div class='about-badge absolute -bottom-6 -left-5 z-10 inline-flex items-center gap-3 bg-[color:var(--card)] px-4 py-3 border border-[color:var(--border)] rounded-[var(--radius-lg)]'
+             style='box-shadow: var(--shadow-lift);'>
+          <div class='flex flex-col leading-tight'>
+            <span class='text-[1.75rem] leading-none tabular-nums text-[color:var(--foreground-strong)] tracking-[-0.03em] shrink-0'
+                  style='font-family: var(--font-serif); font-weight: 400;'
+                  data-count-up={anyosExperiencia}
+                  data-count-suffix='+'
+                  data-count-duration='1400'>0+</span>
+            <span class='text-[0.68rem] font-medium tracking-[0.12em] uppercase text-[color:var(--muted)] mt-1 leading-tight whitespace-nowrap'
+                  style='font-family: var(--font-mono);'>
+              {t('about.badge.anyos', lang)} {t('about.badge.experiencia', lang)}
+            </span>
+          </div>
         </div>
       )}
 
@@ -91,25 +95,32 @@ const puntosResueltos = (() => {
       )}
     </div>
 
-    <div class='flex flex-col gap-5'>
-      <span class='section-eyebrow'>{chipTexto}</span>
-      <h2 class='h-section mt-1'>{tituloTexto}</h2>
+    <div class='flex flex-col gap-6'>
+      <span class='section-eyebrow self-start' data-reveal>{chipTexto}</span>
+      <h2 class='h-section m-0 max-w-[18ch]' style='--reveal-delay:100ms' data-reveal>{tituloTexto}</h2>
 
       {cuerpoHtml ? (
-        <div class='about-corp__cuerpo text-[color:var(--muted-foreground)] leading-[1.7] text-base' set:html={cuerpoHtml} />
+        <div class='about-corp__cuerpo text-[color:var(--muted-foreground)] leading-[1.75] text-[1.02rem] max-w-[52ch]'
+             style='--reveal-delay:200ms'
+             data-reveal
+             set:html={cuerpoHtml} />
       ) : (
-        <p class='text-[color:var(--muted-foreground)] leading-[1.7] text-base'>{t('about.cuerpoFallback', lang)}</p>
+        <p class='text-[color:var(--muted-foreground)] leading-[1.75] text-[1.02rem] max-w-[52ch]'
+           style='--reveal-delay:200ms'
+           data-reveal>{t('about.cuerpoFallback', lang)}</p>
       )}
 
       {puntosResueltos.length > 0 && (
-        <ul class='list-none p-0 mt-2 grid grid-cols-1 min-[500px]:grid-cols-2 gap-[0.6rem] min-[500px]:gap-x-6'>
-          {puntosResueltos.map((p) => (
-            <li class='inline-flex items-start gap-[0.6rem] text-[0.9rem] text-[color:var(--foreground)] leading-[1.5]'>
+        <ul class='list-none p-0 mt-2 grid grid-cols-1 min-[500px]:grid-cols-2 gap-3 min-[500px]:gap-x-6'>
+          {puntosResueltos.map((p, i) => (
+            <li class='inline-flex items-start gap-2.5 text-[0.9rem] text-[color:var(--foreground)] leading-[1.5]'
+                style={`--reveal-delay:${300 + i * 60}ms`}
+                data-reveal>
               <span
-                class='inline-flex items-center justify-center w-5 h-5 bg-[color:var(--success-soft)] text-[color:var(--success)] rounded-full shrink-0 mt-[1px]'
+                class='inline-flex items-center justify-center w-5 h-5 bg-[color:var(--foreground-strong)] text-[color:var(--background)] rounded-full shrink-0 mt-[1px]'
                 aria-hidden='true'
               >
-                <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>
+                <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'>
                   <path d='M20 6 9 17l-5-5' />
                 </svg>
               </span>
@@ -129,19 +140,26 @@ const puntosResueltos = (() => {
   .about-corp__cuerpo :global(p:last-child) { margin-bottom: 0; }
   .about-corp__cuerpo :global(strong) { color: var(--foreground); font-weight: 600; }
 
-  /* Slider — cross-fade entre imágenes, dots pill. */
+  /* Slider — cross-fade editorial 900ms. */
   .about-slide {
     opacity: 0;
-    transition: opacity 1000ms ease-in-out;
+    transition: opacity 900ms var(--ease-in-out);
   }
   .about-slide.is-active { opacity: 1; }
 
-  .about-dot { width: 8px; }
+  .about-dot {
+    width: 6px;
+    transition:
+      width var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out);
+  }
   .about-dot.is-active {
     background: rgb(255 255 255 / 0.95);
-    width: 22px;
+    width: 20px;
   }
-  .about-dot:hover { background: rgb(255 255 255 / 0.7); }
+  @media (hover: hover) and (pointer: fine) {
+    .about-dot:hover { background: rgb(255 255 255 / 0.75); }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .about-slide { transition: none; }

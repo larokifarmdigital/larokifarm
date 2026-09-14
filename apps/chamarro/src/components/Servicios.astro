@@ -15,19 +15,18 @@ const lista = (servicios ?? []).filter((s) => localizar(s.nombre, lang));
 const chip = localizar(textos?.chip, lang) || t('servicios.chip', lang);
 const titulo = localizar(textos?.titulo, lang) || t('servicios.titulo', lang);
 const subtitulo = localizar(textos?.subtitulo, lang) || t('servicios.subtitulo', lang);
-
-// Patrón bento: cada 3 posiciones una "grande" (col-span-4 sobre 6 cols).
-function esGrande(idx: number): boolean {
-  return idx % 3 === 0;
-}
 ---
 
-<section id='servicios' class='py-[clamp(4rem,7vw,6rem)]'>
+<section id='servicios' class='py-[clamp(4.5rem,8vw,7rem)] bg-[color:var(--canvas-alt)]'>
   <div class='container-app'>
-    <header class='max-w-[60ch] mb-[clamp(2.5rem,4vw,3.5rem)] flex flex-col gap-3'>
-      <span class='section-eyebrow'>{chip}</span>
-      <h2 class='h-section mt-1'>{titulo}</h2>
-      {subtitulo && <p class='mt-2 text-[color:var(--muted-foreground)] text-base leading-relaxed'>{subtitulo}</p>}
+    <header class='max-w-[62ch] mb-[clamp(2.5rem,4vw,3.5rem)] flex flex-col gap-4'>
+      <span class='section-eyebrow self-start' data-reveal>{chip}</span>
+      <h2 class='h-section m-0' style='--reveal-delay:80ms' data-reveal>{titulo}</h2>
+      {subtitulo && (
+        <p class='mt-1 text-[color:var(--muted-foreground)] text-[1.05rem] leading-[1.65] max-w-[54ch]' style='--reveal-delay:160ms' data-reveal>
+          {subtitulo}
+        </p>
+      )}
     </header>
 
     {lista.length === 0 ? (
@@ -35,65 +34,32 @@ function esGrande(idx: number): boolean {
         {t('servicios.placeholder', lang)}
       </p>
     ) : (
-      <ul class='list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 min-[960px]:grid-cols-6 gap-3 sm:gap-4 min-[960px]:auto-rows-[minmax(180px,auto)]'>
+      <ul class='list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 min-[960px]:grid-cols-3 gap-4 sm:gap-5'>
         {lista.map((s, i) => {
           const nombre = localizar(s.nombre, lang);
           const descripcion = localizar(s.descripcion, lang);
           const url = s.enlace?.url;
           const externo = s.enlace?.nuevaPestana;
-          const grande = esGrande(i);
 
           const contenido = (
             <>
-              <div class='flex items-start justify-between gap-3'>
-                <div
-                  class={`bento-icon inline-flex items-center justify-center ${grande ? 'w-14 h-14' : 'w-11 h-11'} rounded-[var(--radius)] shrink-0 transition-colors duration-200 ${
-                    url
-                      ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent)]'
-                      : 'bg-[color:var(--card)] text-[color:var(--muted)] border border-[color:var(--border)]'
-                  }`}
-                  aria-hidden='true'
-                >
-                  <IconoServicio nombre={s.icono} size={grande ? 26 : 20} />
-                </div>
-                <span
-                  class={`inline-flex items-center gap-1 text-[0.65rem] font-semibold tracking-[0.14em] uppercase shrink-0 ${
-                    url ? 'text-[color:var(--accent)]' : 'text-[color:var(--muted)]'
-                  }`}
-                  aria-hidden='true'
-                >
-                  {url ? (
-                    <>
-                      <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>
-                        {externo ? <path d='M7 17L17 7M9 7h8v8' /> : <path d='M5 12h14M13 6l6 6-6 6' />}
-                      </svg>
-                    </>
-                  ) : (
-                    <>
-                      <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
-                        <circle cx='12' cy='12' r='10' />
-                        <path d='M12 8v4M12 16h.01' />
-                      </svg>
-                      <span class='hidden min-[960px]:inline'>En farmacia</span>
-                    </>
-                  )}
+              <div class='flex items-center justify-between gap-3'>
+                <span class='servicio-icon inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius-sm)] bg-[color:var(--surface)] border border-[color:var(--border)] text-[color:var(--foreground)] shrink-0' aria-hidden='true'>
+                  <IconoServicio nombre={s.icono} size={20} />
                 </span>
+                {url && (
+                  <span class='servicio-arrow inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius-xs)] text-[color:var(--muted)] border border-[color:var(--border)] shrink-0' aria-hidden='true'>
+                    <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>
+                      {externo ? <path d='M7 17L17 7M9 7h8v8' /> : <path d='M5 12h14M13 6l6 6-6 6' />}
+                    </svg>
+                  </span>
+                )}
               </div>
 
-              <div class='flex flex-col gap-1.5 mt-auto pt-4'>
-                <h3
-                  class={`bento-titulo m-0 font-semibold tracking-tight text-[color:var(--foreground)] leading-tight ${
-                    grande ? 'text-[clamp(1.25rem,1.4vw+0.5rem,1.6rem)]' : 'text-[1.05rem]'
-                  }`}
-                >
-                  {nombre}
-                </h3>
+              <div class='flex flex-col gap-2 mt-4'>
+                <h3 class='m-0 h-card'>{nombre}</h3>
                 {descripcion && (
-                  <p
-                    class={`m-0 text-[color:var(--muted-foreground)] leading-[1.55] ${
-                      grande ? 'text-[0.95rem]' : 'text-[0.85rem]'
-                    } ${grande ? 'line-clamp-3' : 'line-clamp-2'}`}
-                  >
+                  <p class='m-0 text-[0.9rem] text-[color:var(--muted-foreground)] leading-[1.6] line-clamp-3'>
                     {descripcion}
                   </p>
                 )}
@@ -101,26 +67,24 @@ function esGrande(idx: number): boolean {
             </>
           );
 
-          const spanClass = grande
-            ? 'sm:col-span-2 min-[960px]:col-span-4'
-            : 'sm:col-span-1 min-[960px]:col-span-2';
-          const bgClass = url
-            ? 'bg-[color:var(--card)]'
-            : 'bg-[color:var(--surface)]';
-
           return (
-            <li class={`contents ${spanClass}`}>
+            <li>
               {url ? (
                 <a
                   href={url}
                   target={externo ? '_blank' : undefined}
                   rel={externo ? 'noopener noreferrer' : undefined}
-                  class={`bento-card ${spanClass} card ${bgClass} flex flex-col no-underline text-[color:var(--foreground)] cursor-pointer transition-all duration-200 min-h-[180px]`}
+                  class='servicio-card servicio-card--link card flex flex-col no-underline text-[color:var(--foreground)] cursor-pointer h-full min-h-[200px]'
+                  data-reveal
+                  data-spotlight
+                  style={`--reveal-delay:${i * 90}ms`}
                 >
                   {contenido}
                 </a>
               ) : (
-                <div class={`bento-card ${spanClass} card ${bgClass} flex flex-col min-h-[180px]`}>
+                <div class='servicio-card card flex flex-col h-full min-h-[200px]'
+                     data-reveal
+                     style={`--reveal-delay:${i * 90}ms`}>
                   {contenido}
                 </div>
               )}
@@ -133,29 +97,58 @@ function esGrande(idx: number): boolean {
 </section>
 
 <style>
-  a.bento-card:hover {
-    border-color: var(--accent);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px -12px rgb(51 65 85 / 0.25);
+  .servicio-card {
+    transition:
+      border-color var(--dur) var(--ease-out),
+      box-shadow var(--dur) var(--ease-out),
+      background-color var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-magnetic);
   }
-  a.bento-card:hover .bento-titulo {
-    color: var(--accent);
-  }
-  a.bento-card:hover .bento-icon {
-    background: var(--accent);
-    color: #fff;
+  .servicio-icon,
+  .servicio-arrow {
+    transition:
+      background-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      transform var(--dur) var(--ease-magnetic);
   }
 
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  @media (hover: hover) and (pointer: fine) {
+    .servicio-card--link:hover {
+      border-color: var(--foreground-strong);
+      box-shadow: var(--shadow-lift);
+      transform: translateY(-4px);
+    }
+    .servicio-card--link:hover .servicio-arrow {
+      background: var(--foreground-strong);
+      color: var(--background);
+      border-color: var(--foreground-strong);
+      transform: translateX(3px);
+    }
+    .servicio-card--link:hover .servicio-icon {
+      background: var(--foreground-strong);
+      color: var(--background);
+      border-color: var(--foreground-strong);
+      transform: scale(1.05) rotate(-3deg);
+    }
   }
+
+  .servicio-card--link:active {
+    transform: scale(0.99);
+    transition-duration: var(--dur-press);
+  }
+
   .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .servicio-card--link:hover,
+    .servicio-card--link:active { transform: none; }
+    .servicio-card--link:hover .servicio-arrow,
+    .servicio-card--link:hover .servicio-icon { transform: none; }
   }
 </style>

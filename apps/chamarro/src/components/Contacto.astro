@@ -47,10 +47,10 @@ const googleMapsQuery = urlGoogleMaps
   class='py-[clamp(4rem,7vw,6rem)] bg-[color:var(--surface)] border-t border-[color:var(--border)]'
 >
   <div class='container-app'>
-    <header class='max-w-[60ch] mx-auto mb-[clamp(2.5rem,4vw,3.5rem)] text-center flex flex-col gap-3 items-center'>
-      <span class='section-eyebrow'>{t('cta.chip', lang)}</span>
-      <h2 class='h-section mt-1'>{titulo}</h2>
-      <p class='m-0 text-[color:var(--muted-foreground)] max-w-[42ch]'>{t('cta.subtitulo', lang, { nombre })}</p>
+    <header class='max-w-[62ch] mb-[clamp(2.5rem,4vw,3.5rem)] flex flex-col gap-4'>
+      <span class='section-eyebrow self-start' data-reveal>{t('cta.chip', lang)}</span>
+      <h2 class='h-section m-0' style='--reveal-delay:80ms' data-reveal>{titulo}</h2>
+      <p class='m-0 text-[color:var(--muted-foreground)] text-[1.05rem] leading-[1.65] max-w-[52ch]' style='--reveal-delay:160ms' data-reveal>{t('cta.subtitulo', lang, { nombre })}</p>
     </header>
 
     <div class='grid grid-cols-1 min-[900px]:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] gap-6 min-[900px]:gap-8 items-stretch'>

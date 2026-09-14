@@ -20,26 +20,10 @@ const featuresSanity = (lista ?? [])
   .filter((f) => f.titulo);
 
 const featuresFallback = [
-  {
-    icono: 'users' as const,
-    titulo: t('features.atencionTitulo', lang),
-    descripcion: t('features.atencionDesc', lang),
-  },
-  {
-    icono: 'shield' as const,
-    titulo: t('features.calidadTitulo', lang),
-    descripcion: t('features.calidadDesc', lang),
-  },
-  {
-    icono: 'stethoscope' as const,
-    titulo: t('features.equipoTitulo', lang),
-    descripcion: t('features.equipoDesc', lang),
-  },
-  {
-    icono: 'clock' as const,
-    titulo: t('features.horarioTitulo', lang),
-    descripcion: horarioTexto || t('features.horarioDescFallback', lang),
-  },
+  { icono: 'users' as const, titulo: t('features.atencionTitulo', lang), descripcion: t('features.atencionDesc', lang) },
+  { icono: 'shield' as const, titulo: t('features.calidadTitulo', lang), descripcion: t('features.calidadDesc', lang) },
+  { icono: 'stethoscope' as const, titulo: t('features.equipoTitulo', lang), descripcion: t('features.equipoDesc', lang) },
+  { icono: 'clock' as const, titulo: t('features.horarioTitulo', lang), descripcion: horarioTexto || t('features.horarioDescFallback', lang) },
 ];
 
 const items = featuresSanity.length > 0 ? featuresSanity : featuresFallback;
@@ -48,25 +32,27 @@ if (items.length === 0) return null;
 ---
 
 <section
-  class='py-[clamp(4rem,7vw,6rem)] bg-[color:var(--background)] border-b border-[color:var(--border)]'
+  class='py-[clamp(6rem,10vw,9rem)] bg-[color:var(--canvas-alt)] border-y border-[color:var(--border)]'
   aria-label='Nuestras ventajas'
 >
   <div class='container-app'>
-    <ul class='list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 min-[960px]:grid-cols-4 gap-x-6 gap-y-10'>
-      {items.map((f) => (
-        <li class='feature-item flex flex-col items-center text-center gap-4 px-2'>
-          <div
-            class='feature-item-icon inline-flex items-center justify-center w-14 h-14 bg-[color:var(--accent-soft)] text-[color:var(--accent)] rounded-full shrink-0 transition-all duration-300'
-            aria-hidden='true'
-          >
-            <IconoServicio nombre={f.icono} size={26} />
-          </div>
-          <div class='flex flex-col gap-1.5 max-w-[28ch]'>
-            <h3 class='m-0 text-[1.05rem] font-semibold text-[color:var(--foreground)] leading-tight tracking-tight'>
+    <ul class='list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 min-[960px]:grid-cols-4 gap-0 border border-[color:var(--border)] rounded-[var(--radius-lg)] overflow-hidden bg-[color:var(--card)]'>
+      {items.map((f, i) => (
+        <li
+          class='feature-item p-7 flex items-start gap-4 border-b border-[color:var(--border)] relative'
+          data-reveal
+          data-spotlight
+          style={`--reveal-delay:${i * 100}ms;`}
+        >
+          <span class='feature-icon inline-flex items-center justify-center w-10 h-10 rounded-[var(--radius-sm)] bg-[color:var(--surface)] border border-[color:var(--border)] text-[color:var(--foreground)] shrink-0 mt-[2px]' aria-hidden='true'>
+            <IconoServicio nombre={f.icono} size={20} />
+          </span>
+          <div class='flex flex-col gap-1.5 min-w-0 flex-1'>
+            <h3 class='m-0 font-medium tracking-[-0.015em] leading-[1.3] text-[1.02rem] text-[color:var(--foreground-strong)]'>
               {f.titulo}
             </h3>
             {f.descripcion && (
-              <p class='m-0 text-sm text-[color:var(--muted-foreground)] leading-[1.55]'>{f.descripcion}</p>
+              <p class='m-0 text-[0.9rem] text-[color:var(--muted)] leading-[1.55]'>{f.descripcion}</p>
             )}
           </div>
         </li>
@@ -76,10 +62,44 @@ if (items.length === 0) return null;
 </section>
 
 <style>
-  /* Hover coordinado padre → hijo: al pasar sobre la columna, el icono se rellena. */
-  .feature-item:hover .feature-item-icon {
-    background: var(--accent);
-    color: #fff;
-    transform: scale(1.05);
+  /* Grid interior tipo Notion · líneas divisorias internas mediante borders.
+     Todos los items llevan border-b + border-right, luego quitamos los de
+     última columna y última fila con nth-child. */
+  .feature-item { border-right: none; }
+
+  @media (min-width: 640px) and (max-width: 959px) {
+    .feature-item:nth-child(2n-1) { border-right: 1px solid var(--border); }
+  }
+  @media (min-width: 960px) {
+    .feature-item:nth-child(4n-3),
+    .feature-item:nth-child(4n-2),
+    .feature-item:nth-child(4n-1) { border-right: 1px solid var(--border); }
+  }
+
+  /* Icono con motion sutil al hover del container */
+  .feature-icon {
+    transition:
+      background-color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      transform var(--dur) var(--ease-magnetic);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .feature-item:hover .feature-icon {
+      background: var(--foreground-strong);
+      color: var(--background);
+      border-color: var(--foreground-strong);
+      transform: scale(1.08) rotate(-3deg);
+    }
+    .feature-item {
+      transition: background-color var(--dur) var(--ease-out);
+    }
+    .feature-item:hover {
+      background: var(--surface);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .feature-item:hover .feature-icon { transform: none; }
   }
 </style>

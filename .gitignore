@@ -47,6 +47,9 @@ pnpm-debug.log*
 # Sanity studio dist
 studio/dist/
 
+# Skills CLI (skills se instalan globalmente en ~/.claude/skills; el lock local queda vacío)
+skills-lock.json
+
 # Capturas sueltas que no deben entrar al repo
 /WhatsApp Image*.jpeg
 /WhatsApp Image*.jpg

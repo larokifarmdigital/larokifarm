@@ -1,44 +1,78 @@
 @import 'tailwindcss';
 
 /* ==========================================================================
-   Chamarro — estilo corporate/clínico serio.
-   Sans única (Inter), grises fríos slate, azul acero sobrio como acento.
-   Grid limpio, bordes finos, tarjetas cuadradas con radius mínimo, sin
-   animaciones ni decoraciones. Foco en credibilidad y legibilidad B2B.
+   Chamarro · Minimalist UI + Motion (C2 con animación abundante)
+   Warm bone canvas, Newsreader serif para hero, Geist Sans/Mono para UI.
+   Radios crisp 4-12px. Motion abundante pero refinada tipo Vercel/Linear:
+   reveal-blur, word-stagger, spotlight cursor, motion-float, count-up,
+   marquee, magnetic hover, underline animations.
    ========================================================================== */
 
 :root {
-  --background: #ffffff;
-  --surface: #f8fafc;
-  --foreground: #0f172a;
-  --muted: #64748b;
-  --muted-foreground: #475569;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --card: #ffffff;
+  --background: #FBFBFA;
+  --canvas-alt: #F7F6F3;
+  --surface: #F9F9F8;
+  --surface-strong: #F1F0EC;
+  --foreground: #2F3437;
+  --foreground-strong: #111111;
+  --muted: #787774;
+  --muted-foreground: #504D48;
+  --border: #EAEAEA;
+  --border-soft: rgba(0, 0, 0, 0.06);
+  --border-strong: #D6D6D6;
+  --card: #FFFFFF;
 
-  --primary: #0f172a;
-  --primary-hover: #1e293b;
-  --primary-foreground: #ffffff;
-  --primary-soft: #f1f5f9;
+  --primary: #111111;
+  --primary-hover: #333333;
+  --primary-foreground: #FFFFFF;
+  --primary-soft: #F7F6F3;
 
-  /* Marca chamarro: gris plomo elegante (sustituye al azul corporativo de torrents). */
-  --accent: #334155;         /* slate-700 */
-  --accent-hover: #1e293b;   /* slate-800 */
-  --accent-soft: #e2e8f0;    /* slate-200 */
+  --accent: #2F3437;
+  --accent-hover: #111111;
+  --accent-soft: #F1F0EC;
 
-  --success: #059669;
-  --success-soft: #d1fae5;
-  --warning: #d97706;
-  --danger: #dc2626;
+  --pastel-red-bg: #FDEBEC;    --pastel-red-fg: #9F2F2D;
+  --pastel-blue-bg: #E1F3FE;   --pastel-blue-fg: #1F6C9F;
+  --pastel-green-bg: #EDF3EC;  --pastel-green-fg: #346538;
+  --pastel-yellow-bg: #FBF3DB; --pastel-yellow-fg: #956400;
 
-  --whatsapp: #25d366;
+  --success: #346538;
+  --success-soft: #EDF3EC;
+  --warning: #956400;
+  --danger: #9F2F2D;
+  --whatsapp: #1FAF38;
 
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Geist', 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+  --font-serif: 'Newsreader', 'Instrument Serif', 'Playfair Display', Georgia, serif;
+  --font-mono: 'Geist Mono', 'SF Mono', 'JetBrains Mono', monospace;
 
-  --radius-sm: 4px;
-  --radius: 6px;
-  --radius-lg: 8px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Motion tokens · variedad rica de easings/duraciones. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-editorial: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-magnetic: cubic-bezier(0.2, 0.9, 0.3, 1.1);
+
+  --dur-press: 100ms;
+  --dur-fast: 180ms;
+  --dur: 240ms;
+  --dur-slow: 400ms;
+  --dur-cinematic: 700ms;
+  --dur-editorial: 900ms;
+
+  /* Sombras extremadamente sutiles — mantiene look Notion. */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-soft: 0 6px 20px -8px rgba(0, 0, 0, 0.06);
+  --shadow-lift: 0 12px 32px -12px rgba(0, 0, 0, 0.08);
+  --shadow-float: 0 24px 48px -16px rgba(0, 0, 0, 0.10);
 }
 
 @theme inline {
@@ -65,7 +99,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
   min-width: 375px;
   -webkit-font-smoothing: antialiased;
@@ -74,35 +108,39 @@ body {
 }
 
 ::selection {
-  background: var(--accent-soft);
-  color: var(--foreground);
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 
-/* Clases custom envueltas en @layer components → menor especificidad que las
-   utilities de Tailwind, permitiendo que utilities inline (bg-white, text-white,
-   border-white, etc.) sobrescriban colores por defecto de .btn, .h-display, etc. */
 @layer components {
   .h-display {
-    font-family: var(--font-sans);
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    line-height: 1.05;
-    font-size: clamp(2.25rem, 4vw + 1rem, 3.75rem);
-    color: var(--foreground);
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
+    font-size: clamp(2.75rem, 6vw + 0.5rem, 5.5rem);
+    color: var(--foreground-strong);
+    text-wrap: balance;
   }
+  .h-display em { font-style: italic; }
+
   .h-section {
-    font-family: var(--font-sans);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1.15;
-    font-size: clamp(1.75rem, 2.5vw + 0.5rem, 2.5rem);
-    color: var(--foreground);
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    font-size: clamp(2rem, 3.5vw + 0.5rem, 3.25rem);
+    color: var(--foreground-strong);
+    text-wrap: balance;
   }
+  .h-section em { font-style: italic; }
+
   .h-card {
     font-family: var(--font-sans);
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: -0.01em;
-    font-size: 1.15rem;
+    line-height: 1.25;
+    font-size: 1.05rem;
     color: var(--foreground);
   }
 
@@ -110,33 +148,36 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-weight: 600;
+    font-family: var(--font-mono);
+    font-weight: 400;
     font-size: 0.72rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--accent);
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    padding: 0;
+    background: transparent;
+    border: none;
+    text-transform: none;
   }
   .section-eyebrow::before {
     content: '';
     display: inline-block;
-    width: 20px;
-    height: 1.5px;
-    background: var(--accent);
+    width: 14px;
+    height: 1px;
+    background: var(--muted);
   }
 
   .container-app {
     max-width: 1200px;
     margin-inline: auto;
-    padding-inline: clamp(1rem, 4vw, 2rem);
+    padding-inline: clamp(1.25rem, 5vw, 2.5rem);
   }
 
   .card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: clamp(1.25rem, 2vw, 1.75rem);
+    padding: clamp(1.75rem, 2.5vw, 2.25rem);
   }
-  .card-hover:hover { border-color: var(--border-strong); }
 
   .rule {
     border: none;
@@ -145,85 +186,291 @@ body {
     margin: 0;
   }
 
+  /* -------- BUTTONS · cuadrados minimal, sin rounded-full. -------- */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.7rem 1.25rem;
+    padding: 0.7rem 1.15rem;
     font-family: var(--font-sans);
     font-weight: 500;
     font-size: 0.9rem;
-    border-radius: var(--radius);
+    letter-spacing: -0.005em;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     text-decoration: none;
-    transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur) var(--ease-out),
+      transform var(--dur-press) var(--ease-out);
     border: 1px solid transparent;
   }
-  .btn-primary { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
-  .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
-  .btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-  .btn-secondary { background: var(--card); color: var(--foreground); border-color: var(--border-strong); }
-  .btn-secondary:hover { border-color: var(--foreground); background: var(--primary-soft); }
-  .btn-ghost { background: transparent; color: var(--accent); border-color: transparent; padding-inline: 0.5rem; }
-  .btn-ghost:hover { color: var(--accent-hover); }
-  /* WhatsApp — gradiente oficial (mismo del logo): #1FAF38 → #60D669, texto blanco. */
-  .btn-wa {
-    background: linear-gradient(180deg, #60D669 0%, #1FAF38 100%);
-    color: #ffffff;
-    border-color: #1FAF38;
-    box-shadow: 0 4px 14px -6px rgb(31 175 56 / 0.5);
-    transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
-  }
-  .btn-wa:hover {
-    filter: brightness(0.95);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px -6px rgb(31 175 56 / 0.55);
-  }
-  .btn-wa:active { transform: translateY(0); }
+  .btn:active { transform: scale(0.98); }
 
-  /* Botón de teléfono — gris plomo (marca chamarro), misma identidad en header y Contacto. */
+  .btn-primary { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+  .btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-secondary { background: var(--card); color: var(--foreground); border-color: var(--border); }
+  .btn-ghost { background: transparent; color: var(--foreground); border-color: transparent; padding-inline: 0.5rem; }
+  .btn-wa { background: var(--whatsapp); color: #ffffff; border-color: var(--whatsapp); }
   .btn-tel {
-    background: var(--accent);
-    color: #ffffff;
-    border-color: var(--accent);
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--primary);
     font-variant-numeric: tabular-nums;
-    box-shadow: 0 4px 14px -6px rgb(51 65 85 / 0.4);
-    transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
   }
-  .btn-tel:hover {
-    background: var(--accent-hover);
-    border-color: var(--accent-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px -6px rgb(30 41 59 / 0.5);
+
+  /* Button-in-Button trailing icon. */
+  .btn-icon-nested {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-xs);
+    background: color-mix(in oklab, currentColor 15%, transparent);
+    margin-right: -0.35rem;
+    transition:
+      transform var(--dur) var(--ease-magnetic),
+      background-color var(--dur-fast) var(--ease-out);
   }
-  .btn-tel:active { transform: translateY(0); }
+
+  @media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+      box-shadow: var(--shadow-soft);
+      transform: translateY(-1px);
+    }
+    .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); box-shadow: var(--shadow-soft); transform: translateY(-1px); }
+    .btn-secondary:hover {
+      border-color: var(--foreground);
+      background: var(--surface);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-hover);
+    }
+    .btn-ghost:hover { color: var(--foreground); background: var(--surface); }
+    .btn-wa:hover { filter: brightness(0.94); transform: translateY(-1px); box-shadow: var(--shadow-soft); }
+    .btn-tel:hover { background: var(--primary-hover); border-color: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-soft); }
+    .btn:hover .btn-icon-nested {
+      transform: translateX(3px);
+      background: color-mix(in oklab, currentColor 25%, transparent);
+    }
+  }
 
   .link {
-    color: var(--accent);
+    color: var(--foreground);
     text-decoration: none;
-    transition: color 180ms ease;
+    position: relative;
+    transition: color var(--dur-fast) var(--ease-out);
   }
-  .link:hover { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 3px; }
+  .link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur) var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .link:hover { color: var(--foreground-strong); }
+    .link:hover::after { transform: scaleX(1); }
+  }
 
   .chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.3rem 0.7rem;
-    background: var(--accent-soft);
-    color: var(--accent);
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    gap: 0.4rem;
+    padding: 0.28rem 0.7rem;
+    background: var(--pastel-green-bg);
+    color: var(--pastel-green-fg);
+    border-radius: 9999px;
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  kbd {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    padding: 0.15rem 0.4rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: var(--radius-xs);
+    color: var(--foreground);
   }
 }
 
+/* ============================================================
+   MOTION UTILITY SYSTEM · abundante pero refinada.
+   ============================================================ */
+
+/* Reveal on-scroll · fade + translate + BLUR (más expresivo que solo 12px). */
+[data-reveal] {
+  --reveal-delay: 0ms;
+  opacity: 0;
+  transform: translateY(20px);
+  filter: blur(8px);
+  transition:
+    opacity var(--dur-cinematic) var(--ease-editorial),
+    transform var(--dur-cinematic) var(--ease-editorial),
+    filter var(--dur-cinematic) var(--ease-editorial);
+  transition-delay: var(--reveal-delay);
+}
+[data-reveal].in-view {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* Reveal word · para word-by-word stagger en el hero. Más punchy. */
+[data-reveal-word] {
+  --reveal-delay: 0ms;
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(10px);
+  transition:
+    opacity var(--dur-editorial) var(--ease-editorial),
+    transform var(--dur-editorial) var(--ease-editorial),
+    filter var(--dur-editorial) var(--ease-editorial);
+  transition-delay: var(--reveal-delay);
+  will-change: transform, filter;
+}
+[data-reveal-word].in-view {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* Float sutil permanente — imagen protagonista. */
+.motion-float {
+  animation: motion-float 9s var(--ease-in-out) infinite;
+}
+@keyframes motion-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Pulse ambient · dots de status. */
+.motion-pulse {
+  animation: motion-pulse 2.5s var(--ease-in-out) infinite;
+}
+@keyframes motion-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Ambient background · dos radial gradients drift muy lentos. */
+.motion-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.05;
+  background:
+    radial-gradient(ellipse 40% 30% at 20% 30%, var(--foreground-strong), transparent 60%),
+    radial-gradient(ellipse 30% 40% at 80% 70%, var(--foreground-strong), transparent 60%);
+  animation: motion-ambient 40s var(--ease-in-out) infinite alternate;
+}
+@keyframes motion-ambient {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-3%, 2%); }
+}
+
+/* Spotlight border · cursor-tracked highlight. Sutil, opacity baja. */
+.spotlight {
+  position: relative;
+  isolation: isolate;
+}
+.spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    260px circle at var(--mx, 50%) var(--my, 50%),
+    var(--foreground-strong) 0%,
+    transparent 55%
+  );
+  -webkit-mask: linear-gradient(#fff, #fff) content-box, linear-gradient(#fff, #fff);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+  pointer-events: none;
+  z-index: 1;
+}
+.spotlight:hover::before { opacity: 0.5; }
+
+/* Marquee horizontal · loop infinito de trust indicators. */
+.motion-marquee {
+  display: flex;
+  gap: 3rem;
+  animation: motion-marquee 30s linear infinite;
+}
+@keyframes motion-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - 3rem)); }
+}
+.motion-marquee-wrap {
+  position: relative;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+}
+
+/* Magnetic lift · para cards y elementos flotantes al hover. */
+.motion-magnetic {
+  transition:
+    transform var(--dur) var(--ease-magnetic),
+    box-shadow var(--dur) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .motion-magnetic:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+/* Underline animated (para links no-btn) */
+.link-anim {
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.link-anim::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--dur) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .link-anim:hover::after { transform: scaleX(1); transform-origin: left; }
+}
+
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline: 2px solid var(--foreground-strong);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -231,6 +478,13 @@ body {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
   }
+  [data-reveal], [data-reveal-word] {
+    transform: none !important;
+    filter: none !important;
+    transition-duration: 300ms !important;
+  }
+  .motion-ambient, .motion-float, .motion-pulse, .motion-marquee { animation: none !important; }
+  .motion-magnetic:hover { transform: none !important; }
+  .btn:active { transform: none !important; }
 }
