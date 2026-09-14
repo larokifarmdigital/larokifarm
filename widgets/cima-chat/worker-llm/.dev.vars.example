@@ -1,0 +1,4 @@
+# Copiar este archivo a .dev.vars y rellenar tu key real.
+# .dev.vars solo lo lee `wrangler dev` (nunca sube al deploy).
+# Está en .gitignore — NUNCA se commitea.
+GEMINI_API_KEY=pega-aqui-tu-key-de-gemini

@@ -7,6 +7,9 @@ import { AnswerBubble } from './AnswerBubble';
 import { AlertBanner } from './AlertBanner';
 import { AlternativesList } from './AlternativesList';
 import { SymptomWizard } from './SymptomWizard';
+import { ChatIA } from './ChatIA';
+import { AlternativesChat } from './AlternativesChat';
+import { InteractionsInline } from './InteractionsInline';
 import { fetchCatalog, type CimaCatalog } from '../api/sanity';
 import { fetchInventory, type Inventory } from '../api/inventory';
 import { SYMPTOMS } from '../lib/symptoms';
@@ -46,7 +49,7 @@ interface AnswerEntry {
   answer: string;
 }
 
-type EntryMode = 'menu' | 'search' | 'wizard';
+type EntryMode = 'menu' | 'search' | 'wizard' | 'chat';
 
 const BUNDLED_CATALOG: CimaCatalog = {
   symptoms: SYMPTOMS,
@@ -56,6 +59,8 @@ const BUNDLED_CATALOG: CimaCatalog = {
 
 export function ChatPanel({ onClose }: Props) {
   const [entry, setEntry] = useState<EntryMode>('menu');
+  const [heroInput, setHeroInput] = useState('');
+  const [chatInitial, setChatInitial] = useState<string | undefined>(undefined);
   const [catalog, setCatalog] = useState<CimaCatalog>(BUNDLED_CATALOG);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const catalogFetched = useRef(false);
@@ -242,49 +247,136 @@ export function ChatPanel({ onClose }: Props) {
   return (
     <div class="cima-panel" role="dialog" aria-label="Chat de medicamentos CIMA">
       <header class="cima-header">
-        <div>
-          <strong>Consulta de medicamentos</strong>
-          <div class="cima-header-sub">Fuente oficial: AEMPS · CIMA</div>
+        <div class="cima-header__brand">
+          <span class="cima-header__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 12h6M12 9v6"/>
+              <circle cx="12" cy="12" r="9"/>
+            </svg>
+          </span>
+          <span class="cima-header__title">CIMA</span>
         </div>
         {onClose && (
-          <button class="cima-close" onClick={onClose} aria-label="Cerrar">×</button>
+          <button class="cima-close" onClick={onClose} aria-label="Cerrar">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
         )}
       </header>
 
       <div class="cima-body" ref={bodyRef}>
         {!selected && entry === 'menu' && (
-          <div class="cima-entry">
-            <p class="cima-entry-hello">
-              Hola 👋 — soy tu asistente de información de medicamentos.
-              Toda la info procede de la fuente oficial AEMPS (CIMA).
-            </p>
-            <button class="cima-entry-card" onClick={() => setEntry('search')}>
-              <span class="cima-entry-emoji">🔍</span>
-              <span>
-                <strong>Buscar un medicamento</strong>
-                <div class="cima-entry-desc">Por nombre o Código Nacional</div>
-              </span>
-            </button>
-            <button
-              class="cima-entry-card"
-              onClick={() => {
-                setEntry('wizard');
-                if (!catalogFetched.current) {
-                  catalogFetched.current = true;
-                  setCatalogLoading(true);
-                  fetchCatalog(BUNDLED_CATALOG)
-                    .then((c) => setCatalog(c))
-                    .finally(() => setCatalogLoading(false));
-                }
+          <div class="cima-hero">
+            <form
+              class="cima-hero__form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const value = heroInput.trim();
+                if (!value) return;
+                setChatInitial(value);
+                setHeroInput('');
+                setEntry('chat');
               }}
             >
-              <span class="cima-entry-emoji">💬</span>
-              <span>
-                <strong>Encuentra por síntoma</strong>
-                <div class="cima-entry-desc">Te sugiero medicamentos sin receta apropiados</div>
-              </span>
-            </button>
+              <textarea
+                class="cima-hero__input"
+                value={heroInput}
+                onInput={(e) => setHeroInput((e.target as HTMLTextAreaElement).value)}
+                placeholder="Preguntá sobre un medicamento"
+                rows={2}
+                aria-label="Tu consulta"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    (e.currentTarget as HTMLTextAreaElement).form?.requestSubmit();
+                  }
+                }}
+              />
+              <button
+                type="submit"
+                class="cima-hero__submit"
+                disabled={heroInput.trim().length < 3}
+                aria-label="Enviar"
+              >
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 19V5M5 12l7-7 7 7"/>
+                </svg>
+              </button>
+            </form>
+
+            <div class="cima-hero__quick" role="list">
+              <button
+                type="button"
+                role="listitem"
+                class="cima-hero__quick-item"
+                onClick={() => setEntry('search')}
+              >
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="7"/>
+                  <path d="m21 21-4.35-4.35"/>
+                </svg>
+                Buscar
+              </button>
+              <button
+                type="button"
+                role="listitem"
+                class="cima-hero__quick-item"
+                onClick={() => {
+                  setEntry('wizard');
+                  if (!catalogFetched.current) {
+                    catalogFetched.current = true;
+                    setCatalogLoading(true);
+                    fetchCatalog(BUNDLED_CATALOG)
+                      .then((c) => setCatalog(c))
+                      .finally(() => setCatalogLoading(false));
+                  }
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"/>
+                  <circle cx="12" cy="12" r="4"/>
+                </svg>
+                Guía por síntomas
+              </button>
+            </div>
+
+            <div class="cima-hero__examples">
+              {[
+                'Mi bebé tiene fiebre desde ayer',
+                '¿Se puede combinar Adiro con ibuprofeno?',
+                '¿Es apto el paracetamol en lactancia?',
+              ].map((ex) => (
+                <button
+                  key={ex}
+                  type="button"
+                  class="cima-hero__example"
+                  onClick={() => {
+                    setChatInitial(ex);
+                    setEntry('chat');
+                  }}
+                >
+                  <span>{ex}</span>
+                  <span class="cima-hero__example-arrow" aria-hidden="true">›</span>
+                </button>
+              ))}
+            </div>
           </div>
+        )}
+
+        {!selected && entry === 'chat' && (
+          <>
+            <button
+              class="cima-back"
+              onClick={() => {
+                setChatInitial(undefined);
+                setEntry('menu');
+              }}
+            >
+              ← Volver
+            </button>
+            <ChatIA initialMessage={chatInitial} />
+          </>
         )}
 
         {!selected && entry === 'search' && (
@@ -330,6 +422,8 @@ export function ChatPanel({ onClose }: Props) {
               onShowAlternatives={handleShowAlternatives}
             />
             <AlertBanner notas={notas} suministro={suministro} />
+            <AlternativesChat med={selected} />
+            <InteractionsInline med={selected} />
             {altOpen && (
               <AlternativesList
                 label={altLabel}

@@ -1,0 +1,23 @@
+name = "cima-chat-llm"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+# El worker orquesta Gemini con tool-use sobre la API pública de CIMA.
+# Secret GEMINI_API_KEY se define con `wrangler secret put GEMINI_API_KEY`.
+
+# KV para:
+# - Cache de respuestas Q&A frecuentes (TTL 24h)
+# - Rate limit por IP (TTL 1 min ventana deslizante)
+[[kv_namespaces]]
+binding = "CACHE_KV"
+id = "a3ad9cd2da414f99b492cdd7648a2190"
+preview_id = "64c7a8cd972f4350aa284c6c6ff3f99f"
+
+[vars]
+# Origen permitido para CORS. Cámbialo al dominio del widget.
+ALLOWED_ORIGIN = "*"
+# Cuántas requests permite el rate limit por IP en 60s.
+RATE_LIMIT_PER_MIN = "20"
+
+[observability]
+enabled = true
