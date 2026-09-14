@@ -16,7 +16,7 @@ interface UIMessage extends ChatMessage {
 }
 
 const WELCOME_TEXT =
-  'Preguntá lo que necesites saber sobre medicamentos autorizados en España. Algunos ejemplos:\n\n• "¿Puedo tomar ibuprofeno si estoy embarazada?"\n• "¿Efectos secundarios del paracetamol 1 g?"\n• "¿Interacciones entre Adiro y omeprazol?"';
+  'Pregunta lo que necesites saber sobre medicamentos autorizados en España. Algunos ejemplos:\n\n• "¿Puedo tomar ibuprofeno si estoy embarazada?"\n• "¿Efectos secundarios del paracetamol 1 g?"\n• "¿Interacciones entre Adiro y omeprazol?"';
 
 const SUGGESTED_PROMPTS = [
   'Mi bebé tiene fiebre desde ayer',
@@ -191,7 +191,7 @@ export function ChatIA({ mode = 'paciente', initialMessage }: ChatIAProps) {
       >
         <textarea
           class="chat-ia__input"
-          placeholder="Escribí un mensaje"
+          placeholder="Escribe un mensaje"
           value={input}
           rows={1}
           onInput={(e) => {
@@ -207,7 +207,7 @@ export function ChatIA({ mode = 'paciente', initialMessage }: ChatIAProps) {
             }
           }}
           disabled={pending}
-          aria-label="Escribí tu pregunta"
+          aria-label="Escribe tu pregunta"
         />
         <button
           type="submit"

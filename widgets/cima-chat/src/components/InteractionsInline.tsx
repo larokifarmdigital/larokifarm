@@ -48,7 +48,7 @@ export function InteractionsInline({ med }: Props) {
             </svg>
           </span>
           <span>
-            <strong>¿Combinás con otro medicamento?</strong>
+            <strong>¿Lo combinas con otro medicamento?</strong>
             <div class="cima-alt-toggle__desc">
               Revisamos posibles interacciones documentadas
             </div>

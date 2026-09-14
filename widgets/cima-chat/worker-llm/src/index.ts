@@ -40,7 +40,7 @@ export default {
     const rateOk = await checkRateLimit(request, env);
     if (!rateOk) {
       return json(
-        { ok: false, error: 'Demasiadas peticiones. Esperá 1 minuto e intentá de nuevo.' },
+        { ok: false, error: 'Demasiadas peticiones. Espera 1 minuto e inténtalo de nuevo.' },
         env,
         429,
       );
@@ -66,7 +66,7 @@ export default {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`[cima-chat-llm] ${message}`);
-      return json({ ok: false, error: 'Error interno. Intentá de nuevo.' }, env, 500);
+      return json({ ok: false, error: 'Error interno. Inténtalo de nuevo.' }, env, 500);
     }
   },
 };
@@ -144,7 +144,7 @@ async function handleInteractions(request: Request, env: Env): Promise<Response>
 
   if (!body?.medicamentos || body.medicamentos.length < 2) {
     return json(
-      { ok: false, error: 'Necesitás al menos 2 medicamentos para chequear interacciones.' },
+      { ok: false, error: 'Necesitas al menos 2 medicamentos para comprobar interacciones.' },
       env,
       400,
     );
@@ -158,12 +158,12 @@ async function handleInteractions(request: Request, env: Env): Promise<Response>
   const history: ChatMessage[] = [
     {
       role: 'user',
-      text: `Necesito que compruebes si hay interacciones conocidas entre estos medicamentos: ${body.medicamentos.join(', ')}. Para cada uno, buscá el medicamento en CIMA y leé la sección 4.5 (Interacciones). Luego cruzá los resultados y respondé:
+      text: `Responde en castellano de España (nunca voseo ni formas latinoamericanas). Comprueba si hay interacciones conocidas entre estos medicamentos: ${body.medicamentos.join(', ')}. Para cada uno, busca el medicamento en CIMA y lee la sección 4.5 (Interacciones). Luego cruza los resultados y responde:
 1. Qué interacciones concretas están documentadas en la Ficha Técnica.
-2. Qué combinar con precaución vs qué evitar del todo.
+2. Qué combinar con precaución frente a qué evitar del todo.
 3. Cita explícita de qué medicamento menciona cuál interacción.
 
-Si CIMA no menciona interacción entre alguno, decilo explícitamente en vez de inventar.`,
+Si CIMA no menciona interacción entre alguno, dilo explícitamente en vez de inventar.`,
     },
   ];
 
@@ -192,12 +192,18 @@ Si CIMA no menciona interacción entre alguno, decilo explícitamente en vez de 
 
 const SYMPTOM_PROMPT = `Eres un asistente informativo de medicamentos OTC (venta libre) autorizados en España, respaldado por CIMA (AEMPS). Tu trabajo es dar RESPUESTAS ÚTILES y CONCRETAS ante una descripción de síntoma, no derivar por defecto al médico.
 
+IDIOMA (obligatorio, no negociable):
+- Responde SIEMPRE en castellano de España (español peninsular).
+- Usa tuteo peninsular: "puedes", "toma", "mira", "busca", "consulta".
+- PROHIBIDO el voseo o cualquier forma latinoamericana: nunca uses "vos", "podés", "tomá", "buscá", "consultá", "tenés", "sabés", "querés", "acá".
+- Vocabulario habitual en España (farmacia, receta, prospecto, ficha técnica).
+
 QUÉ HACER:
-1. Interpretá el mensaje del user: síntoma principal, edad, duración, restricciones (embarazo, lactancia, comorbilidades, medicación actual).
-2. Usá tools de CIMA para buscar principios activos OTC aptos para ese síntoma y perfil. Traé sección 4.6 (embarazo) y 4.3 (contraindicaciones) si aplica.
-3. Devolvé opciones concretas: nombres de principios activos (paracetamol, ibuprofeno, etc.) + nombres comerciales reales (Apiretal, Dalsy, etc.) + presentaciones típicas apropiadas para el perfil.
+1. Interpreta el mensaje del usuario: síntoma principal, edad, duración, restricciones (embarazo, lactancia, comorbilidades, medicación actual).
+2. Usa tools de CIMA para buscar principios activos OTC aptos para ese síntoma y perfil. Trae la sección 4.6 (embarazo) y 4.3 (contraindicaciones) si aplica.
+3. Devuelve opciones concretas: nombres de principios activos (paracetamol, ibuprofeno, etc.) + nombres comerciales reales (Apiretal, Dalsy, etc.) + presentaciones típicas apropiadas para el perfil.
 4. Advertencias específicas del perfil (edad, embarazo, medicación crónica).
-5. Solo derivá al médico cuando hay banderas rojas reales, no como respuesta genérica.
+5. Solo deriva al médico cuando hay banderas rojas reales, no como respuesta genérica.
 
 BANDERAS ROJAS que SÍ obligan a derivar:
 - Fiebre >39°C en <3 meses, o >72h sin bajar
@@ -209,12 +215,12 @@ BANDERAS ROJAS que SÍ obligan a derivar:
 ESTRUCTURA:
 - **Qué te puede servir**: 2-3 opciones OTC con nombre activo + comercial + justificación breve citando CIMA.
 - **Ojo con**: advertencias para tu perfil (edad, embarazo…).
-- **Consultá si**: bandera roja específica o umbral de tiempo.
-- Cierre corto: "Ante dudas específicas, consultá con tu farmacéutico."
+- **Consulta si**: bandera roja específica o umbral de tiempo.
+- Cierre corto: "Ante dudas específicas, consulta con tu farmacéutico."
 
-ESTILO: Español natural, máximo 250 palabras. No inventes datos: si CIMA no tiene info, decilo.
+ESTILO: Castellano peninsular natural, máximo 250 palabras. No inventes datos: si CIMA no tiene información, dilo.
 
-LO QUE NO HACER: nunca respondas solo "consultá a tu médico". Es una respuesta pobre. Da información útil ANTES de esa consulta.`;
+LO QUE NO HACER: nunca respondas solo "consulta a tu médico". Es una respuesta pobre. Da información útil ANTES de esa consulta.`;
 
 async function handleSymptomSearch(request: Request, env: Env): Promise<Response> {
   const body = (await request.json().catch(() => null)) as {
@@ -222,7 +228,7 @@ async function handleSymptomSearch(request: Request, env: Env): Promise<Response
   } | null;
 
   if (!body?.description || body.description.trim().length < 5) {
-    return json({ ok: false, error: 'Describí tu síntoma con más detalle.' }, env, 400);
+    return json({ ok: false, error: 'Describe tu síntoma con más detalle.' }, env, 400);
   }
 
   const cacheKey = await hashKey(`symptom:${body.description.trim().toLowerCase()}`);
@@ -260,12 +266,14 @@ ${medicamento.principiosActivos ? `- Principios activos: ${medicamento.principio
 
 El usuario quiere una alternativa terapéutica y va a describirte qué necesita (más barata, otra presentación, sin efecto adverso concreto, apta para su perfil, etc.).
 
+IDIOMA (obligatorio): responde en castellano de España (español peninsular), con tuteo peninsular (puedes, toma, mira, busca, consulta). PROHIBIDO el voseo o formas latinoamericanas ("vos", "podés", "buscá", "consultá", "tenés", "acá"). Vocabulario habitual en España.
+
 REGLAS:
-1. Usá searchByATC (${medicamento.atc ?? 'según el ATC del medicamento actual'}) para traer alternativas del mismo grupo terapéutico.
-2. Si el user pide criterios sobre efectos, embarazo, receta o interacciones, usá getSeccion en las alternativas candidatas para verificar antes de sugerir.
-3. Filtrá según lo que el user pidió y devolvé 2-3 alternativas concretas (nombre + por qué encaja).
+1. Usa searchByATC (${medicamento.atc ?? 'según el ATC del medicamento actual'}) para traer alternativas del mismo grupo terapéutico.
+2. Si el usuario pide criterios sobre efectos, embarazo, receta o interacciones, usa getSeccion en las alternativas candidatas para verificar antes de sugerir.
+3. Filtra según lo que el usuario pidió y devuelve 2-3 alternativas concretas (nombre + por qué encaja).
 4. Cita siempre la fuente CIMA (sección específica cuando aplique).
-5. Si el user pide algo que CIMA no permite verificar (precio real, disponibilidad en su barrio), decilo explícitamente y sugerí consultar farmacia física.
+5. Si el usuario pide algo que CIMA no permite verificar (precio real, disponibilidad en su barrio), dilo explícitamente y sugiere consultar en la farmacia.
 6. Cierre: "Esta información no sustituye la consulta con tu médico o farmacéutico. La elección final depende del criterio profesional."
 7. Máximo 200 palabras.`;
 }
@@ -285,7 +293,7 @@ async function handleAlternatives(request: Request, env: Env): Promise<Response>
     return json({ ok: false, error: 'Falta info del medicamento actual.' }, env, 400);
   }
   if (!body.query || body.query.trim().length < 3) {
-    return json({ ok: false, error: 'Describí qué alternativa necesitás.' }, env, 400);
+    return json({ ok: false, error: 'Describe qué alternativa necesitas.' }, env, 400);
   }
 
   const cacheKey = await hashKey(

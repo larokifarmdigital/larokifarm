@@ -283,7 +283,7 @@ export function ChatPanel({ onClose }: Props) {
                 class="cima-hero__input"
                 value={heroInput}
                 onInput={(e) => setHeroInput((e.target as HTMLTextAreaElement).value)}
-                placeholder="Preguntá sobre un medicamento"
+                placeholder="Pregunta sobre un medicamento"
                 rows={2}
                 aria-label="Tu consulta"
                 onKeyDown={(e) => {

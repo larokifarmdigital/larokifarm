@@ -116,7 +116,7 @@ export function AlternativesChat({ med }: Props) {
 
       {entries.length === 0 && (
         <div class="cima-alt-chat__prompts">
-          <span class="cima-alt-chat__prompts-label">Probá con:</span>
+          <span class="cima-alt-chat__prompts-label">Prueba con:</span>
           {QUICK_PROMPTS.map((p) => (
             <button
               key={p}
@@ -182,11 +182,11 @@ export function AlternativesChat({ med }: Props) {
         <input
           type="text"
           class="chat-ia__input"
-          placeholder="¿Qué alternativa necesitás?"
+          placeholder="¿Qué alternativa necesitas?"
           value={input}
           onInput={(e) => setInput((e.target as HTMLInputElement).value)}
           disabled={pending}
-          aria-label="Describí qué alternativa buscás"
+          aria-label="Describe qué alternativa buscas"
         />
         <button
           type="submit"
