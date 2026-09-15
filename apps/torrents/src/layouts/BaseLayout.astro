@@ -3,6 +3,7 @@ import '@/styles/global.css';
 import gilroyRegular from '@/assets/fonts/Gilroy-Regular.ttf?url';
 import gilroyBlack from '@/assets/fonts/Gilroy-Black.ttf?url';
 import { LOCALES_DISPONIBLES, LOCALE_DEFECTO, rutaConLocale, type Locale } from '@/lib/i18n';
+import { SLUG_FARMACIA } from '@/lib/sanity';
 import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
 
@@ -41,7 +42,7 @@ const hrefDefault =
 ---
 
 <!doctype html>
-<html lang={lang}>
+<html lang={lang} data-slug={SLUG_FARMACIA}>
   <head>
     <meta charset='utf-8' />
     <meta name='viewport' content='width=device-width, initial-scale=1' />
@@ -116,6 +117,70 @@ const hrefDefault =
         if (href.startsWith('tel:')) track('llamar');
         else if (href.includes('wa.me') || href.includes('whatsapp')) track('whatsapp');
       });
+    </script>
+
+    <script>
+      /* Motion global · IntersectionObserver único para [data-reveal] y [data-reveal-word]. */
+      const observed = document.querySelectorAll<HTMLElement>('[data-reveal], [data-reveal-word]');
+      if (observed.length > 0 && 'IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              (entry.target as HTMLElement).classList.add('in-view');
+              io.unobserve(entry.target);
+            }
+          }
+        }, { threshold: 0.12, rootMargin: '0px 0px -80px 0px' });
+        observed.forEach((el) => io.observe(el));
+      } else {
+        observed.forEach((el) => el.classList.add('in-view'));
+      }
+
+      /* Spotlight cursor tracking — solo en pointer:fine. */
+      const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+      if (finePointer) {
+        document.querySelectorAll<HTMLElement>('[data-spotlight]').forEach((el) => {
+          el.classList.add('spotlight');
+          el.addEventListener('pointermove', (e) => {
+            const rect = el.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            el.style.setProperty('--mx', `${x}%`);
+            el.style.setProperty('--my', `${y}%`);
+          });
+        });
+      }
+
+      /* Count-up animation · anima el número interior de 0 → N cuando el elemento
+         entra en viewport. Usar data-count-up="N" en el elemento. */
+      const counters = document.querySelectorAll<HTMLElement>('[data-count-up]');
+      if (counters.length > 0 && 'IntersectionObserver' in window) {
+        const preferSinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const cio = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            const el = entry.target as HTMLElement;
+            const target = parseFloat(el.dataset.countUp ?? '0');
+            const duration = parseInt(el.dataset.countDuration ?? '1200', 10);
+            const suffix = el.dataset.countSuffix ?? '';
+            cio.unobserve(el);
+            if (preferSinMovimiento) {
+              el.textContent = `${target}${suffix}`;
+              continue;
+            }
+            const start = performance.now();
+            function tick(now: number) {
+              const t = Math.min(1, (now - start) / duration);
+              const eased = 1 - Math.pow(1 - t, 3);
+              const current = Math.round(target * eased);
+              el.textContent = `${current}${suffix}`;
+              if (t < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+          }
+        }, { threshold: 0.5 });
+        counters.forEach((el) => cio.observe(el));
+      }
     </script>
 
     <div

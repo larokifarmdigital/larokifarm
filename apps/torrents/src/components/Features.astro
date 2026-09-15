@@ -94,11 +94,14 @@ const features = defectoSiVacio(lista, featuresFallback);
     rotacion={0}
   />
   <div class='container-app relative'>
-    <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4 md:gap-8'>
+    <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4 md:gap-8 features-grid'>
       {
-        features.map(f => (
-          <div class='flex items-center gap-4'>
-            <div class='flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_oklch,var(--primary),transparent_90%)] text-[var(--primary)]'>
+        features.map((f, i) => (
+          <div class='feature-item flex items-center gap-4 rounded-2xl p-3 -m-3'
+               style={`--reveal-delay:${i * 90}ms`}
+               data-reveal
+               data-spotlight>
+            <div class='feature-icon flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_oklch,var(--primary),transparent_90%)] text-[var(--primary)]'>
               <IconoServicio nombre={f.icono} size={28} />
             </div>
             <div class='min-w-0'>
@@ -113,3 +116,28 @@ const features = defectoSiVacio(lista, featuresFallback);
     </div>
   </div>
 </section>
+
+<style>
+  .feature-item {
+    transition: background-color var(--dur) var(--ease-out);
+  }
+  .feature-icon {
+    transition:
+      background-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      transform var(--dur) var(--ease-magnetic);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .feature-item:hover {
+      background: color-mix(in oklch, var(--primary), transparent 96%);
+    }
+    .feature-item:hover .feature-icon {
+      background: var(--primary);
+      color: var(--primary-foreground);
+      transform: scale(1.06) rotate(-4deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .feature-item:hover .feature-icon { transform: none; }
+  }
+</style>

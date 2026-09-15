@@ -62,6 +62,9 @@ const subtituloHero =
 
 const altInterior = t('hero.altInterior', lang, { nombre });
 
+/* Palabras del nombre para word-by-word reveal. */
+const palabrasNombre = nombre.split(/\s+/).filter(Boolean);
+
 // Tarjetas flotantes: localiza y descarta las que no tengan título.
 type TarjetaRender = {
   icono?: TarjetaFlotante['icono'];
@@ -128,6 +131,7 @@ const POSICIONES = [
       <div class='space-y-7'>
         <div
           class='inline-flex items-center gap-2 rounded-full border border-[color-mix(in_oklch,var(--primary),transparent_80%)] bg-[color-mix(in_oklch,var(--primary),transparent_94%)] px-4 py-1.5 text-xs font-bold tracking-[0.12em] text-[var(--primary)] uppercase'
+          data-reveal
         >
           <svg
             width='13'
@@ -149,10 +153,17 @@ const POSICIONES = [
         <h1
           class='text-5xl leading-[1.05] font-extrabold tracking-tight text-balance md:text-6xl lg:text-7xl'
         >
-          {nombre}
+          {palabrasNombre.map((palabra, i) => (
+            <>
+              <span class='inline-block' style={`--reveal-delay:${120 + i * 90}ms`} data-reveal-word>{palabra}</span>
+              {i < palabrasNombre.length - 1 && ' '}
+            </>
+          ))}
           {
             subtituloHero && (
-              <span class='mt-3 block text-2xl font-bold text-[var(--primary)] md:text-3xl lg:text-4xl'>
+              <span class='mt-3 block text-2xl font-bold text-[var(--primary)] md:text-3xl lg:text-4xl'
+                    style={`--reveal-delay:${120 + palabrasNombre.length * 90 + 60}ms`}
+                    data-reveal>
                 {subtituloHero}
               </span>
             )
@@ -161,11 +172,15 @@ const POSICIONES = [
 
         {
           claim && (
-            <p class='max-w-md text-lg leading-relaxed text-[var(--muted-foreground)]'>{claim}</p>
+            <p class='max-w-md text-lg leading-relaxed text-[var(--muted-foreground)]'
+               style={`--reveal-delay:${120 + palabrasNombre.length * 90 + 200}ms`}
+               data-reveal>{claim}</p>
           )
         }
 
-        <div class='flex flex-col gap-3 sm:flex-row'>
+        <div class='flex flex-col gap-3 sm:flex-row'
+             style={`--reveal-delay:${120 + palabrasNombre.length * 90 + 320}ms`}
+             data-reveal>
           {
             waUrl && (
               <a
@@ -214,7 +229,9 @@ const POSICIONES = [
 
         {
           direccionCorta && (
-            <div class='flex items-start gap-2 pt-2 text-sm text-[var(--muted-foreground)]'>
+            <div class='flex items-start gap-2 pt-2 text-sm text-[var(--muted-foreground)]'
+                 style={`--reveal-delay:${120 + palabrasNombre.length * 90 + 440}ms`}
+                 data-reveal>
               <svg
                 width='16'
                 height='16'
@@ -236,8 +253,8 @@ const POSICIONES = [
         }
       </div>
 
-      <div class='relative'>
-        <div class='relative mx-auto aspect-square max-w-2xl'>
+      <div class='relative' style='--reveal-delay:280ms' data-reveal>
+        <div class='relative mx-auto aspect-square max-w-2xl motion-float'>
           {
             tieneImagenes ? (
               <div class='absolute inset-4'>
@@ -276,7 +293,9 @@ const POSICIONES = [
               const pos = POSICIONES[i];
               if (!pos) return null;
               return (
-                <div class={`${pos.wrap} rounded-2xl border bg-[var(--card)] p-4 shadow-xl`}>
+                <div class={`${pos.wrap} rounded-2xl border bg-[var(--card)] p-4 shadow-xl`}
+                     style={`--reveal-delay:${900 + i * 140}ms`}
+                     data-reveal>
                   <div class='flex items-center gap-3'>
                     <div
                       class='flex h-12 w-12 items-center justify-center rounded-xl'

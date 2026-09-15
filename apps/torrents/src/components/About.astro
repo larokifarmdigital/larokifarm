@@ -84,8 +84,8 @@ const imagenesParaSlider = imagenes.map(img => ({
 
   <div class='container-app relative'>
     <div class='grid items-center gap-16 lg:grid-cols-2'>
-      <div class='relative order-2 lg:order-1'>
-        <div class='relative mx-auto aspect-square max-w-xl'>
+      <div class='relative order-2 lg:order-1' data-reveal>
+        <div class='relative mx-auto aspect-square max-w-xl motion-float'>
           {
             tieneImagenes ? (
               <div class='absolute inset-0'>
@@ -144,8 +144,11 @@ const imagenesParaSlider = imagenes.map(img => ({
                   </svg>
                 </div>
                 <p class='m-0 text-sm font-semibold whitespace-nowrap text-[var(--foreground)] md:text-base'>
-                  <span class='font-black tabular-nums text-[var(--primary)]'>
-                    {anyosExperiencia}+
+                  <span class='font-black tabular-nums text-[var(--primary)]'
+                        data-count-up={anyosExperiencia}
+                        data-count-suffix='+'
+                        data-count-duration='1400'>
+                    0+
                   </span>{' '}
                   {t('about.badge.anyos', lang)} {t('about.badge.experiencia', lang)}
                 </p>
@@ -156,7 +159,7 @@ const imagenesParaSlider = imagenes.map(img => ({
       </div>
 
       <div class='order-1 space-y-7 lg:order-2'>
-        <div class='chip'>
+        <div class='chip' data-reveal>
           <svg
             width='14'
             height='14'
@@ -177,7 +180,9 @@ const imagenesParaSlider = imagenes.map(img => ({
           <span>{chipTexto}</span>
         </div>
 
-        <h2 class='text-4xl font-extrabold tracking-tight md:text-5xl'>
+        <h2 class='text-4xl font-extrabold tracking-tight md:text-5xl'
+            style='--reveal-delay:80ms'
+            data-reveal>
           {tituloInicio}
           {tituloInicio && <br />}
           <span class='text-[var(--primary)]'>{tituloResaltado}</span>
@@ -187,10 +192,14 @@ const imagenesParaSlider = imagenes.map(img => ({
           cuerpoHtml ? (
             <div
               class='about-cuerpo text-lg leading-relaxed text-[var(--muted-foreground)]'
+              style='--reveal-delay:180ms'
+              data-reveal
               set:html={cuerpoHtml}
             />
           ) : (
-            <p class='text-lg leading-relaxed text-[var(--muted-foreground)]'>
+            <p class='text-lg leading-relaxed text-[var(--muted-foreground)]'
+               style='--reveal-delay:180ms'
+               data-reveal>
               {t('about.cuerpoFallback', lang)}
             </p>
           )
@@ -198,8 +207,10 @@ const imagenesParaSlider = imagenes.map(img => ({
 
         <div class='grid gap-4 sm:grid-cols-2'>
           {
-            puntosFinales.map(p => (
-              <div class='flex items-center gap-3'>
+            puntosFinales.map((p, i) => (
+              <div class='flex items-center gap-3'
+                   style={`--reveal-delay:${280 + i * 70}ms`}
+                   data-reveal>
                 <svg
                   width='22'
                   height='22'

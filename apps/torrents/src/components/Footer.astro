@@ -210,7 +210,7 @@ const hayContacto = !!(
   {!compacto && (
   <div class='container-app relative py-16'>
     <div class='grid gap-10 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr]'>
-      <div class='space-y-6'>
+      <div class='space-y-6' data-reveal>
         <a href={home} class='flex items-center gap-2.5'>
           {
             logoOpt && (
@@ -295,14 +295,14 @@ const hayContacto = !!(
 
       {
         serviciosTop.length > 0 && (
-          <div>
+          <div style='--reveal-delay:80ms' data-reveal>
             <h4 class='mb-4 font-extrabold'>{t('footer.servicios', lang)}</h4>
             <ul class='space-y-3'>
               {serviciosTop.map(s => (
                 <li>
                   <a
                     href={`${home}#servicios`}
-                    class='text-sm text-[var(--muted-foreground)] transition-colors hover:text-[var(--primary)]'
+                    class='link-anim inline-block text-sm text-[var(--muted-foreground)] hover:text-[var(--primary)]'
                   >
                     {s.nombreTxt}
                   </a>
@@ -313,7 +313,7 @@ const hayContacto = !!(
         )
       }
 
-      <div>
+      <div style='--reveal-delay:160ms' data-reveal>
         <h4 class='mb-4 font-extrabold'>{t('footer.informacion', lang)}</h4>
         <ul class='space-y-3'>
           {
@@ -321,7 +321,7 @@ const hayContacto = !!(
               <li>
                 <a
                   href={l.href}
-                  class='text-sm text-[var(--muted-foreground)] transition-colors hover:text-[var(--primary)]'
+                  class='link-anim inline-block text-sm text-[var(--muted-foreground)] hover:text-[var(--primary)]'
                 >
                   {l.label}
                 </a>
@@ -333,7 +333,7 @@ const hayContacto = !!(
 
       {
         hayContacto && (
-          <div>
+          <div style='--reveal-delay:240ms' data-reveal>
             <h4 class='mb-4 font-extrabold'>{t('footer.contactanos', lang)}</h4>
             <ul class='space-y-3 text-sm'>
               {direccionCorta && (

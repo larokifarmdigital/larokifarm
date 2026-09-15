@@ -83,7 +83,7 @@ function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): Enla
 
   <div class='container-app relative'>
     <div class='mb-12 text-start md:mb-16 md:text-center'>
-      <div class='chip mb-6'>
+      <div class='chip mb-6' data-reveal>
         <svg
           width='14'
           height='14'
@@ -101,11 +101,15 @@ function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): Enla
         </svg>
         <span>{chip}</span>
       </div>
-      <h2 class='mb-6 text-4xl font-extrabold tracking-tight md:text-balance md:text-5xl'>
+      <h2 class='mb-6 text-4xl font-extrabold tracking-tight md:text-balance md:text-5xl'
+          style='--reveal-delay:80ms'
+          data-reveal>
         {tituloParte1 && <>{tituloParte1}{' '}</>}
         <span class='text-[var(--primary)]'>{tituloParte2}</span>
       </h2>
-      <p class='max-w-2xl text-lg text-[var(--muted-foreground)] md:mx-auto'>
+      <p class='max-w-2xl text-lg text-[var(--muted-foreground)] md:mx-auto'
+         style='--reveal-delay:160ms'
+         data-reveal>
         {subtitulo}
       </p>
     </div>
