@@ -54,3 +54,6 @@ skills-lock.json
 /WhatsApp Image*.jpeg
 /WhatsApp Image*.jpg
 /WhatsApp Image*.png
+
+# Cloudflare dev secrets
+.dev.vars

@@ -1,5 +1,6 @@
 packages:
   - "apps/*"
+  - "apps/scout/worker"
   - "packages/*"
   - "widgets/*"
   - "widgets/cima-chat/worker"

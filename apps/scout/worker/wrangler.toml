@@ -1,0 +1,37 @@
+name = "scout-batch-worker"
+main = "src/index.ts"
+compatibility_date = "2025-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# KV para estado de jobs + Excel resultado (TTL 7 días).
+# Crear con: wrangler kv namespace create SCOUT_JOBS_KV
+[[kv_namespaces]]
+binding = "SCOUT_JOBS_KV"
+id = "194f6484c23c4618aebed714e7746ec1"
+preview_id = "e23191f16fca4c868293b79492e5b183"
+
+# Durable Object · gestiona el procesamiento largo del batch.
+[[durable_objects.bindings]]
+name = "BATCH_JOB"
+class_name = "BatchJob"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["BatchJob"]
+
+# Variables no-secretas (identificadores públicos, reutilizamos las de cima-chat)
+[vars]
+AZURE_TENANT_ID = "73a2959a-f4d7-4ddb-a9d9-108c0d232707"
+AZURE_CLIENT_ID = "9eb2e975-6e30-41f9-91a2-8c9faf5a503c"
+# Filtrar productos ClasificacionABCD === 'Muerto' (descatalogados) para no gastar créditos.
+# Cambia a "false" si quieres procesar todo sin filtrar.
+SKIP_MUERTO = "true"
+
+# Secretos (poner con `wrangler secret put NOMBRE`):
+# - AZURE_CLIENT_SECRET     → client secret de Azure (reutilizable con cima-chat)
+# - SHAREPOINT_INPUT_URL    → link "Copiar vínculo" del Excel de productos en SharePoint
+# - SCRAPERAPI_KEY          → API key de ScraperAPI. Poner "MOCK" durante desarrollo.
+# - WORKER_AUTH_TOKEN       → password para que Scout hable con el worker
+
+[observability]
+enabled = true

@@ -205,6 +205,22 @@ importers:
         specifier: ^3.2.6
         version: 3.2.6(@types/debug@4.1.13)(@types/node@20.19.43)(jsdom@29.1.1(@noble/hashes@2.2.0)(canvas@3.2.3))(lightningcss@1.32.0)(terser@5.16.9)
 
+  apps/scout/worker:
+    dependencies:
+      xlsx:
+        specifier: 0.18.5
+        version: 0.18.5
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20250101.0
+        version: 4.20260522.1
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      wrangler:
+        specifier: ^3.100.0
+        version: 3.114.17(@cloudflare/workers-types@4.20260522.1)
+
   apps/torrents:
     dependencies:
       '@astrojs/sitemap':

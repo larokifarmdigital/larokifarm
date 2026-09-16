@@ -1,0 +1,6 @@
+# Copiar a .dev.vars y rellenar. .dev.vars solo lo lee `wrangler dev` — no sube al deploy.
+# Está en .gitignore, nunca se commitea.
+AZURE_CLIENT_SECRET=pega-aqui-el-client-secret-de-azure
+SHAREPOINT_INPUT_URL=pega-aqui-el-link-copiar-vinculo-del-excel
+SCRAPERAPI_KEY=MOCK
+WORKER_AUTH_TOKEN=inventa-una-password-fuerte-aqui
