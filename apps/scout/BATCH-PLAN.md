@@ -16,6 +16,57 @@ Cada paso está etiquetado con quién lo hace:
 
 ---
 
+## Índice de pasos (mapa del plan)
+
+### Parte 1 · Preparar el Excel de entrada (setup inicial)
+- 1.1 · 👤 Cliente crea el Excel en SharePoint con columnas `CN | EAN | Nombre`
+- 1.2 · 👤 Cliente pulsa "Compartir" y envía el link a Erick
+- 1.3 · 🛠️ Erick guarda el link como secret en Cloudflare (`wrangler secret put`)
+
+### Parte 2 · Acceso Azure (ya hecho — se reutiliza cima-chat)
+- 2.1 · 👤 Cliente **NO tiene que hacer nada** (admin consent ya está aplicado)
+- 2.2 · 🛠️ Erick configura `AZURE_CLIENT_SECRET`
+
+### Parte 3 · Construir la herramienta
+- 3.1 · 🤖 Crear el worker `scout-batch-worker`
+- 3.2 · 🤖 Endpoints del worker (`/run`, `/jobs/:id`, `/jobs/:id/result`)
+- 3.3 · 🤖 Panel batch en Scout (`/batch`)
+- 3.4 · 🤖 Autorización de la web con password
+
+### Parte 4 · Contratar ScraperAPI (el mes que se use)
+- 4.1 · 👤 Cliente se suscribe al plan Hobby (~46 €/mes) con tarjeta
+- 4.2 · 👤 Cliente copia API key y se la envía a Erick
+- 4.3 · 🛠️ Erick guarda API key como secret
+
+### Parte 5 · Testing y despliegue
+- 5.1 · 🛠️ Erick prueba con 100 productos primero
+- 5.2 · 🛠️ Erick ejecuta el batch real (2.500 productos)
+- 5.3 · 🛠️ Erick graba Loom explicativo para el cliente
+
+### Parte 6 · Uso normal del cliente (después del setup)
+- 6.1 · 👤 Cliente actualiza el Excel si hace falta
+- 6.2 · 👤 Cliente reactiva ScraperAPI (46 €)
+- 6.3 · 👤 Cliente entra a Scout y lanza el batch
+- 6.4 · 👤 Cliente descarga el Excel de resultados
+- 6.5 · 👤 Cliente da de baja ScraperAPI hasta el siguiente trimestre
+
+---
+
+## Vista de una tirada · Setup vs Uso trimestral
+
+| Setup inicial (una sola vez) | Uso trimestral (cada 3 meses) |
+| --- | --- |
+| 👤 Cliente crea el Excel en SharePoint (1.1) | 👤 Cliente actualiza el Excel si hace falta (6.1) |
+| 👤 Cliente envía el link a Erick (1.2) | 👤 Cliente reactiva ScraperAPI 46 € (6.2) |
+| 🛠️ Erick guarda el link como secret (1.3) | 👤 Cliente entra a Scout y lanza el batch (6.3) |
+| 🛠️ Erick configura Azure secret (2.2) | 👤 Cliente descarga el Excel de resultados (6.4) |
+| 🤖 Desarrollo del worker + panel (parte 3) | 👤 Cliente da de baja ScraperAPI (6.5) |
+| 👤 Cliente contrata ScraperAPI la 1ª vez (4.1) | |
+| 🛠️ Erick guarda API key ScraperAPI (4.3) | |
+| 🛠️ Erick testing + Loom (parte 5) | |
+
+---
+
 ## PARTE 1 · Preparar el Excel de entrada (setup inicial)
 
 Antes de que la herramienta pueda funcionar, tiene que existir un Excel en SharePoint que ella pueda leer.
@@ -376,17 +427,4 @@ Ejemplo:
 
 **Total desarrollo: ≈ 13-16h** repartibles en 3 sesiones. Sin dependencias externas bloqueantes.
 
----
-
-## Resumen ultra-rápido de responsabilidades
-
-| Setup inicial (una vez) | Uso trimestral |
-| --- | --- |
-| 👤 Cliente: crea el Excel en SharePoint (paso 1.1) | 👤 Cliente: actualiza el Excel si hace falta (6.1) |
-| 👤 Cliente: envía el link a Erick (paso 1.2) | 👤 Cliente: reactiva ScraperAPI 46 € (6.2) |
-| 🛠️ Erick: guarda el link como secreto (paso 1.3) | 👤 Cliente: entra a Scout y lanza el batch (6.3) |
-| 🛠️ Erick: configura Azure secret (paso 2.2) | 👤 Cliente: descarga el Excel de resultados (6.4) |
-| 🤖 Desarrollo: construir worker + panel (parte 3) | 👤 Cliente: da de baja ScraperAPI (6.5) |
-| 👤 Cliente: contrata ScraperAPI la 1ª vez (paso 4.1) | |
-| 🛠️ Erick: guarda API key ScraperAPI (paso 4.3) | |
-| 🛠️ Erick: testing + Loom explicativo (parte 5) | |
+> El mapa completo de responsabilidades está al principio del documento en las secciones **"Índice de pasos"** y **"Vista de una tirada"**.
