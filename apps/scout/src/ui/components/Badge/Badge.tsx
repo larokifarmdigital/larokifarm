@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/ui/lib/cn';
 
-type Tone = 'neutral' | 'success' | 'danger' | 'info' | 'warning';
+type Tone = 'neutral' | 'success' | 'danger' | 'info' | 'warning' | 'accent';
 
 export type BadgeProps = {
   children: ReactNode;
@@ -10,18 +10,25 @@ export type BadgeProps = {
 };
 
 const tones: Record<Tone, string> = {
-  neutral: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
-  success: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
-  danger: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200',
-  info: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200',
-  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+  neutral:
+    'bg-[color:var(--surface)] text-[color:var(--foreground)] border border-[color:var(--border)]',
+  success:
+    'bg-[color:var(--pastel-green-bg)] text-[color:var(--pastel-green-fg)]',
+  danger:
+    'bg-[color:var(--pastel-red-bg)] text-[color:var(--pastel-red-fg)]',
+  info:
+    'bg-[color:var(--pastel-blue-bg)] text-[color:var(--pastel-blue-fg)]',
+  warning:
+    'bg-[color:var(--pastel-amber-bg)] text-[color:var(--pastel-amber-fg)]',
+  accent:
+    'bg-[color:var(--pastel-teal-bg)] text-[color:var(--pastel-teal-fg)]',
 };
 
 export function Badge({ children, tone = 'neutral', className }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium',
+        'inline-flex items-center rounded-[var(--radius-xs)] px-1.5 py-0.5 text-[11px] font-medium tracking-wide',
         tones[tone],
         className,
       )}

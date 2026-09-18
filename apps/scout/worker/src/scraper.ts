@@ -1,13 +1,5 @@
-/**
- * Motor de comparación de precios contra Google Shopping vía ScraperAPI.
- *
- * Modo MOCK: si SCRAPERAPI_KEY = 'MOCK' o está vacía, devuelve 3 farmacias
- * fake determinísticas (mismo CN → mismos precios). Útil para probar el
- * pipeline end-to-end sin gastar créditos.
- *
- * Modo real: llama a ScraperAPI Google Shopping API estructurada y filtra
- * los resultados que casen razonablemente con el título esperado.
- */
+// Comparador contra Google Shopping vía ScraperAPI. Con SCRAPERAPI_KEY='MOCK'
+// devuelve datos ficticios deterministas por CN (útil para tests sin coste).
 
 export interface FarmaciaPrecio {
   nombre: string;
@@ -29,15 +21,12 @@ export interface ProductoComparado {
 
 export interface ScraperConfig {
   scraperApiKey: string;
-  /** Timeout por request en ms. Default 30s. */
+  /** Timeout por request en ms (default 30000). */
   timeoutMs?: number;
 }
 
 const DEFAULT_TIMEOUT = 30_000;
 
-/**
- * Punto de entrada. Decide MOCK vs real según la key.
- */
 export async function compararProducto(
   producto: { cn: string; ean: string; nombre: string },
   cfg: ScraperConfig,
@@ -48,17 +37,13 @@ export async function compararProducto(
   return realCompararProducto(producto, cfg);
 }
 
-// ============================================================
-// MOCK · datos fake determinísticos basados en el CN
-// ============================================================
-
+// Precios ficticios deterministas: mismo CN devuelve siempre el mismo precio.
 function mockCompararProducto(producto: {
   cn: string;
   nombre: string;
 }): ProductoComparado {
-  // Hash simple del CN para tener precios "estables" por producto.
   const seed = Array.from(producto.cn).reduce((s, c) => s + c.charCodeAt(0), 0);
-  const base = 3 + (seed % 15); // precio base entre 3 y 18 €
+  const base = 3 + (seed % 15);
 
   const farmacias: FarmaciaPrecio[] = [
     {
@@ -83,10 +68,6 @@ function mockCompararProducto(producto: {
 
   return construirResultado(farmacias, 'Datos MOCK (desarrollo)');
 }
-
-// ============================================================
-// Real · ScraperAPI Google Shopping
-// ============================================================
 
 interface ScraperShoppingItem {
   title?: string;
@@ -145,7 +126,7 @@ async function realCompararProducto(
 }
 
 function buildQuery(producto: { cn: string; ean: string; nombre: string }): string {
-  // Prefer EAN si existe (más discriminante), si no el nombre.
+  // EAN suma discriminación si existe.
   const partes = [producto.nombre];
   if (producto.ean) partes.push(producto.ean);
   return partes.join(' ').trim();
@@ -161,7 +142,11 @@ function normalizarResultado(it: ScraperShoppingItem): FarmaciaPrecio | null {
   const merchant = (it.seller ?? it.merchant ?? '').trim();
   if (!merchant) return null;
 
-  const url = it.link ?? it.product_link ?? it.url ?? '';
+  // NOTE: descartamos it.link · es un aclk (ad-click tracker) de Google que caduca
+  // en días. Construimos una URL de Google Search restringida a la tienda: estable
+  // y siempre lleva a la ficha real como primer resultado orgánico.
+  const url = buildStoreSearchUrl(titulo, merchant);
+
   return {
     nombre: merchant,
     precio: round2(precio),
@@ -170,10 +155,22 @@ function normalizarResultado(it: ScraperShoppingItem): FarmaciaPrecio | null {
   };
 }
 
+function buildStoreSearchUrl(titulo: string, source: string): string {
+  const cleanTitle = titulo.replace(/"/g, '').trim();
+  const q = looksLikeDomain(source)
+    ? `"${cleanTitle}" site:${source}`
+    : `"${cleanTitle}" "${source}"`;
+  return `https://www.google.com/search?q=${encodeURIComponent(q)}&gl=es&hl=es`;
+}
+
+function looksLikeDomain(source: string): boolean {
+  return /^[a-z0-9-]+(\.[a-z]{2,})+$/i.test(source.trim());
+}
+
 function extraerPrecio(it: ScraperShoppingItem): number | null {
   if (typeof it.price_value === 'number') return it.price_value;
   if (!it.price) return null;
-  // Formatos comunes: "4,95 €", "€4.95", "EUR 4.95"
+  // Acepta "4,95 €", "€4.95", "EUR 4.95".
   const cleaned = it.price
     .replace(/[€$£¥]/g, '')
     .replace(/EUR|USD|GBP/gi, '')
@@ -184,11 +181,8 @@ function extraerPrecio(it: ScraperShoppingItem): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/**
- * Coincidencia estricta por título. Al menos la mitad de las palabras
- * significativas (>2 letras) del nombre del input debe aparecer en el
- * título encontrado. Descarta variantes/formatos completamente distintos.
- */
+// Coincidencia estricta: al menos el 50% de las palabras significativas (>2 letras)
+// del nombre esperado debe aparecer en el título encontrado.
 function coincideConProducto(tituloEncontrado: string, nombreEsperado: string): boolean {
   const norm = (s: string) =>
     s
@@ -207,10 +201,6 @@ function coincideConProducto(tituloEncontrado: string, nombreEsperado: string): 
   const matches = esperadas.filter((w) => encontradas.has(w)).length;
   return matches / esperadas.length >= 0.5;
 }
-
-// ============================================================
-// Utilidades comunes
-// ============================================================
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;

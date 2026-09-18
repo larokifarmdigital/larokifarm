@@ -146,23 +146,23 @@ export function BarcodeScanner({ isOpen, onClose, onDetected }: BarcodeScannerPr
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-zinc-950"
+        className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"
       >
-        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3">
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-teal-600 text-white">
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 5v14M8 5v14M12 5v14M17 5v14M21 5v14" />
               </svg>
             </span>
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-sm font-semibold text-zinc-900">
               Escanear código de barras
             </h3>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
             aria-label="Cerrar"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -222,15 +222,15 @@ export function BarcodeScanner({ isOpen, onClose, onDetected }: BarcodeScannerPr
                 </svg>
               </div>
               <p className="text-sm">
-                Tu navegador no soporta el escáner nativo. Probá desde Chrome, Edge o Samsung
+                Tu navegador no soporta el escáner nativo. Prueba desde Chrome, Edge o Samsung
                 Internet en móvil.
               </p>
             </div>
           )}
         </div>
 
-        <div className="border-t border-zinc-200 px-5 py-3 dark:border-zinc-800">
-          <p className="text-xs text-zinc-500 dark:text-zinc-500">
+        <div className="border-t border-zinc-200 px-5 py-3">
+          <p className="text-xs text-zinc-500">
             Buscamos EAN-13 (13 dígitos). Sostené el código quieto y bien iluminado. Al detectarlo
             iniciamos la búsqueda automáticamente.
           </p>

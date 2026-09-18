@@ -1,13 +1,5 @@
-/**
- * Microsoft Graph client · versión Workers (sin Buffer).
- * Adaptado de apps/inventory-sync/src/graph.ts.
- *
- * Auth: client_credentials (app-only). El cliente debe haber otorgado admin
- * consent al permiso Microsoft Graph → Files.Read.All en la App Registration.
- *
- * Lectura del Excel: usa el endpoint `/shares/{id}/driveItem/content` con el
- * share URL codificado como `u!{base64url-sin-padding}`.
- */
+// Microsoft Graph · app-only auth (client_credentials) + descarga por share URL.
+// Requiere permiso Files.Read.All con admin consent aplicado.
 
 interface TokenResponse {
   token_type: string;
@@ -44,11 +36,7 @@ export async function getAccessToken(cfg: GraphConfig): Promise<string> {
   return json.access_token;
 }
 
-/**
- * Codifica un share URL de SharePoint al formato `u!{base64url}` que espera
- * Microsoft Graph. En Workers no hay `Buffer`, usamos btoa + manipulación
- * de string para el flavor base64url (sin `=`, `/` → `_`, `+` → `-`).
- */
+// Formato `u!{base64url}` exigido por Graph. No hay Buffer en Workers: usamos btoa.
 function encodeShareUrl(url: string): string {
   const b64 = btoa(url);
   const b64url = b64.replace(/=+$/g, '').replace(/\//g, '_').replace(/\+/g, '-');

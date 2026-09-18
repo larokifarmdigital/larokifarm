@@ -186,7 +186,7 @@ async function search(input: ShoppingSearchInput): Promise<ShoppingSearchResult>
       return {
         ok: false,
         error:
-          'Google Shopping no devolvió resultados. Probá con el nombre comercial del producto (ej: "Fisiocrem Gel Forte 50 ml").',
+          'Google Shopping no devolvió resultados. Prueba con el nombre comercial del producto (ej: "Fisiocrem Gel Forte 50 ml").',
       };
     }
 
@@ -235,7 +235,7 @@ async function search(input: ShoppingSearchInput): Promise<ShoppingSearchResult>
     if (allRows.length === 0) {
       return {
         ok: false,
-        error: `Google Shopping devolvió ${results.length} resultados pero NINGUNO coincide exactamente con "${query}". Los que aparecieron eran de otras variantes/tamaños. Probá con menos palabras (ej: solo la marca + tamaño) o revisá el nombre exacto.`,
+        error: `Google Shopping devolvió ${results.length} resultados pero NINGUNO coincide exactamente con "${query}". Los que aparecieron eran de otras variantes/tamaños. Prueba con menos palabras (ej: solo la marca + tamaño) o revisa el nombre exacto.`,
       };
     }
 

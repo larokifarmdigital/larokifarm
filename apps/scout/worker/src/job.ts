@@ -1,13 +1,4 @@
-/**
- * Persistencia del estado del batch en KV.
- *
- * Estructura:
- *   - job:{jobId}          → JobState (JSON)
- *   - result:{jobId}       → ArrayBuffer del Excel resultado (TTL 7 días)
- *   - lock:current         → jobId del batch actualmente en curso (semáforo)
- *
- * TTL del job y del resultado: 7 días. Después el cliente relanza el batch.
- */
+// Persistencia en KV. Keys: job:{id}, result:{id} (TTL 7d), lock:current.
 
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed';
 
@@ -16,10 +7,10 @@ export interface JobState {
   status: JobStatus;
   processed: number;
   total: number;
-  startedAt: string;      // ISO
-  finishedAt?: string;    // ISO cuando completed/failed
-  error?: string;         // texto de error si failed
-  bytes?: number;         // tamaño del Excel resultado
+  startedAt: string;
+  finishedAt?: string;
+  error?: string;
+  bytes?: number;
   stats?: {
     skippedMuerto: number;
     skippedInvalidCn: number;
@@ -27,9 +18,10 @@ export interface JobState {
   };
 }
 
-const JOB_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 días
+const JOB_TTL_SECONDS = 7 * 24 * 60 * 60;
 const RESULT_TTL_SECONDS = 7 * 24 * 60 * 60;
-const LOCK_TTL_SECONDS = 4 * 60 * 60; // 4h · si un batch se queda colgado, el lock caduca solo
+// NOTE: el lock caduca solo a las 4h si un batch se cuelga.
+const LOCK_TTL_SECONDS = 4 * 60 * 60;
 
 const KEY = {
   job: (id: string) => `job:${id}`,
@@ -62,7 +54,7 @@ export async function loadResult(
   return (await kv.get(KEY.result(jobId), 'arrayBuffer')) as ArrayBuffer | null;
 }
 
-// -------------------- Semáforo (evita batches simultáneos) --------------------
+// Semáforo · evita batches simultáneos.
 
 export async function acquireLock(kv: KVNamespace, jobId: string): Promise<boolean> {
   const current = await kv.get(KEY.lock);
@@ -82,13 +74,26 @@ export async function getCurrentLockedJobId(kv: KVNamespace): Promise<string | n
   return await kv.get(KEY.lock);
 }
 
-// -------------------- Helper para generar jobIds --------------------
-
+// 16 hex chars — único a efectos prácticos, corto para URLs.
 export function newJobId(): string {
-  // 16 hex chars — suficientemente único para uso humano, corto para URLs.
   const bytes = new Uint8Array(8);
   crypto.getRandomValues(bytes);
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
+}
+
+// KV.list() no ordena por fecha; leemos y ordenamos por startedAt del propio JobState.
+export async function listRecentJobs(
+  kv: KVNamespace,
+  limit = 5,
+): Promise<JobState[]> {
+  const list = await kv.list({ prefix: 'job:', limit: 50 });
+  const jobs: JobState[] = [];
+  for (const key of list.keys) {
+    const state = (await kv.get(key.name, 'json')) as JobState | null;
+    if (state) jobs.push(state);
+  }
+  jobs.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  return jobs.slice(0, limit);
 }

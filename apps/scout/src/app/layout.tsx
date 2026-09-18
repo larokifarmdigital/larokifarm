@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist, Geist_Mono, Newsreader } from 'next/font/google';
 import './globals.css';
 
 const geistSans = Geist({
@@ -12,10 +12,17 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const newsreader = Newsreader({
+  variable: '--font-newsreader',
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  weight: ['400', '500'],
+});
+
 export const metadata: Metadata = {
   title: 'Scout · Comparador de precios farmacéuticos',
   description:
-    'Compará precios de productos farmacéuticos y de parafarmacia en decenas de farmacias online españolas en tiempo real.',
+    'Compara precios de productos farmacéuticos y de parafarmacia en decenas de farmacias online españolas en tiempo real.',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
@@ -25,21 +32,33 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
-  ],
+  themeColor: '#050505',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
 };
 
-/**
- * Script inline que corre ANTES de la hidratación de React para aplicar el tema
- * y evitar el flash de tema equivocado (FOUC). Lee localStorage + fallback
- * a prefers-color-scheme del sistema.
- */
-const themeInitScript = `(function(){try{var t=localStorage.getItem('scout:theme');var isDark=t==='dark'||((!t||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(isDark)document.documentElement.classList.add('dark');}catch(e){}})();`;
+// IntersectionObserver global · añade `.in-view` al entrar en viewport.
+const motionInitScript = `
+(function(){
+  if(!('IntersectionObserver' in window))return;
+  function init(){
+    var els=document.querySelectorAll('[data-reveal]:not(.in-view)');
+    if(!els.length)return;
+    var io=new IntersectionObserver(function(entries){
+      for(var i=0;i<entries.length;i++){
+        if(entries[i].isIntersecting){
+          entries[i].target.classList.add('in-view');
+          io.unobserve(entries[i].target);
+        }
+      }
+    },{threshold:0.12,rootMargin:'0px 0px -60px 0px'});
+    els.forEach(function(el){io.observe(el);});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else init();
+  new MutationObserver(function(){init();}).observe(document.body,{childList:true,subtree:true});
+})();`;
 
 export default function RootLayout({
   children,
@@ -49,13 +68,12 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <script dangerouslySetInnerHTML={{ __html: motionInitScript }} />
+      </body>
     </html>
   );
 }

@@ -1,14 +1,6 @@
-/**
- * Parseo del Excel de entrada.
- *
- * Columnas esperadas en la primera fila (case-insensitive, orden libre):
- *   - CN                → Código Nacional (5-7 dígitos, se pada a 6)
- *   - EAN               → Código EAN (opcional en cada fila)
- *   - Nombre            → Descripción del producto
- *   - ClasificacionABCD → Filtro: si vale "Muerto" y SKIP_MUERTO=true, se descarta
- *
- * Si el Excel tiene columnas extra, se ignoran.
- */
+// Parseo del Excel de entrada. Columnas esperadas (case-insensitive):
+// CN, EAN, Nombre, ClasificacionABCD. Filas con ClasificacionABCD='Muerto' se
+// omiten cuando SKIP_MUERTO=true.
 
 import * as XLSX from 'xlsx';
 

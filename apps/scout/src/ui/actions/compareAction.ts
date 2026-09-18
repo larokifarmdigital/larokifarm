@@ -28,7 +28,7 @@ export async function compareAction(
   const nombre = readOptional(formData, 'nombre');
 
   if (!cn && !ean && !nombre) {
-    return { status: 'error', error: 'Ingresá al menos uno: CN, EAN o Nombre.' };
+    return { status: 'error', error: 'Introduce al menos uno: CN, EAN o Nombre.' };
   }
 
   const result = await comparePrice({ cn, ean, nombre }, productionDeps);

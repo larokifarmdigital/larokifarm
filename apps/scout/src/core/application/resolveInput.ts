@@ -42,7 +42,7 @@ export async function resolveInput(
   const nombreHint = args.nombre?.trim() || undefined;
 
   if (!cn && !ean && !nombreHint) {
-    return { ok: false, error: 'Ingresá al menos uno: CN, EAN o Nombre.' };
+    return { ok: false, error: 'Introduce al menos uno: CN, EAN o Nombre.' };
   }
 
   if (cn && !ONLY_DIGITS.test(cn)) {

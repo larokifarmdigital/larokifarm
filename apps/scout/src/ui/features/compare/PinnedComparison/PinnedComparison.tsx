@@ -63,7 +63,7 @@ export function PinnedComparison({ reports, onRemove, onClear }: PinnedCompariso
 
   return (
     <section
-      className="rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50/70 to-white p-5 dark:border-teal-900/50 dark:from-teal-950/20 dark:to-zinc-950"
+      className="rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50/70 to-white p-5"
       aria-label="Comparativa de productos fijados"
     >
       <header className="mb-4 flex items-center justify-between gap-3">
@@ -74,10 +74,10 @@ export function PinnedComparison({ reports, onRemove, onClear }: PinnedCompariso
             </svg>
           </span>
           <div>
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-sm font-semibold text-zinc-900">
               Comparando {reports.length} producto{reports.length === 1 ? '' : 's'}
             </h3>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-500">
+            <p className="text-[11px] text-zinc-500">
               Fijá más productos con el botón &quot;Fijar para comparar&quot; en cada resultado.
             </p>
           </div>
@@ -85,7 +85,7 @@ export function PinnedComparison({ reports, onRemove, onClear }: PinnedCompariso
         <button
           type="button"
           onClick={onClear}
-          className="text-xs font-medium text-zinc-500 hover:text-rose-600 dark:text-zinc-500 dark:hover:text-rose-400"
+          className="text-xs font-medium text-zinc-500 hover:text-rose-600"
         >
           Limpiar todos
         </button>
@@ -108,14 +108,14 @@ export function PinnedComparison({ reports, onRemove, onClear }: PinnedCompariso
               key={`${idx}-${label}`}
               className={`relative rounded-xl border p-4 transition-all ${
                 isGlobalCheapest
-                  ? 'border-emerald-400 bg-emerald-50/60 shadow-sm dark:border-emerald-700/70 dark:bg-emerald-950/20'
-                  : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950'
+                  ? 'border-emerald-400 bg-emerald-50/60 shadow-sm'
+                  : 'border-zinc-200 bg-white'
               }`}
             >
               <button
                 type="button"
                 onClick={() => onRemove(idx)}
-                className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-rose-600 dark:hover:bg-zinc-800 dark:hover:text-rose-400"
+                className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-rose-600"
                 aria-label={`Quitar ${label} de la comparación`}
                 title="Quitar de la comparación"
               >
@@ -125,12 +125,12 @@ export function PinnedComparison({ reports, onRemove, onClear }: PinnedCompariso
               </button>
 
               <div className="pr-6">
-                <h4 className="line-clamp-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100" title={label}>
+                <h4 className="line-clamp-2 text-sm font-semibold text-zinc-900" title={label}>
                   {label}
                 </h4>
 
                 {summary.okCount === 0 ? (
-                  <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-500">
+                  <p className="mt-3 text-xs text-zinc-500">
                     Sin precios encontrados.
                   </p>
                 ) : (
@@ -139,8 +139,8 @@ export function PinnedComparison({ reports, onRemove, onClear }: PinnedCompariso
                       <span
                         className={`text-2xl font-bold tabular-nums ${
                           isGlobalCheapest
-                            ? 'text-emerald-700 dark:text-emerald-400'
-                            : 'text-zinc-900 dark:text-zinc-100'
+                            ? 'text-emerald-700'
+                            : 'text-zinc-900'
                         }`}
                       >
                         {formatPrice(summary.minPrice!, summary.moneda)}
@@ -153,15 +153,15 @@ export function PinnedComparison({ reports, onRemove, onClear }: PinnedCompariso
                     </div>
 
                     {summary.bestRow && (
-                      <div className="mt-1 flex items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
-                        <span className="flex h-4 w-4 items-center justify-center rounded bg-zinc-100 text-[9px] font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                      <div className="mt-1 flex items-center gap-2 text-[11px] text-zinc-500">
+                        <span className="flex h-4 w-4 items-center justify-center rounded bg-zinc-100 text-[9px] font-bold text-zinc-600">
                           {initials(summary.bestRow.pharmacyName)}
                         </span>
                         <span className="truncate">{summary.bestRow.pharmacyName}</span>
                       </div>
                     )}
 
-                    <div className="mt-3 flex items-center justify-between border-t border-zinc-100 pt-3 text-[11px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-500">
+                    <div className="mt-3 flex items-center justify-between border-t border-zinc-100 pt-3 text-[11px] text-zinc-500">
                       <span>
                         {summary.okCount} farmacia{summary.okCount === 1 ? '' : 's'}
                       </span>

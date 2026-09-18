@@ -49,14 +49,14 @@ export function PriceChart({ rows, moneda }: PriceChartProps) {
 
   return (
     <section
-      className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+      className="rounded-2xl border border-zinc-200 bg-white p-5"
       aria-label="Distribución visual de precios"
     >
       <header className="mb-3 flex items-baseline justify-between">
-        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+        <h3 className="text-sm font-semibold text-zinc-800">
           Distribución de precios
         </h3>
-        <span className="text-[11px] text-zinc-500 dark:text-zinc-500">
+        <span className="text-[11px] text-zinc-500">
           {okRows.length} farmacias · media {formatPrice(avg, moneda)} · mediana{' '}
           {formatPrice(median, moneda)}
         </span>
@@ -78,7 +78,7 @@ export function PriceChart({ rows, moneda }: PriceChartProps) {
             y2={HEIGHT / 2}
             stroke="currentColor"
             strokeWidth="0.4"
-            className="text-zinc-200 dark:text-zinc-700"
+            className="text-zinc-200"
           />
 
           {/* Marca de mediana */}
@@ -91,7 +91,7 @@ export function PriceChart({ rows, moneda }: PriceChartProps) {
               stroke="currentColor"
               strokeWidth="0.4"
               strokeDasharray="1 1"
-              className="text-zinc-400 dark:text-zinc-600"
+              className="text-zinc-400"
             />
           )}
 
@@ -119,13 +119,13 @@ export function PriceChart({ rows, moneda }: PriceChartProps) {
         </svg>
 
         {/* Etiquetas de extremos + mediana */}
-        <div className="mt-1 flex justify-between text-[10px] font-medium text-zinc-500 dark:text-zinc-500">
+        <div className="mt-1 flex justify-between text-[10px] font-medium text-zinc-500">
           <span className="inline-flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-emerald-600" />
             Min {formatPrice(min, moneda)}
           </span>
           {range > 0 && (
-            <span className="hidden text-zinc-400 dark:text-zinc-600 sm:inline">
+            <span className="hidden text-zinc-400 sm:inline">
               ← ahorro hasta {formatPrice(range, moneda)} →
             </span>
           )}

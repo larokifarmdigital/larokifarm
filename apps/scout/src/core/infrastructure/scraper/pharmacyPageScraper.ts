@@ -49,7 +49,7 @@ async function scrape(productUrl: string, pharmacyName: string): Promise<Compari
       pharmacyName,
       productUrl,
       status: 'not-found',
-      errorMessage: 'Sin precio automático — hacé click para verificar en la ficha',
+      errorMessage: 'Sin precio automático — haz clic para verificar en la ficha',
     };
   }
 

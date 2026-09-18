@@ -1,10 +1,5 @@
-/**
- * Genera el Excel resultado con dos hojas:
- *   - "Resumen"  → una fila por producto (min/max/medio + mejor farmacia)
- *   - "Detalle"  → una fila por (producto × farmacia) con precio, título y URL
- *
- * Se devuelve como ArrayBuffer para guardar en KV.
- */
+// Genera el Excel resultado con dos hojas: "Resumen" (una fila por producto) y
+// "Detalle" (una fila por producto × farmacia). Devuelve ArrayBuffer para KV.
 
 import * as XLSX from 'xlsx';
 import type { ProductoRow } from './excel-in';
@@ -21,7 +16,6 @@ export function generarExcelResultado(
 ): ExcelResultado {
   const fechaIso = fecha.toISOString().slice(0, 10);
 
-  // --- Hoja Resumen ---------------------------------------------------
   const resumenRows = productos.map(({ input, resultado }) => {
     const mejor = resultado.mejorFarmacia;
     return {
@@ -38,7 +32,6 @@ export function generarExcelResultado(
     };
   });
 
-  // --- Hoja Detalle ---------------------------------------------------
   interface DetalleRow {
     CN: string;
     'Nombre producto': string;
@@ -75,7 +68,6 @@ export function generarExcelResultado(
   const wb = XLSX.utils.book_new();
 
   const wsResumen = XLSX.utils.json_to_sheet(resumenRows);
-  // Anchos de columna razonables para lectura directa en Excel/LibreOffice.
   wsResumen['!cols'] = [
     { wch: 10 }, // CN
     { wch: 15 }, // EAN

@@ -55,13 +55,29 @@ Como es un monorepo, hay que apuntar bien la raíz del proyecto:
 
 Expandir **Environment Variables** antes de deployar:
 
-| Key                | Value                        | Environments                     |
-| ------------------ | ---------------------------- | -------------------------------- |
-| `SCRAPER_API_KEY`  | tu key de ScraperAPI         | Production + Preview + Development |
-| `GEMINI_API_KEY`   | tu key de Gemini             | Production + Preview + Development |
+| Key                     | Value                                  | Environments                       |
+| ----------------------- | -------------------------------------- | ---------------------------------- |
+| `SCRAPER_API_KEY`       | tu key de ScraperAPI (búsqueda on-demand) | Production + Preview + Development |
+| `GEMINI_API_KEY`        | tu key de Gemini                       | Production + Preview + Development |
+| `BATCH_WORKER_URL`      | URL del worker `scout-batch-worker` de Cloudflare (ej: `https://scout-batch-worker.xxx.workers.dev`) | Production + Preview |
+| `WORKER_AUTH_TOKEN`     | mismo valor que en el worker (Bearer token) | Production + Preview               |
+| `BATCH_PASSWORD`        | password que meterá el cliente para acceder a `/batch` | Production + Preview               |
+| `BATCH_COOKIE_SECRET`   | secreto aleatorio (≥ 32 chars) para firmar la cookie de sesión — `openssl rand -hex 32` | Production + Preview               |
 
 **Ojo**: Vercel encripta estas variables. Solo se ven en preview si activás
 "Sensitive" (recomendado para producción).
+
+**Sobre las variables del batch**:
+- `BATCH_WORKER_URL` y `WORKER_AUTH_TOKEN` deben coincidir con las configuradas
+  en el worker de Cloudflare (`apps/scout/worker/`).
+- `BATCH_PASSWORD` es una contraseña única que el cliente introduce una vez para
+  poder ejecutar batches masivos desde `/batch`. Elige una robusta y compártela
+  por canal seguro (1Password, Signal…).
+- `BATCH_COOKIE_SECRET` firma la cookie de sesión de la ruta `/batch` — si lo
+  cambias, todos los logins caducan. Generar con:
+  ```bash
+  openssl rand -hex 32
+  ```
 
 ## 6. Deploy
 

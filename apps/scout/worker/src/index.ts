@@ -1,15 +1,5 @@
-/**
- * scout-batch-worker · entrypoint.
- *
- * Flujo:
- *   1. Scout llama POST /run → creamos jobId, adquirimos semáforo, dispatch al Durable Object.
- *   2. El Durable Object corre en background (con alarm) todo el batch.
- *   3. Scout hace polling a GET /jobs/:id cada 2s.
- *   4. Al completed, Scout hace GET /jobs/:id/result y descarga el Excel.
- *
- * Auth: Bearer WORKER_AUTH_TOKEN en Authorization.
- * CORS: abierto (el token es la protección real).
- */
+// scout-batch-worker · entrypoint.
+// Auth: Bearer WORKER_AUTH_TOKEN. CORS abierto (el token es la protección real).
 
 import { downloadSharedFile, getAccessToken } from './graph';
 import { parseProductosXlsx, type ProductoRow } from './excel-in';
@@ -19,6 +9,7 @@ import {
   acquireLock,
   getCurrentLockedJobId,
   getJob,
+  listRecentJobs,
   loadResult,
   newJobId,
   releaseLock,
@@ -39,10 +30,6 @@ export interface Env {
   SKIP_MUERTO: string;
 }
 
-// ============================================================
-// HTTP HANDLER
-// ============================================================
-
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -50,13 +37,26 @@ export default {
     if (request.method === 'OPTIONS') return corsResponse();
 
     if (url.pathname === '/health' && request.method === 'GET') {
-      return json({ ok: true, service: 'scout-batch-worker', ts: Date.now() });
+      return json({
+        ok: true,
+        service: 'scout-batch-worker',
+        ts: Date.now(),
+        mockMode: isMockMode(env),
+      });
     }
 
     if (!checkAuth(request, env)) return json({ ok: false, error: 'Unauthorized' }, 401);
 
     if (url.pathname === '/run' && request.method === 'POST') {
       return handleRun(env, ctx);
+    }
+
+    if (url.pathname === '/preview' && request.method === 'GET') {
+      return handlePreview(env);
+    }
+
+    if (url.pathname === '/jobs' && request.method === 'GET') {
+      return handleListJobs(env);
     }
 
     const jobMatch = url.pathname.match(/^\/jobs\/([a-f0-9]{8,32})(\/result)?$/);
@@ -70,12 +70,12 @@ export default {
   },
 };
 
-// ============================================================
-// Handlers
-// ============================================================
+function isMockMode(env: Env): boolean {
+  const key = env.SCRAPERAPI_KEY?.trim() ?? '';
+  return key === '' || key.toUpperCase() === 'MOCK';
+}
 
 async function handleRun(env: Env, ctx: ExecutionContext): Promise<Response> {
-  // Semáforo · no permitir dos batches simultáneos.
   const jobId = newJobId();
   const gotLock = await acquireLock(env.SCOUT_JOBS_KV, jobId);
   if (!gotLock) {
@@ -100,13 +100,11 @@ async function handleRun(env: Env, ctx: ExecutionContext): Promise<Response> {
   };
   await saveJob(env.SCOUT_JOBS_KV, initial);
 
-  // Delegamos al Durable Object. Usamos idFromName(jobId) para que cada job
-  // tenga su propia instancia y no colisione con otros.
+  // Una instancia de Durable Object por jobId · aísla la ejecución.
   const doId = env.BATCH_JOB.idFromName(jobId);
   const stub = env.BATCH_JOB.get(doId);
 
-  // Fire and forget — la ejecución del batch corre dentro del DO.
-  // No esperamos su respuesta, respondemos inmediato al cliente.
+  // Fire-and-forget: el batch corre dentro del DO, respondemos inmediato.
   ctx.waitUntil(
     stub.fetch(new Request('https://internal/start', {
       method: 'POST',
@@ -124,6 +122,40 @@ async function handleStatus(env: Env, jobId: string): Promise<Response> {
   const state = await getJob(env.SCOUT_JOBS_KV, jobId);
   if (!state) return json({ ok: false, error: 'Job no encontrado' }, 404);
   return json({ ok: true, ...state });
+}
+
+async function handleListJobs(env: Env): Promise<Response> {
+  const jobs = await listRecentJobs(env.SCOUT_JOBS_KV, 5);
+  return json({ ok: true, jobs });
+}
+
+// Stats del Excel + primeros N productos, sin lanzar batch (0 créditos).
+async function handlePreview(env: Env): Promise<Response> {
+  try {
+    const token = await getAccessToken({
+      tenantId: env.AZURE_TENANT_ID,
+      clientId: env.AZURE_CLIENT_ID,
+      clientSecret: env.AZURE_CLIENT_SECRET,
+    });
+    const buf = await downloadSharedFile(env.SHAREPOINT_INPUT_URL, token);
+    const parsed = parseProductosXlsx(buf, {
+      skipMuerto: env.SKIP_MUERTO !== 'false',
+    });
+    return json({
+      ok: true,
+      totalDataRows: parsed.totalDataRows,
+      totalConsiderados: parsed.rows.length,
+      skippedMuerto: parsed.skippedMuerto,
+      skippedInvalidCn: parsed.skippedInvalidCn,
+      skippedSinNombre: parsed.skippedSinNombre,
+      headersDetectados: parsed.headersDetectados,
+      primeros: parsed.rows.slice(0, 5),
+      mockMode: isMockMode(env),
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return json({ ok: false, error: msg }, 500);
+  }
 }
 
 async function handleResult(env: Env, jobId: string): Promise<Response> {
@@ -146,10 +178,7 @@ async function handleResult(env: Env, jobId: string): Promise<Response> {
   });
 }
 
-// ============================================================
-// DURABLE OBJECT · procesamiento largo del batch
-// ============================================================
-
+// Durable Object · procesamiento largo del batch.
 export class BatchJob {
   constructor(private state: DurableObjectState, private env: Env) {}
 
@@ -157,8 +186,7 @@ export class BatchJob {
     const url = new URL(request.url);
     if (url.pathname === '/start' && request.method === 'POST') {
       const { jobId } = (await request.json()) as { jobId: string };
-      // No await · lo lanzamos y devolvemos, el DO sigue vivo hasta que termine
-      // dentro del scope de blockConcurrencyWhile.
+      // blockConcurrencyWhile mantiene el DO vivo hasta que runBatch termine.
       this.state.blockConcurrencyWhile(async () => {
         await this.runBatch(jobId);
       });
@@ -173,22 +201,19 @@ export class BatchJob {
     if (!state) return;
 
     try {
-      // 1. Auth Azure
       state.status = 'running';
       await saveJob(kv, state);
+
       const token = await getAccessToken({
         tenantId: this.env.AZURE_TENANT_ID,
         clientId: this.env.AZURE_CLIENT_ID,
         clientSecret: this.env.AZURE_CLIENT_SECRET,
       });
-
-      // 2. Descargar Excel
       const buf = await downloadSharedFile(this.env.SHAREPOINT_INPUT_URL, token);
-
-      // 3. Parsear
       const parsed = parseProductosXlsx(buf, {
         skipMuerto: this.env.SKIP_MUERTO !== 'false',
       });
+
       state.total = parsed.rows.length;
       state.stats = {
         skippedMuerto: parsed.skippedMuerto,
@@ -197,10 +222,10 @@ export class BatchJob {
       };
       await saveJob(kv, state);
 
-      // 4. Procesar productos (en paralelo por chunks pequeños)
+      // Chunks pequeños en paralelo · escritura de progreso cada 20 items.
       const productos: Array<{ input: ProductoRow; resultado: ProductoComparado }> = [];
-      const CHUNK_SIZE = 4;      // 4 productos en paralelo
-      const KV_WRITE_EVERY = 20; // guardar progreso cada 20 productos
+      const CHUNK_SIZE = 4;
+      const KV_WRITE_EVERY = 20;
 
       for (let i = 0; i < parsed.rows.length; i += CHUNK_SIZE) {
         const chunk = parsed.rows.slice(i, i + CHUNK_SIZE);
@@ -219,11 +244,9 @@ export class BatchJob {
         }
       }
 
-      // 5. Generar Excel
       const excel = generarExcelResultado(productos, new Date());
       await saveResult(kv, jobId, excel.buffer);
 
-      // 6. Marcar completado
       state.status = 'completed';
       state.finishedAt = new Date().toISOString();
       state.bytes = excel.bytes;
@@ -238,10 +261,6 @@ export class BatchJob {
     }
   }
 }
-
-// ============================================================
-// Utils
-// ============================================================
 
 function checkAuth(request: Request, env: Env): boolean {
   const authHeader = request.headers.get('Authorization') ?? '';
