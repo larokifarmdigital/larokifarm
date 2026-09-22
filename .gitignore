@@ -57,3 +57,11 @@ skills-lock.json
 
 # Cloudflare dev secrets
 .dev.vars
+
+# Playwright MCP outputs y screenshots de sesión
+.playwright-mcp/
+playwright/
+**/playwright/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
