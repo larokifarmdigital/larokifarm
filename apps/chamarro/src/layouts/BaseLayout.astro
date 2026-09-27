@@ -1,6 +1,7 @@
 ---
 import '@/styles/global.css';
 import { LOCALES_DISPONIBLES, LOCALE_DEFECTO, rutaConLocale, type Locale } from '@/lib/i18n';
+import { imagenSanity } from '@/lib/sanity';
 import Analytics from '@vercel/analytics/astro';
 
 export interface Props {
@@ -10,11 +11,24 @@ export interface Props {
   imagenOg?: string;
   jsonLd?: unknown;
   lang: Locale;
-  /** Ruta lógica (sin prefijo de idioma). Ej.: "/", "/aviso-legal". Para los hreflangs. */
   rutaActual?: string;
+  nombreFarmacia?: string;
+  logoFarmacia?: string;
 }
 
-const { titulo, descripcion, canonical, imagenOg, jsonLd, lang, rutaActual = '/' } = Astro.props;
+const {
+  titulo,
+  descripcion,
+  canonical,
+  imagenOg,
+  jsonLd,
+  lang,
+  rutaActual = '/',
+  nombreFarmacia,
+  logoFarmacia
+} = Astro.props;
+
+const logoChatUrl = imagenSanity(logoFarmacia, { w: 128, h: 128, fit: 'crop' });
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
 const ogImageAbsoluta = imagenOg?.startsWith('http')
@@ -26,12 +40,12 @@ const ogImageAbsoluta = imagenOg?.startsWith('http')
 const OG_LOCALES: Record<Locale, string> = {
   es: 'es_ES',
   en: 'en_US',
-  ca: 'ca_ES',
+  ca: 'ca_ES'
 };
 
-const hreflangs = LOCALES_DISPONIBLES.map((codigo) => ({
+const hreflangs = LOCALES_DISPONIBLES.map(codigo => ({
   hreflang: codigo,
-  href: `${siteUrl}${rutaConLocale(rutaActual, codigo)}`.replace(/\/$/, '') || `${siteUrl}/`,
+  href: `${siteUrl}${rutaConLocale(rutaActual, codigo)}`.replace(/\/$/, '') || `${siteUrl}/`
 }));
 const hrefDefault =
   `${siteUrl}${rutaConLocale(rutaActual, LOCALE_DEFECTO)}`.replace(/\/$/, '') || `${siteUrl}/`;
@@ -49,6 +63,8 @@ const hrefDefault =
     <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin />
     <link rel='preconnect' href='https://www.google.com' />
     <link rel='dns-prefetch' href='https://larokifarm-cima-chat-5f3.pages.dev' />
+    <link rel='dns-prefetch' href='https://cima-chat-llm.larokifarmdigital.workers.dev' />
+    <link rel='dns-prefetch' href='https://larokifarm-cima-chat-5f3.pages.dev' />
 
     <link
       rel='stylesheet'
@@ -59,7 +75,7 @@ const hrefDefault =
     {descripcion && <meta name='description' content={descripcion} />}
     <link rel='canonical' href={canonical} />
 
-    {hreflangs.map((h) => <link rel='alternate' hreflang={h.hreflang} href={h.href} />)}
+    {hreflangs.map(h => <link rel='alternate' hreflang={h.hreflang} href={h.href} />)}
     <link rel='alternate' hreflang='x-default' href={hrefDefault} />
 
     <meta name='robots' content='index,follow,max-snippet:-1,max-image-preview:large' />
@@ -67,7 +83,7 @@ const hrefDefault =
     <meta property='og:type' content='website' />
     <meta property='og:locale' content={OG_LOCALES[lang]} />
     {
-      LOCALES_DISPONIBLES.filter((l) => l !== lang).map((l) => (
+      LOCALES_DISPONIBLES.filter(l => l !== lang).map(l => (
         <meta property='og:locale:alternate' content={OG_LOCALES[l]} />
       ))
     }
@@ -109,7 +125,7 @@ const hrefDefault =
 
     <script>
       import { track } from '@vercel/analytics';
-      document.addEventListener('click', (e) => {
+      document.addEventListener('click', e => {
         const enlace = (e.target as Element | null)?.closest('a');
         if (!enlace) return;
         const href = enlace.getAttribute('href') ?? '';
@@ -122,25 +138,28 @@ const hrefDefault =
       /* Motion global · IntersectionObserver único para [data-reveal]. */
       const observed = document.querySelectorAll<HTMLElement>('[data-reveal]');
       if (observed.length > 0 && 'IntersectionObserver' in window) {
-        const io = new IntersectionObserver((entries) => {
-          for (const entry of entries) {
-            if (entry.isIntersecting) {
-              (entry.target as HTMLElement).classList.add('in-view');
-              io.unobserve(entry.target);
+        const io = new IntersectionObserver(
+          entries => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                (entry.target as HTMLElement).classList.add('in-view');
+                io.unobserve(entry.target);
+              }
             }
-          }
-        }, { threshold: 0.12, rootMargin: '0px 0px -80px 0px' });
-        observed.forEach((el) => io.observe(el));
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -80px 0px' }
+        );
+        observed.forEach(el => io.observe(el));
       } else {
-        observed.forEach((el) => el.classList.add('in-view'));
+        observed.forEach(el => el.classList.add('in-view'));
       }
 
       /* Spotlight cursor tracking — solo en pointer:fine. */
       const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
       if (finePointer) {
-        document.querySelectorAll<HTMLElement>('[data-spotlight]').forEach((el) => {
+        document.querySelectorAll<HTMLElement>('[data-spotlight]').forEach(el => {
           el.classList.add('spotlight');
-          el.addEventListener('pointermove', (e) => {
+          el.addEventListener('pointermove', e => {
             const rect = el.getBoundingClientRect();
             const x = ((e.clientX - rect.left) / rect.width) * 100;
             const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -156,31 +175,34 @@ const hrefDefault =
       const counters = document.querySelectorAll<HTMLElement>('[data-count-up]');
       if (counters.length > 0 && 'IntersectionObserver' in window) {
         const preferSinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const cio = new IntersectionObserver((entries) => {
-          for (const entry of entries) {
-            if (!entry.isIntersecting) continue;
-            const el = entry.target as HTMLElement;
-            const target = parseFloat(el.dataset.countUp ?? '0');
-            const duration = parseInt(el.dataset.countDuration ?? '1200', 10);
-            const suffix = el.dataset.countSuffix ?? '';
-            cio.unobserve(el);
-            if (preferSinMovimiento) {
-              el.textContent = `${target}${suffix}`;
-              continue;
+        const cio = new IntersectionObserver(
+          entries => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              const el = entry.target as HTMLElement;
+              const target = parseFloat(el.dataset.countUp ?? '0');
+              const duration = parseInt(el.dataset.countDuration ?? '1200', 10);
+              const suffix = el.dataset.countSuffix ?? '';
+              cio.unobserve(el);
+              if (preferSinMovimiento) {
+                el.textContent = `${target}${suffix}`;
+                continue;
+              }
+              const start = performance.now();
+              function tick(now: number) {
+                const t = Math.min(1, (now - start) / duration);
+                // ease-out-cubic
+                const eased = 1 - Math.pow(1 - t, 3);
+                const current = Math.round(target * eased);
+                el.textContent = `${current}${suffix}`;
+                if (t < 1) requestAnimationFrame(tick);
+              }
+              requestAnimationFrame(tick);
             }
-            const start = performance.now();
-            function tick(now: number) {
-              const t = Math.min(1, (now - start) / duration);
-              // ease-out-cubic
-              const eased = 1 - Math.pow(1 - t, 3);
-              const current = Math.round(target * eased);
-              el.textContent = `${current}${suffix}`;
-              if (t < 1) requestAnimationFrame(tick);
-            }
-            requestAnimationFrame(tick);
-          }
-        }, { threshold: 0.5 });
-        counters.forEach((el) => cio.observe(el));
+          },
+          { threshold: 0.5 }
+        );
+        counters.forEach(el => cio.observe(el));
       }
     </script>
 
@@ -190,8 +212,11 @@ const hrefDefault =
       data-primary-light='#334155'
       data-primary-dark='#94a3b8'
       data-position='bottom-right'
+      data-logo-url={logoChatUrl}
+      data-brand-name={nombreFarmacia}
     >
     </div>
-    <script is:inline async src='https://larokifarm-cima-chat-5f3.pages.dev/cima-chat.iife.js'></script>
+    <script is:inline async src='https://larokifarm-cima-chat-5f3.pages.dev/cima-chat.iife.js'>
+    </script>
   </body>
 </html>
