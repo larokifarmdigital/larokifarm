@@ -34,7 +34,13 @@ export function Widget(props: MountOptions) {
 
   return (
     <div class={`cima-shell pos-${position} theme-${theme}`} style={style}>
-      {(open || inline) && <ChatPanel onClose={inline ? undefined : () => setOpen(false)} />}
+      {(open || inline) && (
+        <ChatPanel
+          onClose={inline ? undefined : () => setOpen(false)}
+          logoUrl={props.logoUrl}
+          brandName={props.brandName}
+        />
+      )}
       {!inline && !open && (
         <button
           class="cima-fab"

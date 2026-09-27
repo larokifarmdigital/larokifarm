@@ -178,6 +178,20 @@
   width: 15px;
   height: 15px;
 }
+.cima-header__mark--logo {
+  background: transparent;
+  box-shadow: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.cima-header__logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
 .cima-header__title {
   font-size: 13px;
   font-weight: 600;
@@ -1124,6 +1138,17 @@
   color: #fff;
   margin-top: 2px;
   box-shadow: 0 1px 3px color-mix(in srgb, var(--c-primary) 25%, transparent);
+}
+.chat-ia__avatar--logo {
+  background: transparent;
+  box-shadow: none;
+  overflow: hidden;
+}
+.chat-ia__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 /* Bubble user — con el color primario como acento */

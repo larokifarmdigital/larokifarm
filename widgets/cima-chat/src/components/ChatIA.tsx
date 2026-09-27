@@ -4,8 +4,8 @@ import { renderMarkdown } from '../lib/renderMarkdown';
 
 interface ChatIAProps {
   mode?: 'paciente' | 'profesional';
-  /** Si se pasa, el chat envía automáticamente este mensaje al montarse. */
   initialMessage?: string;
+  logoUrl?: string;
 }
 
 interface UIMessage extends ChatMessage {
@@ -21,14 +21,14 @@ const WELCOME_TEXT =
 const SUGGESTED_PROMPTS = [
   'Mi bebé tiene fiebre desde ayer',
   '¿Se puede combinar Adiro con ibuprofeno?',
-  '¿Es apto el paracetamol en lactancia?',
+  '¿Es apto el paracetamol en lactancia?'
 ];
 
 function randomId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function ChatIA({ mode = 'paciente', initialMessage }: ChatIAProps) {
+export function ChatIA({ mode = 'paciente', initialMessage, logoUrl }: ChatIAProps) {
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [input, setInput] = useState('');
   const [pending, setPending] = useState(false);
@@ -57,15 +57,15 @@ export function ChatIA({ mode = 'paciente', initialMessage }: ChatIAProps) {
         id: randomId(),
         role: 'model',
         text: '',
-        loading: true,
+        loading: true
       };
-      setMessages((prev) => [...prev, userMsg, loadingMsg]);
+      setMessages(prev => [...prev, userMsg, loadingMsg]);
       setInput('');
       setPending(true);
 
       // Historial completo para dar contexto a Gemini (últimos 6 mensajes máx)
       const history: ChatMessage[] = [...messages, userMsg]
-        .filter((m) => !m.loading && !m.error)
+        .filter(m => !m.loading && !m.error)
         .slice(-6)
         .map(({ role, text }) => ({ role, text }));
 
@@ -76,29 +76,29 @@ export function ChatIA({ mode = 'paciente', initialMessage }: ChatIAProps) {
       const res = await sendChat(history, mode, controller.signal);
       setPending(false);
 
-      setMessages((prev) => {
+      setMessages(prev => {
         const next = [...prev];
-        const idx = next.findIndex((m) => m.id === loadingMsg.id);
+        const idx = next.findIndex(m => m.id === loadingMsg.id);
         if (idx === -1) return prev;
         if (res.ok) {
           next[idx] = {
             id: loadingMsg.id,
             role: 'model',
             text: res.text,
-            citations: res.citations,
+            citations: res.citations
           };
         } else {
           next[idx] = {
             id: loadingMsg.id,
             role: 'model',
             text: '',
-            error: res.error,
+            error: res.error
           };
         }
         return next;
       });
     },
-    [messages, pending, mode],
+    [messages, pending, mode]
   );
 
   // Auto-envío del mensaje inicial cuando venimos del hero
@@ -111,17 +111,17 @@ export function ChatIA({ mode = 'paciente', initialMessage }: ChatIAProps) {
   }, [initialMessage]);
 
   return (
-    <div class="chat-ia">
-      <div class="chat-ia__messages" ref={scrollRef}>
+    <div class='chat-ia'>
+      <div class='chat-ia__messages' ref={scrollRef}>
         {messages.length === 0 && (
-          <div class="chat-ia__welcome">
-            <div class="chat-ia__welcome-text">{WELCOME_TEXT}</div>
-            <div class="chat-ia__prompts">
-              {SUGGESTED_PROMPTS.map((p) => (
+          <div class='chat-ia__welcome'>
+            <div class='chat-ia__welcome-text'>{WELCOME_TEXT}</div>
+            <div class='chat-ia__prompts'>
+              {SUGGESTED_PROMPTS.map(p => (
                 <button
                   key={p}
-                  type="button"
-                  class="chat-ia__prompt-chip"
+                  type='button'
+                  class='chat-ia__prompt-chip'
                   onClick={() => send(p)}
                   disabled={pending}
                 >
@@ -132,43 +132,57 @@ export function ChatIA({ mode = 'paciente', initialMessage }: ChatIAProps) {
           </div>
         )}
 
-        {messages.map((m) => (
+        {messages.map(m => (
           <div key={m.id} class={`chat-ia__msg chat-ia__msg--${m.role}`}>
-            {m.role === 'model' && (
-              <span class="chat-ia__avatar" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9 12h6M12 9v6"/>
-                  <circle cx="12" cy="12" r="9"/>
-                </svg>
-              </span>
-            )}
-            <div class="chat-ia__msg-body">
+            {m.role === 'model' &&
+              (logoUrl ? (
+                <span class='chat-ia__avatar chat-ia__avatar--logo' aria-hidden='true'>
+                  <img src={logoUrl} alt='' class='chat-ia__avatar-img' />
+                </span>
+              ) : (
+                <span class='chat-ia__avatar' aria-hidden='true'>
+                  <svg
+                    viewBox='0 0 24 24'
+                    width='12'
+                    height='12'
+                    fill='none'
+                    stroke='currentColor'
+                    stroke-width='2.4'
+                    stroke-linecap='round'
+                    stroke-linejoin='round'
+                  >
+                    <path d='M9 12h6M12 9v6' />
+                    <circle cx='12' cy='12' r='9' />
+                  </svg>
+                </span>
+              ))}
+            <div class='chat-ia__msg-body'>
               {m.loading ? (
-                <div class="chat-ia__loading">
-                  <span class="chat-ia__dot" />
-                  <span class="chat-ia__dot" />
-                  <span class="chat-ia__dot" />
+                <div class='chat-ia__loading'>
+                  <span class='chat-ia__dot' />
+                  <span class='chat-ia__dot' />
+                  <span class='chat-ia__dot' />
                 </div>
               ) : m.error ? (
-                <div class="chat-ia__error">{m.error}</div>
+                <div class='chat-ia__error'>{m.error}</div>
               ) : (
                 <>
-                  <div class="chat-ia__bubble">
+                  <div class='chat-ia__bubble'>
                     {m.role === 'model' ? renderMarkdown(m.text) : m.text}
                   </div>
                   {m.citations && m.citations.length > 0 && (
-                    <div class="chat-ia__citations">
+                    <div class='chat-ia__citations'>
                       {m.citations.map((c, i) => (
                         <a
                           key={`${c.nregistro}-${c.seccion}-${i}`}
                           href={c.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="chat-ia__citation"
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          class='chat-ia__citation'
                           title={`${c.nombre ?? 'NR ' + c.nregistro}${c.seccion ? ' · sección ' + c.seccion : ''}`}
                         >
-                          <span class="chat-ia__citation-num">{i + 1}</span>
-                          <span class="chat-ia__citation-label">
+                          <span class='chat-ia__citation-num'>{i + 1}</span>
+                          <span class='chat-ia__citation-label'>
                             {c.nombre ?? `NR ${c.nregistro}`}
                           </span>
                         </a>
@@ -183,45 +197,62 @@ export function ChatIA({ mode = 'paciente', initialMessage }: ChatIAProps) {
       </div>
 
       <form
-        class="chat-ia__form"
-        onSubmit={(e) => {
+        class='chat-ia__form'
+        onSubmit={e => {
           e.preventDefault();
           send(input);
         }}
       >
         <textarea
-          class="chat-ia__input"
-          placeholder="Escribe un mensaje"
+          class='chat-ia__input'
+          placeholder='Escribe un mensaje'
           value={input}
           rows={1}
-          onInput={(e) => {
+          onInput={e => {
             const el = e.target as HTMLTextAreaElement;
             setInput(el.value);
             el.style.height = 'auto';
             el.style.height = Math.min(el.scrollHeight, 120) + 'px';
           }}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
               (e.currentTarget as HTMLTextAreaElement).form?.requestSubmit();
             }
           }}
           disabled={pending}
-          aria-label="Escribe tu pregunta"
+          aria-label='Escribe tu pregunta'
         />
         <button
-          type="submit"
-          class="chat-ia__send"
+          type='submit'
+          class='chat-ia__send'
           disabled={pending || !input.trim()}
-          aria-label="Enviar"
+          aria-label='Enviar'
         >
           {pending ? (
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-              <rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor" />
+            <svg
+              viewBox='0 0 24 24'
+              width='14'
+              height='14'
+              fill='none'
+              stroke='currentColor'
+              stroke-width='2.4'
+              stroke-linecap='round'
+            >
+              <rect x='6' y='6' width='12' height='12' rx='1.5' fill='currentColor' />
             </svg>
           ) : (
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 19V5M5 12l7-7 7 7"/>
+            <svg
+              viewBox='0 0 24 24'
+              width='14'
+              height='14'
+              fill='none'
+              stroke='currentColor'
+              stroke-width='2.4'
+              stroke-linecap='round'
+              stroke-linejoin='round'
+            >
+              <path d='M12 19V5M5 12l7-7 7 7' />
             </svg>
           )}
         </button>

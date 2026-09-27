@@ -7,6 +7,8 @@ export interface MountOptions {
   position?: 'bottom-right' | 'bottom-left' | 'inline';
   primaryLight?: string;
   primaryDark?: string;
+  logoUrl?: string;
+  brandName?: string;
 }
 
 export interface CimaHandle {
@@ -20,6 +22,8 @@ function readOptions(el: HTMLElement): MountOptions {
     position: (el.dataset.position as MountOptions['position']) ?? 'bottom-right',
     primaryLight: el.dataset.primaryLight || undefined,
     primaryDark: el.dataset.primaryDark || undefined,
+    logoUrl: el.dataset.logoUrl || undefined,
+    brandName: el.dataset.brandName || undefined
   };
 }
 
@@ -44,7 +48,7 @@ export function mount(target: HTMLElement, opts: MountOptions = {}): CimaHandle 
     unmount() {
       render(null, mountNode);
       delete el.__cimaHandle;
-    },
+    }
   };
   el.__cimaHandle = handle;
   return handle;
@@ -52,7 +56,7 @@ export function mount(target: HTMLElement, opts: MountOptions = {}): CimaHandle 
 
 function autoMount() {
   const nodes = document.querySelectorAll<HTMLElement>('[data-cima-chat]');
-  nodes.forEach((el) => mount(el, readOptions(el)));
+  nodes.forEach(el => mount(el, readOptions(el)));
 }
 
 if (document.readyState === 'loading') {

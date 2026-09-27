@@ -38,6 +38,8 @@ import type { ChipDef, DocMode } from '../lib/sections';
 
 interface Props {
   onClose?: () => void;
+  logoUrl?: string;
+  brandName?: string;
 }
 
 interface AnswerEntry {
@@ -57,7 +59,7 @@ const BUNDLED_CATALOG: CimaCatalog = {
   source: 'bundled',
 };
 
-export function ChatPanel({ onClose }: Props) {
+export function ChatPanel({ onClose, logoUrl, brandName }: Props) {
   const [entry, setEntry] = useState<EntryMode>('menu');
   const [heroInput, setHeroInput] = useState('');
   const [chatInitial, setChatInitial] = useState<string | undefined>(undefined);
@@ -248,13 +250,19 @@ export function ChatPanel({ onClose }: Props) {
     <div class="cima-panel" role="dialog" aria-label="Chat de medicamentos CIMA">
       <header class="cima-header">
         <div class="cima-header__brand">
-          <span class="cima-header__mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 12h6M12 9v6"/>
-              <circle cx="12" cy="12" r="9"/>
-            </svg>
-          </span>
-          <span class="cima-header__title">CIMA</span>
+          {logoUrl ? (
+            <span class="cima-header__mark cima-header__mark--logo" aria-hidden="true">
+              <img src={logoUrl} alt="" class="cima-header__logo-img" />
+            </span>
+          ) : (
+            <span class="cima-header__mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 12h6M12 9v6"/>
+                <circle cx="12" cy="12" r="9"/>
+              </svg>
+            </span>
+          )}
+          <span class="cima-header__title">{brandName ?? 'CIMA'}</span>
         </div>
         {onClose && (
           <button class="cima-close" onClick={onClose} aria-label="Cerrar">
@@ -375,7 +383,7 @@ export function ChatPanel({ onClose }: Props) {
             >
               ← Volver
             </button>
-            <ChatIA initialMessage={chatInitial} />
+            <ChatIA initialMessage={chatInitial} logoUrl={logoUrl} />
           </>
         )}
 
