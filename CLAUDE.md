@@ -92,3 +92,15 @@ El schema real de Farmacia vive en `studio/schemas/farmacias/farmacia.ts`.
   correspondiente.
 - Si cambiaste convención o descubriste bug conocido: memoria auto
   (`feedback_*` o `project_*`).
+
+<!-- auto:recent-commits:start -->
+## Cambios recientes
+
+Actualizado automáticamente al hacer commit (2026-09-27T11:04:55Z).
+
+- `289c4ea` 2026-09-27 — Chore: sincronizar CLAUDE.md con seccion Cambios recientes
+- `1a5063a` 2026-09-22 — Feat: backoffice completo con nav 4 grupos + validacion i18n + TimePicker custom
+- `287337d` 2026-09-18 — Feat: scout panel /batch + rediseño Ethereal Glass Dark + fixes varios
+- `89c2fc8` 2026-09-16 — Feat: scout batch worker - motor de comparacion masiva
+- `ac3ebf7` 2026-09-16 — Docs: scout batch-plan - indice visual de pasos al principio
+<!-- auto:recent-commits:end -->
