@@ -212,7 +212,9 @@ export function ChatIA({ mode = 'paciente', initialMessage, logoUrl }: ChatIAPro
             const el = e.target as HTMLTextAreaElement;
             setInput(el.value);
             el.style.height = 'auto';
-            el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+            const content = el.scrollHeight;
+            el.style.height = Math.min(content, 120) + 'px';
+            el.style.overflowY = content > 120 ? 'auto' : 'hidden';
           }}
           onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {

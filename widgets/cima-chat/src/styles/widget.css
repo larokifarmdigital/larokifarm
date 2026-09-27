@@ -54,13 +54,8 @@
   --c-warning-soft: #fff3d0;
   --c-shadow: 0 14px 36px rgba(15, 30, 60, 0.18);
   --c-bubble-q-text: #ffffff;
-  --c-scroll: rgba(15, 30, 60, 0.22);
-}
-.cima-shell.theme-light .cima-body {
-  scrollbar-color: color-mix(in srgb, var(--c-primary) 35%, transparent) transparent;
-}
-.cima-shell.theme-light .cima-body::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--c-primary) 35%, transparent);
+  --c-scroll: color-mix(in srgb, var(--c-primary) 35%, transparent);
+  --c-scroll-hover: color-mix(in srgb, var(--c-primary) 55%, transparent);
 }
 
 .cima-shell.theme-dark {
@@ -83,7 +78,8 @@
   --c-warning-soft: #2d2410;
   --c-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
   --c-bubble-q-text: #0f2a20;
-  --c-scroll: rgba(255, 255, 255, 0.18);
+  --c-scroll: color-mix(in srgb, var(--c-primary) 40%, transparent);
+  --c-scroll-hover: color-mix(in srgb, var(--c-primary) 60%, transparent);
 }
 
 /* ---------- Shell ---------- */
@@ -233,7 +229,33 @@
   outline-offset: 2px;
 }
 
-/* ---------- Body & scrollbar ---------- */
+/* ---------- Scrollbars unificados (aplica a body, lista de resultados,
+   chat conversacional, textareas del hero y del input, wizard, etc.).
+   Tintados con el primary de la farmacia via --c-scroll. ---------- */
+.cima-shell,
+.cima-shell * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-scroll) transparent;
+}
+.cima-shell *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.cima-shell *::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cima-shell *::-webkit-scrollbar-thumb {
+  background: var(--c-scroll);
+  border-radius: 8px;
+}
+.cima-shell *::-webkit-scrollbar-thumb:hover {
+  background: var(--c-scroll-hover);
+}
+.cima-shell *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---------- Body ---------- */
 .cima-body {
   flex: 1;
   overflow-y: auto;
@@ -244,14 +266,6 @@
   gap: 10px;
   background: var(--c-bg);
   min-width: 0;
-  scrollbar-width: thin;
-  scrollbar-color: var(--c-scroll) transparent;
-}
-.cima-body::-webkit-scrollbar { width: 8px; }
-.cima-body::-webkit-scrollbar-track { background: transparent; }
-.cima-body::-webkit-scrollbar-thumb {
-  background: var(--c-scroll);
-  border-radius: 8px;
 }
 .cima-body > * { min-width: 0; max-width: 100%; }
 
@@ -1283,9 +1297,10 @@
   color: var(--c-text);
   outline: none;
   resize: none;
+  box-sizing: border-box;
   line-height: 1.4;
   max-height: 120px;
-  overflow-y: auto;
+  overflow-y: hidden;
   transition: border-color 0.15s ease;
 }
 .chat-ia__input:focus { border-color: var(--c-primary); }
