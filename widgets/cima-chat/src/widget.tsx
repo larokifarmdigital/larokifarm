@@ -48,7 +48,19 @@ export function Widget(props: MountOptions) {
           aria-expanded={false}
           onClick={() => setOpen(true)}
         >
-          <span aria-hidden="true">💬</span>
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12z" />
+          </svg>
         </button>
       )}
     </div>
