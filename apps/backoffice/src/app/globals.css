@@ -1,31 +1,31 @@
 @import 'tailwindcss';
 
 /* ============================================================
- * Design tokens · Humblytics DNA
- * Base: cream + chocolate + naranja signature
- * Type: Inter Tight (condensada) + Geist Mono
- * Accesibilidad: contraste ≥ 7:1 en texto principal, focus visible,
- * respeto de prefers-reduced-motion, escalable hasta 200%.
+ * Design tokens · larokifarm DNA
+ * Base: blanco + azul Torrents + ink slate.
+ * Alineado con --primary de apps/torrents (color representativo del
+ * grupo). Sustituye la paleta Humblytics (cream/chocolate/naranja) por
+ * una farmacia-clean: fondo casi blanco frío, ink slate, accent azul.
+ * Type: Inter Tight + Geist Mono.
+ * A11y: contraste ≥ 7:1, focus visible, prefers-reduced-motion, 200%.
  * ============================================================ */
 
 @theme {
-  /* Grounds — crema cálida */
-  --color-bg: #faf6f1;
+  /* Grounds — blanco puro con tono frío mínimo */
+  --color-bg: #f6f9fc;
   --color-surface: #ffffff;
-  --color-surface-2: #f4efe6;
-  --color-surface-sunken: #ebe4d7;
+  --color-surface-2: #f1f5f9;
+  --color-surface-sunken: #e2e8f0;
 
-  /* Ink — chocolate profundo */
-  --color-ink: #1a0f0a;
-  --color-ink-2: #3d2e24;
-  --color-muted: #736c64;
-  --color-muted-2: #a69e93;
-  --color-hairline: #e8e1d8;
-  --color-hairline-strong: #d4ccbe;
+  /* Ink — slate profundo, azulado (nunca marrón) */
+  --color-ink: #0f172a;
+  --color-ink-2: #1e293b;
+  --color-muted: #64748b;
+  --color-muted-2: #94a3b8;
+  --color-hairline: #e5e7eb;
+  --color-hairline-strong: #cbd5e1;
 
-  /* Accent — naranja Humblytics signature */
-  /* Azul Torrents (paleta de marca larokifarm — coincide con --primary de
-     apps/torrents/src/styles/global.css). Reemplaza el naranja Humblytics. */
+  /* Accent — azul Torrents (--primary del sitio del cliente) */
   --color-accent: #1265b5;
   --color-accent-hover: #0d5397;
   --color-accent-soft: #e4eff9;
@@ -33,15 +33,19 @@
   --color-accent-tint: rgba(18, 101, 181, 0.1);
   --color-accent-glow: rgba(18, 101, 181, 0.25);
 
-  /* Semantic pastels */
-  --color-red-soft: #fdecec;
-  --color-red-ink: #b23a3a;
-  --color-yellow-soft: #fbf1dc;
-  --color-yellow-ink: #8a5a00;
-  --color-green-soft: #def3e5;
-  --color-green-ink: #0f6c39;
-  --color-blue-soft: #e4eef7;
-  --color-blue-ink: #1e5a8a;
+  /* Tonos secundarios de la escala Torrents (para chips/hovers/grafos) */
+  --color-brand-light: #36a0da;
+  --color-brand-soft: #5bc2eb;
+
+  /* Semantic pastels — recalibrados a la nueva paleta fría */
+  --color-red-soft: #fee2e2;
+  --color-red-ink: #b91c1c;
+  --color-yellow-soft: #fef3c7;
+  --color-yellow-ink: #92400e;
+  --color-green-soft: #dcfce7;
+  --color-green-ink: #15803d;
+  --color-blue-soft: #dbeafe;
+  --color-blue-ink: #1e40af;
 
   /* Tipografía */
   --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -54,10 +58,10 @@
   --radius-lg: 10px;
   --radius-xl: 16px;
 
-  /* Sombras */
+  /* Sombras — base slate (azul frío), sutil pero perceptible sobre fondo blanco */
   --shadow-hairline: 0 0 0 1px var(--color-hairline);
-  --shadow-soft: 0 1px 2px rgba(26, 15, 10, 0.04), 0 2px 6px rgba(26, 15, 10, 0.04);
-  --shadow-elevated: 0 2px 4px rgba(26, 15, 10, 0.06), 0 8px 24px rgba(26, 15, 10, 0.08);
+  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --shadow-elevated: 0 2px 6px rgba(15, 23, 42, 0.06), 0 12px 30px rgba(15, 23, 42, 0.08);
   --shadow-accent: 0 6px 20px -8px var(--color-accent-tint);
   --shadow-focus: 0 0 0 3px var(--color-accent-tint);
 

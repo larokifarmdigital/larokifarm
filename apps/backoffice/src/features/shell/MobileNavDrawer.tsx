@@ -29,9 +29,15 @@ export function MobileNavDrawer({
   const navItems = visibleNavItems(userRole);
   const pathname = usePathname();
 
+  // NOTE: cierra el drawer cuando el usuario navega a otra ruta. `onClose` NO
+  // va en las deps a propósito: el padre pasa una arrow inline (`() =>
+  // setMobileNavOpen(false)`) que crea nueva referencia en cada render, y si
+  // se incluyera aquí el effect se dispararía en el mismo tick en que se abre
+  // → cerrándolo al instante. Solo queremos reaccionar al cambio de pathname.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     onClose();
-  }, [pathname, onClose]);
+  }, [pathname]);
 
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
