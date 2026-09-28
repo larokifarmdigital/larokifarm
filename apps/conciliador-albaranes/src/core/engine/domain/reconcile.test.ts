@@ -80,6 +80,35 @@ describe('reconcile', () => {
     expect(r.lines[0].status).toBe('OK');
   });
 
+  // Caso real (BAYER factura QF00114826): la columna "Código de producto"
+  // trae DOS códigos apilados por línea — un interno de Bayer (8 dígitos, ej.
+  // "87430014") y el C.N. español (7 dígitos, ej. "1593245" → CN 159324).
+  // Si Gemini se equivoca de columna y mete el interno como nationalCode, el
+  // matching primario por C.N. fallaba. Ahora, cuando llegan AMBOS y `code`
+  // encaja con formato C.N., se prueba como cnAlt tras el cn principal.
+  it('layout Bayer: 2 códigos apilados — matchea con el segundo si el primero es interno', () => {
+    const r = reconcile(
+      deliveryNote([{
+        nationalCode: '874300',       // interno truncado por cleanNationalCode (bogus como C.N.)
+        code: '1593245',              // C.N. real con dígito de control → rescata "159324"
+        description: 'REDOXON EXTRA DEFENSAS',
+        quantity: 30,
+        unitPrice: 13.02,
+        discount: 24,
+      }]),
+      order([{
+        productCode: '159324',
+        description: 'REDOXON EXTRA DEFENSAS',
+        units: 30,
+        price: 13.02,
+        discount: 24,
+      }]),
+    );
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].status).toBe('OK');
+    expect(r.lines[0].nationalCode).toBe('159324');
+  });
+
   it('ordena las filas con problema primero', () => {
     const r = reconcile(
       deliveryNote([

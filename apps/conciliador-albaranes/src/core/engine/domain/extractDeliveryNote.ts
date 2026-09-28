@@ -184,6 +184,38 @@ CABECERA REPETIDA EN CADA PÁGINA — MUY IMPORTANTE:
   NO es un artículo nuevo. Igual con el "Lote:" siguiente (pertenece al artículo
   cortado, no al 130).
 
+LAYOUT BAYER (2 códigos APILADOS en la columna "Código de producto") — CRÍTICO:
+- Algunos proveedores (BAYER es el caso claro) imprimen en la columna "Código
+  de producto" DOS códigos apilados verticalmente por cada artículo, dentro de
+  la misma celda de la tabla:
+    Arriba: un código INTERNO del proveedor (típicamente 8 dígitos, ej. "87430014",
+            "88872835", "10013001"; también puede aparecer con 7 dígitos como
+            "3222016"). Es el material/SAP del proveedor.
+    Abajo:  el CÓDIGO NACIONAL español, casi siempre con 7 dígitos que son el
+            CN de 6 dígitos + su dígito de control (ej. "1593245" → CN 159324,
+            "9077419" → CN 907741, "6545713" → CN 654571). A veces vienen 6
+            dígitos exactos si el proveedor no imprime el dígito de control.
+- Regla dura: cuando veas 2 códigos apilados en la misma celda de "Código de
+  producto", el C.N. español (nationalCode) es el de ABAJO (aplicando la regla
+  general: los 6 primeros dígitos, descarta dígito de control), y el de ARRIBA
+  va a "code" (código interno del proveedor). NUNCA metas el interno de 8 dígitos
+  en "nationalCode" — se truncaría a 6 y perdería el sentido, rompiendo el cruce
+  con el pedido.
+- Cómo reconocer el layout: cabecera "Código de producto" (no "C.N."/"Cód.
+  Nacional"), y cada fila de artículo tiene 2 líneas visuales donde la 1ª y la
+  2ª columna llevan números distintos. Ejemplo textual literal del PDF:
+    "10  87430014  REDOXON EXTRA DEFENSAS COMP EFERV   30   20 PI   13,02  260,40"
+    "    1593245   DESCUENTO POR VOLUMEN                                          -24,00% -62,50"
+    "              IVA"
+    "              Nº Batch: CB13596"
+  Salida correcta: nationalCode="159324" (6 primeros de "1593245"), code="87430014",
+  quantity=20, unitPrice=13,02, discount=24, discountAmount=62,50.
+  Salida INCORRECTA: nationalCode="874300" (truncaste el interno) — el cruce con
+  el pedido fallará.
+- Aplica la misma jerarquía de campos incluso si el proveedor no es Bayer: siempre
+  que veas 2 códigos apilados en la celda del código, el que encaje con formato
+  C.N. español (6-7 dígitos) va a nationalCode; el otro a code.
+
 LAYOUT HARTMANN (etiqueta "Dto. por articulo -XX,00%") — IMPORTANTE:
 - Otros proveedores (Hartmann/Peha-soft) usan un formato donde cada ítem trae
   columnas "Precio Bruto Unit EUR" y "Precio Neto Unit EUR" separadas. El
