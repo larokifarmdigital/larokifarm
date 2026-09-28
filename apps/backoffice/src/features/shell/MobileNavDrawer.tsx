@@ -4,7 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useEffect } from 'react';
-import { NAV_ITEMS, SECTION_LABELS, type NavSection } from './nav-config';
+import {
+  SECTION_LABELS,
+  visibleNavItems,
+  type NavRole,
+  type NavSection,
+} from './nav-config';
 import { NavIcon, type IconName } from './NavIcon';
 import { cn } from '@/lib/utils';
 
@@ -14,11 +19,14 @@ export function MobileNavDrawer({
   open,
   onClose,
   userName,
+  userRole,
 }: {
   open: boolean;
   onClose: () => void;
   userName: string;
+  userRole: NavRole | null;
 }) {
+  const navItems = visibleNavItems(userRole);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -53,7 +61,8 @@ export function MobileNavDrawer({
 
           <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
             {SECTIONS.map((section) => {
-              const items = NAV_ITEMS.filter((i) => i.section === section);
+              const items = navItems.filter((i) => i.section === section);
+              if (items.length === 0) return null;
               return (
                 <div key={section}>
                   <div className="px-2 mb-1.5 eyebrow text-[10px]">

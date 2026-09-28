@@ -149,6 +149,7 @@ export function AppTopbar({ user }: { user: Usuario }) {
         open={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
         userName={user.nombre}
+        userRole={user.rol}
       />
       <CommandStub open={commandOpen} onClose={() => setCommandOpen(false)} />
     </>

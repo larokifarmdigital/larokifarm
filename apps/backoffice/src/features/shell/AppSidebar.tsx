@@ -3,16 +3,28 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { NAV_ITEMS, SECTION_LABELS, type NavSection } from './nav-config';
+import {
+  SECTION_LABELS,
+  visibleNavItems,
+  type NavRole,
+  type NavSection,
+} from './nav-config';
 import { NavIcon, type IconName } from './NavIcon';
 import { useSidebar } from './SidebarProvider';
 import { cn } from '@/lib/utils';
 
 const SECTIONS: NavSection[] = ['principal', 'operaciones', 'sistema'];
 
-export function AppSidebar({ userName }: { userName: string }) {
+export function AppSidebar({
+  userName,
+  userRole,
+}: {
+  userName: string;
+  userRole: NavRole | null;
+}) {
   const pathname = usePathname();
   const { collapsed } = useSidebar();
+  const items = visibleNavItems(userRole);
 
   return (
     <Tooltip.Provider delayDuration={200}>
@@ -51,8 +63,8 @@ export function AppSidebar({ userName }: { userName: string }) {
         <nav className={cn('flex-1 overflow-y-auto py-3', collapsed ? 'px-2' : 'px-3')}>
           <div className={cn('space-y-4', !collapsed && 'space-y-6')}>
             {SECTIONS.map((section) => {
-              const items = NAV_ITEMS.filter((i) => i.section === section);
-              if (items.length === 0) return null;
+              const sectionItems = items.filter((i) => i.section === section);
+              if (sectionItems.length === 0) return null;
               return (
                 <div key={section}>
                   {!collapsed && (
@@ -61,7 +73,7 @@ export function AppSidebar({ userName }: { userName: string }) {
                     </div>
                   )}
                   <ul className="space-y-0.5">
-                    {items.map((item) => {
+                    {sectionItems.map((item) => {
                       const active =
                         pathname === item.href || pathname.startsWith(`${item.href}/`);
                       const link = (
