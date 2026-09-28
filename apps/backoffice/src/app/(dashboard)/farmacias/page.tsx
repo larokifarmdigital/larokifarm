@@ -21,12 +21,10 @@ export default async function FarmaciasPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="secondary" size="md" asChild className="flex-1 sm:flex-none">
-            <Link href="/farmacias?filter=drafts">
-              <NavIcon name="PencilSimple" size={14} />
-              Borradores
-            </Link>
-          </Button>
+          {/* El botón "Borradores" apuntaba a /farmacias?filter=drafts pero
+              FarmaciasList no lee query params (todo el filtro es state
+              local). Redundante con los tabs "Publicada/Borrador/Archivada"
+              del listado, así que lo quitamos. */}
           <Button variant="accent" size="md" asChild className="flex-1 sm:flex-none">
             <Link href="/farmacias/nueva">
               <NavIcon name="Plus" size={14} />

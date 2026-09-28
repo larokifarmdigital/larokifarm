@@ -45,15 +45,9 @@ export function UserMenu({ user }: { user: Usuario }) {
             <div className="mt-1.5 chip chip-neutral">{user.rol}</div>
           </div>
           <DropdownMenu.Separator className="h-px bg-[var(--color-hairline)] my-1" />
-          <DropdownMenu.Item className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none cursor-pointer">
-            <NavIcon name="User" size={13} />
-            Mi perfil
-          </DropdownMenu.Item>
-          <DropdownMenu.Item className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none cursor-pointer">
-            <NavIcon name="GearSix" size={13} />
-            Preferencias
-          </DropdownMenu.Item>
-          <DropdownMenu.Separator className="h-px bg-[var(--color-hairline)] my-1" />
+          {/* Mi perfil y Preferencias los tenía el diseño original pero sin
+              implementación. Los ocultamos hasta que existan las páginas para
+              no ofrecerle al usuario botones que no hacen nada. */}
           <DropdownMenu.Item
             onSelect={(e) => {
               // NOTE: preventDefault evita que Radix cierre el menú antes de

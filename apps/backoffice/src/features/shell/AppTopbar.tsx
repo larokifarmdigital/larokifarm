@@ -119,27 +119,10 @@ export function AppTopbar({ user }: { user: Usuario }) {
             </ol>
           </nav>
 
-          <button
-            type="button"
-            onClick={() => setCommandOpen(true)}
-            aria-label="Buscar"
-            className="hidden md:flex items-center gap-2 h-8 pl-2 pr-2.5 rounded-[6px] text-[12px] text-[var(--color-muted)] bg-[var(--color-surface)] border border-[var(--color-hairline)] hover:border-[var(--color-hairline-strong)] transition-colors"
-          >
-            <NavIcon name="MagnifyingGlass" size={13} />
-            <span>Buscar…</span>
-            <span className="flex items-center gap-1 ml-2">
-              <kbd>⌘</kbd>
-              <kbd>K</kbd>
-            </span>
-          </button>
-
-          <button
-            type="button"
-            aria-label="Notificaciones (sin nuevas)"
-            className="flex h-9 w-9 items-center justify-center rounded-[6px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] transition-colors"
-          >
-            <NavIcon name="Bell" size={16} />
-          </button>
+          {/* NOTE: Búsqueda global (⌘K) y notificaciones (Bell) están fuera
+              del scope de Fase 1. El atajo ⌘K sigue registrado por si el
+              usuario lo pulsa por reflejo (abre el modal WIP), pero los
+              botones de la topbar se ocultan para no invitar a usarlos. */}
 
           <UserMenu user={user} />
         </div>
