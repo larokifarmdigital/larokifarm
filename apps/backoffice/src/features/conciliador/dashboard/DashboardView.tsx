@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { NavIcon } from '@/features/shell/NavIcon';
 import type { DashboardData } from '../data/dashboardData';
@@ -24,12 +25,17 @@ export function DashboardView({ data, standaloneUrl }: Props) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild variant="accent" size="lg">
+          <Button asChild variant="secondary">
             <a href={standaloneUrl} target="_blank" rel="noopener noreferrer">
+              <NavIcon name="ArrowSquareOut" size={13} />
+              Abrir standalone
+            </a>
+          </Button>
+          <Button asChild variant="accent" size="lg">
+            <Link href="/albaranes/nueva">
               <NavIcon name="Plus" size={14} weight="bold" />
               Nueva conciliación
-              <NavIcon name="ArrowSquareOut" size={13} />
-            </a>
+            </Link>
           </Button>
         </div>
       </header>
@@ -47,13 +53,12 @@ export function DashboardView({ data, standaloneUrl }: Props) {
           </div>
           <div className="flex-1">
             <p className="text-[13.5px] font-medium text-[var(--color-ink)] m-0">
-              La subida de PDFs abre por ahora el conciliador actual en una pestaña
-              nueva.
+              Nueva conciliación disponible en el backoffice (subida y emparejamiento).
             </p>
             <p className="text-[13px] text-[var(--color-ink-2)] m-0 mt-1 leading-[1.55]">
-              El flujo completo (arrastrar PDFs + XLSX aquí mismo, ver el resultado sin
-              salir del backoffice) llega en las próximas fases. Mientras tanto, este
-              panel refleja los datos reales de tus últimas conciliaciones.
+              La ejecución contra Gemini llega en Fase 1.C.3. Mientras tanto, para
+              ejecutar una conciliación real usa el standalone en una pestaña aparte.
+              Los datos que ves aquí son las conciliaciones reales guardadas en Neon.
             </p>
           </div>
         </div>
