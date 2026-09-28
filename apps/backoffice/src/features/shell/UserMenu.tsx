@@ -1,8 +1,8 @@
 'use client';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { signOut } from 'next-auth/react';
 import { NavIcon } from './NavIcon';
-import { logoutAction } from '@/lib/actions/auth-actions';
 import type { Usuario } from '@/types/content';
 
 function initials(name: string) {
@@ -54,20 +54,19 @@ export function UserMenu({ user }: { user: Usuario }) {
             Preferencias
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="h-px bg-[var(--color-hairline)] my-1" />
-          <form action={logoutAction}>
-            <DropdownMenu.Item
-              asChild
-              className="w-full outline-none rounded-[4px]"
-            >
-              <button
-                type="submit"
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)] rounded-[4px] cursor-pointer"
-              >
-                <NavIcon name="SignOut" size={13} />
-                Cerrar sesión
-              </button>
-            </DropdownMenu.Item>
-          </form>
+          <DropdownMenu.Item
+            onSelect={(e) => {
+              // NOTE: preventDefault evita que Radix cierre el menú antes de
+              // que dispare signOut. signOut cliente-side llama a /api/auth/signout
+              // con CSRF, limpia la cookie de sesión y redirige a /login.
+              e.preventDefault();
+              void signOut({ callbackUrl: '/login' });
+            }}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)] outline-none cursor-pointer"
+          >
+            <NavIcon name="SignOut" size={13} />
+            Cerrar sesión
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

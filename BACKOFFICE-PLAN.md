@@ -1,230 +1,226 @@
 # Plan · Backoffice unificado larokifarm
 
-> Doc de hand-off. Léelo antes de empezar a mover nada.
+> Doc único de referencia para consolidar backoffice + conciliador + scout, y
+> preparar el terreno para las siguientes fases (contenido de landings, backend
+> propio, apagar Sanity).
+>
+> **Última revisión**: 2026-09-28.
+> **Reemplaza a**: `BACKOFFICE-UNIFICACION-PLAN.md` (borrado) y a la versión
+> anterior de este mismo archivo (2026-09-18).
 
-## En una frase
+---
 
-Consolidar todo el ecosistema **larokifarm** en un backoffice web (Next.js 16) que **comparte la misma base de datos y sistema de autenticación** con el conciliador de albaranes ya en producción. El backoffice añade la gestión de contenido de las landings (hoy en Sanity), pilotará Scout como módulo interno y, cuando toque, absorberá el conciliador como módulo también. Un solo login para todo el ecosistema.
+## Índice visual (léelo antes de nada)
 
-Sin apagar nada hasta que la nueva pieza equivalente esté funcionando.
+```
+FASE 0 · Preparación                              ┐
+  · Aprobar este documento                        │
+  · pg_dump Neon (backup pre-cambios)             │  0-2 días
+  · Congelar features nuevas en conciliador/scout │
+    salvo bugfixes críticos                       ┘
 
-## Decisiones tomadas (2026-09-18)
+FASE 1 · Backoffice absorbe conciliador + scout   ┐  ← URGENTE cliente
+  · Auth del conciliador copiada al backoffice    │
+    (SSO real cross-subdomain)                    │
+  · Schema Prisma extendido con TODAS las tablas  │
+    del endgame (tablas de contenido creadas      │  2-3 semanas
+    VACÍAS, para evitar migraciones destructivas) │
+  · UI de conciliador dentro del backoffice       │
+    con DNA Humblytics                            │
+  · UI de scout dentro del backoffice             │
+  · Workers (motor conciliador, DO scout) siguen  │
+    intactos como APIs pesadas                    ┘
+
+────────────────────────────────────────────────────
+              (FRONTERA temporal)
+   Fases 2+ arrancan cuando el REPO BACKEND nuevo
+   esté navegable — no viven en este repo.
+────────────────────────────────────────────────────
+
+FASE 2 · Backend Hono propio (en OTRO repo)       ┐
+  · apps/api/ con Hono + Prisma + Zod + OpenAPI   │
+  · Dueño único del schema (se hereda del         │  fuera de scope
+    conciliador)                                  │  de este doc
+  · Auth JWT emitida por el backend               ┘
+
+FASE 3 · Migrar contenido Sanity → Neon           ┐
+  · Script upsert por slug                        │  1 semana
+  · Landings Astro consumen el backend nuevo      ┘
+
+FASE 4 · Apagar Sanity + retirar Prisma del BO    ┐
+  · Backoffice pasa a "frontend puro" via         │
+    api-client del backend nuevo                  │  1 semana
+  · Sanity workspace archivado                    ┘
+
+FASE 5 · Deprecar apps standalone de conciliador  ┐
+  · Redirects 301 conciliador.* → BO/conciliador  │  2-3 días
+  · Deprecar apps/scout/ (UI ya vive en el BO)    ┘
+
+FASE 6 · Métricas y cotización unificada          ┐
+  · Panel /admin/uso                              │
+  · Alertas presupuesto                           │  1 semana
+  · Export CSV mensual                            ┘
+```
+
+**Fase 1 = urgente cliente** (2-3 semanas). Fases 2+ dependen de que exista el
+repo backend nuevo — que se irá construyendo en paralelo poco a poco.
+
+---
+
+## Estado del ecosistema (2026-09-28)
+
+| App | Stack | Auth | BD | Notas |
+|-----|-------|------|----|----|
+| `apps/backoffice/` | Next 16 / React 19 / Tailwind v4 | next-auth v5 (demo, mocks) | ninguna | DNA Humblytics. Editor farmacia con cobertura Sanity 100%. Falta conectar Sanity y Neon. |
+| `apps/conciliador-albaranes/` | Next + OpenNext → Cloudflare Workers | next-auth v5 (Prisma adapter) | Neon Postgres | Multi-tenant. Producción con clientes reales. Dueño del schema Prisma actual. |
+| `apps/scout/` | Next + Cloudflare Worker (DO `BATCH_JOB`) | Cookie firmada + `BATCH_PASSWORD` | (Worker aparte, no relacional) | Batch worker en `apps/scout/worker/`. Panel `/batch` con Ethereal Glass Dark. |
+| `apps/torrents/` · `apps/chamarro/` | Astro SSG | — | Sanity workspace `farmacias` | Landings con contenido en Sanity. SEO IA + Google. |
+| `apps/calendario-vacunas/` · `widgets/cima-chat/` | Astro / Preact | — | Sanity | Contenido editable por cliente farmacia. |
+
+---
+
+## Decisiones tomadas (2026-09-28)
 
 | Decisión | Elegido | Razón |
-| --- | --- | --- |
-| Estructura | **Todo en el monorepo existente** | Ya funciona el pnpm workspace, comparte tipos y CI |
-| Backend | **Servicio HTTP separado** (`apps/api/` con Hono) | Consumible desde backoffice, landings, widget y futuros clientes externos. Escala independiente del backoffice |
-| Frontend admin | **`apps/backoffice/` (Next.js 16 solo UI)** | Consume `apps/api/` vía `packages/api-client`. Renderiza pantallas, no lógica de dominio |
-| Hosting backoffice + api | **Vercel Hobby** (2 proyectos separados) | $0 · sin problema LaLiga (Cloudflare descartado). Fallback: Vercel Pro $20/mes o Netlify Free |
-| Hosting conciliador | **Sigue en Cloudflare Workers** (no se toca) | Producción estable. Comparte DB con el resto vía DATABASE_URL |
-| Dominios | `larokifarm.com` → backoffice · `api.larokifarm.com` → backend · `conciliador.larokifarm.com` → conciliador | Cookie `.larokifarm.com` para auth cross-subdomain |
-| **Base de datos** | **Neon Postgres compartida** — la misma que ya usa el conciliador en producción | Un solo `User`, un solo `Business`, cero duplicación. Login único para backoffice + conciliador |
-| **Auth** | **next-auth v5** (adoptado del conciliador) | El conciliador ya la usa en producción, evitamos convivencia de dos sistemas de auth. Adapter Prisma nativo, cookie compartida en subdominios |
-| ORM | **Prisma** (versión del conciliador: 6.19) | Ya en uso. Un solo `schema.prisma` compartido en `packages/db/` |
-| Schema | **Extender el schema actual del conciliador** — sin renombrar `Business` | Añadir campos de farmacia (`ciudad`, `descripcionCorta`, etc.) a `Business`. Añadir tablas nuevas `Servicio`, `Faq`, `Resena`, `ContentImage`. Sin migración destructiva |
-| Roles | **Reutilizar los existentes** del conciliador | `SUPER_ADMIN` = admin global · `BUSINESS_ADMIN` = manager de una farmacia · `USER` = viewer. Cero migración de enum |
-| Storage imágenes | **Cloudflare R2** (S3-compatible) | Barato, sin egress fee. El conciliador ya usa `@aws-sdk/client-s3`, misma librería |
-| Editor rich text | **Tiptap** | Extensible, TypeScript, migra bien de Sanity Portable Text |
-| Validación | **Zod** | Server + client, base para generar OpenAPI |
-| Docs API | **`@hono/zod-openapi` + Scalar UI** desde Fase 2 | Cada ruta del api queda documentada sobre la marcha |
-| SDK cliente | **`packages/api-client` autogenerado** desde el OpenAPI del api | Backoffice, landings y widget consumen el mismo tipado |
-| Emails | Resend (opcional Fase 9) | 3k emails/mes free |
+|---|---|---|
+| **Alcance de ESTE repo** | Solo frontend (excepto Prisma temporal en Fase 1 para auth SSO) | El backend Hono va en OTRO repo (aún por crear, tardará) |
+| **Backend Hono** | Fuera de este repo, en proyecto separado. NO se crea en Fase 1 | El cliente urge la Fase 1, el backend se hará poco a poco |
+| **BD** | Neon Postgres del conciliador — ampliada | Cero duplicación, un solo `User` / `Business` |
+| **Dueño del schema Prisma** | `apps/conciliador-albaranes/prisma/schema.prisma` (conciliador) | El backoffice tiene una COPIA idéntica y solo corre `prisma generate` — nunca `prisma migrate` |
+| **Auth Fase 1** | next-auth v5 del conciliador copiada al backoffice | Ya en producción, roles ya existen (`SUPER_ADMIN`/`BUSINESS_ADMIN`/`USER`) |
+| **Cookie de sesión** | `Domain=.larokifarm.com` para SSO cross-subdomain | Backoffice y conciliador comparten sesión sin doble login |
+| **`Business` → `Farmacia`** | NO renombrar. Ampliar `Business` con campos de farmacia (opcionales) | Cero migración destructiva |
+| **Contenido de farmacias en Fase 1** | Sigue en Sanity — no se toca | La Fase 2 (que va en OTRO repo) migra Sanity → Neon |
+| **Tablas de contenido** (`Servicio`/`Faq`/`Resena`/`ContentImage`) | Se **CREAN VACÍAS** en Fase 1 (schema endgame ready) | Cuando llegue Fase 3 sólo hay que POBLAR, no migrar estructura |
+| **Multi-schema Postgres** | NO. Schema único con prefijos (`scout_*`, `content_*`) | Simplicidad; el conciliador nunca usó multi-schema |
+| **Motor conciliador y DO scout** | Se quedan en sus Workers | UI se absorbe al backoffice pero la lógica pesada no |
+| **Estructura de repo** | `apps/` planas, sin `packages/` | Respeta la convención actual del monorepo |
+| **Hosting** | Backoffice = Vercel Hobby. Workers = Cloudflare (donde ya están) | Sin coste incremental |
+| **Storage imágenes** | Cloudflare R2 (cuando llegue Fase 3) | Sin egress fee. El conciliador ya usa `@aws-sdk/client-s3` |
 
-## Coste operativo total
+---
 
-| Servicio | Coste mensual | Notas |
-| --- | --- | --- |
-| **Vercel Hobby** (backoffice + api + landings) | **$0** | 3-4 proyectos separados, todos en Hobby. Fallback: Netlify Free o Vercel Pro $20 |
-| **Cloudflare Workers** (conciliador + scout-batch + cima-inventory-sync) | **$0** | 100k req/día free. LaLiga no afecta al conciliador porque los usuarios ya llegan por su propio dominio, y a los otros dos porque no son user-facing |
-| **Neon Free tier** (compartida) | **$0** | Ya la pagas si el conciliador está ahí. 500 MB, 191h compute/mes |
-| **Cloudflare R2** | **$0** | Hasta 10 GB gratis, sin egress fee |
-| **next-auth v5** | **$0** | Self-hosted |
-| **Total mensual incremental** | **$0** | El backoffice no añade coste real al stack existente |
-
-Cuando crezca la DB o tráfico → upgrade selectivo (Neon Pro $19, Vercel Pro $20). Nunca fijo desde el día 1.
-
-## Alerta: contexto Vercel Hobby y LaLiga
-
-**Vercel Hobby**:
-- ToS dice "no commercial use", área gris para landings de farmacia.
-- Miles de PYMES lo usan sin problema. Vercel no ha demostrado ser agresivo persiguiendo esto.
-- Si un día detectan patrón comercial: envían email pidiendo upgrade a Pro con 30 días.
-- **Plan B lista**: Netlify Free (100% legal comercial) o Vercel Pro ($20/mes).
-
-**LaLiga blocking en Cloudflare**:
-- Fines de semana durante partidos (sáb/dom 14:00-17:00 y noche), Cloudflare Workers/Pages tienen bloqueos por IPs en Movistar/Vodafone/Orange/DIGI.
-- **Backoffice, api y landings NUNCA en Cloudflare Pages/Workers** por esto.
-- **Conciliador** ya vive en Cloudflare Workers; si LaLiga lo bloquea, se plantea migrar (Fase 8 del plan absorbe el conciliador de todos modos).
-
-## Arquitectura final
+## Arquitectura Fase 1 (lo que hay que construir YA)
 
 ```
-    ┌──────────────────────────────────────┐
-    │  BACKOFFICE (Next.js 16 · solo UI)   │
-    │  https://larokifarm.com              │       ┌─────────────────────────────┐
-    │  · Login (next-auth cookie .lar…)    │       │  CONCILIADOR (Next.js 15)   │
-    │  · Gestión farmacias                 │       │  https://conciliador.       │
-    │  · Scout (precios)                   │       │           larokifarm.com    │
-    │  · Albaranes (ver histórico)         │       │  · Producción actual        │
-    │  · Inventario                        │       │  · Cloudflare Workers       │
-    │  Vercel Hobby · proyecto 1           │       └────────────┬────────────────┘
-    └──────────────┬───────────────────────┘                    │
-                   │ fetch con cookie                            │ Prisma directo
-                   │ (packages/api-client)                       │ (misma DB)
-                   ▼                                             │
-    ┌────────────────────────────────────────────┐               │
-    │  API (Hono · backend HTTP puro)            │               │
-    │  https://api.larokifarm.com                │               │
-    │  · /admin/*     → next-auth session         │              │
-    │  · /publico/*   → sin auth, CORS abierto   │               │
-    │  · /auth/*      → next-auth handler         │              │
-    │  · /docs        → Scalar UI                │               │
-    │  Vercel Hobby · proyecto 2                 │               │
-    └──────────────┬─────────────────────────────┘               │
-                   │ Prisma                                       │
-                   ▼                                              │
-                ┌────────────────────────────────────────┐        │
-                │  Neon (PostgreSQL) — COMPARTIDA        │◄───────┘
-                │  Un solo User, un solo Business,       │
-                │  tablas conciliador + tablas backoffice│
-                └──────────▲────────────▲────────────────┘
-                           │            │
-                           │            │ (background jobs)
-                           │            │
-    ┌──────────────────────┴──┐  ┌──────┴──────────────────────┐
-    │  Landings Astro         │  │  Cloudflare Workers          │
-    │  · torrents · chamarro  │  │  · scout-batch               │
-    │  Vercel Hobby           │  │  · cima-inventory-sync       │
-    └──────────┬──────────────┘  └──────────────────────────────┘
-               │ fetch api.larokifarm.com/publico/*
-               ▼
-      packages/api-client (tipado desde OpenAPI)
-
-    ┌────────────────────────┐
-    │  Cloudflare R2         │◄──── presigned URLs (upload desde backoffice)
-    │  (imágenes de landings)│────► CDN directo (lectura pública)
-    └────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│  backoffice.larokifarm.com   (Next 16, Vercel Hobby)   │
+│  · DNA Humblytics · next-auth v5 (copia del concil.)   │
+│                                                        │
+│  /farmacias/*     → editor Sanity (ya existe)          │
+│  /conciliador/*   → UI nueva + server actions          │
+│  /scout/*         → UI nueva + server actions          │
+│  /admin/*         → gestión usuarios/roles             │
+└──────┬───────────┬──────────────┬────────────┬────────┘
+       │           │              │            │
+       │ Sanity    │ Prisma       │ HTTP+JWT   │ HTTP+JWT
+       │ API       │ (auth+leer)  │            │
+       ▼           ▼              ▼            ▼
+  ┌────────┐  ┌───────────┐  ┌─────────┐  ┌────────┐
+  │ Sanity │  │  Neon     │  │ Worker  │  │ Worker │
+  │ WS     │  │  Postgres │◄─┤ concil. │  │ scout  │
+  │ farm.  │  │           │  │ (motor) │  │ (DO)   │
+  └────────┘  │  users    │  └─────────┘  └────────┘
+              │  business │
+              │  concil.* │  ← tablas existentes (no se tocan)
+              │  scout_*  │  ← NUEVAS Fase 1 (BatchJob, BatchQuery)
+              │  content_*│  ← NUEVAS Fase 1 VACÍAS (Servicio, Faq, ...)
+              │  billing_*│  ← NUEVAS Fase 1 (UsageEntry)
+              └───────────┘
 ```
 
-**Flujo de auth compartido**:
-- next-auth v5 emite cookie con `domain: .larokifarm.com`, `secure`, `httpOnly`, `sameSite: lax`.
-- Login en backoffice (`larokifarm.com`) crea cookie válida en todo `.larokifarm.com`.
-- Backoffice llama a `api.larokifarm.com/admin/*` con `credentials: 'include'` → api valida la sesión con la misma librería.
-- El conciliador (`conciliador.larokifarm.com`) también reconoce la cookie si el user ya está autenticado en el backoffice → SSO real, no doble login.
+**Flujo auth SSO Fase 1**:
+- Login en `backoffice.larokifarm.com` → next-auth firma cookie con `Domain=.larokifarm.com`.
+- El conciliador (`conciliador.larokifarm.com`) reconoce la misma cookie → SSO sin doble login.
+- El worker de scout recibe JWT en `Authorization: Bearer` cuando el backoffice le habla.
+- El backoffice y el conciliador **comparten `AUTH_SECRET`** (misma env var, misma Neon).
 
-## Convivencia con el conciliador (importante)
+---
 
-El conciliador **ya está en producción con clientes reales** (Farmacia Chamarro, otros). Estas son las reglas de oro para no romperlo:
-
-1. **El schema del conciliador es la base**. El backoffice **extiende**, no reemplaza. Toda migración se prueba primero en preview/branch antes de aplicarse.
-2. **Cero migraciones destructivas** en tablas del conciliador (`Business`, `User`, `Comparison`, `ComparisonFile`, `ComparisonReport`). Solo `ALTER TABLE ADD COLUMN` con `DEFAULT NULL` o campos opcionales.
-3. **Coordinar despliegues**: cuando el backoffice aplica una migración, el conciliador debe estar preparado. Como Prisma es idempotente, esto se controla desde CI.
-4. **Ampliaciones al `User`**: si se necesitan nuevos campos, se añaden como opcionales. `passwordHash` sigue siendo `bcryptjs` — el backoffice lo respeta.
-5. **Ampliaciones al `Business`**: se añaden columnas de farmacia (`ciudad`, `descripcionCorta`, etc.) como opcionales. Un Business que hoy solo tiene `slug` + `name` sigue funcionando.
-6. **Migración del schema al package compartido** (Fase 0): se mueve `apps/conciliador-albaranes/prisma/` a `packages/db/prisma/`. El conciliador se actualiza para importar `@larokifarm/db`. Se prueba localmente y en preview antes de deploy.
-
-## Estructura del monorepo final
+## Arquitectura destino (Fases 2+, para referencia)
 
 ```
-larokifarm/
-├── apps/
-│   ├── backoffice/                    ← NUEVO · Next.js 16 solo UI
-│   │   ├── src/app/
-│   │   │   ├── (auth)/login/          ← form de login → api /auth
-│   │   │   ├── (dashboard)/
-│   │   │   │   ├── farmacias/         ← CRUD, textos, imágenes
-│   │   │   │   ├── scout/             ← comparador precios
-│   │   │   │   ├── albaranes/         ← visualización del histórico del conciliador
-│   │   │   │   ├── inventario/
-│   │   │   │   └── ajustes/
-│   │   │   └── layout.tsx
-│   │   └── package.json               ← depende de @larokifarm/api-client, @larokifarm/ui, @larokifarm/db (para middleware SSR)
-│   │
-│   ├── api/                           ← NUEVO · Hono backend HTTP puro
-│   │   ├── src/
-│   │   │   ├── index.ts               ← app.route() todos los módulos
-│   │   │   ├── routes/
-│   │   │   │   ├── auth.ts            ← next-auth handler
-│   │   │   │   ├── admin/
-│   │   │   │   │   ├── farmacias.ts   ← CRUD protegido
-│   │   │   │   │   ├── media.ts       ← presigned URLs a R2
-│   │   │   │   │   ├── usuarios.ts
-│   │   │   │   │   └── albaranes.ts   ← lee del histórico del conciliador
-│   │   │   │   └── publico/
-│   │   │   │       ├── farmacia.ts    ← GET /publico/farmacia/:slug
-│   │   │   │       ├── inventario.ts  ← GET /publico/inventario
-│   │   │   │       └── faqs.ts
-│   │   │   ├── middleware/
-│   │   │   │   ├── auth.ts            ← guard de sesión next-auth
-│   │   │   │   ├── cors.ts            ← CORS con allowlist
-│   │   │   │   └── rateLimit.ts
-│   │   │   └── openapi/
-│   │   │       └── generate.ts        ← script que genera spec.json en build
-│   │   └── package.json               ← depende de @larokifarm/db, @larokifarm/auth
-│   │
-│   ├── conciliador-albaranes/         ← EXISTE · producción · migra su schema a @larokifarm/db en Fase 0
-│   ├── torrents/                      ← existe · consume @larokifarm/api-client
-│   ├── chamarro/                      ← existe · consume @larokifarm/api-client
-│   ├── scout/                         ← DEPRECAR al final Fase 6
-│   └── inventory-sync/                ← mover a workers/
-│
-├── packages/                          ← NUEVO nivel · código compartido
-│   ├── db/                            ← Prisma schema compartido (movido del conciliador)
-│   │   ├── prisma/
-│   │   │   ├── schema.prisma          ← Business + User + Comparison* (existentes) + Servicio + Faq + Resena + ContentImage (nuevos)
-│   │   │   └── migrations/            ← historial completo desde el conciliador + nuevas
-│   │   ├── src/
-│   │   │   └── client.ts              ← factory Prisma
-│   │   └── package.json
-│   │
-│   ├── auth/                          ← next-auth v5 config compartida
-│   │   ├── src/
-│   │   │   ├── server.ts              ← auth() con Prisma adapter + cookie domain .larokifarm.com
-│   │   │   └── client.ts              ← React auth client
-│   │   └── package.json
-│   │
-│   ├── api-client/                    ← SDK TypeScript autogenerado desde OpenAPI
-│   │   ├── src/
-│   │   │   ├── generated/
-│   │   │   ├── client.ts              ← wrapper fetch con credentials
-│   │   │   └── index.ts
-│   │   └── package.json
-│   │
-│   ├── ui/                            ← componentes React compartidos
-│   ├── shared/                        ← tipos y utils cross-package
-│   └── storage/                       ← wrapper Cloudflare R2 (S3 SDK)
-│
-├── widgets/
-│   └── cima-chat/                     ← existe · consume api.larokifarm.com/publico/inventario
-│
-├── workers/                           ← NUEVO nivel para Cloudflare Workers
-│   ├── inventory-sync/                ← reubicar desde apps/inventory-sync
-│   └── scout-batch/                   ← reubicar desde apps/scout/worker
-│
-├── studio/                            ← DEPRECAR al final (Sanity)
-│
-├── pnpm-workspace.yaml
-├── package.json
-└── BACKOFFICE-PLAN.md                 ← este archivo
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Backoffice  │     │  Landings    │     │  Widgets     │
+│  (frontend)  │     │  (Astro SSG) │     │  (cima-chat) │
+└──────┬───────┘     └──────┬───────┘     └──────┬───────┘
+       │                    │                    │
+       │      packages/api-client (autogen OpenAPI)
+       │                    │                    │
+       └──────────┬─────────┴──────────┬─────────┘
+                  ▼                    ▼
+              ┌──────────────────────────┐
+              │  Backend Hono            │ ← OTRO REPO
+              │  api.larokifarm.com      │
+              │  Prisma · Zod · OpenAPI  │
+              └────────────┬─────────────┘
+                           ▼
+                  ┌────────────────┐
+                  │  Neon Postgres │
+                  └────────────────┘
 ```
 
-## Schema extendido (delta sobre lo existente del conciliador)
+En este estado final, este repo (larokifarm) es **solo frontend**: no hay
+Prisma, no hay conexión directa a BD, todo pasa por el backend.
 
-### Ampliaciones a modelos existentes
+**Cómo se llega**: Fase 3 y 4 (en OTRO repo). Cuando el backend esté listo,
+el backoffice desconecta Prisma y consume `api-client`. Sanity se apaga.
+
+---
+
+## Reglas de convivencia con el conciliador en producción
+
+El conciliador **ya está con clientes reales** (Farmacia Chamarro, otros). Reglas
+duras para Fase 1:
+
+1. **El schema del conciliador es el que manda**. El backoffice **extiende**, nunca
+   reemplaza. `apps/conciliador-albaranes/prisma/schema.prisma` es el ÚNICO lugar
+   donde se editan modelos y migraciones.
+2. **Backoffice tiene copia del schema** en `apps/backoffice/prisma/schema.prisma`
+   pero **sólo corre `prisma generate`** — nunca `prisma migrate`.
+3. **Regla de sincronización**: cada vez que se cambia el schema del conciliador,
+   se copia el archivo al backoffice y se regenera el client. Hay un script para
+   automatizar esto (`pnpm --filter backoffice sync-schema`, ver Fase 1 abajo).
+4. **Cero migraciones destructivas** en las tablas existentes (`users`,
+   `businesses`, `comparisons`, `comparison_files`, `comparison_reports`). Sólo
+   `ALTER TABLE ADD COLUMN` con `DEFAULT NULL` u opcionales.
+5. **Ampliaciones al `Business`**: campos nuevos de farmacia (opcionales).
+6. **Tablas nuevas** (`scout_*`, `content_*`, `billing_*`): se crean en Fase 1
+   aunque no se usen todas. Cero riesgo para el conciliador.
+7. **Migración se prueba primero en preview branch** de Vercel/CF antes de
+   `prisma migrate deploy` en Neon producción.
+8. **Todos los envs comparten `DATABASE_URL`** (misma Neon) y `AUTH_SECRET`
+   (misma cookie).
+
+---
+
+## Schema Prisma endgame (Fase 1 lo deja listo)
+
+Todo esto vive en `apps/conciliador-albaranes/prisma/schema.prisma` en Fase 1
+(dueño único). Cuando nazca el backend Hono, el schema se traslada a ese repo.
+
+### Existente (no se toca)
+
+```prisma
+model User        { … }   // ya existe
+model Business    { … }   // se AMPLÍA (columnas opcionales, ver abajo)
+model Comparison  { … }   // ya existe
+model ComparisonFile { … } // ya existe
+model ComparisonReport { … } // ya existe
+
+enum Role              { SUPER_ADMIN BUSINESS_ADMIN USER }
+enum ComparisonStatus  { OK DISCREPANCIES ERROR }
+enum FileKind          { PDF_INPUT XLSX_INPUT REPORT_OUTPUT }
+enum ReportStatus      { OPEN RESOLVED }
+```
+
+### `Business` extendido (columnas nuevas — todas opcionales)
 
 ```prisma
 model Business {
-  // Campos existentes (no se tocan):
-  id               String   @id @default(cuid())
-  slug             String   @unique
-  name             String
-  geminiKeyEnc     String?
-  monthlyBudgetUsd Decimal? @db.Decimal(10, 4)
-  supportEmail     String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  // … campos existentes intactos …
 
-  // ── NUEVOS campos para landing (todos opcionales) ─────
+  // Identidad de farmacia
   ciudad             String?
   telefono           String?
   whatsapp           String?
@@ -232,66 +228,143 @@ model Business {
   web                String?
   titular            String?
   numeroColegiado    String?
-  descripcionCorta   Json?     // { es, en, ca }
-  descripcionLarga   Json?     // Portable Text migrado o HTML de Tiptap
   logoUrl            String?
-  heroImages         Json?
+
+  // Multi-idioma (Sanity → JSON)
+  descripcionCorta   Json?     // { es, en, ca }
+  descripcionLarga   Json?     // HTML por locale (Tiptap) o Portable Text migrado
   direccion          Json?
   horarios           Json?
   redesSociales      Json?
   googleMapsUrl      String?
-  idiomasActivos     Json?
-  publishedStatus    String    @default("draft") // draft | published | archived
+  idiomasActivos     Json?     // ["es","en","ca"]
+
+  // Publicación
+  publishedStatus    String    @default("draft")  // draft | published | archived
   seoConfig          Json?
-  // ────────────────────────────────────────────────────
 
-  // Relaciones existentes:
-  users       User[]
-  comparisons Comparison[]
+  // Módulos contratados (para permisos en backoffice)
+  modules            Json?     // { conciliador: true, scout: true, chatbot: false }
+  plan               String?   // BASIC | PRO | ENTERPRISE
 
-  // ── NUEVAS relaciones para landing ────────────────────
-  servicios Servicio[]
-  faqs      Faq[]
-  resenas   Resena[]
-  imagenes  ContentImage[]
+  // Relaciones nuevas
+  servicios  Servicio[]
+  faqs       Faq[]
+  resenas    Resena[]
+  imagenes   ContentImage[]
+  batchJobs  ScoutBatchJob[]
+  usage      UsageEntry[]
 
   @@map("businesses")
 }
 ```
 
-### Tablas nuevas (100% para el backoffice)
+### Tablas de scout (nuevas Fase 1, se usan ya)
+
+```prisma
+enum ScoutBatchStatus { QUEUED RUNNING DONE FAILED }
+enum ScoutQueryStatus { PENDING DONE ERROR }
+
+model ScoutBatchJob {
+  id            String            @id @default(cuid())
+  businessId    String
+  userId        String
+  status        ScoutBatchStatus  @default(QUEUED)
+  totalQueries  Int
+  doneQueries   Int               @default(0)
+  costUsd       Decimal           @default(0) @db.Decimal(10, 4)
+  errorReason   String?
+  createdAt     DateTime          @default(now())
+  finishedAt    DateTime?
+
+  business Business        @relation(fields: [businessId], references: [id])
+  user     User            @relation(fields: [userId], references: [id])
+  queries  ScoutBatchQuery[]
+
+  @@index([businessId, createdAt])
+  @@index([userId, createdAt])
+  @@map("scout_batch_jobs")
+}
+
+model ScoutBatchQuery {
+  id         String            @id @default(cuid())
+  batchJobId String
+  query      String
+  status     ScoutQueryStatus  @default(PENDING)
+  resultJson Json?
+  errorMsg   String?
+
+  batchJob   ScoutBatchJob @relation(fields: [batchJobId], references: [id], onDelete: Cascade)
+
+  @@index([batchJobId])
+  @@map("scout_batch_queries")
+}
+```
+
+**Nota**: el Durable Object del worker de scout sigue orquestando la ejecución
+en runtime. La BD guarda **snapshots** para que el backoffice pueda mostrar
+historial cuando el DO haya sido reciclado.
+
+### Tablas de billing / uso (nuevas Fase 1, se usan ya)
+
+```prisma
+enum UsageModule { CONCILIADOR SCOUT CHATBOT }
+
+model UsageEntry {
+  id          String       @id @default(cuid())
+  businessId  String
+  userId      String?
+  module      UsageModule
+  action      String       // "compare", "batch_query", "chat_turn", ...
+  units       Int          @default(1)
+  costUsd     Decimal      @default(0) @db.Decimal(10, 6)
+  tokensIn    Int          @default(0)
+  tokensOut   Int          @default(0)
+  createdAt   DateTime     @default(now())
+
+  business Business @relation(fields: [businessId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@index([businessId, module, createdAt])
+  @@index([businessId, createdAt])
+  @@map("usage_entries")
+}
+```
+
+### Tablas de contenido (nuevas Fase 1, se CREAN VACÍAS — se poblan en Fase 3)
 
 ```prisma
 model Servicio {
   id           String   @id @default(cuid())
   businessId   String
-  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   icono        String?
   nombre       Json     // { es, en, ca }
   descripcion  Json?
-  enlace       Json?
+  enlace       Json?    // { url, nuevaPestana }
   orden        Int      @default(0)
 
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   @@index([businessId, orden])
-  @@map("servicios")
+  @@map("content_servicios")
 }
 
 model Faq {
   id           String   @id @default(cuid())
   businessId   String
-  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   pregunta     Json
   respuesta    Json
   orden        Int      @default(0)
 
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   @@index([businessId, orden])
-  @@map("faqs")
+  @@map("content_faqs")
 }
 
 model Resena {
   id           String   @id @default(cuid())
   businessId   String
-  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   autor        String
   puntuacion   Int
   texto        String
@@ -300,16 +373,17 @@ model Resena {
   avatarUrl    String?
   orden        Int      @default(0)
 
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   @@index([businessId, fecha])
-  @@map("resenas")
+  @@map("content_resenas")
 }
 
 model ContentImage {
   id           String   @id @default(cuid())
   businessId   String
-  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   role         String   // 'logo' | 'hero' | 'servicio' | 'gallery' | 'og'
-  storageKey   String   // clave en R2
+  storageKey   String   // R2 key
   publicUrl    String
   alt          Json     // multi-idioma
   width        Int?
@@ -317,23 +391,33 @@ model ContentImage {
   sizeBytes    Int?
   createdAt    DateTime @default(now())
 
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   @@index([businessId, role])
   @@map("content_images")
 }
 ```
 
-**Nota**: `heroImages` y `logoUrl` en `Business` son la fuente RÁPIDA para lecturas de la landing. `ContentImage` es el catálogo completo con metadata (para admin: reutilizar imágenes entre secciones, alt text estructurado, versiones).
+**Regla dura Fase 1**: estas tablas quedan **vacías**. Ni el backoffice ni el
+conciliador escriben en ellas. Sanity sigue siendo la fuente de verdad del
+contenido. Cuando el backend Hono exista (Fase 3), se poblan con el dump de
+Sanity y se apaga el workspace.
 
-## next-auth v5 con cookie compartida cross-subdomain
+---
 
-`packages/auth/src/server.ts`:
+## Auth: next-auth v5 en el backoffice (copia del conciliador)
+
+### Configuración compartida
+
+Tanto `apps/backoffice/lib/auth.ts` como `apps/conciliador-albaranes/lib/auth.ts`
+tienen la MISMA config:
 
 ```typescript
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
-import { prisma } from '@larokifarm/db';
+import { prisma } from './prisma';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -361,11 +445,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
         return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          businessId: user.businessId ?? undefined,
+          id: user.id, email: user.email, name: user.name,
+          role: user.role, businessId: user.businessId ?? undefined,
         };
       },
     }),
@@ -389,213 +470,291 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 });
 ```
 
-Con esto:
-- Login en backoffice (`larokifarm.com`) crea cookie con `Domain=.larokifarm.com`.
-- Backoffice llama a `api.larokifarm.com/admin/*` con `credentials: 'include'` y la cookie viaja.
-- El conciliador (`conciliador.larokifarm.com`) reconoce la misma cookie → SSO transparente.
+Claves:
+- **Misma `AUTH_SECRET`** en backoffice y conciliador → los JWT son
+  intercambiables entre las dos apps.
+- **`domain: .larokifarm.com`** → la cookie viaja a subdominios.
+- **`prisma` local en cada app** → cada una carga su cliente Prisma generado
+  desde su copia del schema, apuntando ambos al mismo `DATABASE_URL`.
 
-## Fases de migración (~5-7 semanas)
+### Rollout auth en Fase 1
 
-### Fase 0 · Consolidar la base de datos (2-3 días)
-
-- [ ] Snapshot del schema actual del conciliador (`_backups/schema-2026-09-18.prisma`).
-- [ ] Crear `packages/db/` moviendo `apps/conciliador-albaranes/prisma/` allí.
-- [ ] Actualizar `apps/conciliador-albaranes/` para importar `@larokifarm/db`.
-- [ ] Verificar en local que el conciliador sigue funcionando (`pnpm --filter conciliador-albaranes dev`).
-- [ ] Deploy del conciliador en preview branch para validar.
-- [ ] Crear `packages/auth/` con next-auth v5 apuntando al mismo `User` existente.
-- [ ] Crear `packages/storage/` con S3 SDK apuntando a R2.
-- [ ] Crear bucket R2 en Cloudflare + API tokens.
-- [ ] Añadir `packages/*` al `pnpm-workspace.yaml`.
-
-**Entrega:** el conciliador en preview sigue funcionando idéntico con el schema movido a `packages/db/`.
-
-### Fase 1 · Ampliar schema para landings (1-2 días)
-
-- [ ] Añadir campos opcionales a `Business` (`ciudad`, `descripcionCorta`, etc.).
-- [ ] Crear modelos `Servicio`, `Faq`, `Resena`, `ContentImage`.
-- [ ] Migración Prisma: `pnpm --filter @larokifarm/db prisma migrate dev --name add_landing_content`.
-- [ ] Aplicar en Neon producción con `prisma migrate deploy` (una vez validado en preview).
-- [ ] Verificar que el conciliador sigue funcionando (no depende de los nuevos campos).
-
-**Entrega:** schema extendido en producción, conciliador intacto.
-
-### Fase 2 · Api HTTP + OpenAPI + api-client (4-5 días)
-
-- [ ] Crear `apps/api/` con Hono + `@hono/zod-openapi`.
-- [ ] Configurar CORS con allowlist.
-- [ ] Montar `/auth/**` con next-auth handler (comparte `packages/auth`).
-- [ ] Ruta pública `/publico/health` (sin auth).
-- [ ] Ruta admin `/admin/ping` (protegida, valida sesión next-auth).
-- [ ] `/openapi.json` + `/docs` con Scalar UI.
-- [ ] Crear `packages/api-client/` con script de generación desde OpenAPI.
-- [ ] Deploy en Vercel Hobby con dominio `api.larokifarm.com`.
-
-**Entrega:** `curl https://api.larokifarm.com/publico/health` responde 200 y `/docs` muestra Scalar con las rutas iniciales.
-
-### Fase 3 · Backoffice base consumiendo api (3-4 días)
-
-- [ ] Crear `apps/backoffice/` con Next.js 16 (solo UI). *(Ya existe la base con mocks; se conecta al api real aquí.)*
-- [ ] Login con next-auth server-side (calls internas a `packages/auth`).
-- [ ] Middleware que valida sesión via `auth()`.
-- [ ] Deploy en Vercel Hobby con dominio `larokifarm.com`.
-- [ ] Verificar SSO: hacer login en backoffice → cookie válida al abrir conciliador.
-
-**Entrega:** login funciona, cookie compartida entre backoffice y conciliador.
-
-### Fase 4 · Módulo Farmacias completo (6-8 días)
-
-- [ ] Api: `/admin/businesses/:id` CRUD completo con Zod + OpenAPI (mapea a modelo `Business`).
-- [ ] Api: `/admin/media/presign` para subir imágenes a R2 via presigned URL.
-- [ ] Api: `/publico/farmacia/:slug` con cache CDN (Cache-Control: s-maxage=3600).
-- [ ] Regenerar `packages/api-client`.
-- [ ] Backoffice: reemplazar el mock `contentRepository` por llamadas reales al api-client.
-- [ ] Editor Tiptap para descripción larga multi-idioma.
-- [ ] Upload de imágenes directo del navegador a R2 usando presigned URLs.
-- [ ] Roles: `SUPER_ADMIN` ve todas, `BUSINESS_ADMIN` solo el suyo.
-
-**Entrega:** admin crea/edita farmacias desde el backoffice; `curl https://api.larokifarm.com/publico/farmacia/torrents` devuelve JSON; Scalar UI muestra 8+ rutas.
-
-### Fase 5 · Migración Sanity → Neon (2-3 días)
-
-- [ ] Script `scripts/migrate-from-sanity.ts` (Node local):
-  - Lee farmacias, servicios, faqs, reseñas via Sanity API con GROQ.
-  - Descarga imágenes de `cdn.sanity.io` y las sube a R2.
-  - **UPSERT** al `Business` existente (por slug) para no duplicar. Añade `Servicio`/`Faq`/`Resena`/`ContentImage`.
-  - Log + summary.
-- [ ] Modo `--dry-run`.
-- [ ] Verificación visual antes/después.
-- [ ] Backup del dataset Sanity en JSON.
-
-**Entrega:** Neon refleja el contenido de Sanity al 100%.
-
-### Fase 6 · Landings Astro consumiendo api-client (2-3 días)
-
-- [ ] `apps/torrents/src/lib/content.ts` (renombrado de `sanity.ts`) usando `@larokifarm/api-client`.
-- [ ] Igual en `apps/chamarro/`.
-- [ ] Astro SSG llama a `api.larokifarm.com/publico/farmacia/:slug` en build.
-- [ ] Webhook desde backoffice → deploy hook Vercel al publicar.
-- [ ] Verificar SEO y visual.
-
-**Entrega:** landings sirviendo desde Neon vía api. Sanity ya no se toca en runtime.
-
-### Fase 7 · Scout como módulo del backoffice (4-5 días)
-
-- [ ] Mover `apps/scout/src/core/` a `packages/scout-core/`.
-- [ ] Api: `/admin/scout/*` con OpenAPI.
-- [ ] Backoffice: página scout consume api-client.
-- [ ] Historial en Neon (`ScoutSearch`, `ScoutBatch` — modelos nuevos).
-- [ ] Worker `scout-batch-worker` escribe estado en Neon via api.
-- [ ] Deprecar `apps/scout/`.
-
-**Entrega:** módulo scout equivalente + historial persistente multi-usuario.
-
-### Fase 8 · Absorber el conciliador dentro del backoffice (5-7 días)
-
-- [ ] Portar UI de `apps/conciliador-albaranes/` a `apps/backoffice/src/app/(dashboard)/albaranes/`.
-- [ ] La lógica (Prisma, Gemini, bcryptjs) ya vive en `packages/db` y `packages/auth` — se reutiliza.
-- [ ] Api: rutas `/admin/albaranes/*` con OpenAPI si aplica.
-- [ ] Redirección `conciliador.larokifarm.com/*` → `larokifarm.com/albaranes/*`.
-- [ ] Deprecar `apps/conciliador-albaranes/` (mantener repo archivado 30 días por si acaso).
-
-**Entrega:** conciliador es un módulo más del backoffice. Un solo deploy, un solo dominio user-facing.
-
-### Fase 9 · Inventario + workers reubicados + Sanity apagado (3-4 días)
-
-- [ ] Api: `/publico/inventario` (para widget) + `/admin/inventario/sync-now`.
-- [ ] Backoffice: UI de estado del sync + forzar sync manual + historial.
-- [ ] Mover `apps/inventory-sync/` a `workers/inventory-sync/`.
-- [ ] Widget cima-chat consume `api.larokifarm.com/publico/inventario`.
-- [ ] `grep -r "@sanity"` para verificar cero imports vivos.
-- [ ] Cancelar plan Sanity (si de pago).
-- [ ] `git mv studio/ _archived/studio-2026/`.
-- [ ] Borrar `apps/scout/`.
-- [ ] Actualizar `README.md` raíz.
-
-**Entrega:** monorepo con solo lo que se usa. Un solo lugar de gestión.
-
-## Variables de entorno
-
-### Shared (Neon URL — misma para todos)
-
-```
-DATABASE_URL=postgres://...neon.tech/larokifarm?sslmode=require
-DIRECT_DATABASE_URL=...  ← usada solo por migraciones
-```
-
-### `apps/api/.env.local`
-
-```
-DATABASE_URL=…
-AUTH_SECRET=… (openssl rand -hex 32)
-AUTH_URL=https://api.larokifarm.com
-COOKIE_DOMAIN=.larokifarm.com
-
-R2_ACCOUNT_ID=…
-R2_ACCESS_KEY_ID=…
-R2_SECRET_ACCESS_KEY=…
-R2_BUCKET=larokifarm-media
-R2_PUBLIC_URL=https://cdn.larokifarm.com
-
-WORKER_AUTH_TOKEN=…
-RESEND_API_KEY=… (opcional)
-```
-
-### `apps/backoffice/.env.local`
-
-```
-NEXT_PUBLIC_API_URL=https://api.larokifarm.com
-AUTH_SECRET=…  ← MISMO que el api (para verificar tokens JWT localmente)
-AUTH_URL=https://larokifarm.com
-DATABASE_URL=…  ← solo para middleware SSR que valida sesión
-```
-
-### `apps/conciliador-albaranes/.env` (existentes + nada nuevo)
-
-Ninguna variable nueva. Sigue usando su `DATABASE_URL` que ahora coincide con el resto.
-
-### `apps/torrents/.env` y `apps/chamarro/.env`
-
-```
-PUBLIC_API_URL=https://api.larokifarm.com
-```
-
-## Riesgos y mitigación
-
-| Riesgo | Mitigación |
-| --- | --- |
-| Migración del schema al package rompe el conciliador | Snapshot previo del schema. Prueba local + preview antes de deploy. Rollback: revertir el commit y `git restore packages/db`, el conciliador vuelve a apuntar a su ubicación anterior |
-| Migración `add_landing_content` rompe algo | Todos los nuevos campos son opcionales. `prisma migrate deploy` solo aplica lo pendiente. Rollback: `prisma migrate resolve --rolled-back` + `DROP COLUMN` manual si hace falta |
-| Cookie cross-subdomain no viaja | Verificar en Fase 3 con `curl -b`; requiere `credentials: 'include'` en fetch y `domain: .larokifarm.com` en next-auth |
-| Auth de next-auth diferente entre backoffice y conciliador | Ambos usan el MISMO `packages/auth` y misma `AUTH_SECRET` → los tokens JWT son intercambiables |
-| Vercel Hobby te avisa por uso "comercial" | Plan B: Netlify Free o Vercel Pro ($20/mes). Sin lock-in |
-| Api-client desincronizado del OpenAPI | Script `pnpm --filter @larokifarm/api-client generate` en pre-commit hook y CI |
-| Migración Sanity → Neon rompe algo | `--dry-run` primero; verificación visual antes/después |
-| Landings pierden SEO al cambiar origen | Salida HTML idéntica byte-a-byte porque siguen Astro SSG con mismo template |
-| Portable Text de Sanity no mapea 1:1 a Tiptap | Convertidor con test cases; fallback a plain text |
-| next-auth v5 sigue en beta | La beta ya está en producción en muchos SaaS. Adapter pattern permite migrar a Auth.js estable cuando salga sin rehacer UI |
-| Prisma cold start en Vercel Hobby | Node runtime + `@prisma/adapter-neon` funcionan bien (+150-300ms primera vez, imperceptible) |
-| R2 caro si crecen las imágenes | R2 sin egress fee = muy barato incluso con TB. Alertas configurables |
-| Downtime durante Fase 6 (landings) | Deploy staged en preview branch, validar, promover a production |
-| LaLiga bloquea el conciliador (Cloudflare) | Fase 8 absorbe el conciliador en Vercel, resuelve por diseño |
-
-## Checklist antes de dar por hecho
-
-- [ ] Fase 0: schema movido a `packages/db/`, conciliador sigue funcionando idéntico.
-- [ ] Fase 1: nuevos campos y tablas en Neon producción, conciliador intacto.
-- [ ] Fase 2: `curl https://api.larokifarm.com/publico/health` responde, `/docs` muestra Scalar.
-- [ ] Fase 3: login en backoffice funciona, cookie válida en `.larokifarm.com`, SSO con conciliador verificado.
-- [ ] Fase 4: crear/editar `Business` con campos de farmacia, `/publico/farmacia/:slug` sirve JSON.
-- [ ] Fase 5: migración Sanity → Neon verificada visualmente.
-- [ ] Fase 6: landings torrents/chamarro sirviendo desde Neon vía api en producción.
-- [ ] Fase 7: módulo scout en backoffice reemplaza `apps/scout/`.
-- [ ] Fase 8: módulo albaranes en backoffice reemplaza `apps/conciliador-albaranes/`.
-- [ ] Fase 9: inventario en backoffice, workers reubicados, Sanity apagado.
+1. Copiar `apps/conciliador-albaranes/lib/auth.ts` → `apps/backoffice/lib/auth.ts`.
+2. Reemplazar el login demo del backoffice por el login real contra `users`.
+3. Verificar en local: login en `localhost:3001` (backoffice) crea cookie que
+   `localhost:3000` (conciliador) reconoce (misma cookie, sub-dominio en local
+   via `/etc/hosts` con `*.local.larokifarm.com` o similar).
+4. Verificar en preview: login en `backoffice-preview.vercel.app` funciona.
+5. Verificar en producción: `backoffice.larokifarm.com` login → abrir
+   `conciliador.larokifarm.com` sin re-login.
+6. Retirar el login demo (`admin@larokifarm.com / demo1234`) del backoffice.
 
 ---
 
-**Duración estimada total**: 5-7 semanas de trabajo neto. Paralelizables Fases 7 y 8 (por equipos distintos si hubiera).
+## Estructura del repo tras Fase 1
 
-**Coste operativo estable**: **$0/mes** incremental (el conciliador ya paga la Neon; el resto suma cero).
+```
+larokifarm/
+├── apps/
+│   ├── backoffice/                     ← Next 16, DNA Humblytics
+│   │   ├── prisma/
+│   │   │   └── schema.prisma           ← COPIA idéntica del conciliador (sync manual)
+│   │   ├── src/
+│   │   │   ├── app/
+│   │   │   │   ├── (auth)/login/
+│   │   │   │   └── (dashboard)/
+│   │   │   │       ├── farmacias/      ← ya existe, editor Sanity
+│   │   │   │       ├── conciliador/    ← NUEVO Fase 1
+│   │   │   │       ├── scout/          ← NUEVO Fase 1
+│   │   │   │       └── admin/          ← usuarios, uso, roles
+│   │   │   ├── features/
+│   │   │   │   ├── farmacias/         ← ya existe
+│   │   │   │   ├── conciliador/       ← NUEVO Fase 1 (UI portada del standalone)
+│   │   │   │   └── scout/             ← NUEVO Fase 1
+│   │   │   ├── lib/
+│   │   │   │   ├── auth.ts             ← next-auth v5 (copia del conciliador)
+│   │   │   │   ├── prisma.ts           ← cliente Prisma
+│   │   │   │   └── clients/
+│   │   │   │       ├── conciliadorWorker.ts  ← fetch al worker existente
+│   │   │   │       └── scoutWorker.ts        ← fetch al worker de scout
+│   │   │   └── ...
+│   │   └── package.json
+│   │
+│   ├── conciliador-albaranes/          ← DUEÑO del schema Prisma
+│   │   ├── prisma/schema.prisma        ← FUENTE DE VERDAD
+│   │   └── ...                         ← standalone sigue funcionando en paralelo
+│   │
+│   ├── scout/                          ← Worker sigue como API
+│   │   ├── worker/                     ← DO BATCH_JOB, motor scraper
+│   │   └── src/                        ← UI standalone (se deprecha en Fase 5)
+│   │
+│   ├── torrents/ · chamarro/           ← Astro, contenido Sanity (Fase 3 migra)
+│   ├── calendario-vacunas/
+│   └── ...
+│
+├── widgets/                            ← convención plana original
+├── studio/                             ← Sanity (activo hasta Fase 4)
+│
+├── BACKOFFICE-PLAN.md                  ← este archivo
+├── CLAUDE.md
+└── pnpm-lock.yaml
+```
 
-**Próximo paso**: aprobar este plan y arrancar Fase 0. Cuando confirmes, muevo el schema del conciliador a `packages/db/` con snapshot previo y probamos que el conciliador sigue funcionando en local.
+Sin `packages/`. Estructura plana como la convención del repo.
+
+---
+
+## Fases detalladas
+
+### FASE 0 · Preparación (0-2 días)
+
+- [ ] Este documento aprobado por Erick.
+- [ ] `pg_dump` de Neon → `_backups/neon-pre-fase1-2026-09-28.sql` (fuera del
+      repo, subir a R2 o guardar local con etiqueta).
+- [ ] Congelar features nuevas en `apps/conciliador-albaranes/` y `apps/scout/`
+      mientras dure la Fase 1 (excepto bugfixes críticos como el de Bayer
+      que acabamos de mergear).
+- [ ] Inventario de envs actuales de las 3 apps (Vercel + Cloudflare secrets).
+      Documento privado.
+
+### FASE 1 · Backoffice absorbe conciliador y scout (2-3 semanas)
+
+Todo esta fase es en este repo. Sub-fases ordenadas.
+
+#### 1.A · Base de datos y Prisma (2-3 días)
+
+- [ ] Ampliar `apps/conciliador-albaranes/prisma/schema.prisma`:
+  - Añadir columnas nuevas opcionales a `Business` (`ciudad`, `descripcionCorta`,
+    `modules`, etc. — ver sección **Schema endgame** arriba).
+  - Añadir enums nuevos (`ScoutBatchStatus`, `ScoutQueryStatus`, `UsageModule`).
+  - Añadir modelos `ScoutBatchJob`, `ScoutBatchQuery`, `UsageEntry`,
+    `Servicio`, `Faq`, `Resena`, `ContentImage`.
+- [ ] Migración: `pnpm --filter conciliador-albaranes exec prisma migrate dev
+      --name endgame_schema_prep`.
+- [ ] Verificar que el conciliador local sigue arrancando y funciona idéntico.
+- [ ] Aplicar en Neon producción con `prisma migrate deploy` **desde una
+      preview branch de Vercel** primero.
+- [ ] Aplicar en Neon producción real.
+
+#### 1.B · Backoffice conectado a Neon + auth SSO (3-4 días)
+
+- [ ] Añadir `prisma` a las deps de `apps/backoffice/`.
+- [ ] Copiar el schema: `apps/backoffice/prisma/schema.prisma` = copia idéntica
+      del conciliador.
+- [ ] Script en `apps/backoffice/package.json`:
+  ```json
+  "sync-schema": "cp ../conciliador-albaranes/prisma/schema.prisma prisma/schema.prisma && prisma generate"
+  ```
+- [ ] `apps/backoffice/lib/prisma.ts` con singleton Prisma.
+- [ ] Copiar `apps/conciliador-albaranes/lib/auth.ts` → `apps/backoffice/lib/auth.ts`.
+- [ ] Configurar env `DATABASE_URL`, `AUTH_SECRET` (mismo que conciliador),
+      `AUTH_URL=https://backoffice.larokifarm.com`, `COOKIE_DOMAIN=.larokifarm.com`.
+- [ ] Reemplazar login demo por login real contra `users`.
+- [ ] E2E: login en backoffice → cookie válida al abrir el conciliador (dev y
+      preview).
+
+#### 1.C · Módulo conciliador en el backoffice (5-7 días)
+
+- [ ] Rutas `/conciliador`, `/conciliador/historial`, `/conciliador/reports` en
+      `apps/backoffice/src/app/(dashboard)/conciliador/`.
+- [ ] UI portada desde `apps/conciliador-albaranes/src/app/` con DNA Humblytics
+      (Button/Modal/IconInput/TimePicker del backoffice).
+- [ ] Server action `runComparison` que POSTea al Worker conciliador con JWT.
+- [ ] Worker conciliador extendido: aceptar `Authorization: Bearer <JWT>` con
+      `AUTH_SECRET` compartido, además de su login propio (fallback).
+- [ ] Panel de reports para SUPER_ADMIN (portar UI del standalone).
+- [ ] Escrituras en `comparisons`, `comparison_files`, `comparison_reports`:
+      decidir si las hace el worker (como ahora) o el backoffice. **Recomendado**:
+      seguir haciéndolas en el worker; el backoffice solo lee.
+
+#### 1.D · Módulo scout en el backoffice (5-7 días, paralelizable con 1.C)
+
+- [ ] Rutas `/scout`, `/scout/batch`, `/scout/batch/[jobId]` en el backoffice.
+- [ ] UI de subida de queries + resultados con DNA Humblytics.
+- [ ] Server actions llaman al Worker de scout via `BatchWorkerClient` (ya
+      existe en `apps/scout/src/core/infrastructure/batch/`).
+- [ ] Worker de scout: aceptar JWT compartido, mantener `BATCH_PASSWORD` como
+      fallback 1 sprint.
+- [ ] `ScoutBatchJob` y `ScoutBatchQuery` escritos como snapshot desde el
+      Worker (el DO sigue mandando en runtime).
+- [ ] Historial en el backoffice leído desde `scout_batch_jobs`.
+
+#### 1.E · Métricas mínimas (2 días)
+
+- [ ] Los tres módulos escriben en `usage_entries` cuando hay una acción
+      contabilizable (comparar, batch, chat).
+- [ ] Panel `/admin/uso` (versión mínima: tabla con filtros farmacia + módulo
+      + rango).
+
+#### 1.F · Deploy + verificación (1-2 días)
+
+- [ ] Vercel Hobby: proyecto `backoffice-larokifarm`.
+- [ ] Dominio: `backoffice.larokifarm.com`.
+- [ ] Envs de producción configuradas.
+- [ ] Verificación con cliente: hacer 3 conciliaciones y 1 batch de scout desde
+      el backoffice.
+
+**Entrega Fase 1**: cliente puede loguearse en `backoffice.larokifarm.com` y
+usar conciliador + scout desde ahí con el DNA Humblytics. Las apps standalone
+(`conciliador.larokifarm.com`, `scout.larokifarm.com`) siguen vivas en
+paralelo como fallback.
+
+---
+
+### FASES 2+ (fuera del scope de este repo — resumen para tenerlas en mente)
+
+**FASE 2 — Backend Hono en OTRO repo** (mientras tanto)
+- Repo nuevo `larokifarm-api/` con Hono + Prisma + Zod + `@hono/zod-openapi`.
+- Se hereda el schema del conciliador (dueño se traslada aquí).
+- `packages/api-client/` autogenerado desde el OpenAPI del api.
+- El backoffice empieza a consumir el api para módulos nuevos.
+
+**FASE 3 — Migrar contenido Sanity → Neon**
+- Script `migrate-from-sanity.ts` que puebla `content_servicios`, `content_faqs`,
+  `content_resenas`, `content_images` por slug de business.
+- Descarga imágenes de `cdn.sanity.io` y las sube a R2.
+- Dry-run + verificación visual antes/después.
+
+**FASE 4 — Apagar Sanity + retirar Prisma del backoffice**
+- Backoffice pasa a "frontend puro": Prisma fuera, todo por api-client.
+- Landings Astro (torrents, chamarro) consumen api-client.
+- Sanity workspace archivado. `git mv studio/ _archived/studio-YYYY/`.
+
+**FASE 5 — Deprecar apps standalone**
+- Redirects 301 en `conciliador.larokifarm.com` → `backoffice.larokifarm.com/conciliador`.
+- Retirar UIs viejas de `apps/conciliador-albaranes/` y `apps/scout/` (los
+  Workers pueden seguir como APIs si el api Hono no los ha absorbido aún).
+
+**FASE 6 — Métricas y cotización unificada**
+- Panel completo `/admin/uso` con export CSV mensual.
+- Alertas presupuesto (`monthlyBudgetUsd` del Business).
+- Rollup mensual `usage_monthly_aggregate` si crece `usage_entries`.
+
+---
+
+## Variables de entorno (Fase 1)
+
+### `apps/conciliador-albaranes/` (existentes, sin cambios)
+
+```
+DATABASE_URL=postgres://…neon.tech/larokifarm?sslmode=require
+DIRECT_DATABASE_URL=…
+AUTH_SECRET=…
+GEMINI_API_KEY=…
+ACCESO_CLAVE=…
+```
+
+### `apps/backoffice/.env.local` (Fase 1 nuevo)
+
+```
+DATABASE_URL=…                     ← MISMO que el conciliador
+DIRECT_DATABASE_URL=…              ← MISMO que el conciliador
+AUTH_SECRET=…                      ← MISMO que el conciliador (para JWT compatibles)
+AUTH_URL=https://backoffice.larokifarm.com
+COOKIE_DOMAIN=.larokifarm.com
+
+# Comunicación con workers
+CONCILIADOR_WORKER_URL=https://conciliador.larokifarm.com
+CONCILIADOR_WORKER_TOKEN=…         ← token server-to-server
+SCOUT_WORKER_URL=https://scout-batch-worker.workers.dev
+SCOUT_WORKER_TOKEN=…               ← WORKER_AUTH_TOKEN de scout worker
+
+# Sanity (ya se usa en el editor de farmacias)
+SANITY_PROJECT_ID=…
+SANITY_DATASET=production
+SANITY_TOKEN=…
+```
+
+### `apps/scout/worker/` (existente, se añade)
+
+```
+# Además del existente:
+AUTH_SECRET=…                      ← MISMO que backoffice/conciliador para validar JWTs
+```
+
+---
+
+## Riesgos y mitigación
+
+| Riesgo | Impacto | Mitigación |
+|--------|---------|------------|
+| Migración `endgame_schema_prep` rompe el conciliador en producción | Alto (clientes reales) | Todos los campos nuevos son opcionales. Migración probada primero en preview branch. Rollback: `prisma migrate resolve --rolled-back` + `DROP` manual. |
+| Schema del backoffice se desincroniza del conciliador | Medio | Script `sync-schema` documentado. Regla dura: cualquier cambio al schema pasa por el conciliador y se copia. Idealmente un pre-push hook que compare los dos archivos. |
+| Cookie cross-subdomain no viaja | Medio | Probar en Fase 1.B con `curl -b/-c` y con navegador real. `credentials: 'include'` en fetch. |
+| next-auth v5 sigue en beta | Bajo | Ya está en producción en el conciliador desde hace meses. |
+| Vercel Hobby avisa por uso "comercial" | Bajo | Plan B: Netlify Free o Vercel Pro ($20/mes). |
+| UI del conciliador portada al backoffice pierde features del standalone | Medio | Checklist de features del standalone antes de deprecarlo. Mantener el standalone vivo en paralelo hasta Fase 5. |
+| Worker de scout no valida JWT correctamente | Medio | Test manual + `BATCH_PASSWORD` como fallback durante 1 sprint. |
+| El cliente ve tablas de contenido vacías y se preocupa | Bajo | Documentar en README interno: "tablas creadas para Fase 3, contenido sigue en Sanity". |
+| Bugs del refactor tumban el conciliador o scout | Alto | Deploy staged (preview → prod). Botón rollback en Vercel. Workers de conciliador/scout mantienen su UI standalone como salida de emergencia. |
+| Doble mantenimiento (standalone + backoffice) durante Fase 1 | Medio | Comunicar al cliente que use el backoffice; el standalone es fallback silencioso. Retirar en Fase 5. |
+| LaLiga bloquea el conciliador (CF Workers) | Bajo (ya vive así) | El motor sigue en CF Workers, no cambia en Fase 1. Migración futura (Fase 2 en otro repo) puede resolver. |
+
+---
+
+## Checklist antes de dar por hecho Fase 1
+
+- [ ] `apps/conciliador-albaranes/prisma/schema.prisma` extendido, migración
+      aplicada en Neon prod sin romper nada.
+- [ ] `apps/backoffice/prisma/schema.prisma` es copia idéntica y `prisma generate`
+      corre limpio.
+- [ ] Login en `backoffice.larokifarm.com` funciona con usuario real de la
+      tabla `users`.
+- [ ] SSO verificado: abrir `conciliador.larokifarm.com` desde el backoffice no
+      pide re-login.
+- [ ] `/conciliador/*` en el backoffice ejecuta una comparación real y muestra
+      resultado.
+- [ ] `/scout/*` en el backoffice lanza un batch y muestra progreso + resultado.
+- [ ] `usage_entries` se rellena con las acciones de los 3 módulos.
+- [ ] Panel `/admin/uso` muestra las entradas.
+- [ ] Cliente ha probado y aceptado.
+- [ ] Standalone de conciliador y scout siguen vivos como fallback.
+
+---
+
+## Próximo paso
+
+Aprobar este documento → arrancar **Fase 0** (pg_dump + congelar features) y
+después la Fase 1.A (ampliar el schema del conciliador). Cuando confirmes, me
+pongo con la migración `endgame_schema_prep` en el conciliador — es el paso
+que desbloquea todo lo demás.

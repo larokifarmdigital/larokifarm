@@ -1,11 +1,9 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { AuthError } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { MOCK_PASSWORDS, MOCK_USUARIOS } from '@/mocks/users';
-import { SESSION_COOKIE, SESSION_MAX_AGE, encodeSession } from '@/lib/session';
-import { sleep } from '@/lib/utils';
+import { signIn, signOut } from '@/lib/auth';
 
 const loginSchema = z.object({
   email: z.string().email('Introduce un correo válido'),
@@ -33,30 +31,34 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     return { status: 'error', message: 'Revisa los campos marcados', fieldErrors };
   }
 
-  await sleep(600);
+  try {
+    await signIn('credentials', {
+      email: parsed.data.email,
+      password: parsed.data.password,
+      redirectTo: '/farmacias',
+    });
+  } catch (err) {
+    // NOTE: next-auth v5 lanza NEXT_REDIRECT internamente al redirigir tras
+    // login OK — hay que dejarlo propagar.
+    if (err instanceof Error && err.message === 'NEXT_REDIRECT') throw err;
 
-  const user = MOCK_USUARIOS.find((u) => u.email.toLowerCase() === parsed.data.email);
-  if (!user || MOCK_PASSWORDS[user.email] !== parsed.data.password) {
-    return {
-      status: 'error',
-      message: 'Correo o contraseña incorrectos',
-    };
+    if (err instanceof AuthError) {
+      if (err.type === 'CredentialsSignin') {
+        return { status: 'error', message: 'Correo o contraseña incorrectos' };
+      }
+      return { status: 'error', message: 'No se pudo iniciar sesión. Vuelve a intentarlo.' };
+    }
+    throw err;
   }
 
-  const store = await cookies();
-  store.set(SESSION_COOKIE, encodeSession(user.id), {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: SESSION_MAX_AGE,
-  });
-
-  redirect('/farmacias');
+  // No debería llegar aquí (signIn redirige), pero por seguridad:
+  return { status: 'success' };
 }
 
 export async function logoutAction() {
-  const store = await cookies();
-  store.delete(SESSION_COOKIE);
+  // NOTE: redirect:false → signOut solo limpia la sesión (no intenta
+  // redirigir por su cuenta, que dentro de una server action se comporta
+  // erráticamente en next-auth v5 beta). El redirect lo hacemos nosotros.
+  await signOut({ redirect: false });
   redirect('/login');
 }

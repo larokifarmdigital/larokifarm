@@ -96,11 +96,11 @@ El schema real de Farmacia vive en `studio/schemas/farmacias/farmacia.ts`.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-09-27T11:04:55Z).
+Actualizado automáticamente al hacer commit (2026-09-28T08:49:07Z).
 
-- `289c4ea` 2026-09-27 — Chore: sincronizar CLAUDE.md con seccion Cambios recientes
-- `1a5063a` 2026-09-22 — Feat: backoffice completo con nav 4 grupos + validacion i18n + TimePicker custom
-- `287337d` 2026-09-18 — Feat: scout panel /batch + rediseño Ethereal Glass Dark + fixes varios
-- `89c2fc8` 2026-09-16 — Feat: scout batch worker - motor de comparacion masiva
-- `ac3ebf7` 2026-09-16 — Docs: scout batch-plan - indice visual de pasos al principio
+- `4fad4c2` 2026-09-28 — Feat: schema Prisma endgame (Fase 1.A) - Business ampliado + tablas scout/billing/content
+- `e0cb885` 2026-09-28 — Fix: conciliador soporta layout Bayer con 2 códigos apilados en la celda de producto
+- `1a814a6` 2026-09-28 — Fix(cima-chat): scrollbars unificados + textarea sin scroll fantasma
+- `bde1a7f` 2026-09-27 — Style(cima-chat): mejorar UI del chat, jerarquia y toque de marca
+- `0d04426` 2026-09-27 — Chore: .npmrc raiz con ignore-workspace-root-check=true
 <!-- auto:recent-commits:end -->

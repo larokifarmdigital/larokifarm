@@ -65,3 +65,6 @@ playwright/
 
 # TypeScript incremental build cache
 *.tsbuildinfo
+
+# Backups y notas privadas de infra (dumps de BD, inventarios de secrets, etc.)
+_backups/

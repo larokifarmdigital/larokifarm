@@ -1,0 +1,341 @@
+// Conciliador de Albaranes — Multi-tenant schema.
+// Phase 1: User + Business + Role.
+// Phase 2: Comparison + ComparisonFile (persistent history + usage metrics).
+//
+// Field names are in English (Prisma model) but `@map(...)` preserves the
+// original DB column / enum value so no migration is needed when renaming.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  BUSINESS_ADMIN
+  USER
+}
+
+model Business {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  geminiKeyEnc     String?
+  monthlyBudgetUsd Decimal? @db.Decimal(10, 4)
+  supportEmail     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // ── Farmacia · identidad (Fase 1.A · todos opcionales) ─────────
+  ciudad          String?
+  telefono        String?
+  whatsapp        String?
+  email           String?
+  web             String?
+  titular         String?
+  numeroColegiado String?
+  logoUrl         String?
+
+  // ── Farmacia · contenido multi-idioma (Sanity → JSON) ──────────
+  // Estos campos hoy viven en Sanity. Se poblarán en Fase 3 (migración
+  // Sanity → Neon). Formato { es, en, ca } o Portable Text / HTML por locale.
+  descripcionCorta Json?
+  descripcionLarga Json?
+  direccion        Json?
+  horarios         Json?
+  redesSociales    Json?
+  googleMapsUrl    String?
+  idiomasActivos   Json?
+
+  // ── Publicación y SEO ──────────────────────────────────────────
+  publishedStatus String @default("draft") // draft | published | archived
+  seoConfig       Json?
+
+  // ── Módulos contratados (permisos backoffice) ──────────────────
+  // Ej.: { "conciliador": true, "scout": true, "chatbot": false }
+  modules Json?
+  plan    String? // BASIC | PRO | ENTERPRISE
+
+  // Relaciones existentes
+  users       User[]
+  comparisons Comparison[]
+
+  // ── Relaciones Fase 1.A ────────────────────────────────────────
+  servicios Servicio[]
+  faqs      Faq[]
+  resenas   Resena[]
+  imagenes  ContentImage[]
+  batchJobs ScoutBatchJob[]
+  usage     UsageEntry[]
+
+  @@map("businesses")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role
+  businessId   String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  business         Business?          @relation(fields: [businessId], references: [id])
+  comparisons      Comparison[]
+  reportsCreated   ComparisonReport[] @relation("reportsCreated")
+  reportsResolved  ComparisonReport[] @relation("reportsResolved")
+
+  // Fase 1.A
+  batchJobs ScoutBatchJob[]
+  usage     UsageEntry[]
+
+  @@index([businessId])
+  @@map("users")
+}
+
+enum ComparisonStatus {
+  OK
+  DISCREPANCIES @map("DISCREPANCIAS") // BD legacy value
+  ERROR
+}
+
+enum FileKind {
+  PDF_INPUT
+  XLSX_INPUT
+  REPORT_OUTPUT
+}
+
+model Comparison {
+  id                 String           @id @default(cuid())
+  businessId         String
+  userId             String
+  createdAt          DateTime         @default(now())
+  durationMs         Int
+  status             ComparisonStatus
+  supplier           String?          @map("proveedor")
+  label              String?          @map("etiqueta")
+  numPairs           Int
+  numPdfs            Int
+  numXlsx            Int
+  numDiscrepancies   Int              @default(0) @map("numDiscrepancias")
+  geminiInputTokens  Int              @default(0)
+  geminiOutputTokens Int              @default(0)
+  geminiCostUsd      Decimal          @default(0) @db.Decimal(10, 6)
+  summary            Json
+
+  business Business           @relation(fields: [businessId], references: [id])
+  user     User               @relation(fields: [userId], references: [id])
+  files    ComparisonFile[]
+  reports  ComparisonReport[]
+
+  @@index([businessId, createdAt])
+  @@index([userId, createdAt])
+  @@index([businessId, supplier])
+  @@map("comparisons")
+}
+
+model ComparisonFile {
+  id           String   @id @default(cuid())
+  comparisonId String
+  kind         FileKind
+  filename     String
+  storageKey   String
+  sizeBytes    Int
+  createdAt    DateTime @default(now())
+
+  comparison Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+
+  @@index([comparisonId])
+  @@map("comparison_files")
+}
+
+// Phase 3: user-submitted reports for false/missed discrepancies.
+// SUPER_ADMIN reviews and resolves; the reporting user sees the resolution in their history.
+enum ReportStatus {
+  OPEN
+  RESOLVED
+}
+
+model ComparisonReport {
+  id           String       @id @default(cuid())
+  comparisonId String
+  userId       String
+  note         String
+  status       ReportStatus @default(OPEN)
+  resolvedById String?
+  resolvedNote String?
+  resolvedAt   DateTime?
+  createdAt    DateTime     @default(now())
+
+  comparison Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  user       User       @relation("reportsCreated", fields: [userId], references: [id])
+  resolvedBy User?      @relation("reportsResolved", fields: [resolvedById], references: [id])
+
+  @@index([comparisonId, status])
+  @@index([status, createdAt])
+  @@map("comparison_reports")
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Fase 1.A · Scout (batch jobs persistidos como snapshot del DO)
+// ══════════════════════════════════════════════════════════════════
+// El Durable Object BATCH_JOB del worker de scout sigue orquestando la
+// ejecución en runtime. Estas tablas guardan snapshots del estado para que
+// el backoffice pueda mostrar historial cuando el DO haya sido reciclado.
+
+enum ScoutBatchStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum ScoutQueryStatus {
+  PENDING
+  DONE
+  ERROR
+}
+
+model ScoutBatchJob {
+  id           String           @id @default(cuid())
+  businessId   String
+  userId       String
+  status       ScoutBatchStatus @default(QUEUED)
+  totalQueries Int
+  doneQueries  Int              @default(0)
+  costUsd      Decimal          @default(0) @db.Decimal(10, 4)
+  errorReason  String?
+  createdAt    DateTime         @default(now())
+  finishedAt   DateTime?
+
+  business Business          @relation(fields: [businessId], references: [id])
+  user     User              @relation(fields: [userId], references: [id])
+  queries  ScoutBatchQuery[]
+
+  @@index([businessId, createdAt])
+  @@index([userId, createdAt])
+  @@map("scout_batch_jobs")
+}
+
+model ScoutBatchQuery {
+  id         String           @id @default(cuid())
+  batchJobId String
+  query      String
+  status     ScoutQueryStatus @default(PENDING)
+  resultJson Json?
+  errorMsg   String?
+
+  batchJob ScoutBatchJob @relation(fields: [batchJobId], references: [id], onDelete: Cascade)
+
+  @@index([batchJobId])
+  @@map("scout_batch_queries")
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Fase 1.A · Billing / uso (transversal a los 3 módulos)
+// ══════════════════════════════════════════════════════════════════
+// Los tres módulos (conciliador, scout, chatbot) escriben aquí cada acción
+// contabilizable. Sirve para el panel /admin/uso y la cotización mensual.
+
+enum UsageModule {
+  CONCILIADOR
+  SCOUT
+  CHATBOT
+}
+
+model UsageEntry {
+  id         String      @id @default(cuid())
+  businessId String
+  userId     String?
+  module     UsageModule
+  action     String // "compare", "batch_query", "chat_turn", ...
+  units      Int         @default(1)
+  costUsd    Decimal     @default(0) @db.Decimal(10, 6)
+  tokensIn   Int         @default(0)
+  tokensOut  Int         @default(0)
+  createdAt  DateTime    @default(now())
+
+  business Business @relation(fields: [businessId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@index([businessId, module, createdAt])
+  @@index([businessId, createdAt])
+  @@map("usage_entries")
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Fase 1.A · Contenido de farmacias (tablas VACÍAS hasta Fase 3)
+// ══════════════════════════════════════════════════════════════════
+// Se crean ahora para dejar el schema endgame listo. Nadie escribe en ellas
+// en Fase 1. Sanity sigue siendo la fuente de verdad del contenido hasta
+// Fase 3, cuando un script upsert por slug las poblará y Sanity se apagará.
+
+model Servicio {
+  id          String  @id @default(cuid())
+  businessId  String
+  icono       String?
+  nombre      Json // { es, en, ca }
+  descripcion Json?
+  enlace      Json? // { url, nuevaPestana }
+  orden       Int     @default(0)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, orden])
+  @@map("content_servicios")
+}
+
+model Faq {
+  id         String @id @default(cuid())
+  businessId String
+  pregunta   Json
+  respuesta  Json
+  orden      Int    @default(0)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, orden])
+  @@map("content_faqs")
+}
+
+model Resena {
+  id         String   @id @default(cuid())
+  businessId String
+  autor      String
+  puntuacion Int
+  texto      String
+  fecha      DateTime
+  fuente     String // 'google' | 'manual'
+  avatarUrl  String?
+  orden      Int      @default(0)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, fecha])
+  @@map("content_resenas")
+}
+
+model ContentImage {
+  id         String   @id @default(cuid())
+  businessId String
+  role       String // 'logo' | 'hero' | 'servicio' | 'gallery' | 'og'
+  storageKey String // R2 key
+  publicUrl  String
+  alt        Json // multi-idioma
+  width      Int?
+  height     Int?
+  sizeBytes  Int?
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, role])
+  @@map("content_images")
+}
