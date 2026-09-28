@@ -11,7 +11,7 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { href: '/farmacias', label: 'Farmacias', icon: 'Storefront', section: 'principal' },
   { href: '/scout', label: 'Scout precios', icon: 'MagnifyingGlass', section: 'operaciones', badge: 'wip' },
-  { href: '/albaranes', label: 'Albaranes', icon: 'Receipt', section: 'operaciones', badge: 'wip' },
+  { href: '/albaranes', label: 'Albaranes', icon: 'Receipt', section: 'operaciones', badge: 'nuevo' },
   { href: '/inventario', label: 'Inventario', icon: 'Package', section: 'operaciones', badge: 'wip' },
   { href: '/ajustes', label: 'Ajustes', icon: 'GearSix', section: 'sistema' },
 ];

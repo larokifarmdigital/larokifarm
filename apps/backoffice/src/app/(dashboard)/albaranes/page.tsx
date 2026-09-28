@@ -1,20 +1,26 @@
-import { PlaceholderScreen } from '@/components/PlaceholderScreen';
+import { requireUser } from '@/lib/session';
+import { auth } from '@/lib/auth';
+import { getConciliadorDashboard } from '@/features/conciliador/data/dashboardData';
+import { DashboardView } from '@/features/conciliador/dashboard/DashboardView';
 
 export const metadata = { title: 'Albaranes · Backoffice' };
 
-export default function AlbaranesPage() {
-  return (
-    <PlaceholderScreen
-      icon="Receipt"
-      eyebrow="Conciliación"
-      title="Albaranes"
-      description="Subida de PDFs de proveedores y conciliación con las órdenes de compra. Vive hoy en una app aparte y pasará a ser un módulo interno."
-      bullets={[
-        'Subir varios PDFs y detectar CN, cantidades y descuentos.',
-        'Reconstrucción de descuentos multi-página (Nestlé, Perox, Zambon).',
-        'Panel de debug para auditar la extracción.',
-      ]}
-      fase="Fase 7"
-    />
-  );
+// NOTE: siempre datos frescos. Cada conciliación cambia los KPIs y no queremos
+// ver un panel obsoleto.
+export const dynamic = 'force-dynamic';
+
+const DEFAULT_STANDALONE_URL =
+  process.env.NODE_ENV === 'production'
+    ? 'https://conciliador.larokifarm.com'
+    : 'http://localhost:3000';
+
+export default async function AlbaranesPage() {
+  await requireUser();
+  const session = await auth();
+  const businessId = session?.user?.businessId ?? null;
+
+  const data = await getConciliadorDashboard(businessId);
+  const standaloneUrl = process.env.CONCILIADOR_STANDALONE_URL ?? DEFAULT_STANDALONE_URL;
+
+  return <DashboardView data={data} standaloneUrl={standaloneUrl} />;
 }
