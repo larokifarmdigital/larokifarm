@@ -31,8 +31,47 @@ model Business {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  // ── Farmacia · identidad (Fase 1.A · todos opcionales) ─────────
+  ciudad          String?
+  telefono        String?
+  whatsapp        String?
+  email           String?
+  web             String?
+  titular         String?
+  numeroColegiado String?
+  logoUrl         String?
+
+  // ── Farmacia · contenido multi-idioma (Sanity → JSON) ──────────
+  // Estos campos hoy viven en Sanity. Se poblarán en Fase 3 (migración
+  // Sanity → Neon). Formato { es, en, ca } o Portable Text / HTML por locale.
+  descripcionCorta Json?
+  descripcionLarga Json?
+  direccion        Json?
+  horarios         Json?
+  redesSociales    Json?
+  googleMapsUrl    String?
+  idiomasActivos   Json?
+
+  // ── Publicación y SEO ──────────────────────────────────────────
+  publishedStatus String @default("draft") // draft | published | archived
+  seoConfig       Json?
+
+  // ── Módulos contratados (permisos backoffice) ──────────────────
+  // Ej.: { "conciliador": true, "scout": true, "chatbot": false }
+  modules Json?
+  plan    String? // BASIC | PRO | ENTERPRISE
+
+  // Relaciones existentes
   users       User[]
   comparisons Comparison[]
+
+  // ── Relaciones Fase 1.A ────────────────────────────────────────
+  servicios Servicio[]
+  faqs      Faq[]
+  resenas   Resena[]
+  imagenes  ContentImage[]
+  batchJobs ScoutBatchJob[]
+  usage     UsageEntry[]
 
   @@map("businesses")
 }
@@ -52,6 +91,10 @@ model User {
   comparisons      Comparison[]
   reportsCreated   ComparisonReport[] @relation("reportsCreated")
   reportsResolved  ComparisonReport[] @relation("reportsResolved")
+
+  // Fase 1.A
+  batchJobs ScoutBatchJob[]
+  usage     UsageEntry[]
 
   @@index([businessId])
   @@map("users")
@@ -138,4 +181,161 @@ model ComparisonReport {
   @@index([comparisonId, status])
   @@index([status, createdAt])
   @@map("comparison_reports")
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Fase 1.A · Scout (batch jobs persistidos como snapshot del DO)
+// ══════════════════════════════════════════════════════════════════
+// El Durable Object BATCH_JOB del worker de scout sigue orquestando la
+// ejecución en runtime. Estas tablas guardan snapshots del estado para que
+// el backoffice pueda mostrar historial cuando el DO haya sido reciclado.
+
+enum ScoutBatchStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum ScoutQueryStatus {
+  PENDING
+  DONE
+  ERROR
+}
+
+model ScoutBatchJob {
+  id           String           @id @default(cuid())
+  businessId   String
+  userId       String
+  status       ScoutBatchStatus @default(QUEUED)
+  totalQueries Int
+  doneQueries  Int              @default(0)
+  costUsd      Decimal          @default(0) @db.Decimal(10, 4)
+  errorReason  String?
+  createdAt    DateTime         @default(now())
+  finishedAt   DateTime?
+
+  business Business          @relation(fields: [businessId], references: [id])
+  user     User              @relation(fields: [userId], references: [id])
+  queries  ScoutBatchQuery[]
+
+  @@index([businessId, createdAt])
+  @@index([userId, createdAt])
+  @@map("scout_batch_jobs")
+}
+
+model ScoutBatchQuery {
+  id         String           @id @default(cuid())
+  batchJobId String
+  query      String
+  status     ScoutQueryStatus @default(PENDING)
+  resultJson Json?
+  errorMsg   String?
+
+  batchJob ScoutBatchJob @relation(fields: [batchJobId], references: [id], onDelete: Cascade)
+
+  @@index([batchJobId])
+  @@map("scout_batch_queries")
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Fase 1.A · Billing / uso (transversal a los 3 módulos)
+// ══════════════════════════════════════════════════════════════════
+// Los tres módulos (conciliador, scout, chatbot) escriben aquí cada acción
+// contabilizable. Sirve para el panel /admin/uso y la cotización mensual.
+
+enum UsageModule {
+  CONCILIADOR
+  SCOUT
+  CHATBOT
+}
+
+model UsageEntry {
+  id         String      @id @default(cuid())
+  businessId String
+  userId     String?
+  module     UsageModule
+  action     String // "compare", "batch_query", "chat_turn", ...
+  units      Int         @default(1)
+  costUsd    Decimal     @default(0) @db.Decimal(10, 6)
+  tokensIn   Int         @default(0)
+  tokensOut  Int         @default(0)
+  createdAt  DateTime    @default(now())
+
+  business Business @relation(fields: [businessId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@index([businessId, module, createdAt])
+  @@index([businessId, createdAt])
+  @@map("usage_entries")
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Fase 1.A · Contenido de farmacias (tablas VACÍAS hasta Fase 3)
+// ══════════════════════════════════════════════════════════════════
+// Se crean ahora para dejar el schema endgame listo. Nadie escribe en ellas
+// en Fase 1. Sanity sigue siendo la fuente de verdad del contenido hasta
+// Fase 3, cuando un script upsert por slug las poblará y Sanity se apagará.
+
+model Servicio {
+  id          String  @id @default(cuid())
+  businessId  String
+  icono       String?
+  nombre      Json // { es, en, ca }
+  descripcion Json?
+  enlace      Json? // { url, nuevaPestana }
+  orden       Int     @default(0)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, orden])
+  @@map("content_servicios")
+}
+
+model Faq {
+  id         String @id @default(cuid())
+  businessId String
+  pregunta   Json
+  respuesta  Json
+  orden      Int    @default(0)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, orden])
+  @@map("content_faqs")
+}
+
+model Resena {
+  id         String   @id @default(cuid())
+  businessId String
+  autor      String
+  puntuacion Int
+  texto      String
+  fecha      DateTime
+  fuente     String // 'google' | 'manual'
+  avatarUrl  String?
+  orden      Int      @default(0)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, fecha])
+  @@map("content_resenas")
+}
+
+model ContentImage {
+  id         String   @id @default(cuid())
+  businessId String
+  role       String // 'logo' | 'hero' | 'servicio' | 'gallery' | 'og'
+  storageKey String // R2 key
+  publicUrl  String
+  alt        Json // multi-idioma
+  width      Int?
+  height     Int?
+  sizeBytes  Int?
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, role])
+  @@map("content_images")
 }
