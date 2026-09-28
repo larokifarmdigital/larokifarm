@@ -4,9 +4,36 @@
 > preparar el terreno para las siguientes fases (contenido de landings, backend
 > propio, apagar Sanity).
 >
-> **Última revisión**: 2026-09-28.
+> **Última revisión**: 2026-09-28 (rev 3).
 > **Reemplaza a**: `BACKOFFICE-UNIFICACION-PLAN.md` (borrado) y a la versión
 > anterior de este mismo archivo (2026-09-18).
+
+---
+
+## ⚠ Cambio de estrategia (rev 3 · 2026-09-28)
+
+Después de arrancar Fase 1.C portando UI del conciliador al backoffice
+(dropzone + matchFiles + server action) decidimos **pivotar a navegación
+simple**: no duplicamos UI ni lógica del conciliador/scout en el backoffice.
+
+**Regla nueva**: el backoffice es un **panel de gestión** (dashboards con KPIs
+leídos de Neon). La **ejecución** vive en los standalones (conciliador, scout),
+que se abren desde el backoffice con un CTA `target="_blank"` — la cookie SSO
+compartida evita el re-login.
+
+**Beneficios**:
+- Cero duplicación de lógica (matchFiles, reconcile, extractDeliveryNote…).
+- El conciliador y scout siguen siendo la fuente de verdad de su UI.
+- Cuando se actualicen, el backoffice ve el cambio inmediatamente.
+
+**Consecuencias en el plan**:
+- Fase 1.C.2, 1.C.3, 1.C.4 (portar UI, server action, JWT worker): **canceladas**.
+- Fase 1.C.5 (historial completo): **descartada** — el standalone ya tiene `/historial`.
+- Fase 1.C.6 (reports SUPER_ADMIN): **descartada** — el standalone ya tiene `/admin/reports`.
+- Fase 1.C queda cerrada con **1.C.1** (dashboard `/albaranes` con KPIs + CTA).
+- Fase 1.D queda como **dashboard `/scout` mismo patrón** (KPIs cuando estén + CTA al standalone).
+
+Todo lo demás del plan (BD endgame, auth SSO, hosting) sigue igual.
 
 ---
 
