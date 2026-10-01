@@ -68,7 +68,7 @@ const hrefDefault =
 
     <link
       rel='stylesheet'
-      href='https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap'
+      href='https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap'
     />
 
     <title>{titulo}</title>
@@ -97,11 +97,11 @@ const hrefDefault =
     {descripcion && <meta name='twitter:description' content={descripcion} />}
     {ogImageAbsoluta && <meta name='twitter:image' content={ogImageAbsoluta} />}
 
-    <link rel='icon' type='image/png' href='/logo.png' />
     <link rel='icon' type='image/svg+xml' href='/favicon.svg' />
-    <link rel='apple-touch-icon' href='/logo.png' />
+    <link rel='icon' type='image/png' sizes='32x32' href='/favicon-32.png' />
+    <link rel='apple-touch-icon' sizes='180x180' href='/apple-touch-icon.png' />
     <link rel='manifest' href='/manifest.webmanifest' />
-    <meta name='theme-color' content='#334155' />
+    <meta name='theme-color' content='#44a460' />
 
     {
       jsonLd && (
@@ -209,8 +209,8 @@ const hrefDefault =
     <div
       data-cima-chat
       data-theme='light'
-      data-primary-light='#334155'
-      data-primary-dark='#94a3b8'
+      data-primary-light='#44a460'
+      data-primary-dark='#6dc261'
       data-position='bottom-right'
       data-logo-url={logoChatUrl}
       data-brand-name={nombreFarmacia}

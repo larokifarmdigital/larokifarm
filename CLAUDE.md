@@ -33,6 +33,13 @@ Landing pública de Farmacia Torrents (Barcelona) en Astro + Sanity workspace
 `farmacias`. Sin GA, sin publicidad, sin cookies. Mapa con patrón "click para
 cargar" para no requerir consentimiento.
 
+### `apps/chamarro/`
+Landing pública de Farmacia Chamarro en Astro + Sanity workspace `farmacias`.
+Fuente única Manrope, paleta verde del logo del cliente (#44A460 → #6DC261 →
+#C8E845) + blanco. PWA completa (favicon.svg + apple-touch-icon + icon-192/512
++ maskable). Chat widget `cima-chat` embebido. i18n: es, ca, en.
+Contexto: `apps/chamarro/CLAUDE.md`.
+
 ### `widgets/cima-chat/`
 Widget embebible (Preact + Vite library + Shadow DOM). Cliente real:
 farmacia en Barcelona. Sin LLM en MVP.
@@ -96,11 +103,11 @@ El schema real de Farmacia vive en `studio/schemas/farmacias/farmacia.ts`.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-09-28T08:49:07Z).
+Actualizado automáticamente al hacer commit (2026-09-28T11:42:02Z).
 
-- `4fad4c2` 2026-09-28 — Feat: schema Prisma endgame (Fase 1.A) - Business ampliado + tablas scout/billing/content
-- `e0cb885` 2026-09-28 — Fix: conciliador soporta layout Bayer con 2 códigos apilados en la celda de producto
-- `1a814a6` 2026-09-28 — Fix(cima-chat): scrollbars unificados + textarea sin scroll fantasma
-- `bde1a7f` 2026-09-27 — Style(cima-chat): mejorar UI del chat, jerarquia y toque de marca
-- `0d04426` 2026-09-27 — Chore: .npmrc raiz con ignore-workspace-root-check=true
+- `b9a3ae9` 2026-09-28 — Feat: paleta blanco+azul Torrents completa + fix menu hamburguesa movil
+- `12e47d9` 2026-09-28 — Feat: paleta Torrents (azul) + limpieza de botones muertos en topbar/listado
+- `6911dc0` 2026-09-28 — Feat: Fase 1.E dashboard /admin/uso (SUPER_ADMIN)
+- `7276c80` 2026-09-28 — Feat: Fase 1.D dashboard /scout con CTA al standalone
+- `112fbe6` 2026-09-28 — Chore: eliminar duplicación de UI del conciliador en el backoffice
 <!-- auto:recent-commits:end -->

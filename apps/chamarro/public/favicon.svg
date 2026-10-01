@@ -1,4 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="10" fill="#0a0a0a"/>
-  <text x="32" y="43" font-family="Georgia, 'Instrument Serif', serif" font-size="34" fill="#ffffff" text-anchor="middle" font-style="italic">C</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c8e845"/>
+      <stop offset="60%" stop-color="#6dc261"/>
+      <stop offset="100%" stop-color="#44a460"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#logoGradient)" d="
+    M34 12 h14 v36 h-36 v-14 h22 v-22 z
+    M52 12 h14 v22 h22 v14 h-36 z
+    M52 52 h36 v14 h-22 v22 h-14 z
+    M12 52 h36 v36 h-14 v-22 h-22 z
+  " />
 </svg>

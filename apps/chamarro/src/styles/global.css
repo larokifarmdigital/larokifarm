@@ -1,50 +1,53 @@
 @import 'tailwindcss';
 
 /* ==========================================================================
-   Chamarro · Minimalist UI + Motion (C2 con animación abundante)
-   Warm bone canvas, Newsreader serif para hero, Geist Sans/Mono para UI.
-   Radios crisp 4-12px. Motion abundante pero refinada tipo Vercel/Linear:
-   reveal-blur, word-stagger, spotlight cursor, motion-float, count-up,
-   marquee, magnetic hover, underline animations.
+   Chamarro · Manrope + paleta verde de marca sobre blanco.
+   Blancos limpios, verdes del logo (#c8e845 → #6dc261 → #44a460), motion
+   refinada: reveal-blur, word-stagger, spotlight cursor, motion-float,
+   count-up, marquee, magnetic hover, underline animations.
    ========================================================================== */
 
 :root {
-  --background: #FBFBFA;
-  --canvas-alt: #F7F6F3;
-  --surface: #F9F9F8;
-  --surface-strong: #F1F0EC;
-  --foreground: #2F3437;
-  --foreground-strong: #111111;
-  --muted: #787774;
-  --muted-foreground: #504D48;
-  --border: #EAEAEA;
-  --border-soft: rgba(0, 0, 0, 0.06);
-  --border-strong: #D6D6D6;
+  --background: #FFFFFF;
+  --canvas-alt: #F6FBF4;
+  --surface: #F8FBF6;
+  --surface-strong: #EDF5E8;
+  --foreground: #1F2A22;
+  --foreground-strong: #0E1810;
+  --muted: #6B7A6E;
+  --muted-foreground: #4B5750;
+  --border: #E5ECE2;
+  --border-soft: rgba(68, 164, 96, 0.08);
+  --border-strong: #C9D4C3;
   --card: #FFFFFF;
 
-  --primary: #111111;
-  --primary-hover: #333333;
-  --primary-foreground: #FFFFFF;
-  --primary-soft: #F7F6F3;
+  --brand-lime: #C8E845;
+  --brand-mid: #6DC261;
+  --brand-deep: #44A460;
 
-  --accent: #2F3437;
-  --accent-hover: #111111;
-  --accent-soft: #F1F0EC;
+  --primary: #44A460;
+  --primary-hover: #388450;
+  --primary-foreground: #FFFFFF;
+  --primary-soft: #EDF7EF;
+
+  --accent: #6DC261;
+  --accent-hover: #5BB050;
+  --accent-soft: #E8F5E3;
 
   --pastel-red-bg: #FDEBEC;    --pastel-red-fg: #9F2F2D;
   --pastel-blue-bg: #E1F3FE;   --pastel-blue-fg: #1F6C9F;
-  --pastel-green-bg: #EDF3EC;  --pastel-green-fg: #346538;
+  --pastel-green-bg: #EDF7EF;  --pastel-green-fg: #2E6E42;
   --pastel-yellow-bg: #FBF3DB; --pastel-yellow-fg: #956400;
 
-  --success: #346538;
-  --success-soft: #EDF3EC;
+  --success: #44A460;
+  --success-soft: #EDF7EF;
   --warning: #956400;
   --danger: #9F2F2D;
   --whatsapp: #1FAF38;
 
-  --font-sans: 'Geist', 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
-  --font-serif: 'Newsreader', 'Instrument Serif', 'Playfair Display', Georgia, serif;
-  --font-mono: 'Geist Mono', 'SF Mono', 'JetBrains Mono', monospace;
+  --font-sans: 'Manrope', 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+  --font-serif: 'Manrope', 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+  --font-mono: 'Manrope', 'SF Mono', 'JetBrains Mono', monospace;
 
   --radius-xs: 4px;
   --radius-sm: 6px;
@@ -114,56 +117,92 @@ body {
 
 @layer components {
   .h-display {
-    font-family: var(--font-serif);
-    font-weight: 400;
-    letter-spacing: -0.035em;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: -0.04em;
     line-height: 1.02;
     font-size: clamp(2.75rem, 6vw + 0.5rem, 5.5rem);
     color: var(--foreground-strong);
     text-wrap: balance;
   }
-  .h-display em { font-style: italic; }
+  .h-display em {
+    font-style: normal;
+    font-weight: 800;
+    background: linear-gradient(100deg, var(--brand-deep) 0%, var(--brand-mid) 55%, var(--brand-lime) 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+  }
 
   .h-section {
-    font-family: var(--font-serif);
-    font-weight: 400;
-    letter-spacing: -0.03em;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: -0.035em;
     line-height: 1.08;
     font-size: clamp(2rem, 3.5vw + 0.5rem, 3.25rem);
     color: var(--foreground-strong);
     text-wrap: balance;
   }
-  .h-section em { font-style: italic; }
+  .h-section em {
+    font-style: normal;
+    font-weight: 800;
+    background: linear-gradient(100deg, var(--brand-deep) 0%, var(--brand-mid) 55%, var(--brand-lime) 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+  }
 
   .h-card {
     font-family: var(--font-sans);
-    font-weight: 500;
-    letter-spacing: -0.01em;
+    font-weight: 600;
+    letter-spacing: -0.015em;
     line-height: 1.25;
     font-size: 1.05rem;
     color: var(--foreground);
   }
 
   .section-eyebrow {
+    position: relative;
     display: inline-flex;
+    align-self: flex-start;
+    width: fit-content;
+    max-width: fit-content;
     align-items: center;
-    gap: 0.5rem;
-    font-family: var(--font-mono);
-    font-weight: 400;
+    gap: 0.55rem;
+    font-family: var(--font-sans);
+    font-weight: 600;
     font-size: 0.72rem;
-    letter-spacing: 0.06em;
-    color: var(--muted);
-    padding: 0;
-    background: transparent;
-    border: none;
-    text-transform: none;
+    letter-spacing: 0.08em;
+    color: var(--brand-deep);
+    padding: 0.4rem 0.85rem 0.4rem 0.75rem;
+    background: var(--primary-soft);
+    border: 1px solid color-mix(in oklab, var(--brand-deep) 18%, transparent);
+    border-radius: 9999px;
+    text-transform: uppercase;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      transform var(--dur) var(--ease-magnetic),
+      box-shadow var(--dur) var(--ease-out);
   }
   .section-eyebrow::before {
     content: '';
     display: inline-block;
-    width: 14px;
-    height: 1px;
-    background: var(--muted);
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--brand-deep);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand-deep) 20%, transparent);
+    animation: motion-pulse 2.5s var(--ease-in-out) infinite;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .section-eyebrow:hover {
+      background: var(--accent-soft);
+      border-color: color-mix(in oklab, var(--brand-deep) 32%, transparent);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-soft);
+    }
   }
 
   .container-app {
@@ -286,16 +325,27 @@ body {
   .chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.28rem 0.7rem;
-    background: var(--pastel-green-bg);
-    color: var(--pastel-green-fg);
+    gap: 0.5rem;
+    padding: 0.35rem 0.85rem 0.35rem 0.7rem;
+    background: var(--primary-soft);
+    color: var(--brand-deep);
+    border: 1px solid color-mix(in oklab, var(--brand-deep) 20%, transparent);
     border-radius: 9999px;
     font-family: var(--font-sans);
-    font-size: 0.68rem;
-    font-weight: 500;
-    letter-spacing: 0.05em;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  }
+  .chip::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--brand-deep);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand-deep) 20%, transparent);
   }
 
   kbd {
@@ -376,10 +426,10 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.05;
+  opacity: 0.18;
   background:
-    radial-gradient(ellipse 40% 30% at 20% 30%, var(--foreground-strong), transparent 60%),
-    radial-gradient(ellipse 30% 40% at 80% 70%, var(--foreground-strong), transparent 60%);
+    radial-gradient(ellipse 45% 35% at 15% 25%, var(--brand-lime), transparent 65%),
+    radial-gradient(ellipse 40% 45% at 85% 75%, var(--brand-mid), transparent 65%);
   animation: motion-ambient 40s var(--ease-in-out) infinite alternate;
 }
 @keyframes motion-ambient {
@@ -400,7 +450,7 @@ body {
   padding: 1px;
   background: radial-gradient(
     260px circle at var(--mx, 50%) var(--my, 50%),
-    var(--foreground-strong) 0%,
+    var(--brand-deep) 0%,
     transparent 55%
   );
   -webkit-mask: linear-gradient(#fff, #fff) content-box, linear-gradient(#fff, #fff);
