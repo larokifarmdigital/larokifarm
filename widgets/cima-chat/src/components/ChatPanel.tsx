@@ -10,6 +10,7 @@ import { SymptomWizard } from './SymptomWizard';
 import { ChatIA } from './ChatIA';
 import { AlternativesChat } from './AlternativesChat';
 import { InteractionsInline } from './InteractionsInline';
+import { IA_LIBRE_ENABLED } from '../lib/features';
 import { fetchCatalog, type CimaCatalog } from '../api/sanity';
 import { fetchInventory, type Inventory } from '../api/inventory';
 import { SYMPTOMS } from '../lib/symptoms';
@@ -276,103 +277,181 @@ export function ChatPanel({ onClose, logoUrl, brandName }: Props) {
       <div class="cima-body" ref={bodyRef}>
         {!selected && entry === 'menu' && (
           <div class="cima-hero">
-            <form
-              class="cima-hero__form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const value = heroInput.trim();
-                if (!value) return;
-                setChatInitial(value);
-                setHeroInput('');
-                setEntry('chat');
-              }}
-            >
-              <textarea
-                class="cima-hero__input"
-                value={heroInput}
-                onInput={(e) => setHeroInput((e.target as HTMLTextAreaElement).value)}
-                placeholder="Pregunta sobre un medicamento"
-                rows={2}
-                aria-label="Tu consulta"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    (e.currentTarget as HTMLTextAreaElement).form?.requestSubmit();
-                  }
-                }}
-              />
-              <button
-                type="submit"
-                class="cima-hero__submit"
-                disabled={heroInput.trim().length < 3}
-                aria-label="Enviar"
-              >
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 19V5M5 12l7-7 7 7"/>
-                </svg>
-              </button>
-            </form>
-
-            <div class="cima-hero__quick" role="list">
-              <button
-                type="button"
-                role="listitem"
-                class="cima-hero__quick-item"
-                onClick={() => setEntry('search')}
-              >
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="11" cy="11" r="7"/>
-                  <path d="m21 21-4.35-4.35"/>
-                </svg>
-                Buscar
-              </button>
-              <button
-                type="button"
-                role="listitem"
-                class="cima-hero__quick-item"
-                onClick={() => {
-                  setEntry('wizard');
-                  if (!catalogFetched.current) {
-                    catalogFetched.current = true;
-                    setCatalogLoading(true);
-                    fetchCatalog(BUNDLED_CATALOG)
-                      .then((c) => setCatalog(c))
-                      .finally(() => setCatalogLoading(false));
-                  }
+            {IA_LIBRE_ENABLED && (
+              <form
+                class="cima-hero__form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const value = heroInput.trim();
+                  if (!value) return;
+                  setChatInitial(value);
+                  setHeroInput('');
+                  setEntry('chat');
                 }}
               >
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="9"/>
-                  <circle cx="12" cy="12" r="4"/>
-                </svg>
-                Guía por síntomas
-              </button>
-            </div>
-
-            <div class="cima-hero__examples">
-              {[
-                'Mi bebé tiene fiebre desde ayer',
-                '¿Se puede combinar Adiro con ibuprofeno?',
-                '¿Es apto el paracetamol en lactancia?',
-              ].map((ex) => (
+                <textarea
+                  class="cima-hero__input"
+                  value={heroInput}
+                  onInput={(e) => setHeroInput((e.target as HTMLTextAreaElement).value)}
+                  placeholder="Pregunta sobre un medicamento"
+                  rows={2}
+                  aria-label="Tu consulta"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      (e.currentTarget as HTMLTextAreaElement).form?.requestSubmit();
+                    }
+                  }}
+                />
                 <button
-                  key={ex}
+                  type="submit"
+                  class="cima-hero__submit"
+                  disabled={heroInput.trim().length < 3}
+                  aria-label="Enviar"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 19V5M5 12l7-7 7 7"/>
+                  </svg>
+                </button>
+              </form>
+            )}
+
+            {IA_LIBRE_ENABLED ? (
+              <div class="cima-hero__quick" role="list">
+                <button
                   type="button"
-                  class="cima-hero__example"
+                  role="listitem"
+                  class="cima-hero__quick-item"
+                  onClick={() => setEntry('search')}
+                >
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="7"/>
+                    <path d="m21 21-4.35-4.35"/>
+                  </svg>
+                  Buscar
+                </button>
+                <button
+                  type="button"
+                  role="listitem"
+                  class="cima-hero__quick-item"
                   onClick={() => {
-                    setChatInitial(ex);
-                    setEntry('chat');
+                    setEntry('wizard');
+                    if (!catalogFetched.current) {
+                      catalogFetched.current = true;
+                      setCatalogLoading(true);
+                      fetchCatalog(BUNDLED_CATALOG)
+                        .then((c) => setCatalog(c))
+                        .finally(() => setCatalogLoading(false));
+                    }
                   }}
                 >
-                  <span>{ex}</span>
-                  <span class="cima-hero__example-arrow" aria-hidden="true">›</span>
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"/>
+                    <circle cx="12" cy="12" r="4"/>
+                  </svg>
+                  Guía por síntomas
                 </button>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div class="cima-menu">
+                <div class="cima-menu__welcome">
+                  <h2 class="cima-menu__title">¿Qué necesitas hoy?</h2>
+                  <p class="cima-menu__sub">
+                    Consulta el catálogo oficial de medicamentos o descubre qué puede ayudarte según cómo te sientes.
+                  </p>
+                </div>
+                <div class="cima-menu__cards" role="list">
+                  <button
+                    type="button"
+                    role="listitem"
+                    class="cima-menu__card"
+                    onClick={() => setEntry('search')}
+                  >
+                    <span class="cima-menu__card-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="7"/>
+                        <path d="m21 21-4.35-4.35"/>
+                      </svg>
+                    </span>
+                    <span class="cima-menu__card-body">
+                      <span class="cima-menu__card-title">Buscar medicamento</span>
+                      <span class="cima-menu__card-desc">
+                        Por nombre, principio activo o código nacional.
+                      </span>
+                    </span>
+                    <span class="cima-menu__card-arrow" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14M13 6l6 6-6 6"/>
+                      </svg>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    role="listitem"
+                    class="cima-menu__card"
+                    onClick={() => {
+                      setEntry('wizard');
+                      if (!catalogFetched.current) {
+                        catalogFetched.current = true;
+                        setCatalogLoading(true);
+                        fetchCatalog(BUNDLED_CATALOG)
+                          .then((c) => setCatalog(c))
+                          .finally(() => setCatalogLoading(false));
+                      }
+                    }}
+                  >
+                    <span class="cima-menu__card-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"/>
+                        <circle cx="12" cy="12" r="4"/>
+                      </svg>
+                    </span>
+                    <span class="cima-menu__card-body">
+                      <span class="cima-menu__card-title">Guía por síntomas</span>
+                      <span class="cima-menu__card-desc">
+                        Dinos qué sientes y te orientamos sobre qué puede ayudarte.
+                      </span>
+                    </span>
+                    <span class="cima-menu__card-arrow" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14M13 6l6 6-6 6"/>
+                      </svg>
+                    </span>
+                  </button>
+                </div>
+                <div class="cima-menu__footer">
+                  <span class="cima-menu__footer-dot" aria-hidden="true"></span>
+                  Datos oficiales del catálogo CIMA · AEMPS
+                </div>
+              </div>
+            )}
+
+            {IA_LIBRE_ENABLED && (
+              <div class="cima-hero__examples">
+                {[
+                  'Mi bebé tiene fiebre desde ayer',
+                  '¿Se puede combinar Adiro con ibuprofeno?',
+                  '¿Es apto el paracetamol en lactancia?',
+                ].map((ex) => (
+                  <button
+                    key={ex}
+                    type="button"
+                    class="cima-hero__example"
+                    onClick={() => {
+                      setChatInitial(ex);
+                      setEntry('chat');
+                    }}
+                  >
+                    <span>{ex}</span>
+                    <span class="cima-hero__example-arrow" aria-hidden="true">›</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
-        {!selected && entry === 'chat' && (
+        {IA_LIBRE_ENABLED && !selected && entry === 'chat' && (
           <>
             <button
               class="cima-back"

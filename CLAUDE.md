@@ -103,11 +103,11 @@ El schema real de Farmacia vive en `studio/schemas/farmacias/farmacia.ts`.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-09-28T11:42:02Z).
+Actualizado automáticamente al hacer commit (2026-10-01T11:40:18Z).
 
+- `98be190` 2026-10-01 — Feat(chamarro): identidad verde + Manrope + favicon/PWA completos
 - `b9a3ae9` 2026-09-28 — Feat: paleta blanco+azul Torrents completa + fix menu hamburguesa movil
 - `12e47d9` 2026-09-28 — Feat: paleta Torrents (azul) + limpieza de botones muertos en topbar/listado
 - `6911dc0` 2026-09-28 — Feat: Fase 1.E dashboard /admin/uso (SUPER_ADMIN)
 - `7276c80` 2026-09-28 — Feat: Fase 1.D dashboard /scout con CTA al standalone
-- `112fbe6` 2026-09-28 — Chore: eliminar duplicación de UI del conciliador en el backoffice
 <!-- auto:recent-commits:end -->
