@@ -49,8 +49,11 @@ Mini-app Astro SSG + Sanity CMS — calendarios de vacunación por CCAA
 editables por el cliente farmacia.
 
 ### `apps/conciliador-albaranes/`
-Herramienta interna. NESTLE/PEROX reparten info entre 2-3 PDFs; plan Fase 2
-en `conciliador-albaranes-MULTI-PDF.md`.
+Herramienta interna. Soporta **N PDFs del proveedor + M Excels del pedido**
+por par: multi-PDF (Fase 2, union-find vía `fusionarAlbaranes.ts`) y
+multi-Excel (Fase 3, 2026-10-05 — concat de líneas + `agrupar()` del engine).
+Casos reales NESTLE/PEROX. Mapeo completo + decisiones en
+`apps/conciliador-albaranes/docs/multi-pdf.md`.
 
 ## Convenciones globales
 
@@ -103,11 +106,11 @@ El schema real de Farmacia vive en `studio/schemas/farmacias/farmacia.ts`.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-10-05T07:16:58Z).
+Actualizado automáticamente al hacer commit (2026-10-05T11:53:24Z).
 
+- `634aa48` 2026-10-05 — Feat(conciliador): soporte multi-Excel por par (N PDFs + M Excels)
 - `0e26a9a` 2026-10-05 — Chore(backoffice): ocultar modulos WIP del sidebar + stats cards en /farmacias
 - `5650e55` 2026-10-02 — Feat(cima-chat): toggle IA libre + rediseño menú principal
 - `98be190` 2026-10-01 — Feat(chamarro): identidad verde + Manrope + favicon/PWA completos
 - `b9a3ae9` 2026-09-28 — Feat: paleta blanco+azul Torrents completa + fix menu hamburguesa movil
-- `12e47d9` 2026-09-28 — Feat: paleta Torrents (azul) + limpieza de botones muertos en topbar/listado
 <!-- auto:recent-commits:end -->
