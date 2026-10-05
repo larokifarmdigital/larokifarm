@@ -144,6 +144,9 @@ Diferencias schema vs UI documentadas:
    cuando no la necesitas.
 9. **Screenshots evitados** por consumo de tokens. Verificar con
    `browser_snapshot` (accessibility tree, text) o `browser_evaluate`.
+10. **Módulos WIP ocultos del sidebar** con `hidden: true` en `nav-config.ts`
+    hasta estar listos para producción — la ruta sigue accesible por URL
+    para desarrollo, pero el cliente no la ve.
 
 ## Fases del roadmap
 
@@ -155,6 +158,12 @@ Diferencias schema vs UI documentadas:
 - **Extras 22-09-2026**: TimePicker custom, HorarioSemanal rediseñado (card
   por tramo + duración calculada), IconInput con focus arreglado, Label con
   asterisco naranja para required, `.scrollbar-thin` utility ✅
+- **Pulido pre-demo 05-10-2026**: nav-config con flag `hidden?: boolean` para
+  ocultar módulos WIP del sidebar sin romper rutas (Scout/Albaranes/Inventario/
+  Admin-Uso ocultos, siguen accesibles por URL); stats cards de resumen por
+  estado (Total/Publicadas/Borradores/Archivadas con tonos accent/green/
+  yellow/neutral) en `/farmacias` + fecha de última actualización global en
+  el header ✅
 - **Infra de contexto**: hook `PostToolUse` en `.claude/settings.json` que
   actualiza sección `## Cambios recientes` al hacer commit + skill global
   `/handoff` para cerrar sesiones con contexto persistido ✅
