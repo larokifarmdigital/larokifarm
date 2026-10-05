@@ -39,7 +39,8 @@ export interface PairInput {
   id: number;
   label: string;
   pdfs: Array<{ filename: string; bytes: Uint8Array }>;
-  xlsx: { filename: string; bytes: Uint8Array };
+  /** 1..N Excels del pedido. Se concatenan antes de `reconcile()`. */
+  xlsxs: Array<{ filename: string; bytes: Uint8Array }>;
 }
 
 export interface ProcessAndPersistPairInput {
@@ -67,7 +68,18 @@ export class ProcessAndPersistPairUseCase {
       );
 
       const mergedDeliveryNote = mergeDeliveryNotes(extractions.map((r) => r.data));
-      const order = readOrder(pair.xlsx.bytes);
+
+      // NOTE: multi-Excel — leemos cada Excel por separado y concatenamos sus líneas en un
+      // único OrderData. `reconcile()` ya agrupa por C.N./EAN/código interno vía `agrupar()`,
+      // así que productos repetidos entre Excels suman cantidades por diseño. Los metadatos
+      // de proveedor se toman del primer Excel que los traiga.
+      const partialOrders = pair.xlsxs.map((x) => readOrder(x.bytes));
+      const order = {
+        lines: partialOrders.flatMap((o) => o.lines),
+        supplierNumber: partialOrders.find((o) => o.supplierNumber)?.supplierNumber,
+        supplierName: partialOrders.find((o) => o.supplierName)?.supplierName,
+      };
+
       const reconciliation = reconcile(mergedDeliveryNote, order);
       const reportBytes = generateReport(reconciliation);
       const reportName = reportFilename(reconciliation, order.supplierNumber);
@@ -98,13 +110,13 @@ export class ProcessAndPersistPairUseCase {
           bytes: p.bytes,
           contentType: 'application/pdf',
         })),
-        {
+        ...pair.xlsxs.map((x) => ({
           kind: 'XLSX_INPUT' as const,
-          filename: pair.xlsx.filename,
-          bytes: pair.xlsx.bytes,
+          filename: x.filename,
+          bytes: x.bytes,
           contentType:
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        },
+        })),
         {
           kind: 'REPORT_OUTPUT' as const,
           filename: reportName,
@@ -143,7 +155,7 @@ export class ProcessAndPersistPairUseCase {
         label: pair.label,
         numPairs: 1,
         numPdfs: pair.pdfs.length,
-        numXlsx: 1,
+        numXlsx: pair.xlsxs.length,
         numDiscrepancies: reconciliation.totalDiscrepancies,
         geminiInputTokens: inputTokens,
         geminiOutputTokens: outputTokens,
@@ -196,7 +208,7 @@ export class ProcessAndPersistPairUseCase {
           label: pair.label,
           numPairs: 1,
           numPdfs: pair.pdfs.length,
-          numXlsx: 1,
+          numXlsx: pair.xlsxs.length,
           numDiscrepancies: 0,
           geminiInputTokens: 0,
           geminiOutputTokens: 0,

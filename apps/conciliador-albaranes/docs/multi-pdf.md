@@ -147,3 +147,40 @@ Añadido bloque "FORMATOS DE TABLA" en `extraerAlbaran.ts` para manejar:
 - Si Gemini no clasifica bien (`tipo_documento`): puede que el PDF no tenga las palabras claras. Mirar `lineasCrudas` en el debug de la UI. Ajustar prompt si hace falta.
 - Si Gemini no suma bien los descuentos compuestos: refinar el ejemplo del prompt con el caso real visto.
 - Si las líneas no se cruzan entre PDFs: comprobar que Gemini extrae `codigo` con el código interno del proveedor (no con el C.N. o EAN). El campo es la "ancla" para PEROX.
+
+## 10. Multi-Excel por par (Fase 3 · 2026-10-05)
+
+Hasta aquí el par era **N PDFs + 1 Excel**. A partir del 2026-10-05 el par es **N PDFs + M Excels** — el cliente reportó casos donde quiere emparejar manualmente 1 remesa de PDFs contra varios Excels (p.ej. 1 pedido partido en 2 archivos, o 2 pedidos distintos contra el mismo albarán).
+
+### 10.1. Cambios aplicados
+
+- **UI** (`ReconcilerView.tsx`):
+  - `interface Pair`: `excel: LoadedFile | null` → `excels: LoadedFile[]`.
+  - `UnmatchedRow` ya no filtra pares por `!p.excel` → cualquier par acepta cualquier tipo.
+  - `assignUnmatched` para Excels hace `[...p.excels, item]` (como ya hacía para PDFs).
+  - `takeExcelFromPair(pairId, excelId)` filtra por id (antes removía el único).
+  - Chips de Excel se renderizan con `.map` igual que los PDFs, cada uno con su × individual.
+  - Conveniencia pre-existente de "N PDFs + 1 Excel sueltos → agrupar" ampliada a "N PDFs + M Excels".
+  - Mensaje informativo `🔀 Los N Excels se concatenarán como un único pedido antes de conciliar` cuando el par tiene >1 Excel (análogo al de PDFs).
+- **Transport** (`ui/lib/reconcile.ts`):
+  - `PairToSend.xlsx: File` → `xlsxs: File[]`.
+  - FormData: `xlsxs_${i}` multivaluado.
+- **Server** (`src/app/api/conciliar/route.ts`):
+  - `form.getAll(xlsxs_${i})` + fallback a la clave singular `xlsx_${i}` por compat con clientes antiguos.
+  - Validación de par incompleto ahora exige `xlsxs.length > 0`.
+- **Engine** (`core/engine/application/processAndPersistPair.ts`):
+  - `PairInput.xlsx` → `xlsxs: Array<{ filename; bytes }>`.
+  - **Estrategia de merge**: concatenar `lines` de cada `readOrder()`, metadata (`supplierNumber`, `supplierName`) del primer Excel que la traiga. **No se añade union-find** porque los pedidos los rellena el cliente a mano con C.N. de catálogo y no sufren el problema que sí tenían los PDFs del proveedor (ambiguos). `agrupar()` dentro de `reconcile()` ya agrupa por C.N./EAN/código interno y suma cantidades, así que productos repetidos entre Excels se consolidan por diseño.
+  - Storage: cada Excel sube como `XLSX_INPUT` separado (no se fusiona antes de guardar).
+  - `numXlsx` en la fila `comparisons` ahora refleja la cantidad real (antes era hardcoded `1`).
+
+### 10.2. Decisiones tomadas
+
+- **Suma de cantidades duplicadas por diseño** (vía `agrupar()`). Si en el futuro quieren distinguir "qué pedido es de quién", hay que meter una dimensión extra en `OrderLine` (p.ej. `sourceOrderId`), pero no está pedido todavía.
+- **Metadata del primer Excel que la traiga** (en vez de concatenar nombres de proveedor). Suficiente porque todos los Excels de un par representan el mismo proveedor.
+- **No se escribió `fusionarPedidos.ts` análogo a `fusionarAlbaranes.ts`** — el merge es trivial (concat + `agrupar()` existente) y no justifica otro módulo con union-find.
+- **Compat server-side con `xlsx_${i}` singular**: para que un deploy del server sin frontend aún no actualizado siga funcionando mientras el frontend se propaga.
+
+### 10.3. Pendiente de validación
+
+- Probar end-to-end con casos reales: subir 2 Excels del mismo pedido particionado y verificar que `agrupar()` consolida bien las cantidades. Tests unitarios no se añadieron porque el 100% de la lógica nueva ya está cubierta por `reconcile.test.ts` (agrupación) y `readOrder` lo testea `excel.test.ts`.

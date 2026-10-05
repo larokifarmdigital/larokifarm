@@ -88,7 +88,9 @@ async function resolveContext(): Promise<
 async function pairsFromForm(form: FormData): Promise<PairInput[]> {
   const indices = new Set<number>();
   for (const key of form.keys()) {
-    const m = key.match(/^(?:pdfs|xlsx)_(\d+)$/);
+    // NOTE: `xlsxs` plural (multi-Excel). Mantener compat con `xlsx` singular por si
+    // llega un cliente antiguo todavía en producción.
+    const m = key.match(/^(?:pdfs|xlsxs?)_(\d+)$/);
     if (m) indices.add(Number(m[1]));
   }
 
@@ -96,9 +98,13 @@ async function pairsFromForm(form: FormData): Promise<PairInput[]> {
   for (const i of [...indices].sort((a, b) => a - b)) {
     const label = String(form.get(`label_${i}`) ?? `Par ${i + 1}`);
     const pdfs = form.getAll(`pdfs_${i}`).filter((v): v is File => v instanceof File);
-    const xlsx = form.get(`xlsx_${i}`);
-    if (pdfs.length === 0 || !(xlsx instanceof File)) {
-      pairs.push({ id: i, label, pdfs: [], xlsx: { filename: '', bytes: new Uint8Array() } });
+    const xlsxs = form.getAll(`xlsxs_${i}`).filter((v): v is File => v instanceof File);
+    // NOTE: fallback a la clave singular `xlsx_${i}` por compat con clientes antiguos.
+    const legacyXlsx = form.get(`xlsx_${i}`);
+    if (xlsxs.length === 0 && legacyXlsx instanceof File) xlsxs.push(legacyXlsx);
+
+    if (pdfs.length === 0 || xlsxs.length === 0) {
+      pairs.push({ id: i, label, pdfs: [], xlsxs: [] });
       continue;
     }
     const pdfBytes = await Promise.all(
@@ -107,12 +113,13 @@ async function pairsFromForm(form: FormData): Promise<PairInput[]> {
         bytes: new Uint8Array(await pdf.arrayBuffer()),
       })),
     );
-    pairs.push({
-      id: i,
-      label,
-      pdfs: pdfBytes,
-      xlsx: { filename: xlsx.name, bytes: new Uint8Array(await xlsx.arrayBuffer()) },
-    });
+    const xlsxBytes = await Promise.all(
+      xlsxs.map(async (x) => ({
+        filename: x.name,
+        bytes: new Uint8Array(await x.arrayBuffer()),
+      })),
+    );
+    pairs.push({ id: i, label, pdfs: pdfBytes, xlsxs: xlsxBytes });
   }
   return pairs;
 }
@@ -149,7 +156,7 @@ export async function POST(req: Request) {
   );
 
   const tasks: Array<Promise<PairResult>> = pairs.map((pair) => {
-    if (pair.pdfs.length === 0) {
+    if (pair.pdfs.length === 0 || pair.xlsxs.length === 0) {
       return Promise.resolve<PairResult>({
         id: pair.id,
         label: pair.label,

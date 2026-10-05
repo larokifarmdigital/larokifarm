@@ -68,7 +68,8 @@ interface Pair {
   label: string;
   /** 1..N PDFs del mismo envío (albarán + factura + …). Vacío = incompleto. */
   pdfs: LoadedFile[];
-  excel: LoadedFile | null;
+  /** 1..N Excels del mismo pedido. Vacío = incompleto. Se concatenan en el server. */
+  excels: LoadedFile[];
 }
 
 const uid = () => crypto.randomUUID();
@@ -81,8 +82,8 @@ function toLoadedFile(file: File): LoadedFile | null {
   return { id: uid(), file, name: file.name, kind };
 }
 
-function defaultLabel(pdfs: LoadedFile[], excel: LoadedFile | null): string {
-  const base = pdfs[0]?.name ?? excel?.name ?? '';
+function defaultLabel(pdfs: LoadedFile[], excels: LoadedFile[]): string {
+  const base = pdfs[0]?.name ?? excels[0]?.name ?? '';
   const key = fileKey(base);
   return key ? key.toUpperCase() : base.replace(/\.[^.]+$/, '');
 }
@@ -128,7 +129,10 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
     if (saved) setAccessKey(saved);
   }, []);
 
-  const complete = useMemo(() => pairs.filter((p) => p.pdfs.length > 0 && p.excel), [pairs]);
+  const complete = useMemo(
+    () => pairs.filter((p) => p.pdfs.length > 0 && p.excels.length > 0),
+    [pairs],
+  );
   const incompleteCount = pairs.length - complete.length;
 
   function add(files: File[]) {
@@ -138,27 +142,33 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
     if (added.length === 0) return;
 
     // NOTE: cálculo fuera de setState — Strict Mode reejecuta updaters y duplicaría pares.
-    let { pairs: np, unmatched: ns } = matchFiles([...unmatched, ...added]);
+    const { pairs: matched, unmatched: ns } = matchFiles([...unmatched, ...added]);
 
-    // NOTE: conveniencia — N PDFs + 1 Excel sin pareja por nombre se agrupan en un único par.
-    let unmatchedPdfs = ns.filter((s) => s.kind === 'pdf');
-    let unmatchedExcels = ns.filter((s) => s.kind === 'excel');
-    if (unmatchedPdfs.length >= 1 && unmatchedExcels.length === 1) {
-      np = [...np, { pdfs: unmatchedPdfs, excel: unmatchedExcels[0], key: '' }];
-      ns = [];
-      unmatchedPdfs = [];
-      unmatchedExcels = [];
+    // Pasamos del output del matcher (1 Excel por par) al modelo multi-Excel de la UI.
+    let np: { pdfs: LoadedFile[]; excels: LoadedFile[] }[] = matched.map((p) => ({
+      pdfs: p.pdfs,
+      excels: p.excel ? [p.excel] : [],
+    }));
+
+    let remaining = ns;
+    const unmatchedPdfs = remaining.filter((s) => s.kind === 'pdf');
+    const unmatchedExcels = remaining.filter((s) => s.kind === 'excel');
+
+    // NOTE: conveniencia — N PDFs + M Excels sin pareja por nombre se agrupan en un único par.
+    if (unmatchedPdfs.length >= 1 && unmatchedExcels.length >= 1) {
+      np = [...np, { pdfs: unmatchedPdfs, excels: unmatchedExcels }];
+      remaining = [];
     }
-
-    // NOTE: si hay 1 par completo + PDFs sueltos sin Excel suelto, los absorbemos (caso NESTLE.pdf + NESTLE_factura.pdf con keys distintas).
-    if (
+    // NOTE: 1 par ya completo + PDFs sueltos sin Excel suelto → los absorbemos
+    // (caso NESTLE.pdf + NESTLE_factura.pdf con keys distintas).
+    else if (
       np.length === 1 &&
-      np[0].excel &&
+      np[0].excels.length > 0 &&
       unmatchedPdfs.length > 0 &&
       unmatchedExcels.length === 0
     ) {
       np = [{ ...np[0], pdfs: [...np[0].pdfs, ...unmatchedPdfs] }];
-      ns = ns.filter((s) => s.kind !== 'pdf');
+      remaining = remaining.filter((s) => s.kind !== 'pdf');
     }
 
     if (np.length > 0) {
@@ -166,13 +176,13 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
         ...prev,
         ...np.map((p) => ({
           id: uid(),
-          label: defaultLabel(p.pdfs, p.excel),
+          label: defaultLabel(p.pdfs, p.excels),
           pdfs: p.pdfs,
-          excel: p.excel,
+          excels: p.excels,
         })),
       ]);
     }
-    setUnmatched(ns);
+    setUnmatched(remaining);
   }
 
   function removePair(id: string) {
@@ -189,11 +199,15 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
     setUnmatched((prev) => (prev.some((s) => s.id === taken.id) ? prev : [...prev, taken]));
   }
 
-  function takeExcelFromPair(pairId: string) {
+  function takeExcelFromPair(pairId: string, excelId: string) {
     const pair = pairs.find((p) => p.id === pairId);
-    const taken = pair?.excel;
+    const taken = pair?.excels.find((e) => e.id === excelId);
     if (!taken) return;
-    setPairs((prev) => prev.map((p) => (p.id === pairId ? { ...p, excel: null } : p)));
+    setPairs((prev) =>
+      prev.map((p) =>
+        p.id === pairId ? { ...p, excels: p.excels.filter((e) => e.id !== excelId) } : p,
+      ),
+    );
     setUnmatched((prev) => (prev.some((s) => s.id === taken.id) ? prev : [...prev, taken]));
   }
 
@@ -204,7 +218,7 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
       prev.map((p) => {
         if (p.id !== pairId) return p;
         if (item.kind === 'pdf') return { ...p, pdfs: [...p.pdfs, item] };
-        return { ...p, excel: item };
+        return { ...p, excels: [...p.excels, item] };
       }),
     );
     setUnmatched((prev) => prev.filter((s) => s.id !== unmatchedId));
@@ -214,10 +228,10 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
     const item = unmatched.find((s) => s.id === unmatchedId);
     if (!item) return;
     const pdfs = item.kind === 'pdf' ? [item] : [];
-    const excel = item.kind === 'excel' ? item : null;
+    const excels = item.kind === 'excel' ? [item] : [];
     setPairs((prev) => [
       ...prev,
-      { id: uid(), label: defaultLabel(pdfs, excel), pdfs, excel },
+      { id: uid(), label: defaultLabel(pdfs, excels), pdfs, excels },
     ]);
     setUnmatched((prev) => prev.filter((s) => s.id !== unmatchedId));
   }
@@ -248,9 +262,9 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
     const snapshot = complete;
     try {
       const envio: PairToSend[] = snapshot.map((p) => ({
-        label: p.label.trim() || defaultLabel(p.pdfs, p.excel) || 'Par',
+        label: p.label.trim() || defaultLabel(p.pdfs, p.excels) || 'Par',
         pdfs: p.pdfs.map((pdf) => pdf.file),
-        xlsx: p.excel!.file,
+        xlsxs: p.excels.map((x) => x.file),
       }));
       const { summary } = await reconcilePairs(envio);
       setResults(summary);
@@ -804,11 +818,11 @@ function PairRow({
 }: {
   pair: Pair;
   onTakePdf: (pairId: string, pdfId: string) => void;
-  onTakeExcel: (pairId: string) => void;
+  onTakeExcel: (pairId: string, excelId: string) => void;
   onRemove: (id: string) => void;
   onRename: (id: string, label: string) => void;
 }) {
-  const isComplete = pair.pdfs.length > 0 && pair.excel;
+  const isComplete = pair.pdfs.length > 0 && pair.excels.length > 0;
   return (
     <div className={`rounded-2xl border bg-white p-3 ${isComplete ? 'border-slate-200' : 'border-amber-300'}`}>
       <div className="mb-2 flex items-center gap-2">
@@ -861,15 +875,27 @@ function PairRow({
             />
           ))
         )}
-        {pair.excel ? (
-          <Chip name={pair.excel.name} kind="excel" onRemove={() => onTakeExcel(pair.id)} />
-        ) : (
+        {pair.excels.length === 0 ? (
           <Slot kind="excel" />
+        ) : (
+          pair.excels.map((xlsx) => (
+            <Chip
+              key={xlsx.id}
+              name={xlsx.name}
+              kind="excel"
+              onRemove={() => onTakeExcel(pair.id, xlsx.id)}
+            />
+          ))
         )}
       </div>
       {pair.pdfs.length > 1 && (
         <p className="mt-2 text-xs text-slate-500">
           🔀 Los {pair.pdfs.length} PDFs se fusionarán en un único informe (albarán + factura del mismo envío).
+        </p>
+      )}
+      {pair.excels.length > 1 && (
+        <p className="mt-2 text-xs text-slate-500">
+          🔀 Los {pair.excels.length} Excels se concatenarán como un único pedido antes de conciliar.
         </p>
       )}
     </div>
@@ -889,8 +915,8 @@ function UnmatchedRow({
   onNew: (unmatchedId: string) => void;
   onRemove: (unmatchedId: string) => void;
 }) {
-  // NOTE: para Excels solo pares sin Excel; PDFs pueden ir a cualquier par.
-  const available = pairs.filter((p) => (unmatched.kind === 'pdf' ? true : !p.excel));
+  // NOTE: cualquier par acepta cualquier archivo — PDFs se fusionan, Excels se concatenan.
+  const available = pairs;
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Chip name={unmatched.name} kind={unmatched.kind} />
@@ -950,15 +976,11 @@ function ResultRow({
   const sourceFiles = sourcePair
     ? [
         ...sourcePair.pdfs.map((p) => ({ name: p.name, file: p.file, kind: 'pdf' as const })),
-        ...(sourcePair.excel
-          ? [
-              {
-                name: sourcePair.excel.name,
-                file: sourcePair.excel.file,
-                kind: 'excel' as const,
-              },
-            ]
-          : []),
+        ...sourcePair.excels.map((e) => ({
+          name: e.name,
+          file: e.file,
+          kind: 'excel' as const,
+        })),
       ]
     : [];
 

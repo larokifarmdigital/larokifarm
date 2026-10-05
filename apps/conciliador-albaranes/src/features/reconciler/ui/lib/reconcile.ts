@@ -4,7 +4,8 @@ export interface PairToSend {
   label: string;
   /** 1 or N PDFs from the SAME shipment (delivery note + invoice + …). Merged server-side. */
   pdfs: File[];
-  xlsx: File;
+  /** 1 or N Excels del mismo pedido. Se concatenan server-side antes de conciliar. */
+  xlsxs: File[];
 }
 
 export interface BudgetBlockedDetail {
@@ -36,7 +37,7 @@ export async function reconcilePairs(
   const fd = new FormData();
   pairs.forEach((p, i) => {
     for (const pdf of p.pdfs) fd.append(`pdfs_${i}`, pdf);
-    fd.append(`xlsx_${i}`, p.xlsx);
+    for (const xlsx of p.xlsxs) fd.append(`xlsxs_${i}`, xlsx);
     fd.append(`label_${i}`, p.label);
   });
 
