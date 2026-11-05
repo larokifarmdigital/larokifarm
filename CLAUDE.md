@@ -74,6 +74,52 @@ El schema real de Farmacia vive en `studio/schemas/farmacias/farmacia.ts`.
 · Reseñas · Contacto · Legal · SEO. El backoffice mapea 1:1 estos campos
 (ver `apps/backoffice/CLAUDE.md` para detalle).
 
+**Project ID**: `yovi040n`. Workspaces del studio: `cima-chat` (dataset
+`cima`), `farmacias` (dataset `production` o el que tengan en el .env), y
+`calendario-vacunas` (dataset `calendario`).
+
+## Infra: alojamiento y deploy
+
+Qué recurso vive en qué cuenta y cómo se redeployan los sitios públicos.
+
+| Recurso | Hosting | Cuenta | Notas |
+|---|---|---|---|
+| `apps/torrents/` | Cloudflare Pages | Cuenta empresa | Dominio personal (de Erick) |
+| `apps/torrents/` | Vercel | Cuenta cliente | Dominio del cliente |
+| `apps/backoffice/` | — | — | Local todavía, pendiente deploy |
+| `workers/sanity-fanout/` | Cloudflare Workers | **Cuenta empresa** (`larokifarmdigital@gmail.com`, account ID `b541c31a1626d80fb24641caa2ce9d15`) | Recibe el único webhook de Sanity y hace fan-out a N deploy hooks en paralelo |
+| `workers/google-resenas/` | Cloudflare Workers | — | Pendiente de activar cuando Google apruebe la API |
+
+### Flujo de deploy al editar Sanity
+
+```
+Cliente publica en Sanity Studio
+         ↓
+Sanity webhook (único, plan free) → POST a workers/sanity-fanout
+         ↓
+Worker verifica firma HMAC-SHA256 + hace fan-out en paralelo a:
+  ├─ Cloudflare Pages Torrents (dominio Erick)
+  ├─ Vercel Torrents (dominio cliente)
+  └─ Cloudflare Pages Calendario-vacunas
+         ↓
+Cada hosting re-builda su sitio en ~1-2 min
+```
+
+Para añadir un nuevo sitio al fan-out: `workers/sanity-fanout/README.md` →
+sección "Añadir un sitio nuevo". Soporta cualquier hosting con deploy hook
+tipo `POST sin auth` (CF Pages, Vercel, Netlify).
+
+### `CLOUDFLARE_ACCOUNT_ID` en tu shell
+
+Si tienes esa env var exportada (desde cuando trabajabas con la cuenta
+personal), wrangler la respeta por encima del `whoami` y puede dar
+`Authentication error [code: 10000]` al deployar. Si pasa:
+- `unset CLOUDFLARE_ACCOUNT_ID` para la sesión actual, o
+- `CLOUDFLARE_ACCOUNT_ID=b541c31a1626d80fb24641caa2ce9d15 pnpm exec wrangler deploy`
+  solo para ese comando.
+
+Mira `~/.zshrc` para ver si está exportada permanentemente.
+
 ## Reseñas Google (Fase pendiente)
 
 - Solicitud a Google Business Profile API rechazada 2026-06-15 por usar
@@ -106,11 +152,11 @@ El schema real de Farmacia vive en `studio/schemas/farmacias/farmacia.ts`.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-10-05T11:53:24Z).
+Actualizado automáticamente al hacer commit (2026-11-05T22:48:05Z).
 
+- `6bb4e10` 2026-11-05 — Docs: documentar infra de deploy y migracion del worker sanity-fanout
+- `2244068` 2026-10-05 — Docs: actualizar entrada del conciliador en CLAUDE.md raíz
 - `634aa48` 2026-10-05 — Feat(conciliador): soporte multi-Excel por par (N PDFs + M Excels)
 - `0e26a9a` 2026-10-05 — Chore(backoffice): ocultar modulos WIP del sidebar + stats cards en /farmacias
 - `5650e55` 2026-10-02 — Feat(cima-chat): toggle IA libre + rediseño menú principal
-- `98be190` 2026-10-01 — Feat(chamarro): identidad verde + Manrope + favicon/PWA completos
-- `b9a3ae9` 2026-09-28 — Feat: paleta blanco+azul Torrents completa + fix menu hamburguesa movil
 <!-- auto:recent-commits:end -->
