@@ -433,3 +433,43 @@ kbd {
   pointer-events: none;
   height: 0;
 }
+
+/* ============================================================
+ * Editor section sheet (bottom sheet móvil con las 9 secciones)
+ * ============================================================ */
+dialog.editor-section-sheet {
+  width: calc(100% - 16px);
+  max-width: 420px;
+  margin: 0 8px 8px;
+  padding: 0;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-xl);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: auto;
+  max-height: min(70vh, 540px);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.18);
+}
+dialog.editor-section-sheet[open] {
+  animation: editor-sheet-in 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+dialog.editor-section-sheet::backdrop {
+  background: rgba(15, 23, 42, 0.4);
+  animation: editor-sheet-backdrop 180ms ease;
+}
+@keyframes editor-sheet-in {
+  from { transform: translateY(16px); opacity: 0 }
+  to   { transform: translateY(0); opacity: 1 }
+}
+@keyframes editor-sheet-backdrop {
+  from { opacity: 0 }
+  to   { opacity: 1 }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog.editor-section-sheet[open],
+  dialog.editor-section-sheet::backdrop { animation: none }
+}
