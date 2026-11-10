@@ -52,6 +52,23 @@ model Business {
   googleMapsUrl    String?
   idiomasActivos   Json?
 
+  // ── Farmacia · contenido Fase 1.B (añadido 2026-11-10) ─────────
+  // Campos que el editor del backoffice ya edita pero no tenían hueco.
+  // Todos opcionales (Json? / String?) — migración no destructiva.
+  mapaUrl               String? // iframe embed Google Maps (distinto a googleMapsUrl)
+  heroChip              Json? // MultilangText — etiqueta pequeña sobre el titulo del hero
+  heroSubtitulo         Json? // MultilangText — subtitulo bajo el titulo del hero
+  heroTarjetasFlotantes Json? // [{icono, titulo, subtitulo, orden}] máx 3
+  sobreNosotros         Json? // {chip, titulo, anyosExperiencia, puntos[]}
+  avisoLegal            Json? // MultilangText de HTML (Tiptap)
+  politicaPrivacidad    Json? // MultilangText de HTML (Tiptap)
+  textosServicios       Json? // TextosCabecera {chip, titulo, subtitulo}
+  textosFaqs            Json? // TextosCabecera
+  textosResenas         Json? // TextosCabecera
+  googleLocationName    String? // ficha GBP para el worker de sync de reseñas
+  lastEditedByUserId    String? // quién tocó la farmacia por última vez (no FK por simplicidad)
+  lastPublishedAt       DateTime? // timestamp del último publish, para "publicada y al día"
+
   // ── Publicación y SEO ──────────────────────────────────────────
   publishedStatus String @default("draft") // draft | published | archived
   seoConfig       Json?
@@ -67,6 +84,7 @@ model Business {
 
   // ── Relaciones Fase 1.A ────────────────────────────────────────
   servicios Servicio[]
+  features  ContentFeature[]
   faqs      Faq[]
   resenas   Resena[]
   imagenes  ContentImage[]
@@ -87,10 +105,10 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  business         Business?          @relation(fields: [businessId], references: [id])
-  comparisons      Comparison[]
-  reportsCreated   ComparisonReport[] @relation("reportsCreated")
-  reportsResolved  ComparisonReport[] @relation("reportsResolved")
+  business        Business?          @relation(fields: [businessId], references: [id])
+  comparisons     Comparison[]
+  reportsCreated  ComparisonReport[] @relation("reportsCreated")
+  reportsResolved ComparisonReport[] @relation("reportsResolved")
 
   // Fase 1.A
   batchJobs ScoutBatchJob[]
@@ -325,17 +343,32 @@ model Resena {
 model ContentImage {
   id         String   @id @default(cuid())
   businessId String
-  role       String // 'logo' | 'hero' | 'servicio' | 'gallery' | 'og'
+  role       String // 'logo' | 'hero' | 'sobre' | 'servicio' | 'gallery' | 'og'
   storageKey String // R2 key
   publicUrl  String
   alt        Json // multi-idioma
   width      Int?
   height     Int?
   sizeBytes  Int?
+  orden      Int      @default(0) // para carrusel hero y galería sobre
   createdAt  DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
-  @@index([businessId, role])
+  @@index([businessId, role, orden])
   @@map("content_images")
+}
+
+model ContentFeature {
+  id          String  @id @default(cuid())
+  businessId  String
+  icono       String?
+  titulo      Json // { es, en, ca }
+  descripcion Json?
+  orden       Int     @default(0)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, orden])
+  @@map("content_features")
 }
