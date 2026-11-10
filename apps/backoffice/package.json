@@ -9,6 +9,7 @@
     "lint": "eslint",
     "check": "tsc --noEmit",
     "sync-schema": "cp ../conciliador-albaranes/prisma/schema.prisma prisma/schema.prisma && prisma generate",
+    "migrate:sanity": "../conciliador-albaranes/node_modules/.bin/tsx scripts/migrate-sanity-to-neon.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
