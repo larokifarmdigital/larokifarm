@@ -1,36 +1,17 @@
 'use client';
 
-import Image from 'next/image';
-import { useRef } from 'react';
 import { useFarmaciaEditor } from '../EditorContext';
 import { MultilangInput } from '../MultilangInput';
 import { MultilangTextarea } from '../MultilangTextarea';
-import { Button } from '@/components/ui/Button';
+import { ImageGalleryField } from '../ImageGalleryField';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { NavIcon } from '@/features/shell/NavIcon';
-import type { ImagenAsset } from '@/types/content';
-
-function mockUpload(name: string): ImagenAsset {
-  const seed = name.replace(/\W+/g, '-').toLowerCase() || `og-${Date.now()}`;
-  return {
-    id: `og_${Math.random().toString(36).slice(2, 10)}`,
-    url: `https://picsum.photos/seed/${seed}/1200/630`,
-    alt: {},
-  };
-}
 
 export function SeoTab() {
   const { farmacia, patch, currentLocale } = useFarmaciaEditor();
   const seo = farmacia.seo ?? {};
-  const ogRef = useRef<HTMLInputElement>(null);
 
   const titleValue = seo.title?.[currentLocale] ?? '';
   const descValue = seo.description?.[currentLocale] ?? '';
-
-  const setOg = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    patch({ seo: { ...seo, ogImage: mockUpload(files[0].name) } });
-  };
 
   return (
     <div className="space-y-10 max-w-3xl">
@@ -70,65 +51,18 @@ export function SeoTab() {
           id="sec-seo-og"
           title="Imagen Open Graph"
           hint="Se muestra al compartir la landing en WhatsApp, Facebook, LinkedIn, etc. Formato 1200×630 px (relación 1.91:1), JPG o PNG, menos de 1 MB. Compartida entre idiomas."
-          actions={
-            <>
-              <input
-                ref={ogRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => setOg(e.target.files)}
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => ogRef.current?.click()}
-              >
-                <NavIcon name="Image" size={13} />
-                {seo.ogImage ? 'Reemplazar' : 'Subir imagen'}
-              </Button>
-            </>
-          }
         />
 
-        {seo.ogImage ? (
-          <div className="card overflow-hidden">
-            <div className="relative aspect-[1200/630] bg-[var(--color-surface-sunken)]">
-              <Image
-                src={seo.ogImage.url}
-                alt={seo.ogImage.alt[currentLocale] ?? 'Imagen Open Graph'}
-                fill
-                unoptimized
-                className="object-cover"
-              />
-              <button
-                type="button"
-                onClick={() => patch({ seo: { ...seo, ogImage: undefined } })}
-                aria-label="Quitar imagen Open Graph"
-                className="absolute top-2 right-2 h-8 w-8 flex items-center justify-center rounded-[6px] bg-white/90 hover:bg-white text-[var(--color-red-ink)]"
-              >
-                <NavIcon name="Trash" size={14} />
-              </button>
-              <div className="absolute bottom-2 left-2 chip chip-neutral bg-white/90 font-mono-tabular">
-                1200 × 630
-              </div>
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => ogRef.current?.click()}
-            className="w-full card p-8 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
-          >
-            <div className="mx-auto w-10 h-10 rounded-full bg-[var(--color-surface-sunken)] flex items-center justify-center mb-3">
-              <NavIcon name="Image" size={18} className="text-[var(--color-muted)]" />
-            </div>
-            <p className="text-[13.5px] text-[var(--color-ink-2)] m-0">Sube la imagen de compartir</p>
-            <p className="mt-1 text-[12px] text-[var(--color-muted)] m-0">
-              Si la dejas vacía, se usa la primera imagen del hero como fallback.
-            </p>
-          </button>
-        )}
+        <ImageGalleryField
+          mode="single"
+          businessId={farmacia.id}
+          role="og"
+          aspect="og"
+          value={seo.ogImage}
+          onChange={(ogImage) =>
+            patch({ seo: { ...seo, ogImage: ogImage ?? undefined } })
+          }
+        />
       </section>
 
       <div className="hairline" />

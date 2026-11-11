@@ -9,7 +9,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { NavIcon, type IconName } from '@/features/shell/NavIcon';
 import { useFarmaciaEditor } from '../EditorContext';
 import { HorarioSemanal } from '../HorarioSemanal';
-import { ImageUploader } from '../ImageUploader';
+import { ImageGalleryField } from '../ImageGalleryField';
 import { slugify } from '@/lib/utils';
 import type { Horario } from '@/types/content';
 
@@ -108,9 +108,9 @@ export function GeneralTab() {
             />
           </div>
 
-          {/* Logotipo — ImageUploader sube a R2 vía uploadContentImage server action */}
+          {/* Logotipo — sube a R2 vía uploadContentImage server action */}
           <div className="sm:col-span-2">
-            <ImageUploader
+            <ImageGalleryField
               mode="single"
               businessId={farmacia.id}
               role="logo"
@@ -118,7 +118,7 @@ export function GeneralTab() {
               hint="240×240 mín · cuadrado · PNG o SVG con fondo transparente"
               value={farmacia.logo}
               onChange={(logo) => patch({ logo: logo ?? undefined })}
-              className="max-w-[260px]"
+              className="max-w-[220px]"
             />
           </div>
         </div>

@@ -8,13 +8,14 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TextosCabeceraFields } from '../TextosCabeceraFields';
 import { IconPicker } from '@/components/ui/IconPicker';
 import { IconoSVG } from '@/components/ui/IconoSVG';
 import { NavIcon } from '@/features/shell/NavIcon';
 import { cn } from '@/lib/utils';
-import type { Servicio } from '@/types/content';
+import type { Servicio, Locale } from '@/types/content';
 import {
   DndContext,
   closestCenter,
@@ -44,14 +45,20 @@ function crearServicioVacio(orden: number): Servicio {
   };
 }
 
-function SortableRow({
+/**
+ * Fila compacta read-only. Mostrar + gestionar (editar/eliminar/reordenar).
+ * El contenido NO se edita in-place: click en editar abre el modal.
+ */
+function ServicioRow({
   servicio,
   currentLocale,
+  activeLocales,
   onEdit,
   onRemove,
 }: {
   servicio: Servicio;
-  currentLocale: 'es' | 'en' | 'ca';
+  currentLocale: Locale;
+  activeLocales: Locale[];
   onEdit: () => void;
   onRemove: () => void;
 }) {
@@ -63,8 +70,23 @@ function SortableRow({
     zIndex: isDragging ? 10 : undefined,
   };
 
-  const nombre = servicio.nombre[currentLocale];
-  const desc = servicio.descripcion?.[currentLocale];
+  const nombre =
+    servicio.nombre[currentLocale] ||
+    servicio.nombre.es ||
+    servicio.nombre.ca ||
+    servicio.nombre.en ||
+    '';
+  const desc =
+    servicio.descripcion?.[currentLocale] ||
+    servicio.descripcion?.es ||
+    servicio.descripcion?.ca ||
+    servicio.descripcion?.en ||
+    '';
+  const hasName = !!nombre.trim();
+
+  const missingLocales = activeLocales.filter(
+    (l) => !servicio.nombre[l]?.trim(),
+  );
 
   return (
     <li
@@ -72,7 +94,7 @@ function SortableRow({
       style={style}
       className={cn(
         'group flex items-center gap-2 px-2 py-2 rounded-[var(--radius-sm)] border border-transparent bg-[var(--color-surface)]',
-        'hover:border-[var(--color-hairline)] hover:shadow-[var(--shadow-soft)] transition-all',
+        'hover:border-[var(--color-hairline)] transition-all',
         isDragging && 'border-[var(--color-hairline-strong)] shadow-[var(--shadow-elevated)]',
       )}
     >
@@ -80,8 +102,8 @@ function SortableRow({
         type="button"
         {...attributes}
         {...listeners}
-        aria-label="Reordenar (arrastrar)"
-        className="shrink-0 h-8 w-6 flex items-center justify-center rounded-[var(--radius-xs)] text-[var(--color-muted-2)] hover:text-[var(--color-ink-2)] cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+        aria-label="Reordenar servicio"
+        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted-2)] hover:text-[var(--color-ink-2)] cursor-grab active:cursor-grabbing"
       >
         <NavIcon name="DotsSixVertical" size={14} weight="bold" />
       </button>
@@ -89,7 +111,7 @@ function SortableRow({
       <button
         type="button"
         onClick={onEdit}
-        className="flex-1 flex items-center gap-3 min-w-0 text-left px-1 py-0.5 rounded-[var(--radius-xs)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+        className="flex-1 min-w-0 flex items-center gap-3 text-left"
       >
         <span
           className={cn(
@@ -106,39 +128,49 @@ function SortableRow({
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[14px] font-medium text-[var(--color-ink)] truncate">
-            {nombre || (
-              <span className="italic text-[var(--color-muted-2)]">
-                Sin nombre en {currentLocale.toUpperCase()}
-              </span>
+          <span
+            className={cn(
+              'block text-[13.5px] font-medium truncate leading-tight',
+              hasName
+                ? 'text-[var(--color-ink)]'
+                : 'text-[var(--color-muted-2)] italic',
             )}
+          >
+            {hasName ? nombre : 'Servicio sin título'}
           </span>
           {desc && (
-            <span className="block text-[12.5px] text-[var(--color-muted)] truncate">
+            <span className="block text-[12.5px] text-[var(--color-muted)] truncate leading-tight mt-0.5">
               {desc}
+            </span>
+          )}
+          {missingLocales.length > 0 && (
+            <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-[var(--color-yellow-ink)]">
+              <span
+                aria-hidden
+                className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-yellow-ink)]"
+              />
+              Falta {missingLocales.map((l) => l.toUpperCase()).join(', ')}
             </span>
           )}
         </span>
       </button>
 
-      <div className="shrink-0 flex items-center gap-0.5">
-        <button
-          type="button"
-          onClick={onEdit}
-          aria-label="Editar servicio"
-          className="h-8 w-8 flex items-center justify-center rounded-[var(--radius-xs)] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]"
-        >
-          <NavIcon name="PencilSimple" size={13} />
-        </button>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="Eliminar servicio"
-          className="h-8 w-8 flex items-center justify-center rounded-[var(--radius-xs)] text-[var(--color-muted)] hover:text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)] transition-colors"
-        >
-          <NavIcon name="Trash" size={13} />
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label="Editar servicio"
+        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]"
+      >
+        <NavIcon name="PencilSimple" size={13} />
+      </button>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="Eliminar servicio"
+        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)]"
+      >
+        <NavIcon name="Trash" size={13} />
+      </button>
     </li>
   );
 }
@@ -146,33 +178,27 @@ function SortableRow({
 function ServicioModal({
   open,
   initial,
+  mode,
   onSave,
   onClose,
 }: {
   open: boolean;
   initial: Servicio | null;
+  mode: 'create' | 'edit';
   onSave: (servicio: Servicio) => void;
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<Servicio | null>(initial);
 
-  // Sincronizar cuando cambia initial (abrir modal con otro servicio)
-  if (initial && draft?.id !== initial.id) {
-    setDraft(initial);
-  }
-  if (!initial && draft !== null) {
-    setDraft(null);
-  }
-
+  if (initial && draft?.id !== initial.id) setDraft(initial);
+  if (!initial && draft !== null) setDraft(null);
   if (!draft) return null;
-
-  const isNew = !initial?.nombre.es && !initial?.nombre.en && !initial?.nombre.ca;
 
   return (
     <Modal
       open={open}
       onOpenChange={(o) => !o && onClose()}
-      title={isNew ? 'Nuevo servicio' : 'Editar servicio'}
+      title={mode === 'create' ? 'Nuevo servicio' : 'Editar servicio'}
       description="Los servicios aparecen en la sección «Nuestros servicios» de la landing."
       footer={
         <>
@@ -187,7 +213,7 @@ function ServicioModal({
               onClose();
             }}
           >
-            {isNew ? 'Añadir servicio' : 'Guardar cambios'}
+            {mode === 'create' ? 'Añadir servicio' : 'Guardar cambios'}
           </Button>
         </>
       }
@@ -262,56 +288,50 @@ function ServicioModal({
 
 export function ServiciosTab() {
   const { farmacia, patch, currentLocale } = useFarmaciaEditor();
-  const [editingId, setEditingId] = useState<string | null>(null);
+
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [editingDraft, setEditingDraft] = useState<Servicio | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Servicio | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const editingServicio = farmacia.servicios.find((s) => s.id === editingId) ?? null;
-
   const setServicios = (list: Servicio[]) => {
     patch({ servicios: list.map((s, i) => ({ ...s, orden: i })) });
   };
 
-  const handleAdd = () => {
-    const nuevo = crearServicioVacio(farmacia.servicios.length);
-    setServicios([...farmacia.servicios, nuevo]);
-    setEditingId(nuevo.id);
+  const openCreate = () => {
+    setModalMode('create');
+    setEditingDraft(crearServicioVacio(farmacia.servicios.length));
     setModalOpen(true);
   };
 
-  const handleEdit = (id: string) => {
-    setEditingId(id);
+  const openEdit = (s: Servicio) => {
+    setModalMode('edit');
+    setEditingDraft(s);
     setModalOpen(true);
   };
 
-  const handleSaveModal = (servicio: Servicio) => {
-    setServicios(
-      farmacia.servicios.map((s) => (s.id === servicio.id ? servicio : s)),
-    );
-  };
-
-  const handleCloseModal = () => {
-    // Si es un servicio nuevo sin nombre, lo eliminamos al cerrar
-    if (editingServicio) {
-      const isEmpty =
-        !editingServicio.nombre.es &&
-        !editingServicio.nombre.en &&
-        !editingServicio.nombre.ca &&
-        !editingServicio.icono;
-      if (isEmpty) {
-        setServicios(farmacia.servicios.filter((s) => s.id !== editingServicio.id));
-      }
-    }
+  const closeModal = () => {
     setModalOpen(false);
-    setEditingId(null);
+    setEditingDraft(null);
   };
 
-  const handleRemove = (id: string) => {
-    setServicios(farmacia.servicios.filter((s) => s.id !== id));
+  const handleSave = (s: Servicio) => {
+    if (modalMode === 'create') {
+      setServicios([...farmacia.servicios, s]);
+    } else {
+      setServicios(farmacia.servicios.map((x) => (x.id === s.id ? s : x)));
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    setServicios(farmacia.servicios.filter((x) => x.id !== deleteTarget.id));
+    setDeleteTarget(null);
   };
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -321,8 +341,17 @@ export function ServiciosTab() {
     setServicios(arrayMove(farmacia.servicios, oldIdx, newIdx));
   };
 
+  const activeLocales = farmacia.idiomasActivos;
+  const count = farmacia.servicios.length;
+
+  const deletePreview =
+    deleteTarget?.nombre.es ||
+    deleteTarget?.nombre.ca ||
+    deleteTarget?.nombre.en ||
+    '';
+
   return (
-    <div className="space-y-10 max-w-3xl">
+    <div className="section-gap max-w-3xl">
       {/* ============= TEXTOS DE CABECERA ============= */}
       <section aria-labelledby="sec-servicios-textos">
         <SectionHeader
@@ -341,67 +370,84 @@ export function ServiciosTab() {
         />
       </section>
 
-      <div className="hairline" />
-
       {/* ============= LISTA DE SERVICIOS ============= */}
       <section aria-labelledby="sec-servicios-lista">
-      <SectionHeader
-        id="sec-servicios-lista"
-        title="Lista de servicios"
-        hint="Cada servicio aparece como card. Arrastra las filas para reordenar."
-        actions={
-          <Button variant="accent" size="sm" onClick={handleAdd}>
-            <NavIcon name="Plus" size={13} />
-            <span className="hidden sm:inline">Añadir servicio</span>
-            <span className="sm:hidden">Añadir</span>
-          </Button>
-        }
-      />
+        <SectionHeader
+          id="sec-servicios-lista"
+          title={count === 0 ? 'Lista de servicios' : `${count} ${count === 1 ? 'servicio' : 'servicios'}`}
+          hint="Cada servicio aparece como card en la landing. Arrastra las filas para reordenar."
+          actions={
+            count > 0 ? (
+              <Button variant="accent" size="sm" onClick={openCreate}>
+                <NavIcon name="Plus" size={13} />
+                <span className="hidden sm:inline">Añadir servicio</span>
+                <span className="sm:hidden">Añadir</span>
+              </Button>
+            ) : null
+          }
+        />
 
-      {farmacia.servicios.length === 0 ? (
-        <button
-          type="button"
-          onClick={handleAdd}
-          className="w-full card p-10 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
-        >
-          <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-4 text-[var(--color-accent)]">
-            <NavIcon name="Plus" size={20} />
-          </div>
-          <p className="text-[14px] text-[var(--color-ink-2)]">
-            Añade tu primer servicio
-          </p>
-          <p className="mt-1 text-[12.5px] text-[var(--color-muted)]">
-            Consulta dermofarmacéutica, delivery, asesoría nutricional…
-          </p>
-        </button>
-      ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext
-            items={farmacia.servicios.map((s) => s.id)}
-            strategy={verticalListSortingStrategy}
+        {count === 0 ? (
+          <button
+            type="button"
+            onClick={openCreate}
+            className="w-full card p-10 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
           >
-            <ul className="card p-1.5 space-y-0.5">
-              {farmacia.servicios.map((s) => (
-                <SortableRow
-                  key={s.id}
-                  servicio={s}
-                  currentLocale={currentLocale}
-                  onEdit={() => handleEdit(s.id)}
-                  onRemove={() => handleRemove(s.id)}
-                />
-              ))}
-            </ul>
-          </SortableContext>
-        </DndContext>
-      )}
+            <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-4 text-[var(--color-accent)]">
+              <NavIcon name="Plus" size={20} />
+            </div>
+            <p className="text-[14px] text-[var(--color-ink-2)] m-0">
+              Añade tu primer servicio
+            </p>
+            <p className="mt-1 text-[12.5px] text-[var(--color-muted)] m-0">
+              Consulta dermofarmacéutica, delivery, asesoría nutricional…
+            </p>
+          </button>
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext
+              items={farmacia.servicios.map((s) => s.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="card p-1.5 space-y-0.5 list-none m-0">
+                {farmacia.servicios.map((s) => (
+                  <ServicioRow
+                    key={s.id}
+                    servicio={s}
+                    currentLocale={currentLocale}
+                    activeLocales={activeLocales}
+                    onEdit={() => openEdit(s)}
+                    onRemove={() => setDeleteTarget(s)}
+                  />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
+        )}
+      </section>
 
       <ServicioModal
         open={modalOpen}
-        initial={editingServicio}
-        onSave={handleSaveModal}
-        onClose={handleCloseModal}
+        initial={editingDraft}
+        mode={modalMode}
+        onSave={handleSave}
+        onClose={closeModal}
       />
-      </section>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title="Eliminar servicio"
+        description={
+          deletePreview
+            ? `Vas a eliminar «${deletePreview}». Esta acción no se puede deshacer.`
+            : 'Vas a eliminar este servicio. Esta acción no se puede deshacer.'
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

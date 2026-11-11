@@ -43,6 +43,7 @@ import {
   IdentificationCardIcon,
   ScalesIcon,
   UsersThreeIcon,
+  ArrowsClockwiseIcon,
 } from '@phosphor-icons/react/dist/ssr';
 
 const ICONS = {
@@ -90,6 +91,7 @@ const ICONS = {
   IdentificationCard: IdentificationCardIcon,
   Scales: ScalesIcon,
   UsersThree: UsersThreeIcon,
+  ArrowsClockwise: ArrowsClockwiseIcon,
 } as const;
 
 export type IconName = keyof typeof ICONS;

@@ -1,24 +1,21 @@
 'use client';
 
 /**
- * Galería de imágenes con editor de ALT por idioma en modal.
+ * Campo de imagen reutilizable, dos modos.
  *
- * Sustituye al patrón anterior (grid de thumbs + lista paralela "Texto
- * alternativo por idioma") que duplicaba la información visual y obligaba
- * a 10+ interacciones para rellenar los alts de 3 idiomas.
+ *   - mode="multi"  → galería tipo grid (hero, sobre, gallery). Cada tile
+ *     abre un modal para editar el texto alternativo por idioma. Ver patrón
+ *     canónico FAQs.
+ *   - mode="single" → una sola imagen (logo, OG). Al subir reemplaza; botón
+ *     "Reemplazar" (abre file picker) y "Eliminar" (con ConfirmDialog). SIN
+ *     modal de alt — logo y og no necesitan alt multilang editable aquí.
  *
- * Patrón canónico del editor: click en tile → modal (igual que FAQs /
- * Servicios / Features).
- *
- * Cada tile muestra:
- *   - thumbnail cover
- *   - dot de status (verde = todos los idiomas activos tienen alt,
- *     naranja = incompleto, gris = ninguno)
- *   - overlay con editar / borrar (siempre visible en touch,
- *     fade-in en hover para desktop)
- *
- * El modal permite editar los alts de TODOS los idiomas activos sin
- * cambiar el lang-tab global + eliminar la imagen con ConfirmDialog.
+ * Reglas de diseño:
+ *   - Acciones visibles siempre en touch (no hover-only). En desktop
+ *     aparecen con hover para no competir con la propia imagen.
+ *   - Delete siempre pasa por ConfirmDialog ("confirm before destruction").
+ *   - Reemplazo NO confirma: es el flujo esperado del usuario tras pulsar
+ *     "Reemplazar".
  */
 
 import { useRef, useState, useTransition } from 'react';
@@ -37,7 +34,7 @@ import {
 import type { ImagenAsset, Locale } from '@/types/content';
 import { LOCALE_LABELS } from '@/types/content';
 
-type Role = 'hero' | 'sobre' | 'gallery';
+type Role = 'logo' | 'hero' | 'sobre' | 'servicio' | 'gallery' | 'og';
 
 const LOCALE_FLAGS: Record<Locale, string> = {
   es: '🇪🇸',
@@ -45,15 +42,233 @@ const LOCALE_FLAGS: Record<Locale, string> = {
   ca: '🇦🇩',
 };
 
-type ImageGalleryFieldProps = {
+type BaseProps = {
   businessId: string;
   role: Role;
+  label?: string;
+  hint?: string;
+  className?: string;
+};
+
+type MultiProps = BaseProps & {
+  mode?: 'multi';
   value: ImagenAsset[];
   onChange: (next: ImagenAsset[]) => void;
   idiomasActivos: Locale[];
   max?: number;
-  className?: string;
 };
+
+type SingleProps = BaseProps & {
+  mode: 'single';
+  value: ImagenAsset | null | undefined;
+  onChange: (next: ImagenAsset | null) => void;
+  /** Aspecto del preview. Default square. */
+  aspect?: 'square' | 'og' | 'auto';
+};
+
+export function ImageGalleryField(props: MultiProps | SingleProps) {
+  if (props.mode === 'single') return <SingleImageField {...props} />;
+  return <MultiImageField {...props} />;
+}
+
+/* =====================================================================
+ * MODO SINGLE — logo, OG
+ * ===================================================================== */
+
+function SingleImageField({
+  businessId,
+  role,
+  value,
+  onChange,
+  label,
+  hint,
+  className,
+  aspect = 'square',
+}: SingleProps) {
+  const [isPending, startTransition] = useTransition();
+  const [dragging, setDragging] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  async function handleFile(file: File) {
+    const fd = new FormData();
+    fd.append('file', file);
+    startTransition(async () => {
+      const res = await uploadContentImage(businessId, role, fd);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      // Reemplazo: si había una previa (y no es legacy), bórrala del storage.
+      if (value?.id && value.id !== 'legacy-logo') {
+        void deleteContentImage(businessId, value.id);
+      }
+      onChange(res.data);
+      toast.success('Imagen subida');
+    });
+  }
+
+  function doDelete() {
+    if (!value) return;
+    if (value.id === 'legacy-logo') {
+      // Imagen legacy (Business.logoUrl) sin fila en content_images: solo
+      // quitamos del formulario, no hay nada que borrar del storage.
+      onChange(null);
+      setConfirmDelete(false);
+      return;
+    }
+    startTransition(async () => {
+      const res = await deleteContentImage(businessId, value.id);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      onChange(null);
+      setConfirmDelete(false);
+      toast.success('Imagen borrada');
+    });
+  }
+
+  function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) void handleFile(file);
+    e.target.value = '';
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) void handleFile(file);
+  }
+
+  const aspectClass =
+    aspect === 'og'
+      ? 'aspect-[1200/630]'
+      : aspect === 'auto'
+        ? ''
+        : 'aspect-square';
+
+  return (
+    <div className={cn('flex flex-col gap-2.5', className)}>
+      {label && (
+        <div>
+          <div className="text-[13px] font-semibold text-[var(--color-ink)]">
+            {label}
+          </div>
+          {hint && (
+            <div className="text-[12px] text-[var(--color-muted)] mt-0.5">
+              {hint}
+            </div>
+          )}
+        </div>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+        onChange={onInputChange}
+        disabled={isPending}
+        className="sr-only"
+      />
+
+      {value ? (
+        <figure
+          className={cn(
+            'group relative overflow-hidden rounded-[10px] border border-[var(--color-hairline)] bg-[var(--color-surface-sunken)]',
+            aspectClass,
+          )}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={value.url}
+            alt={label ?? ''}
+            className={cn(
+              'h-full w-full',
+              aspect === 'og' ? 'object-cover' : 'object-contain',
+            )}
+          />
+
+          <div
+            className={cn(
+              'absolute inset-0 flex items-end justify-between gap-1 p-2',
+              'bg-gradient-to-t from-black/55 via-black/10 to-transparent',
+              'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100',
+              'transition-opacity duration-150',
+            )}
+          >
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={isPending}
+              aria-label="Reemplazar imagen"
+              className="flex h-8 items-center gap-1 rounded-full bg-white px-2.5 text-[12px] font-medium text-[var(--color-ink)] shadow-sm hover:bg-[var(--color-surface-sunken)] disabled:opacity-60"
+            >
+              <NavIcon name="ArrowsClockwise" size={12} />
+              Reemplazar
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              disabled={isPending}
+              aria-label="Eliminar imagen"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[var(--color-red-ink)] shadow-sm hover:bg-[var(--color-red-soft)] disabled:opacity-60"
+            >
+              <NavIcon name="Trash" size={13} />
+            </button>
+          </div>
+        </figure>
+      ) : (
+        <label
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+          onClick={(e) => {
+            e.preventDefault();
+            inputRef.current?.click();
+          }}
+          className={cn(
+            'relative flex flex-col items-center justify-center gap-2 py-8 px-4 rounded-[10px] border-2 border-dashed cursor-pointer text-[13px] transition-colors',
+            aspectClass && aspect === 'og' && 'aspect-[1200/630]',
+            dragging
+              ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+              : 'border-[var(--color-hairline-strong)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-ink)]',
+            isPending && 'pointer-events-none opacity-60',
+          )}
+        >
+          {isPending ? (
+            <span className="animate-pulse">Subiendo…</span>
+          ) : (
+            <>
+              <NavIcon name="Image" size={20} />
+              <span className="font-medium">Arrastra una imagen o haz click</span>
+              <span className="text-[11px] text-[var(--color-muted-2)]">
+                PNG, JPG, WebP o SVG · máx 10 MB
+              </span>
+            </>
+          )}
+        </label>
+      )}
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="¿Eliminar esta imagen?"
+        description="Se borrará del almacenamiento y dejará de aparecer en la landing. No se puede deshacer."
+        confirmLabel="Eliminar imagen"
+        onConfirm={doDelete}
+      />
+    </div>
+  );
+}
+
+/* =====================================================================
+ * MODO MULTI — hero, sobre, gallery
+ * ===================================================================== */
 
 type AltStatus = 'complete' | 'partial' | 'empty';
 
@@ -64,15 +279,17 @@ function getAltStatus(img: ImagenAsset, activeLocales: Locale[]): AltStatus {
   return 'partial';
 }
 
-export function ImageGalleryField({
+function MultiImageField({
   businessId,
   role,
   value,
   onChange,
   idiomasActivos,
   max,
+  label,
+  hint,
   className,
-}: ImageGalleryFieldProps) {
+}: MultiProps) {
   const [isPending, startTransition] = useTransition();
   const [dragging, setDragging] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -134,6 +351,19 @@ export function ImageGalleryField({
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
+      {label && (
+        <div>
+          <div className="text-[13px] font-semibold text-[var(--color-ink)]">
+            {label}
+          </div>
+          {hint && (
+            <div className="text-[12px] text-[var(--color-muted)] mt-0.5">
+              {hint}
+            </div>
+          )}
+        </div>
+      )}
+
       {(value.length > 0 || canAdd) && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {value.map((img, i) => {
@@ -146,7 +376,6 @@ export function ImageGalleryField({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={img.url} alt="" className="h-full w-full object-cover" />
 
-                {/* dot de status alt (esquina sup. izq) */}
                 <span
                   aria-label={
                     status === 'complete'
@@ -170,7 +399,6 @@ export function ImageGalleryField({
                   )}
                 />
 
-                {/* overlay acciones — siempre visible en touch, hover en desktop */}
                 <div
                   className={cn(
                     'absolute inset-0 flex items-end justify-between gap-1 p-2',
@@ -249,7 +477,6 @@ export function ImageGalleryField({
         </p>
       )}
 
-      {/* ============ MODAL EDITAR IMAGEN ============ */}
       <ImagenDetailModal
         open={!!editing}
         image={editing}
@@ -263,7 +490,6 @@ export function ImageGalleryField({
         }}
       />
 
-      {/* ============ CONFIRM BORRADO ============ */}
       <ConfirmDialog
         open={!!confirmDelete}
         onOpenChange={(o) => !o && setConfirmDeleteId(null)}
@@ -276,7 +502,7 @@ export function ImageGalleryField({
   );
 }
 
-/* ---------- Modal de edición de ALT por idioma ---------- */
+/* ---------- Modal de edición de ALT por idioma (multi) ---------- */
 
 function ImagenDetailModal({
   open,
