@@ -1,35 +1,24 @@
 'use client';
 
-import Image from 'next/image';
-import { useRef } from 'react';
 import { useFarmaciaEditor } from '../EditorContext';
 import { MultilangInput } from '../MultilangInput';
 import { TiptapField } from '../TiptapField';
 import { LocaleChip } from '../LocaleChip';
+import { ImageUploader } from '../ImageUploader';
 import { computeLocaleStatus } from '../i18nStatus';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { NavIcon } from '@/features/shell/NavIcon';
-import type { ImagenAsset, MultilangText, SobreNosotros } from '@/types/content';
+import type { MultilangText, SobreNosotros } from '@/types/content';
 
 const MAX_PUNTOS = 8;
 const RECOMENDADO_PUNTOS = 4;
 const MAX_IMAGENES = 6;
 
-function mockUpload(name: string): ImagenAsset {
-  const seed = name.replace(/\W+/g, '-').toLowerCase() || `img-${Date.now()}`;
-  return {
-    id: `img_${Math.random().toString(36).slice(2, 10)}`,
-    url: `https://picsum.photos/seed/${seed}/1600/1200`,
-    alt: {},
-  };
-}
-
 export function SobreTab() {
   const { farmacia, patch, currentLocale } = useFarmaciaEditor();
-  const imgRef = useRef<HTMLInputElement>(null);
   const sobre: SobreNosotros = farmacia.sobreNosotros ?? {};
   const puntos = sobre.puntos ?? [];
   const imagenes = farmacia.imagenesSobre ?? [];
@@ -55,13 +44,6 @@ export function SobreTab() {
     setPuntos(next);
   };
 
-  const addImg = (files: FileList | null) => {
-    if (!files) return;
-    const nuevas = Array.from(files).map((f) => mockUpload(f.name));
-    patch({ imagenesSobre: [...imagenes, ...nuevas].slice(0, MAX_IMAGENES) });
-  };
-  const removeImg = (id: string) =>
-    patch({ imagenesSobre: imagenes.filter((h) => h.id !== id) });
   const updateAlt = (id: string, alt: string) =>
     patch({
       imagenesSobre: imagenes.map((h) =>
@@ -256,67 +238,32 @@ export function SobreTab() {
           id="sec-sobre-imagenes"
           title="Imágenes"
           hint={`Aparecen junto a la descripción en la landing. Entre 1 y ${MAX_IMAGENES} imágenes.`}
-          actions={
-            <>
-              <input
-                ref={imgRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => addImg(e.target.files)}
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => imgRef.current?.click()}
-                disabled={imagenes.length >= MAX_IMAGENES}
-              >
-                <NavIcon name="Plus" size={13} />
-                Añadir
-              </Button>
-            </>
-          }
         />
 
-        {imagenes.length === 0 ? (
-          <button
-            type="button"
-            onClick={() => imgRef.current?.click()}
-            className="w-full card p-8 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
-          >
-            <div className="mx-auto w-10 h-10 rounded-full bg-[var(--color-surface-sunken)] flex items-center justify-center mb-3">
-              <NavIcon name="Image" size={18} className="text-[var(--color-muted)]" />
-            </div>
-            <p className="text-[13.5px] text-[var(--color-ink-2)] m-0">Sube 1-6 imágenes de la farmacia</p>
-            <p className="mt-1 text-[12px] text-[var(--color-muted)] m-0">Interior, equipo, momento del día…</p>
-          </button>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ImageUploader
+          mode="multi"
+          businessId={farmacia.id}
+          role="sobre"
+          value={imagenes}
+          onChange={(imagenesSobre) => patch({ imagenesSobre })}
+          max={MAX_IMAGENES}
+        />
+
+        {imagenes.length > 0 && (
+          <div className="mt-6 space-y-3">
+            <h4 className="text-[12.5px] font-semibold text-[var(--color-muted)] uppercase tracking-[0.06em]">
+              Texto alternativo por idioma (accesibilidad + SEO)
+            </h4>
             {imagenes.map((h, i) => (
-              <div key={h.id} className="card overflow-hidden">
-                <div className="relative aspect-[4/3] bg-[var(--color-surface-sunken)]">
-                  <Image
-                    src={h.url}
-                    alt={h.alt[currentLocale] ?? ''}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                  <div className="absolute top-2 left-2 chip chip-neutral bg-white/90">
-                    Imagen {i + 1}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeImg(h.id)}
-                    aria-label="Eliminar imagen"
-                    className="absolute top-2 right-2 h-8 w-8 flex items-center justify-center rounded-[6px] bg-white/90 hover:bg-white text-[var(--color-red-ink)]"
-                  >
-                    <NavIcon name="Trash" size={14} />
-                  </button>
+              <div key={h.id} className="card p-3 flex items-center gap-3">
+                <div className="w-14 h-10 shrink-0 rounded-[6px] overflow-hidden bg-[var(--color-surface-sunken)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={h.url} alt="" className="w-full h-full object-cover" />
                 </div>
-                <div className="p-4">
-                  <Label htmlFor={`alt-sobre-${h.id}`}>Alt (accesibilidad + SEO)</Label>
+                <div className="flex-1 min-w-0">
+                  <Label htmlFor={`alt-sobre-${h.id}`} className="text-[11.5px] text-[var(--color-muted)]">
+                    Imagen {i + 1}
+                  </Label>
                   <Input
                     id={`alt-sobre-${h.id}`}
                     value={h.alt[currentLocale] ?? ''}

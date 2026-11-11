@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useFarmaciaEditor } from '../EditorContext';
 import { MultilangInput } from '../MultilangInput';
 import { MultilangTextarea } from '../MultilangTextarea';
+import { ImageUploader } from '../ImageUploader';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
@@ -14,7 +14,7 @@ import { IconPicker } from '@/components/ui/IconPicker';
 import { IconoSVG } from '@/components/ui/IconoSVG';
 import { NavIcon } from '@/features/shell/NavIcon';
 import { cn } from '@/lib/utils';
-import type { HeroTarjetaFlotante, ImagenAsset } from '@/types/content';
+import type { HeroTarjetaFlotante } from '@/types/content';
 import {
   DndContext,
   closestCenter,
@@ -32,15 +32,6 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-function mockUpload(name: string): ImagenAsset {
-  const seed = name.replace(/\W+/g, '-').toLowerCase() || `img-${Date.now()}`;
-  return {
-    id: `img_${Math.random().toString(36).slice(2, 10)}`,
-    url: `https://picsum.photos/seed/${seed}/1920/800`,
-    alt: {},
-  };
-}
 
 function crearTarjetaVacia(orden: number): HeroTarjetaFlotante {
   return {
@@ -198,7 +189,6 @@ function TarjetaModal({
 
 export function HeroTab() {
   const { farmacia, patch, currentLocale } = useFarmaciaEditor();
-  const imgInputRef = useRef<HTMLInputElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const sensors = useSensors(
@@ -252,15 +242,6 @@ export function HeroTab() {
     setTarjetas(arrayMove(tarjetas, oldIdx, newIdx));
   };
 
-  const addHero = (files: FileList | null) => {
-    if (!files) return;
-    const nuevos = Array.from(files).map((f) => mockUpload(f.name));
-    patch({ heroImages: [...farmacia.heroImages, ...nuevos] });
-  };
-
-  const removeHero = (id: string) =>
-    patch({ heroImages: farmacia.heroImages.filter((h) => h.id !== id) });
-
   const updateHeroAlt = (id: string, alt: string) =>
     patch({
       heroImages: farmacia.heroImages.map((h) =>
@@ -313,66 +294,32 @@ export function HeroTab() {
           id="sec-hero-imagenes"
           title="Imágenes del hero"
           hint="Se rotan en la cabecera de la landing. Recomendado 1-6 imágenes horizontales, mínimo 1920×800."
-          actions={
-            <>
-              <input
-                ref={imgInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => addHero(e.target.files)}
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => imgInputRef.current?.click()}
-              >
-                <NavIcon name="Plus" size={13} />
-                Añadir
-              </Button>
-            </>
-          }
         />
 
-        {farmacia.heroImages.length === 0 ? (
-          <button
-            type="button"
-            onClick={() => imgInputRef.current?.click()}
-            className="w-full card p-10 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
-          >
-            <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-surface-sunken)] flex items-center justify-center mb-3">
-              <NavIcon name="Image" size={20} className="text-[var(--color-muted)]" />
-            </div>
-            <p className="text-[14px] text-[var(--color-ink-2)] m-0">Arrastra o pulsa para subir imágenes</p>
-            <p className="mt-1 text-[12px] text-[var(--color-muted)] m-0">JPG, PNG o WEBP · mínimo 1920×800</p>
-          </button>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ImageUploader
+          mode="multi"
+          businessId={farmacia.id}
+          role="hero"
+          value={farmacia.heroImages}
+          onChange={(heroImages) => patch({ heroImages })}
+          max={6}
+        />
+
+        {farmacia.heroImages.length > 0 && (
+          <div className="mt-6 space-y-3">
+            <h4 className="text-[12.5px] font-semibold text-[var(--color-muted)] uppercase tracking-[0.06em]">
+              Texto alternativo por idioma (accesibilidad + SEO)
+            </h4>
             {farmacia.heroImages.map((h, i) => (
-              <div key={h.id} className="card overflow-hidden">
-                <div className="relative aspect-[12/5] bg-[var(--color-surface-sunken)]">
-                  <Image
-                    src={h.url}
-                    alt={h.alt[currentLocale] ?? ''}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                  <div className="absolute top-2 left-2 chip chip-neutral bg-white/90">
-                    Imagen {i + 1}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeHero(h.id)}
-                    aria-label="Eliminar imagen"
-                    className="absolute top-2 right-2 h-8 w-8 flex items-center justify-center rounded-[6px] bg-white/90 hover:bg-white text-[var(--color-red-ink)]"
-                  >
-                    <NavIcon name="Trash" size={14} />
-                  </button>
+              <div key={h.id} className="card p-3 flex items-center gap-3">
+                <div className="w-14 h-10 shrink-0 rounded-[6px] overflow-hidden bg-[var(--color-surface-sunken)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={h.url} alt="" className="w-full h-full object-cover" />
                 </div>
-                <div className="p-4">
-                  <Label htmlFor={`alt-${h.id}`}>Alt (accesibilidad + SEO)</Label>
+                <div className="flex-1 min-w-0">
+                  <Label htmlFor={`alt-${h.id}`} className="text-[11.5px] text-[var(--color-muted)]">
+                    Imagen {i + 1}
+                  </Label>
                   <Input
                     id={`alt-${h.id}`}
                     value={h.alt[currentLocale] ?? ''}

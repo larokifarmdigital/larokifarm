@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-import { useRef } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
@@ -11,8 +9,9 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { NavIcon, type IconName } from '@/features/shell/NavIcon';
 import { useFarmaciaEditor } from '../EditorContext';
 import { HorarioSemanal } from '../HorarioSemanal';
+import { ImageUploader } from '../ImageUploader';
 import { slugify } from '@/lib/utils';
-import type { Horario, ImagenAsset } from '@/types/content';
+import type { Horario } from '@/types/content';
 
 const REDES: { key: 'instagram' | 'facebook' | 'x' | 'tiktok' | 'youtube'; label: string; icon: IconName; placeholder: string }[] = [
   { key: 'instagram', label: 'Instagram', icon: 'InstagramLogo', placeholder: 'usuario' },
@@ -32,27 +31,12 @@ const HORARIO_TIPICO: Horario[] = [
   { dia: 'dom', tramos: [], cerrado: true },
 ];
 
-function mockUpload(name: string): ImagenAsset {
-  const seed = name.replace(/\W+/g, '-').toLowerCase() || `img-${Date.now()}`;
-  return {
-    id: `img_${Math.random().toString(36).slice(2, 10)}`,
-    url: `https://picsum.photos/seed/${seed}/480/480`,
-    alt: {},
-  };
-}
-
 export function GeneralTab() {
   const { farmacia, patch } = useFarmaciaEditor();
-  const logoInputRef = useRef<HTMLInputElement>(null);
   const d = farmacia.direccion ?? {};
 
   const setDir = (field: string, value: string) => {
     patch({ direccion: { ...d, [field]: value } });
-  };
-
-  const setLogo = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    patch({ logo: mockUpload(files[0].name) });
   };
 
   return (
@@ -124,54 +108,18 @@ export function GeneralTab() {
             />
           </div>
 
-          {/* Logotipo */}
+          {/* Logotipo — ImageUploader sube a R2 vía uploadContentImage server action */}
           <div className="sm:col-span-2">
-            <Label hint={<span className="text-[10.5px] font-mono-tabular text-[var(--color-muted-2)]">240×240 mín · cuadrado</span>}>Logotipo</Label>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => logoInputRef.current?.click()}
-                aria-label={farmacia.logo ? 'Reemplazar logotipo' : 'Subir logotipo'}
-                className="relative h-16 w-16 shrink-0 rounded-[10px] overflow-hidden border border-[var(--color-hairline-strong)] bg-[var(--color-surface-sunken)] hover:border-[var(--color-accent)] transition-colors group"
-              >
-                {farmacia.logo ? (
-                  <>
-                    <Image
-                      src={farmacia.logo.url}
-                      alt={farmacia.logo.alt['es'] ?? 'Logo'}
-                      width={64}
-                      height={64}
-                      className="object-cover w-full h-full"
-                      unoptimized
-                    />
-                    <span className="absolute inset-0 bg-[var(--color-ink)]/60 opacity-0 group-hover:opacity-100 transition-opacity grid place-items-center text-white text-[10.5px] font-mono-tabular uppercase tracking-wider">
-                      Cambiar
-                    </span>
-                  </>
-                ) : (
-                  <div className="absolute inset-0 grid place-items-center text-[var(--color-muted)] group-hover:text-[var(--color-accent)] transition-colors">
-                    <NavIcon name="Plus" size={20} />
-                  </div>
-                )}
-              </button>
-              <input
-                ref={logoInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => setLogo(e.target.files)}
-              />
-              {farmacia.logo && (
-                <button
-                  type="button"
-                  onClick={() => patch({ logo: undefined })}
-                  aria-label="Quitar logotipo"
-                  className="h-8 w-8 flex items-center justify-center rounded-[6px] text-[var(--color-muted)] hover:text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)] transition-colors"
-                >
-                  <NavIcon name="Trash" size={14} />
-                </button>
-              )}
-            </div>
+            <ImageUploader
+              mode="single"
+              businessId={farmacia.id}
+              role="logo"
+              label="Logotipo"
+              hint="240×240 mín · cuadrado · PNG o SVG con fondo transparente"
+              value={farmacia.logo}
+              onChange={(logo) => patch({ logo: logo ?? undefined })}
+              className="max-w-[260px]"
+            />
           </div>
         </div>
       </section>
