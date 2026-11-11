@@ -35,9 +35,50 @@ Todo en `src/app/globals.css` como CSS vars:
 mockup dice ink para "Guardar" (que no aparece porque hay autosave) y accent
 naranja para todo lo que compromete.
 
+## Estructura de carpetas (skill `nextjs-conventions`)
+
+```
+src/
+├── app/            SOLO routing. Pages finas: params → View de la feature
+├── core/           BACKEND por dominio (domain / application / infrastructure)
+│   ├── shared/     Locale, LOCALES, LOCALE_LABELS, MultilangText, SaveResult
+│   ├── auth/       Usuario · getCurrentUser/requireUser · Auth.js (authjs.ts
+│   │               + authjs.config.ts edge-safe para el middleware)
+│   ├── farmacias/  modelos (Farmacia, Servicio…), ports FarmaciaRepository +
+│   │               ContentImageRepository, adapters Prisma/mock, use cases
+│   │               (CreateFarmacia, Upload/Delete/Reorder/GetContentImage…)
+│   └── storage/    StorageRepository + StorageR2/StorageLocal + getStorage()
+├── features/       FRONTEND por pantalla: ui/{views,components,context,lib} + actions/
+│   ├── farmacias/  lista, wizard y editor (ver abajo) · actions finas → core
+│   ├── auth/  shell/  conciliador/  scout/  admin/
+│   └── <x>/index.ts  API pública: lo que importan las pages
+└── shared/         sin negocio: components/{atoms,molecules,templates},
+                    hooks/, lib/ (cn, format, slugify, prisma, iconCatalog), types/
+```
+
+Reglas:
+- **Una carpeta por componente** con su `index.ts` (`Button/Button.tsx` +
+  `index.ts`). Los subcomponentes privados viven dentro de la carpeta del
+  padre (ej. `FarmaciasList/FarmaciasTable.tsx`) y no se exportan.
+- **Cross-core solo por barrel** (`@/core/auth`, nunca `@/core/auth/application/…`).
+  Grafo: shared ← auth ← farmacias → storage. Excepción documentada: el
+  middleware importa `@/core/auth/infrastructure/authjs.config` directo (edge).
+- **Client components**: tipos/valores de dominio desde `@/core/farmacias/domain`
+  o `@/core/shared`. NUNCA `@/core/farmacias` (barrel server-only, arrastra Prisma).
+- **Use cases solo donde hay lógica**. Listar/obtener/guardar/publicar/duplicar/
+  archivar llaman directo a `getFarmaciaRepository()` (flag `USE_NEON_CONTENT`).
+- **Naming**: dominio en español (calca los fields de Sanity — excepción del
+  skill `naming-conventions`); carpetas estructurales y utils en inglés.
+
 ## Arquitectura del editor de farmacia
 
-Todo en `src/features/farmacias/editor/`. Componentes clave:
+Todo en `src/features/farmacias/ui/components/editor/`, agrupado en
+`navigation/` (TopBar, Tabs, FloatingNav, GroupSegmented, Section*,
+MobileActionBar, ActionButtons), `status/` (AutosaveIndicator, HealthChip,
+LocaleChip), `fields/` (Multilang*, LangTabs, Tiptap, ImageGalleryField,
+HorarioSemanal, TextosCabeceraFields, FieldPreview), `sections/` (los *Tab) y
+`preview/`. Estado en `ui/context/EditorContext.tsx`; config de secciones e
+i18n en `ui/lib/{sectionsConfig,i18nStatus}.ts`. Componentes clave:
 
 ### Layout raíz
 - **`FarmaciaEditor.tsx`** — orquesta todo. Estado `activeSectionKey`, agrupa
@@ -77,7 +118,7 @@ Todo en `src/features/farmacias/editor/`. Componentes clave:
 - **`TextosCabeceraFields.tsx`** — trío `chip / titulo / subtitulo` i18n
   reutilizable para Servicios/FAQs/Reseñas.
 
-### Componentes UI reutilizables (en `src/components/ui/`)
+### Componentes UI reutilizables (en `src/shared/components/{atoms,molecules}/`)
 - **`Button.tsx`** — variantes `primary` (ink), `secondary` (blanco+border),
   `ghost`, **`accent`** (naranja — LA importante), `danger`, `link`.
 - **`IconInput.tsx`** — input con icono adornment a la izquierda. **Focus
@@ -96,7 +137,7 @@ Todo en `src/features/farmacias/editor/`. Componentes clave:
   Hero tarjetas, Features).
 - **`IconPicker.tsx`** — grid de iconos por categorías para Servicios/Hero/Features.
 
-### Tabs del editor (todos en `tabs/`)
+### Tabs del editor (todos en `editor/sections/`)
 | Grupo | Tab | Sanity fields cubiertos |
 |---|---|---|
 | Datos | `GeneralTab` | nombre, slug, logo, titular, colegiado, contacto, redes, direccion, googleMapsUrl, mapaUrl, horarios (via `HorarioSemanal`) |
@@ -120,7 +161,8 @@ Todo en `src/features/farmacias/editor/`. Componentes clave:
 ## Cobertura Sanity actual: 100%
 
 Todos los campos editables del schema `studio/schemas/farmacias/farmacia.ts`
-tienen UI en el backoffice. Tipos en `src/types/content.ts`.
+tienen UI en el backoffice. Tipos en `src/core/farmacias/domain/models/Farmacia.ts`
+(+ i18n en `src/core/shared/domain/i18n.ts`).
 
 Diferencias schema vs UI documentadas:
 - **Redes sociales** — backoffice tiene `x` y `youtube` extra (Sanity solo
@@ -144,9 +186,9 @@ Diferencias schema vs UI documentadas:
    cuando no la necesitas.
 9. **Screenshots evitados** por consumo de tokens. Verificar con
    `browser_snapshot` (accessibility tree, text) o `browser_evaluate`.
-10. **Módulos WIP ocultos del sidebar** con `hidden: true` en `nav-config.ts`
-    hasta estar listos para producción — la ruta sigue accesible por URL
-    para desarrollo, pero el cliente no la ve.
+10. **Módulos WIP ocultos del sidebar** con `hidden: true` en
+    `features/shell/ui/lib/navConfig.ts` hasta estar listos para producción —
+    la ruta sigue accesible por URL para desarrollo, pero el cliente no la ve.
 
 ## Fases del roadmap
 
@@ -167,6 +209,9 @@ Diferencias schema vs UI documentadas:
 - **Infra de contexto**: hook `PostToolUse` en `.claude/settings.json` que
   actualiza sección `## Cambios recientes` al hacer commit + skill global
   `/handoff` para cerrar sesiones con contexto persistido ✅
+- **Reestructura 11-11-2026**: `core/` (dominio) + `features/` (pantallas) +
+  `shared/` (design system), una carpeta por componente; lógica de imágenes
+  a use cases; `FarmaciasList` e `ImageGalleryField` troceados ✅
 - **Pendientes**:
   - Persistencia real en Neon (server actions ya están, falta conectar el
     save) — se comparte DB con conciliador-albaranes, el `Business` del
@@ -182,7 +227,7 @@ Diferencias schema vs UI documentadas:
    tabs enteros para orientarse.
 2. **Cambios de UI**: revisar la sección "Decisiones UI/UX acordadas" antes.
 3. **Añadir componente nuevo**: preferir extender los reutilizables de
-   `components/ui/` antes de crear otro.
+   `shared/components/` antes de crear otro.
 4. **Verificación visual**: `browser_snapshot` (barato) > `browser_evaluate`
    (barato) > screenshots (caro, evitar).
 5. **Al terminar cambios significativos**: actualizar este archivo (sección
@@ -195,5 +240,17 @@ Diferencias schema vs UI documentadas:
 - Nunca commit/push sin permiso explícito del user.
 - Español peninsular (no rioplatense).
 - Comentarios: por defecto NO. Solo cuando el WHY es no obvio.
-- Types en `src/types/content.ts` — hay que mantenerlos sincronizados con
+- Types en `src/core/farmacias/domain/models/Farmacia.ts` — hay que mantenerlos sincronizados con
   el schema Sanity real (`studio/schemas/farmacias/farmacia.ts`).
+
+<!-- auto:recent-commits:start -->
+## Cambios recientes
+
+Actualizado automáticamente al hacer commit (2026-11-11T09:43:18Z).
+
+- `f710fc3` 2026-11-11 — Refactor(backoffice): estructura core/ + features/ + shared/
+- `227621a` 2026-11-11 — Feat(backoffice): modal pattern Features+Puntos + FieldPreview live mini-mockup
+- `2e7d262` 2026-11-11 — Feat(backoffice): ImageGalleryField mode=single + jubilar ImageUploader + ServiciosTab modal
+- `522eb88` 2026-11-11 — Feat(backoffice): revamp UX del editor de farmacias (Gilroy, modales, galería compacta)
+- `4b84a3e` 2026-11-11 — Fix(backoffice): migración Sanity → mapear language (no _key) + traducir días Mo→lun
+<!-- auto:recent-commits:end -->
