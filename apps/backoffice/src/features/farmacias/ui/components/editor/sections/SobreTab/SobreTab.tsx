@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { MultilangInput } from '@/features/farmacias/ui/components/editor/fields/MultilangInput';
 import { TiptapField } from '@/features/farmacias/ui/components/editor/fields/TiptapField';
@@ -157,12 +157,15 @@ function PuntoModal({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<MultilangText | null>(initial);
+  const [seed, setSeed] = useState({ open, initial });
 
-  // Seed el draft cada vez que se abre con un `initial` nuevo; limpia al cerrar.
-  useEffect(() => {
+  // Re-seed el draft cada vez que se abre con un `initial` nuevo; limpia al
+  // cerrar. Se ajusta durante el render (patrón React), no en un effect.
+  if (seed.open !== open || seed.initial !== initial) {
+    setSeed({ open, initial });
     if (open && initial) setDraft(initial);
     if (!open) setDraft(null);
-  }, [open, initial]);
+  }
 
   if (!draft) return null;
 

@@ -43,7 +43,7 @@ src/
 ├── core/           BACKEND por dominio (domain / application / infrastructure)
 │   ├── shared/     Locale, LOCALES, LOCALE_LABELS, MultilangText, SaveResult
 │   ├── auth/       Usuario · getCurrentUser/requireUser · Auth.js (authjs.ts
-│   │               + authjs.config.ts edge-safe para el middleware)
+│   │               + authjs.config.ts ligero para src/proxy.ts)
 │   ├── farmacias/  modelos (Farmacia, Servicio…), ports FarmaciaRepository +
 │   │               ContentImageRepository, adapters Prisma/mock, use cases
 │   │               (CreateFarmacia, Upload/Delete/Reorder/GetContentImage…)
@@ -53,7 +53,7 @@ src/
 │   ├── auth/  shell/  conciliador/  scout/  admin/
 │   └── <x>/index.ts  API pública: lo que importan las pages
 └── shared/         sin negocio: components/{atoms,molecules,templates},
-                    hooks/, lib/ (cn, format, slugify, prisma, iconCatalog), types/
+                    lib/ (cn, format, slugify, sleep, prisma, iconCatalog), types/
 ```
 
 Reglas:
@@ -61,8 +61,10 @@ Reglas:
   `index.ts`). Los subcomponentes privados viven dentro de la carpeta del
   padre (ej. `FarmaciasList/FarmaciasTable.tsx`) y no se exportan.
 - **Cross-core solo por barrel** (`@/core/auth`, nunca `@/core/auth/application/…`).
-  Grafo: shared ← auth ← farmacias → storage. Excepción documentada: el
-  middleware importa `@/core/auth/infrastructure/authjs.config` directo (edge).
+  Grafo: shared ← auth ← farmacias → storage. Excepción documentada:
+  `src/proxy.ts` (antes middleware, Next 16) importa
+  `@/core/auth/infrastructure/authjs.config` directo para no cargar Prisma
+  en cada petición. Debe ser `export default` (Next lo analiza estáticamente).
 - **Client components**: tipos/valores de dominio desde `@/core/farmacias/domain`
   o `@/core/shared`. NUNCA `@/core/farmacias` (barrel server-only, arrastra Prisma).
 - **Use cases solo donde hay lógica**. Listar/obtener/guardar/publicar/duplicar/
@@ -246,11 +248,11 @@ Diferencias schema vs UI documentadas:
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-11T09:43:18Z).
+Actualizado automáticamente al hacer commit (2026-11-11T09:54:12Z).
 
+- `fc26000` 2026-11-11 — Refactor(backoffice): trocear FarmaciasList e ImageGalleryField
 - `f710fc3` 2026-11-11 — Refactor(backoffice): estructura core/ + features/ + shared/
 - `227621a` 2026-11-11 — Feat(backoffice): modal pattern Features+Puntos + FieldPreview live mini-mockup
 - `2e7d262` 2026-11-11 — Feat(backoffice): ImageGalleryField mode=single + jubilar ImageUploader + ServiciosTab modal
 - `522eb88` 2026-11-11 — Feat(backoffice): revamp UX del editor de farmacias (Gilroy, modales, galería compacta)
-- `4b84a3e` 2026-11-11 — Fix(backoffice): migración Sanity → mapear language (no _key) + traducir días Mo→lun
 <!-- auto:recent-commits:end -->

@@ -3,7 +3,6 @@
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { MultilangInput } from '@/features/farmacias/ui/components/editor/fields/MultilangInput';
 import { MultilangTextarea } from '@/features/farmacias/ui/components/editor/fields/MultilangTextarea';
-import { Input } from '@/shared/components/atoms/Input';
 import { Label } from '@/shared/components/atoms/Label';
 import { IconInput } from '@/shared/components/atoms/IconInput';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';

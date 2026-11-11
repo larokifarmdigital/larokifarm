@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   SECTION_LABELS,
   visibleNavItems,
@@ -29,14 +29,16 @@ export function MobileNavDrawer({
   const navItems = visibleNavItems(userRole);
   const pathname = usePathname();
 
-  // NOTE: cierra el drawer cuando el usuario navega a otra ruta. `onClose` NO
-  // va en las deps a propósito: el padre pasa una arrow inline (`() =>
-  // setMobileNavOpen(false)`) que crea nueva referencia en cada render, y si
-  // se incluyera aquí el effect se dispararía en el mismo tick en que se abre
+  // NOTE: cierra el drawer cuando el usuario navega a otra ruta. `onClose` va
+  // en un ref porque el padre pasa una arrow inline (nueva referencia en cada
+  // render): como dep, el effect se dispararía en el mismo tick en que se abre
   // → cerrándolo al instante. Solo queremos reaccionar al cambio de pathname.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const onCloseRef = useRef(onClose);
   useEffect(() => {
-    onClose();
+    onCloseRef.current = onClose;
+  });
+  useEffect(() => {
+    onCloseRef.current();
   }, [pathname]);
 
   return (

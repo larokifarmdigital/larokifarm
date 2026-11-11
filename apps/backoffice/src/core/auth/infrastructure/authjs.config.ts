@@ -1,7 +1,7 @@
 import type { NextAuthConfig } from 'next-auth';
 
-// NOTE: config edge-safe (sin Prisma ni bcrypt). Usada por el middleware,
-// que corre en el edge runtime y no soporta esas deps.
+// NOTE: config ligera (sin Prisma ni bcrypt). Usada por src/proxy.ts,
+// que solo necesita leer el JWT en cada petición.
 export const authConfig = {
   pages: {
     signIn: '/login',
