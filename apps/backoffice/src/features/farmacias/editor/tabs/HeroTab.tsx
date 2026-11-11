@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useFarmaciaEditor } from '../EditorContext';
 import { MultilangInput } from '../MultilangInput';
 import { MultilangTextarea } from '../MultilangTextarea';
+import { FieldPreview } from '../FieldPreview';
 import { ImageGalleryField } from '../ImageGalleryField';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
@@ -251,21 +252,33 @@ export function HeroTab() {
           hint="Chip, subtítulo y claim que aparecen sobre la primera pantalla de la landing. Si dejas el chip o el subtítulo vacíos, se usan los textos por defecto del sitio."
         />
 
-        <div className="space-y-4">
-          <MultilangInput
-            label="Chip (etiqueta superior)"
-            value={farmacia.heroChip ?? {}}
-            onChange={(v) => patch({ heroChip: v })}
-            placeholder="Farmacia en Barcelona"
-            help="Texto pequeño sobre el título principal."
-          />
-          <MultilangInput
-            label="Subtítulo"
-            value={farmacia.heroSubtitulo ?? {}}
-            onChange={(v) => patch({ heroSubtitulo: v })}
-            placeholder="Tu farmacia familiar en el Eixample"
-            help="Línea destacada bajo el nombre de la farmacia."
-          />
+        <div className="space-y-5">
+          <div className="grid gap-3 md:grid-cols-[1fr_200px] md:items-start">
+            <MultilangInput
+              label="Chip (etiqueta superior)"
+              value={farmacia.heroChip ?? {}}
+              onChange={(v) => patch({ heroChip: v })}
+              placeholder="Farmacia en Barcelona"
+              help="Texto pequeño sobre el título principal."
+            />
+            <FieldPreview
+              kind="heroChip"
+              value={farmacia.heroChip?.[currentLocale] ?? ''}
+            />
+          </div>
+          <div className="grid gap-3 md:grid-cols-[1fr_200px] md:items-start">
+            <MultilangInput
+              label="Subtítulo"
+              value={farmacia.heroSubtitulo ?? {}}
+              onChange={(v) => patch({ heroSubtitulo: v })}
+              placeholder="Tu farmacia familiar en el Eixample"
+              help="Línea destacada bajo el nombre de la farmacia."
+            />
+            <FieldPreview
+              kind="heroTitulo"
+              value={farmacia.heroSubtitulo?.[currentLocale] ?? ''}
+            />
+          </div>
           <MultilangTextarea
             label="Claim / descripción corta"
             value={farmacia.descripcionCorta}

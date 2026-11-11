@@ -152,11 +152,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-11T07:37:12Z).
+Actualizado automáticamente al hacer commit (2026-11-11T09:07:55Z).
 
+- `2e7d262` 2026-11-11 — Feat(backoffice): ImageGalleryField mode=single + jubilar ImageUploader + ServiciosTab modal
+- `522eb88` 2026-11-11 — Feat(backoffice): revamp UX del editor de farmacias (Gilroy, modales, galería compacta)
 - `4b84a3e` 2026-11-11 — Fix(backoffice): migración Sanity → mapear language (no _key) + traducir días Mo→lun
 - `205fbfb` 2026-11-11 — Feat(backoffice): integrar ImageUploader en HeroTab/SobreTab/GeneralTab
 - `79f5b68` 2026-11-10 — Feat(backoffice): Fase C — imágenes a R2 (storage + server actions + proxy + uploader)
-- `6d3bed1` 2026-11-10 — Feat(backoffice): Fase D — script migración Sanity → Neon
-- `2d632d9` 2026-11-10 — Feat(backoffice): Fase B — repo Prisma real + mappers Business ↔ Farmacia
 <!-- auto:recent-commits:end -->

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useFarmaciaEditor } from '../EditorContext';
 import { MultilangInput } from '../MultilangInput';
 import { TiptapField } from '../TiptapField';
@@ -9,13 +10,197 @@ import { computeLocaleStatus } from '../i18nStatus';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
+import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { NavIcon } from '@/features/shell/NavIcon';
-import type { MultilangText, SobreNosotros } from '@/types/content';
+import { cn } from '@/lib/utils';
+import type { Locale, MultilangText, SobreNosotros } from '@/types/content';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const MAX_PUNTOS = 8;
 const RECOMENDADO_PUNTOS = 4;
 const MAX_IMAGENES = 6;
+
+/**
+ * Fila compacta read-only. Mostrar + gestionar (editar/eliminar/reordenar).
+ * Punto = una sola frase i18n, sin icono ni descripción.
+ */
+function PuntoRow({
+  id,
+  punto,
+  currentLocale,
+  activeLocales,
+  onEdit,
+  onRemove,
+}: {
+  id: string;
+  punto: MultilangText;
+  currentLocale: Locale;
+  activeLocales: Locale[];
+  onEdit: () => void;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  const texto =
+    punto[currentLocale] || punto.es || punto.ca || punto.en || '';
+  const hasText = !!texto.trim();
+
+  const missingLocales = activeLocales.filter((l) => !punto[l]?.trim());
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'group flex items-center gap-2 px-2 py-2 rounded-[var(--radius-sm)] border border-transparent bg-[var(--color-surface)]',
+        'hover:border-[var(--color-hairline)] transition-all',
+        isDragging && 'border-[var(--color-hairline-strong)] shadow-[var(--shadow-elevated)]',
+      )}
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label="Reordenar punto"
+        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted-2)] hover:text-[var(--color-ink-2)] cursor-grab active:cursor-grabbing"
+      >
+        <NavIcon name="DotsSixVertical" size={14} weight="bold" />
+      </button>
+
+      <button
+        type="button"
+        onClick={onEdit}
+        className="flex-1 min-w-0 flex items-center gap-3 text-left"
+      >
+        <span className="shrink-0 h-9 w-9 rounded-[var(--radius-sm)] bg-[var(--color-accent-soft)] flex items-center justify-center text-[var(--color-accent-ink)]">
+          <NavIcon name="Check" size={14} weight="bold" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span
+            className={cn(
+              'block text-[13.5px] font-medium truncate leading-tight',
+              hasText
+                ? 'text-[var(--color-ink)]'
+                : 'text-[var(--color-muted-2)] italic',
+            )}
+          >
+            {hasText ? texto : 'Punto sin texto'}
+          </span>
+          {missingLocales.length > 0 && (
+            <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-[var(--color-yellow-ink)]">
+              <span
+                aria-hidden
+                className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-yellow-ink)]"
+              />
+              Falta {missingLocales.map((l) => l.toUpperCase()).join(', ')}
+            </span>
+          )}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label="Editar punto"
+        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]"
+      >
+        <NavIcon name="PencilSimple" size={13} />
+      </button>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="Eliminar punto"
+        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)]"
+      >
+        <NavIcon name="Trash" size={13} />
+      </button>
+    </li>
+  );
+}
+
+function PuntoModal({
+  open,
+  initial,
+  mode,
+  onSave,
+  onClose,
+}: {
+  open: boolean;
+  initial: MultilangText | null;
+  mode: 'create' | 'edit';
+  onSave: (p: MultilangText) => void;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState<MultilangText | null>(initial);
+
+  // Seed el draft cada vez que se abre con un `initial` nuevo; limpia al cerrar.
+  useEffect(() => {
+    if (open && initial) setDraft(initial);
+    if (!open) setDraft(null);
+  }, [open, initial]);
+
+  if (!draft) return null;
+
+  return (
+    <Modal
+      open={open}
+      onOpenChange={(o) => !o && onClose()}
+      title={mode === 'create' ? 'Nuevo punto destacado' : 'Editar punto'}
+      description="Frase corta que resume un valor de la farmacia. Aparece como ítem de lista en la sección «Sobre nosotros»."
+      footer={
+        <>
+          <Button variant="ghost" size="md" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            variant="accent"
+            size="md"
+            onClick={() => {
+              onSave(draft);
+              onClose();
+            }}
+          >
+            {mode === 'create' ? 'Añadir punto' : 'Guardar cambios'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <MultilangInput
+          label="Texto del punto"
+          value={draft}
+          onChange={setDraft}
+          placeholder="Ej.: Equipo formado en pediatría"
+          required
+        />
+      </div>
+    </Modal>
+  );
+}
 
 export function SobreTab() {
   const { farmacia, patch, currentLocale } = useFarmaciaEditor();
@@ -23,33 +208,80 @@ export function SobreTab() {
   const puntos = sobre.puntos ?? [];
   const imagenes = farmacia.imagenesSobre ?? [];
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingDraft, setEditingDraft] = useState<MultilangText | null>(null);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
   const setSobre = (next: Partial<SobreNosotros>) =>
     patch({ sobreNosotros: { ...sobre, ...next } });
 
   const setPuntos = (next: MultilangText[]) => setSobre({ puntos: next });
 
-  const addPunto = () => {
+  const openCreate = () => {
     if (puntos.length >= MAX_PUNTOS) return;
-    setPuntos([...puntos, {}]);
-  };
-  const updatePunto = (i: number, v: MultilangText) =>
-    setPuntos(puntos.map((p, idx) => (idx === i ? v : p)));
-  const removePunto = (i: number) =>
-    setPuntos(puntos.filter((_, idx) => idx !== i));
-  const movePunto = (i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= puntos.length) return;
-    const next = [...puntos];
-    [next[i], next[j]] = [next[j], next[i]];
-    setPuntos(next);
+    setModalMode('create');
+    setEditingIndex(null);
+    setEditingDraft({});
+    setModalOpen(true);
   };
 
+  const openEdit = (i: number) => {
+    setModalMode('edit');
+    setEditingIndex(i);
+    setEditingDraft({ ...puntos[i] });
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditingDraft(null);
+    setEditingIndex(null);
+  };
+
+  const handleSave = (p: MultilangText) => {
+    if (modalMode === 'create') {
+      setPuntos([...puntos, p]);
+    } else if (editingIndex !== null) {
+      setPuntos(puntos.map((x, idx) => (idx === editingIndex ? p : x)));
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteIndex === null) return;
+    setPuntos(puntos.filter((_, idx) => idx !== deleteIndex));
+    setDeleteIndex(null);
+  };
+
+  const onDragEnd = (e: DragEndEvent) => {
+    if (!e.over || e.active.id === e.over.id) return;
+    const oldIdx = Number(String(e.active.id).replace('p-', ''));
+    const newIdx = Number(String(e.over.id).replace('p-', ''));
+    if (Number.isNaN(oldIdx) || Number.isNaN(newIdx)) return;
+    setPuntos(arrayMove(puntos, oldIdx, newIdx));
+  };
+
+  const count = puntos.length;
   const puntosCountHint =
-    puntos.length === 0
+    count === 0
       ? `Recomendado ${RECOMENDADO_PUNTOS}-6 puntos.`
-      : puntos.length < RECOMENDADO_PUNTOS
-        ? `${puntos.length}/${RECOMENDADO_PUNTOS} recomendados.`
-        : `${puntos.length}/${MAX_PUNTOS} · máx ${MAX_PUNTOS}.`;
+      : count < RECOMENDADO_PUNTOS
+        ? `${count}/${RECOMENDADO_PUNTOS} recomendados.`
+        : `${count}/${MAX_PUNTOS} · máx ${MAX_PUNTOS}.`;
+
+  const deletePreview =
+    deleteIndex !== null
+      ? puntos[deleteIndex]?.es ||
+        puntos[deleteIndex]?.ca ||
+        puntos[deleteIndex]?.en ||
+        ''
+      : '';
 
   return (
     <div className="space-y-10 max-w-3xl">
@@ -104,26 +336,28 @@ export function SobreTab() {
       <section aria-labelledby="sec-sobre-puntos">
         <SectionHeader
           id="sec-sobre-puntos"
-          title="Puntos destacados"
+          title={count === 0 ? 'Puntos destacados' : `${count} ${count === 1 ? 'punto' : 'puntos'}`}
           hint={`Lista de frases cortas que resumen los valores de la farmacia. ${puntosCountHint}`}
           actions={
-            <Button
-              variant="accent"
-              size="sm"
-              onClick={addPunto}
-              disabled={puntos.length >= MAX_PUNTOS}
-            >
-              <NavIcon name="Plus" size={13} />
-              <span className="hidden sm:inline">Añadir punto</span>
-              <span className="sm:hidden">Añadir</span>
-            </Button>
+            count > 0 ? (
+              <Button
+                variant="accent"
+                size="sm"
+                onClick={openCreate}
+                disabled={count >= MAX_PUNTOS}
+              >
+                <NavIcon name="Plus" size={13} />
+                <span className="hidden sm:inline">Añadir punto</span>
+                <span className="sm:hidden">Añadir</span>
+              </Button>
+            ) : null
           }
         />
 
-        {puntos.length === 0 ? (
+        {count === 0 ? (
           <button
             type="button"
-            onClick={addPunto}
+            onClick={openCreate}
             className="w-full card p-8 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
           >
             <div className="mx-auto w-10 h-10 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
@@ -135,56 +369,26 @@ export function SobreTab() {
             </p>
           </button>
         ) : (
-          <ul className="card divide-y divide-[var(--color-hairline)] list-none m-0 p-0 overflow-hidden">
-            {puntos.map((p, i) => (
-              <li key={i} className="flex items-center gap-2 px-3 py-2.5">
-                <span className="shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent-ink)] text-[11px] font-mono-tabular font-medium">
-                  {i + 1}
-                </span>
-                <div className="flex-1 min-w-0 flex items-center gap-2">
-                  <Input
-                    aria-label={`Punto ${i + 1}`}
-                    value={p[currentLocale] ?? ''}
-                    onChange={(e) => updatePunto(i, { ...p, [currentLocale]: e.target.value })}
-                    placeholder="Ej.: Atención personalizada desde 1978"
-                    className="border-0 shadow-none px-0 py-0 h-8 bg-transparent focus:shadow-none"
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext
+              items={puntos.map((_, i) => `p-${i}`)}
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="card p-1.5 space-y-0.5 list-none m-0">
+                {puntos.map((p, i) => (
+                  <PuntoRow
+                    key={`p-${i}`}
+                    id={`p-${i}`}
+                    punto={p}
+                    currentLocale={currentLocale}
+                    activeLocales={farmacia.idiomasActivos}
+                    onEdit={() => openEdit(i)}
+                    onRemove={() => setDeleteIndex(i)}
                   />
-                  <LocaleChip
-                    locale={currentLocale}
-                    status={computeLocaleStatus(p, currentLocale, farmacia.idiomasActivos)}
-                  />
-                </div>
-                <div className="flex items-center gap-0.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => movePunto(i, -1)}
-                    disabled={i === 0}
-                    aria-label="Subir punto"
-                    className="h-7 w-7 flex items-center justify-center rounded-[4px] text-[var(--color-muted-2)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] disabled:opacity-30 disabled:pointer-events-none"
-                  >
-                    <NavIcon name="CaretRight" size={11} className="-rotate-90" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => movePunto(i, 1)}
-                    disabled={i === puntos.length - 1}
-                    aria-label="Bajar punto"
-                    className="h-7 w-7 flex items-center justify-center rounded-[4px] text-[var(--color-muted-2)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] disabled:opacity-30 disabled:pointer-events-none"
-                  >
-                    <NavIcon name="CaretRight" size={11} className="rotate-90" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removePunto(i)}
-                    aria-label="Eliminar punto"
-                    className="h-7 w-7 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)]"
-                  >
-                    <NavIcon name="Trash" size={11} />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
         )}
       </section>
 
@@ -242,6 +446,29 @@ export function SobreTab() {
           max={MAX_IMAGENES}
         />
       </section>
+
+      <PuntoModal
+        open={modalOpen}
+        initial={editingDraft}
+        mode={modalMode}
+        onSave={handleSave}
+        onClose={closeModal}
+      />
+
+      <ConfirmDialog
+        open={deleteIndex !== null}
+        onOpenChange={(o) => !o && setDeleteIndex(null)}
+        title="Eliminar punto"
+        description={
+          deletePreview
+            ? `Vas a eliminar «${deletePreview}». Esta acción no se puede deshacer.`
+            : 'Vas a eliminar este punto. Esta acción no se puede deshacer.'
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }
