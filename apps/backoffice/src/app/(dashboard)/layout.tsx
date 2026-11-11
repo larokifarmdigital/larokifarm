@@ -1,8 +1,6 @@
 import { redirect } from 'next/navigation';
-import { AppSidebar } from '@/features/shell/AppSidebar';
-import { AppTopbar } from '@/features/shell/AppTopbar';
-import { SidebarProvider } from '@/features/shell/SidebarProvider';
-import { getCurrentUser } from '@/lib/session';
+import { getCurrentUser } from '@/core/auth';
+import { AppSidebar, AppTopbar, SidebarProvider } from '@/features/shell';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();

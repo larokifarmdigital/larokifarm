@@ -12,28 +12,25 @@
  */
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getStorage } from '@/lib/storage';
+import { GetContentImageFileUseCase, getContentImageRepository } from '@/core/farmacias';
+import { getStorage } from '@/core/storage';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const img = await prisma.contentImage.findUnique({
-    where: { id },
-    select: { storageKey: true, sizeBytes: true },
-  });
-  if (!img) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const res = await new GetContentImageFileUseCase(getContentImageRepository(), getStorage()).execute(id);
 
-  try {
-    const { data, contentType } = await getStorage().read(img.storageKey);
-    return new NextResponse(new Uint8Array(data), {
-      status: 200,
-      headers: {
-        'Content-Type': contentType,
-        'Content-Length': String(img.sizeBytes ?? data.byteLength),
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
-    });
-  } catch {
-    return NextResponse.json({ error: 'Storage read failed' }, { status: 502 });
+  if (!res.ok) {
+    return res.reason === 'not-found'
+      ? NextResponse.json({ error: 'Not found' }, { status: 404 })
+      : NextResponse.json({ error: 'Storage read failed' }, { status: 502 });
   }
+
+  return new NextResponse(new Uint8Array(res.data), {
+    status: 200,
+    headers: {
+      'Content-Type': res.contentType,
+      'Content-Length': String(res.sizeBytes),
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+  });
 }

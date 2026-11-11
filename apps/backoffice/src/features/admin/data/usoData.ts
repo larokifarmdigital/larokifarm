@@ -1,5 +1,5 @@
 import 'server-only';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/shared/lib/prisma';
 
 export type UsoGlobalKpis = {
   totalCostUsdMonth: number;

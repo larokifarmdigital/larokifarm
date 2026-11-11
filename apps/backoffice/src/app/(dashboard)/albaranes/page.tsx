@@ -1,7 +1,5 @@
-import { requireUser } from '@/lib/session';
-import { auth } from '@/lib/auth';
-import { getConciliadorDashboard } from '@/features/conciliador/data/dashboardData';
-import { DashboardView } from '@/features/conciliador/dashboard/DashboardView';
+import { requireUser } from '@/core/auth';
+import { DashboardView, getConciliadorDashboard } from '@/features/conciliador';
 
 export const metadata = { title: 'Albaranes · Backoffice' };
 
@@ -15,9 +13,8 @@ const DEFAULT_STANDALONE_URL =
     : 'http://localhost:3000';
 
 export default async function AlbaranesPage() {
-  await requireUser();
-  const session = await auth();
-  const businessId = session?.user?.businessId ?? null;
+  const user = await requireUser();
+  const businessId = user.farmaciaId ?? null;
 
   const data = await getConciliadorDashboard(businessId);
   const standaloneUrl = process.env.CONCILIADOR_STANDALONE_URL ?? DEFAULT_STANDALONE_URL;

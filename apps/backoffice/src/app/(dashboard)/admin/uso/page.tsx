@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
-import { requireUser } from '@/lib/session';
-import { getUsoData } from '@/features/admin/data/usoData';
-import { UsoView } from '@/features/admin/dashboard/UsoView';
+import { requireUser } from '@/core/auth';
+import { UsoView, getUsoData } from '@/features/admin';
 
 export const metadata = { title: 'Uso · Backoffice' };
 export const dynamic = 'force-dynamic';

@@ -1,7 +1,8 @@
 import NextAuth from 'next-auth';
-import { authConfig } from '@/lib/auth.config';
+import { authConfig } from '@/core/auth/infrastructure/authjs.config';
 
-// NOTE: middleware corre en edge runtime → usa authConfig sin providers
+// NOTE: middleware corre en edge runtime → importa authjs.config DIRECTO (no por
+// el barrel @/core/auth, que arrastra Prisma). authConfig va sin providers
 // (Credentials + Prisma + bcrypt no funcionan en edge).
 export const { auth: middleware } = NextAuth(authConfig);
 

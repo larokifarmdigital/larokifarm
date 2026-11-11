@@ -1,6 +1,6 @@
 import 'server-only';
 import type { ComparisonStatus } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/shared/lib/prisma';
 
 export type DashboardKpis = {
   total: number;

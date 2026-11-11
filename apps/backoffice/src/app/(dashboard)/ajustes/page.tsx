@@ -1,4 +1,4 @@
-import { PlaceholderScreen } from '@/components/PlaceholderScreen';
+import { PlaceholderScreen } from '@/shared/components/templates/PlaceholderScreen';
 
 export const metadata = { title: 'Ajustes · Backoffice' };
 

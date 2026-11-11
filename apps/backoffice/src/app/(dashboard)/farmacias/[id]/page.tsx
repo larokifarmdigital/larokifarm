@@ -1,25 +1,13 @@
-import { notFound } from 'next/navigation';
-import { contentRepository } from '@/lib/content-repository';
-import { FarmaciaEditor } from '@/features/farmacias/editor/FarmaciaEditor';
+import { FarmaciaEditorView, getFarmaciaEditorTitle } from '@/features/farmacias';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+type Props = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Props) {
   const { id } = await params;
-  const f = await contentRepository.getFarmacia(id);
-  return { title: f ? `${f.nombre} · Backoffice` : 'Farmacia · Backoffice' };
+  return { title: await getFarmaciaEditorTitle(id) };
 }
 
-export default async function FarmaciaEditorPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function FarmaciaEditorPage({ params }: Props) {
   const { id } = await params;
-  const farmacia = await contentRepository.getFarmacia(id);
-  if (!farmacia) notFound();
-
-  return <FarmaciaEditor initial={farmacia} />;
+  return <FarmaciaEditorView id={id} />;
 }
