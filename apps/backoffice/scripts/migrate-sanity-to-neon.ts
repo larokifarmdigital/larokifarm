@@ -64,15 +64,19 @@ const LOCALES = ['es', 'en', 'ca'] as const;
 type Locale = (typeof LOCALES)[number];
 type MultilangText = Partial<Record<Locale, string>>;
 
-/** El plugin internationalized-array guarda arrays `[{_key:'es', value:'...'}]`. */
+/** El plugin internationalized-array guarda arrays
+ *  `[{_key:'<hash>', _type:'internationalizedArrayStringValue', language:'es', value:'...'}]`.
+ *  La clave del idioma está en `language` (el `_key` es un hash random). */
 function fromI18nArray(v: unknown): MultilangText {
   if (!Array.isArray(v)) return {};
   const out: MultilangText = {};
   for (const el of v) {
     if (!el || typeof el !== 'object') continue;
-    const o = el as { _key?: string; value?: string };
-    if (o._key && typeof o.value === 'string' && (LOCALES as readonly string[]).includes(o._key)) {
-      out[o._key as Locale] = o.value;
+    const o = el as { language?: string; _key?: string; value?: string };
+    // Preferimos `language`; fallback a `_key` por si viene un dataset legacy.
+    const lang = o.language ?? o._key;
+    if (lang && typeof o.value === 'string' && (LOCALES as readonly string[]).includes(lang)) {
+      out[lang as Locale] = o.value;
     }
   }
   return out;
@@ -133,13 +137,22 @@ function mapFarmaciaToBusinessData(f: SanityFarmacia) {
   const direccion = (get<Record<string, unknown>>(f, 'direccion') ?? {}) as Record<string, unknown>;
   const logoImg = imageAssetToUrl(get(f, 'logo'));
 
-  const horarios = ((get<Record<string, unknown>[]>(f, 'horarios') ?? []) as Record<string, unknown>[]).map((h) => ({
-    dia: h.dia as string,
-    tramos: h.cerrado
-      ? []
-      : [{ abre: (h.apertura as string) ?? '', cierra: (h.cierre as string) ?? '' }],
-    cerrado: h.cerrado as boolean | undefined,
-  }));
+  // Sanity usa códigos ISO 2 letras en inglés (Mo, Tu, We, Th, Fr, Sa, Su);
+  // la UI del backoffice espera lun|mar|mie|jue|vie|sab|dom.
+  const DIA_MAP: Record<string, string> = {
+    Mo: 'lun', Tu: 'mar', We: 'mie', Th: 'jue', Fr: 'vie', Sa: 'sab', Su: 'dom',
+    // Pasa-por si algún doc ya está en formato nuevo (idempotencia):
+    lun: 'lun', mar: 'mar', mie: 'mie', jue: 'jue', vie: 'vie', sab: 'sab', dom: 'dom',
+  };
+  const horarios = ((get<Record<string, unknown>[]>(f, 'horarios') ?? []) as Record<string, unknown>[])
+    .map((h) => ({
+      dia: DIA_MAP[h.dia as string] ?? h.dia,
+      tramos: h.cerrado
+        ? []
+        : [{ abre: (h.apertura as string) ?? '', cierra: (h.cierre as string) ?? '' }],
+      cerrado: h.cerrado as boolean | undefined,
+    }))
+    .filter((h) => ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'].includes(h.dia as string));
 
   return {
     name: (get<string>(f, 'nombre') ?? 'Sin nombre').trim(),
