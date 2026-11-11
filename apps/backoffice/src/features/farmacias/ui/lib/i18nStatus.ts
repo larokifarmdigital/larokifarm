@@ -242,3 +242,48 @@ export function countBySection(farmacia: Farmacia): SectionI18nStatus[] {
 
   return Object.values(sections);
 }
+
+export type MissingSummary = {
+  /** Total de campos "missing" sumando todos los idiomas activos. */
+  totalMissing: number;
+  perLocale: { locale: Locale; total: number; filled: number; missing: number }[];
+  /** Solo secciones con algún missing, con el desglose por idioma (>0). */
+  sectionsWithMissing: (SectionI18nStatus & {
+    missingByLocale: { locale: Locale; missing: number }[];
+  })[];
+};
+
+/**
+ * Resumen de traducciones pendientes de una farmacia. Fuente única para el
+ * EditorHealthChip y para el aviso previo a publicar.
+ */
+export function summarizeMissing(farmacia: Farmacia): MissingSummary {
+  const active = farmacia.idiomasActivos;
+
+  const perLocale = active.map((locale) => {
+    const { total, filled, missing } = countLocaleStatus(farmacia, locale);
+    return { locale, total, filled, missing };
+  });
+
+  const sectionsWithMissing = countBySection(farmacia)
+    .map((sec) => ({
+      ...sec,
+      missingByLocale: active
+        .map((locale) => ({ locale, missing: sec.byLocale[locale]?.missing ?? 0 }))
+        .filter((x) => x.missing > 0),
+    }))
+    .filter((sec) => sec.missingByLocale.length > 0);
+
+  return {
+    totalMissing: perLocale.reduce((acc, l) => acc + l.missing, 0),
+    perLocale,
+    sectionsWithMissing,
+  };
+}
+
+/** Idioma con más pendientes de una sección (para saltar directo a él). */
+export function localeWithMostMissing(
+  sec: MissingSummary['sectionsWithMissing'][number],
+): Locale | undefined {
+  return [...sec.missingByLocale].sort((a, b) => b.missing - a.missing)[0]?.locale;
+}

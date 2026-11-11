@@ -1,30 +1,62 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { Button } from '@/shared/components/atoms/Button';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { publishFarmaciaAction } from '@/features/farmacias/actions/farmaciaActions';
+import { useI18nHealth } from '@/features/farmacias/ui/hooks/useI18nHealth';
+import { localeWithMostMissing } from '@/features/farmacias/ui/lib/i18nStatus';
 import { cn } from '@/shared/lib/cn';
+import { PublishMissingDialog } from './PublishMissingDialog';
 
 /**
  * Trío de acciones del editor (Ver preview · Ver landing · Publicar cambios).
  * Se usa tanto en el TopBar (desktop) como en la barra móvil bottom.
  *
  * `compact` activa el modo bottom-bar: los 3 botones ocupan flex-1 por igual.
+ *
+ * Si hay traducciones pendientes, "Publicar" abre antes PublishMissingDialog
+ * (confirmar, no bloquear).
  */
 export function EditorActionButtons({ compact = false }: { compact?: boolean }) {
-  const { farmacia, saveNow, dirty } = useFarmaciaEditor();
+  const { farmacia, saveNow, dirty, goToSection } = useFarmaciaEditor();
+  const health = useI18nHealth();
   const [pending, startTx] = useTransition();
+  const [warnOpen, setWarnOpen] = useState(false);
+
+  const doPublish = () => {
+    // NOTE: se captura antes del await — el contenido no cambia al guardar.
+    const remaining = health.totalMissing;
+    startTx(async () => {
+      try {
+        if (dirty) await saveNow();
+        await publishFarmaciaAction(farmacia.id, true);
+      } catch {
+        toast.error('No se pudo publicar. Vuelve a intentarlo.');
+        return;
+      }
+      setWarnOpen(false);
+      toast.success(
+        remaining === 0
+          ? 'Cambios publicados en la landing'
+          : `Publicado. ${remaining === 1 ? 'Queda 1 texto' : `Quedan ${remaining} textos`} por traducir.`,
+      );
+    });
+  };
 
   const publish = () => {
-    startTx(async () => {
-      if (dirty) await saveNow();
-      await publishFarmaciaAction(farmacia.id, true);
-      toast.success('Cambios publicados en la landing');
-    });
+    if (health.totalMissing > 0) setWarnOpen(true);
+    else doPublish();
+  };
+
+  const review = (sectionKey?: string) => {
+    const sec =
+      health.sectionsWithMissing.find((s) => s.key === sectionKey) ?? health.sectionsWithMissing[0];
+    setWarnOpen(false);
+    if (sec) goToSection(sec.key, localeWithMostMissing(sec));
   };
 
   const publishLabel = farmacia.status === 'published' ? 'Publicar cambios' : 'Publicar';
@@ -92,6 +124,15 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
           <span className="sm:hidden">{pending ? '…' : 'Publicar'}</span>
         )}
       </Button>
+
+      <PublishMissingDialog
+        open={warnOpen}
+        onOpenChange={setWarnOpen}
+        summary={health}
+        publishing={pending}
+        onPublish={doPublish}
+        onReview={review}
+      />
     </div>
   );
 }

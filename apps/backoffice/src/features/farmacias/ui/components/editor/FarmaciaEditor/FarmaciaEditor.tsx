@@ -14,14 +14,17 @@
  *   - MultilangInput / LocaleChip / TiptapField siguen funcionando igual — leen
  *     currentLocale del contexto.
  *
- * SECCIONES fuente de verdad: `sections-config.ts` (metadata sin components).
+ * SECCIONES fuente de verdad: `ui/lib/sectionsConfig.ts` (metadata sin components).
  * Los `Components` siguen mapeados aquí para que el sidebar/picker/sheet no
  * arrastren el bundle de Tiptap.
  */
 
 import { useEffect, useState } from 'react';
 import type { Farmacia } from '@/core/farmacias/domain';
-import { FarmaciaEditorProvider } from '@/features/farmacias/ui/context/EditorContext';
+import {
+  FarmaciaEditorProvider,
+  useFarmaciaEditor,
+} from '@/features/farmacias/ui/context/EditorContext';
 import { EditorTopBar } from '@/features/farmacias/ui/components/editor/navigation/EditorTopBar';
 import { LangTabs } from '@/features/farmacias/ui/components/editor/fields/LangTabs';
 import { EditorSectionSidebar } from '@/features/farmacias/ui/components/editor/navigation/EditorSectionSidebar';
@@ -54,7 +57,17 @@ const COMPONENTS: Record<string, React.ComponentType> = {
 };
 
 export function FarmaciaEditor({ initial }: { initial: Farmacia }) {
-  const [activeSectionKey, setActiveSectionKey] = useState<string>('general');
+  return (
+    <FarmaciaEditorProvider initial={initial}>
+      <FarmaciaEditorLayout />
+    </FarmaciaEditorProvider>
+  );
+}
+
+/** La sección activa vive en el contexto: el aviso de publicar y el chip de
+ *  salud también navegan a una sección. */
+function FarmaciaEditorLayout() {
+  const { activeSectionKey, goToSection } = useFarmaciaEditor();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const activeSection = SECTION_BY_KEY[activeSectionKey] ?? SECTION_BY_KEY.general;
@@ -65,19 +78,19 @@ export function FarmaciaEditor({ initial }: { initial: Farmacia }) {
   }, [activeSectionKey]);
 
   const selectSection = (key: string) => {
-    setActiveSectionKey(key);
+    goToSection(key);
     setSheetOpen(false);
   };
 
   return (
-    <FarmaciaEditorProvider initial={initial}>
+    <>
       <EditorTopBar />
 
       <div className="max-w-[1200px] mx-auto px-3 sm:px-6 pt-6 sm:pt-8 pb-40 sm:pb-24">
         <div className="grid gap-5 sm:gap-7 grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)]">
           {/* Sidebar desktop (oculta < lg vía hidden) */}
           <div className="hidden lg:block">
-            <EditorSectionSidebar activeKey={activeSectionKey} onSelect={setActiveSectionKey} />
+            <EditorSectionSidebar activeKey={activeSectionKey} onSelect={goToSection} />
           </div>
 
           <div className="min-w-0">
@@ -112,6 +125,6 @@ export function FarmaciaEditor({ initial }: { initial: Farmacia }) {
       />
 
       <EditorMobileActionBar />
-    </FarmaciaEditorProvider>
+    </>
   );
 }

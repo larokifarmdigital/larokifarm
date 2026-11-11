@@ -23,11 +23,14 @@ type State = {
   saveStatus: SaveStatus;
   lastSavedAt: string | null;
   currentLocale: Locale;
+  /** Clave de sectionsConfig (general, hero, …). */
+  activeSectionKey: string;
 };
 
 type Action =
   | { type: 'PATCH'; patch: Partial<Farmacia> }
   | { type: 'SET_LOCALE'; locale: Locale }
+  | { type: 'GO_TO_SECTION'; key: string; locale?: Locale }
   | { type: 'SAVING' }
   | { type: 'SAVED'; farmacia: Farmacia }
   | { type: 'ERROR' }
@@ -43,6 +46,12 @@ function reducer(state: State, action: Action): State {
       };
     case 'SET_LOCALE':
       return { ...state, currentLocale: action.locale };
+    case 'GO_TO_SECTION':
+      return {
+        ...state,
+        activeSectionKey: action.key,
+        currentLocale: action.locale ?? state.currentLocale,
+      };
     case 'SAVING':
       return { ...state, saveStatus: 'saving' };
     case 'SAVED':
@@ -64,6 +73,8 @@ function reducer(state: State, action: Action): State {
 type EditorContextValue = State & {
   patch: (p: Partial<Farmacia>) => void;
   setLocale: (l: Locale) => void;
+  /** Cambia de sección (y opcionalmente de idioma) en un solo paso. */
+  goToSection: (key: string, locale?: Locale) => void;
   saveNow: () => Promise<void>;
 };
 
@@ -85,6 +96,7 @@ export function FarmaciaEditorProvider({
     saveStatus: 'idle',
     lastSavedAt: initial.updatedAt,
     currentLocale: (initial.idiomasActivos[0] ?? 'es') as Locale,
+    activeSectionKey: 'general',
   });
 
   const stateRef = useRef(state);
@@ -98,6 +110,10 @@ export function FarmaciaEditorProvider({
 
   const setLocale = useCallback((l: Locale) => {
     dispatch({ type: 'SET_LOCALE', locale: l });
+  }, []);
+
+  const goToSection = useCallback((key: string, locale?: Locale) => {
+    dispatch({ type: 'GO_TO_SECTION', key, locale });
   }, []);
 
   const saveNow = useCallback(async () => {
@@ -154,8 +170,8 @@ export function FarmaciaEditorProvider({
   }, [state.dirty]);
 
   const value = useMemo<EditorContextValue>(
-    () => ({ ...state, patch, setLocale, saveNow }),
-    [state, patch, setLocale, saveNow],
+    () => ({ ...state, patch, setLocale, goToSection, saveNow }),
+    [state, patch, setLocale, goToSection, saveNow],
   );
 
   return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;

@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { LOCALE_LABELS, type Locale } from '@/core/shared';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
-import { countBySection, countLocaleStatus } from '@/features/farmacias/ui/lib/i18nStatus';
+import { useI18nHealth } from '@/features/farmacias/ui/hooks/useI18nHealth';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { formatRelativeDate } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
@@ -73,37 +73,12 @@ function ProgressBar({
 }
 
 export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'center' | 'end' }) {
-  const { farmacia, currentLocale, setLocale, saveStatus, dirty, lastSavedAt } = useFarmaciaEditor();
+  const { currentLocale, setLocale, goToSection, saveStatus, dirty, lastSavedAt } = useFarmaciaEditor();
   const [open, setOpen] = useState(false);
 
-  const active = farmacia.idiomasActivos;
-
-  const perLocale = useMemo(
-    () =>
-      active.map((l) => {
-        const { total, filled, missing } = countLocaleStatus(farmacia, l);
-        return { locale: l, total, filled, missing };
-      }),
-    [farmacia, active],
-  );
-
-  const totalMissing = perLocale.reduce((a, l) => a + l.missing, 0);
+  const { perLocale, totalMissing, sectionsWithMissing } = useI18nHealth();
   const level = getLevel(saveStatus, dirty, totalMissing);
   const style = LEVEL_STYLE[level];
-
-  const bySection = useMemo(() => countBySection(farmacia), [farmacia]);
-  const sectionsWithMissing = useMemo(
-    () =>
-      bySection
-        .map((sec) => {
-          const missingByLocale = active
-            .map((l) => ({ locale: l, missing: sec.byLocale[l]?.missing ?? 0 }))
-            .filter((x) => x.missing > 0);
-          return { ...sec, missingByLocale };
-        })
-        .filter((sec) => sec.missingByLocale.length > 0),
-    [bySection, active],
-  );
 
   const jumpToLocale = (l: Locale) => {
     if (l !== currentLocale) setLocale(l);
@@ -215,7 +190,10 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
                         <button
                           key={m.locale}
                           type="button"
-                          onClick={() => jumpToLocale(m.locale)}
+                          onClick={() => {
+                            goToSection(sec.key, m.locale);
+                            setOpen(false);
+                          }}
                           className="inline-flex items-center gap-1 h-5 px-1.5 rounded bg-[var(--color-red-soft)] text-[var(--color-red-ink)] text-[10.5px] font-mono-tabular hover:brightness-95"
                           title={`Faltan ${m.missing} en ${LOCALE_LABELS[m.locale]}`}
                         >

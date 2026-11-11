@@ -188,7 +188,12 @@ Diferencias schema vs UI documentadas:
    cuando no la necesitas.
 9. **Screenshots evitados** por consumo de tokens. Verificar con
    `browser_snapshot` (accessibility tree, text) o `browser_evaluate`.
-10. **Módulos WIP ocultos del sidebar** con `hidden: true` en
+10. **Publicar con traducciones pendientes = confirmar, no bloquear**
+    (`PublishMissingDialog`). "missing" es heurístico y la landing cae al
+    castellano vía `localizar()` (packages/sanity-client). Lista por sección
+    con chips por idioma; cada fila navega a sección + idioma. Footer apilado
+    en móvil con el naranja abajo.
+11. **Módulos WIP ocultos del sidebar** con `hidden: true` en
     `features/shell/ui/lib/navConfig.ts` hasta estar listos para producción —
     la ruta sigue accesible por URL para desarrollo, pero el cliente no la ve.
 
@@ -214,13 +219,16 @@ Diferencias schema vs UI documentadas:
 - **Reestructura 11-11-2026**: `core/` (dominio) + `features/` (pantallas) +
   `shared/` (design system), una carpeta por componente; lógica de imágenes
   a use cases; `FarmaciasList` e `ImageGalleryField` troceados ✅
+- **Aviso al publicar 11-11-2026**: `PublishMissingDialog` + hook
+  `useI18nHealth` (fuente única con el HealthChip) + `goToSection(key, locale?)`
+  en el EditorContext (la sección activa ya no es estado local de
+  FarmaciaEditor). Los chips del popover del HealthChip también navegan ✅
 - **Pendientes**:
   - Persistencia real en Neon (server actions ya están, falta conectar el
     save) — se comparte DB con conciliador-albaranes, el `Business` del
     conciliador se **extiende** a `Farmacia`, NO se renombra
   - Wizard `Nueva farmacia` en `/farmacias/nueva` (nombre + slug + idiomas
     activos + ciudad, mínimo viable antes de mandar al editor completo)
-  - Bloquear/confirmar "Publicar cambios" si `totalMissing > 0`
   - Worker de sincronización de reseñas Google (fuera del backoffice)
 
 ## Cómo trabajar en este proyecto
@@ -248,11 +256,11 @@ Diferencias schema vs UI documentadas:
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-11T09:54:12Z).
+Actualizado automáticamente al hacer commit (2026-11-11T10:09:57Z).
 
+- `565c63c` 2026-11-11 — Chore(backoffice): middleware → proxy (Next 16), lint a cero, quitar código muerto
 - `fc26000` 2026-11-11 — Refactor(backoffice): trocear FarmaciasList e ImageGalleryField
 - `f710fc3` 2026-11-11 — Refactor(backoffice): estructura core/ + features/ + shared/
 - `227621a` 2026-11-11 — Feat(backoffice): modal pattern Features+Puntos + FieldPreview live mini-mockup
 - `2e7d262` 2026-11-11 — Feat(backoffice): ImageGalleryField mode=single + jubilar ImageUploader + ServiciosTab modal
-- `522eb88` 2026-11-11 — Feat(backoffice): revamp UX del editor de farmacias (Gilroy, modales, galería compacta)
 <!-- auto:recent-commits:end -->
