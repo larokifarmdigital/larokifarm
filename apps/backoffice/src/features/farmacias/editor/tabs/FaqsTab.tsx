@@ -1,13 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import { useFarmaciaEditor } from '../EditorContext';
 import { MultilangInput } from '../MultilangInput';
 import { MultilangTextarea } from '../MultilangTextarea';
 import { TextosCabeceraFields } from '../TextosCabeceraFields';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { NavIcon } from '@/features/shell/NavIcon';
-import type { Faq } from '@/types/content';
+import { cn } from '@/lib/utils';
+import type { Faq, Locale } from '@/types/content';
 import {
   DndContext,
   closestCenter,
@@ -26,7 +30,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-function newFaq(orden: number): Faq {
+function crearFaqVacia(orden: number): Faq {
   return {
     id: `faq_${Math.random().toString(36).slice(2, 10)}`,
     pregunta: {},
@@ -35,13 +39,19 @@ function newFaq(orden: number): Faq {
   };
 }
 
-function SortableFaq({
+/**
+ * Fila compacta read-only. Mostrar + gestionar (editar/eliminar/reordenar).
+ * El contenido NO se edita in-place: click en editar abre el modal.
+ */
+function FaqRow({
   faq,
-  onChange,
+  activeLocales,
+  onEdit,
   onRemove,
 }: {
   faq: Faq;
-  onChange: (f: Faq) => void;
+  activeLocales: Locale[];
+  onEdit: () => void;
   onRemove: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -52,52 +62,154 @@ function SortableFaq({
     zIndex: isDragging ? 10 : undefined,
   };
 
+  const pregunta = faq.pregunta.es || faq.pregunta.ca || faq.pregunta.en || '';
+  const preview = pregunta.trim() || 'Pregunta sin título';
+  const missingLocales = activeLocales.filter(
+    (l) => !(faq.pregunta[l]?.trim() && faq.respuesta[l]?.trim()),
+  );
+
   return (
-    <div
+    <li
       ref={setNodeRef}
       style={style}
-      className={`card p-5 ${isDragging ? 'shadow-[var(--shadow-elevated)]' : ''}`}
+      className={cn(
+        'group flex items-center gap-2 px-2 py-2 rounded-[var(--radius-sm)] border border-transparent bg-[var(--color-surface)]',
+        'hover:border-[var(--color-hairline)] transition-all',
+        isDragging && 'border-[var(--color-hairline-strong)] shadow-[var(--shadow-elevated)]',
+      )}
     >
-      <div className="flex items-start gap-3">
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          aria-label="Reordenar pregunta"
-          className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted-2)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] cursor-grab active:cursor-grabbing"
-        >
-          <NavIcon name="DotsSixVertical" size={16} weight="bold" />
-        </button>
-        <div className="flex-1 space-y-4">
-          <MultilangInput
-            label="Pregunta"
-            value={faq.pregunta}
-            onChange={(v) => onChange({ ...faq, pregunta: v })}
-            placeholder="¿Hacéis guardia nocturna?"
-          />
-          <MultilangTextarea
-            label="Respuesta"
-            value={faq.respuesta}
-            onChange={(v) => onChange({ ...faq, respuesta: v })}
-            placeholder="Escribe la respuesta clara y breve."
-            rows={3}
-          />
-        </div>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="Eliminar pregunta"
-          className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)] transition-colors"
-        >
-          <NavIcon name="Trash" size={14} />
-        </button>
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label="Reordenar pregunta"
+        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted-2)] hover:text-[var(--color-ink-2)] cursor-grab active:cursor-grabbing"
+      >
+        <NavIcon name="DotsSixVertical" size={14} weight="bold" />
+      </button>
+
+      <button
+        type="button"
+        onClick={onEdit}
+        className="flex-1 min-w-0 flex items-center gap-3 text-left"
+      >
+        <span className="shrink-0 h-9 w-9 rounded-[var(--radius-sm)] bg-[var(--color-accent-soft)] flex items-center justify-center text-[var(--color-accent-ink)]">
+          <NavIcon name="Question" size={16} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span
+            className={cn(
+              'block text-[13.5px] font-medium truncate leading-tight',
+              pregunta.trim()
+                ? 'text-[var(--color-ink)]'
+                : 'text-[var(--color-muted-2)] italic',
+            )}
+          >
+            {preview}
+          </span>
+          {missingLocales.length > 0 && (
+            <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-[var(--color-yellow-ink)]">
+              <span
+                aria-hidden
+                className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-yellow-ink)]"
+              />
+              Falta {missingLocales.map((l) => l.toUpperCase()).join(', ')}
+            </span>
+          )}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label="Editar pregunta"
+        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]"
+      >
+        <NavIcon name="PencilSimple" size={13} />
+      </button>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="Eliminar pregunta"
+        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)]"
+      >
+        <NavIcon name="Trash" size={13} />
+      </button>
+    </li>
+  );
+}
+
+function FaqModal({
+  open,
+  initial,
+  mode,
+  onSave,
+  onClose,
+}: {
+  open: boolean;
+  initial: Faq | null;
+  mode: 'create' | 'edit';
+  onSave: (f: Faq) => void;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState<Faq | null>(initial);
+
+  if (initial && draft?.id !== initial.id) setDraft(initial);
+  if (!initial && draft !== null) setDraft(null);
+  if (!draft) return null;
+
+  return (
+    <Modal
+      open={open}
+      onOpenChange={(o) => !o && onClose()}
+      title={mode === 'create' ? 'Nueva pregunta frecuente' : 'Editar pregunta'}
+      description="Aparecen como bloque FAQ en la landing y se publican como FAQ schema en Google."
+      footer={
+        <>
+          <Button variant="ghost" size="md" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            variant="accent"
+            size="md"
+            onClick={() => {
+              onSave(draft);
+              onClose();
+            }}
+          >
+            {mode === 'create' ? 'Añadir pregunta' : 'Guardar cambios'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <MultilangInput
+          label="Pregunta"
+          value={draft.pregunta}
+          onChange={(v) => setDraft({ ...draft, pregunta: v })}
+          placeholder="¿Hacéis guardia nocturna?"
+          required
+        />
+        <MultilangTextarea
+          label="Respuesta"
+          value={draft.respuesta}
+          onChange={(v) => setDraft({ ...draft, respuesta: v })}
+          placeholder="Escribe la respuesta clara y breve."
+          rows={4}
+        />
       </div>
-    </div>
+    </Modal>
   );
 }
 
 export function FaqsTab() {
   const { farmacia, patch } = useFarmaciaEditor();
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [editingDraft, setEditingDraft] = useState<Faq | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Faq | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -107,7 +219,36 @@ export function FaqsTab() {
     patch({ faqs: list.map((f, i) => ({ ...f, orden: i })) });
   };
 
-  const add = () => setFaqs([...farmacia.faqs, newFaq(farmacia.faqs.length)]);
+  const openCreate = () => {
+    setModalMode('create');
+    setEditingDraft(crearFaqVacia(farmacia.faqs.length));
+    setModalOpen(true);
+  };
+
+  const openEdit = (f: Faq) => {
+    setModalMode('edit');
+    setEditingDraft(f);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditingDraft(null);
+  };
+
+  const handleSave = (f: Faq) => {
+    if (modalMode === 'create') {
+      setFaqs([...farmacia.faqs, f]);
+    } else {
+      setFaqs(farmacia.faqs.map((x) => (x.id === f.id ? f : x)));
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    setFaqs(farmacia.faqs.filter((x) => x.id !== deleteTarget.id));
+    setDeleteTarget(null);
+  };
 
   const onDragEnd = (e: DragEndEvent) => {
     if (!e.over || e.active.id === e.over.id) return;
@@ -116,8 +257,17 @@ export function FaqsTab() {
     setFaqs(arrayMove(farmacia.faqs, oldIdx, newIdx));
   };
 
+  const activeLocales = farmacia.idiomasActivos;
+  const count = farmacia.faqs.length;
+
+  const deletePreview =
+    deleteTarget?.pregunta.es ||
+    deleteTarget?.pregunta.ca ||
+    deleteTarget?.pregunta.en ||
+    '';
+
   return (
-    <div className="space-y-10 max-w-3xl">
+    <div className="section-gap max-w-3xl">
       {/* ============= TEXTOS DE CABECERA ============= */}
       <section aria-labelledby="sec-faqs-textos">
         <SectionHeader
@@ -136,27 +286,27 @@ export function FaqsTab() {
         />
       </section>
 
-      <div className="hairline" />
-
       {/* ============= LISTA DE PREGUNTAS ============= */}
       <section aria-labelledby="sec-faqs-lista">
         <SectionHeader
           id="sec-faqs-lista"
-          title="Lista de preguntas"
+          title={count === 0 ? 'Lista de preguntas' : `${count} ${count === 1 ? 'pregunta' : 'preguntas'}`}
           hint="Aparecen como bloque de FAQ en la landing y se publican como FAQ schema en Google. Recomendado 4-8."
           actions={
-            <Button onClick={add} variant="accent" size="sm">
-              <NavIcon name="Plus" size={13} />
-              <span className="hidden sm:inline">Añadir pregunta</span>
-              <span className="sm:hidden">Añadir</span>
-            </Button>
+            count > 0 ? (
+              <Button onClick={openCreate} variant="accent" size="sm">
+                <NavIcon name="Plus" size={13} />
+                <span className="hidden sm:inline">Añadir pregunta</span>
+                <span className="sm:hidden">Añadir</span>
+              </Button>
+            ) : null
           }
         />
 
-        {farmacia.faqs.length === 0 ? (
+        {count === 0 ? (
           <button
             type="button"
-            onClick={add}
+            onClick={openCreate}
             className="w-full card p-10 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
           >
             <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-4 text-[var(--color-accent)]">
@@ -173,22 +323,44 @@ export function FaqsTab() {
               items={farmacia.faqs.map((f) => f.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-3">
+              <ul className="card p-1.5 space-y-0.5 list-none m-0">
                 {farmacia.faqs.map((f) => (
-                  <SortableFaq
+                  <FaqRow
                     key={f.id}
                     faq={f}
-                    onChange={(next) =>
-                      setFaqs(farmacia.faqs.map((x) => (x.id === f.id ? next : x)))
-                    }
-                    onRemove={() => setFaqs(farmacia.faqs.filter((x) => x.id !== f.id))}
+                    activeLocales={activeLocales}
+                    onEdit={() => openEdit(f)}
+                    onRemove={() => setDeleteTarget(f)}
                   />
                 ))}
-              </div>
+              </ul>
             </SortableContext>
           </DndContext>
         )}
       </section>
+
+      <FaqModal
+        open={modalOpen}
+        initial={editingDraft}
+        mode={modalMode}
+        onSave={handleSave}
+        onClose={closeModal}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title="Eliminar pregunta"
+        description={
+          deletePreview
+            ? `Vas a eliminar «${deletePreview}». Esta acción no se puede deshacer.`
+            : 'Vas a eliminar esta pregunta. Esta acción no se puede deshacer.'
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

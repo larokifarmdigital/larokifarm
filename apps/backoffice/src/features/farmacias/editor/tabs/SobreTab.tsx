@@ -4,7 +4,7 @@ import { useFarmaciaEditor } from '../EditorContext';
 import { MultilangInput } from '../MultilangInput';
 import { TiptapField } from '../TiptapField';
 import { LocaleChip } from '../LocaleChip';
-import { ImageUploader } from '../ImageUploader';
+import { ImageGalleryField } from '../ImageGalleryField';
 import { computeLocaleStatus } from '../i18nStatus';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -43,13 +43,6 @@ export function SobreTab() {
     [next[i], next[j]] = [next[j], next[i]];
     setPuntos(next);
   };
-
-  const updateAlt = (id: string, alt: string) =>
-    patch({
-      imagenesSobre: imagenes.map((h) =>
-        h.id === id ? { ...h, alt: { ...h.alt, [currentLocale]: alt } } : h,
-      ),
-    });
 
   const puntosCountHint =
     puntos.length === 0
@@ -240,41 +233,14 @@ export function SobreTab() {
           hint={`Aparecen junto a la descripción en la landing. Entre 1 y ${MAX_IMAGENES} imágenes.`}
         />
 
-        <ImageUploader
-          mode="multi"
+        <ImageGalleryField
           businessId={farmacia.id}
           role="sobre"
           value={imagenes}
           onChange={(imagenesSobre) => patch({ imagenesSobre })}
+          idiomasActivos={farmacia.idiomasActivos}
           max={MAX_IMAGENES}
         />
-
-        {imagenes.length > 0 && (
-          <div className="mt-6 space-y-3">
-            <h4 className="text-[12.5px] font-semibold text-[var(--color-muted)] uppercase tracking-[0.06em]">
-              Texto alternativo por idioma (accesibilidad + SEO)
-            </h4>
-            {imagenes.map((h, i) => (
-              <div key={h.id} className="card p-3 flex items-center gap-3">
-                <div className="w-14 h-10 shrink-0 rounded-[6px] overflow-hidden bg-[var(--color-surface-sunken)]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={h.url} alt="" className="w-full h-full object-cover" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <Label htmlFor={`alt-sobre-${h.id}`} className="text-[11.5px] text-[var(--color-muted)]">
-                    Imagen {i + 1}
-                  </Label>
-                  <Input
-                    id={`alt-sobre-${h.id}`}
-                    value={h.alt[currentLocale] ?? ''}
-                    onChange={(e) => updateAlt(h.id, e.target.value)}
-                    placeholder="Describe lo que se ve"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
     </div>
   );

@@ -152,11 +152,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-05T22:48:05Z).
+Actualizado automáticamente al hacer commit (2026-11-11T07:37:12Z).
 
-- `6bb4e10` 2026-11-05 — Docs: documentar infra de deploy y migracion del worker sanity-fanout
-- `2244068` 2026-10-05 — Docs: actualizar entrada del conciliador en CLAUDE.md raíz
-- `634aa48` 2026-10-05 — Feat(conciliador): soporte multi-Excel por par (N PDFs + M Excels)
-- `0e26a9a` 2026-10-05 — Chore(backoffice): ocultar modulos WIP del sidebar + stats cards en /farmacias
-- `5650e55` 2026-10-02 — Feat(cima-chat): toggle IA libre + rediseño menú principal
+- `4b84a3e` 2026-11-11 — Fix(backoffice): migración Sanity → mapear language (no _key) + traducir días Mo→lun
+- `205fbfb` 2026-11-11 — Feat(backoffice): integrar ImageUploader en HeroTab/SobreTab/GeneralTab
+- `79f5b68` 2026-11-10 — Feat(backoffice): Fase C — imágenes a R2 (storage + server actions + proxy + uploader)
+- `6d3bed1` 2026-11-10 — Feat(backoffice): Fase D — script migración Sanity → Neon
+- `2d632d9` 2026-11-10 — Feat(backoffice): Fase B — repo Prisma real + mappers Business ↔ Farmacia
 <!-- auto:recent-commits:end -->

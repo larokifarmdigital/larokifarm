@@ -15,16 +15,16 @@ export function SectionHeader({
   id?: string;
 }) {
   return (
-    <div className={cn('flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-6 mb-4', className)}>
+    <div className={cn('flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-6 mb-5', className)}>
       <div className="min-w-0 max-w-[62ch]">
         <h3
           id={id}
-          className="text-[15px] font-semibold leading-[1.3] tracking-[-0.015em] text-[var(--color-ink)] m-0"
+          className="text-[14px] font-bold leading-[1.3] tracking-[-0.012em] text-[var(--color-ink)] m-0"
         >
           {title}
         </h3>
         {hint && (
-          <p className="text-[12.5px] leading-[1.5] text-[var(--color-muted)] mt-1 m-0">
+          <p className="text-[12.5px] leading-[1.55] text-[var(--color-muted-2)] mt-1 m-0">
             {hint}
           </p>
         )}

@@ -4,10 +4,9 @@ import { useState } from 'react';
 import { useFarmaciaEditor } from '../EditorContext';
 import { MultilangInput } from '../MultilangInput';
 import { MultilangTextarea } from '../MultilangTextarea';
-import { ImageUploader } from '../ImageUploader';
+import { ImageGalleryField } from '../ImageGalleryField';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
-import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { IconPicker } from '@/components/ui/IconPicker';
@@ -242,13 +241,6 @@ export function HeroTab() {
     setTarjetas(arrayMove(tarjetas, oldIdx, newIdx));
   };
 
-  const updateHeroAlt = (id: string, alt: string) =>
-    patch({
-      heroImages: farmacia.heroImages.map((h) =>
-        h.id === id ? { ...h, alt: { ...h.alt, [currentLocale]: alt } } : h,
-      ),
-    });
-
   return (
     <div className="space-y-10 max-w-3xl">
       {/* ============= TEXTOS ============= */}
@@ -296,41 +288,14 @@ export function HeroTab() {
           hint="Se rotan en la cabecera de la landing. Recomendado 1-6 imágenes horizontales, mínimo 1920×800."
         />
 
-        <ImageUploader
-          mode="multi"
+        <ImageGalleryField
           businessId={farmacia.id}
           role="hero"
           value={farmacia.heroImages}
           onChange={(heroImages) => patch({ heroImages })}
+          idiomasActivos={farmacia.idiomasActivos}
           max={6}
         />
-
-        {farmacia.heroImages.length > 0 && (
-          <div className="mt-6 space-y-3">
-            <h4 className="text-[12.5px] font-semibold text-[var(--color-muted)] uppercase tracking-[0.06em]">
-              Texto alternativo por idioma (accesibilidad + SEO)
-            </h4>
-            {farmacia.heroImages.map((h, i) => (
-              <div key={h.id} className="card p-3 flex items-center gap-3">
-                <div className="w-14 h-10 shrink-0 rounded-[6px] overflow-hidden bg-[var(--color-surface-sunken)]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={h.url} alt="" className="w-full h-full object-cover" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <Label htmlFor={`alt-${h.id}`} className="text-[11.5px] text-[var(--color-muted)]">
-                    Imagen {i + 1}
-                  </Label>
-                  <Input
-                    id={`alt-${h.id}`}
-                    value={h.alt[currentLocale] ?? ''}
-                    onChange={(e) => updateHeroAlt(h.id, e.target.value)}
-                    placeholder="Describe lo que se ve"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
 
       <div className="hairline" />

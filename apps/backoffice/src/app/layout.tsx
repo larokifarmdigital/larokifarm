@@ -1,13 +1,18 @@
 import type { Metadata } from 'next';
-import { Inter_Tight, Geist_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
+import { Geist_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import './globals.css';
 
-const interTight = Inter_Tight({
-  subsets: ['latin'],
+// Gilroy — misma fuente que la landing de Farmàcia Torrents, para
+// coherencia visual entre backoffice y sitio público del cliente.
+const gilroy = localFont({
+  src: [
+    { path: '../assets/fonts/Gilroy-Regular.ttf', weight: '100 600', style: 'normal' },
+    { path: '../assets/fonts/Gilroy-Black.ttf', weight: '700 900', style: 'normal' },
+  ],
   variable: '--font-sans-family',
-  weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
 
@@ -26,7 +31,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${interTight.variable} ${geistMono.variable}`}>
+    <html lang="es" className={`${gilroy.variable} ${geistMono.variable}`}>
       <body>
         <a href="#main" className="skip-link">
           Ir al contenido principal

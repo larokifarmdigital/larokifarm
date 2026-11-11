@@ -11,24 +11,24 @@
  * ============================================================ */
 
 @theme {
-  /* Grounds — blanco puro con tono frío mínimo */
-  --color-bg: #f6f9fc;
-  --color-surface: #ffffff;
-  --color-surface-2: #f1f5f9;
-  --color-surface-sunken: #e2e8f0;
+  /* Grounds — blanco con tinte azulado cálido, consistente con la landing Torrents */
+  --color-bg: #F4F7FB;              /* ambiente bg (ligeramente más azul) */
+  --color-surface: #FFFFFF;          /* cards, inputs */
+  --color-surface-2: #EEF3F9;        /* paneles secundarios, hovers */
+  --color-surface-sunken: #E4ECF4;   /* sunken (dropzones, chip bg) */
 
-  /* Ink — slate profundo, azulado (nunca marrón) */
-  --color-ink: #0f172a;
-  --color-ink-2: #1e293b;
-  --color-muted: #64748b;
-  --color-muted-2: #94a3b8;
-  --color-hairline: #e5e7eb;
-  --color-hairline-strong: #cbd5e1;
+  /* Ink — slate azulado, más profundo que Tailwind slate-900 para contraste WCAG AAA */
+  --color-ink: #0B1829;
+  --color-ink-2: #1B2A44;
+  --color-muted: #5B6B82;
+  --color-muted-2: #8A98AE;
+  --color-hairline: #DAE3EE;         /* bordes 1px (más azulado, menos gris plano) */
+  --color-hairline-strong: #BFCDDD;  /* bordes énfasis, hover */
 
   /* Accent — azul Torrents (--primary del sitio del cliente) */
   --color-accent: #1265b5;
   --color-accent-hover: #0d5397;
-  --color-accent-soft: #e4eff9;
+  --color-accent-soft: #E3EEFA;      /* un pelo más saturado que antes */
   --color-accent-ink: #0a4576;
   --color-accent-tint: rgba(18, 101, 181, 0.1);
   --color-accent-glow: rgba(18, 101, 181, 0.25);
@@ -47,9 +47,9 @@
   --color-blue-soft: #dbeafe;
   --color-blue-ink: #1e40af;
 
-  /* Tipografía */
-  --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Geist Mono', 'SF Mono', 'JetBrains Mono', ui-monospace, monospace;
+  /* Tipografía — Gilroy (misma que usa farmacia Torrents) + Geist Mono para números */
+  --font-sans: var(--font-sans-family, 'Gilroy'), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: var(--font-mono-family, 'Geist Mono'), 'SF Mono', 'JetBrains Mono', ui-monospace, monospace;
 
   /* Radios */
   --radius-xs: 4px;
@@ -58,11 +58,18 @@
   --radius-lg: 10px;
   --radius-xl: 16px;
 
-  /* Sombras — base slate (azul frío), sutil pero perceptible sobre fondo blanco */
+  /* Sombras — base slate con tinte azul Torrents, más suaves y layered */
   --shadow-hairline: 0 0 0 1px var(--color-hairline);
-  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 6px rgba(15, 23, 42, 0.04);
-  --shadow-elevated: 0 2px 6px rgba(15, 23, 42, 0.06), 0 12px 30px rgba(15, 23, 42, 0.08);
-  --shadow-accent: 0 6px 20px -8px var(--color-accent-tint);
+  --shadow-soft:
+    0 1px 2px rgba(11, 24, 41, 0.04),
+    0 2px 8px rgba(11, 24, 41, 0.04);
+  --shadow-elevated:
+    0 1px 2px rgba(11, 24, 41, 0.05),
+    0 8px 24px -6px rgba(11, 24, 41, 0.10);
+  --shadow-float:
+    0 2px 4px rgba(11, 24, 41, 0.05),
+    0 20px 40px -12px rgba(11, 24, 41, 0.14);
+  --shadow-accent: 0 8px 24px -10px var(--color-accent-glow);
   --shadow-focus: 0 0 0 3px var(--color-accent-tint);
 
   /* Movimiento — Humblytics spring */
@@ -102,12 +109,26 @@ body {
   min-width: 375px;
   font-family: var(--font-sans);
   font-size: 14px;
+  font-weight: 400;
   line-height: 1.5;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.003em;
   color: var(--color-ink);
+  /* Fondo con un toque de gradiente radial azulado muy sutil — igual que la
+     landing Torrents respira con un halo de luz, el backoffice gana profundidad
+     sin sacrificar legibilidad. */
   background-color: var(--color-bg);
+  background-image:
+    radial-gradient(1200px 600px at 100% -10%, rgba(18, 101, 181, 0.035), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(54, 160, 218, 0.03), transparent 60%);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.018em;
 }
 
 :where(a, button, input, textarea, select, [role='button'], [tabindex]):focus-visible {
@@ -194,9 +215,13 @@ body {
   background: var(--color-surface);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-lg);
-  transition: box-shadow var(--dur-base) var(--ease-spring),
+  /* sombra muy sutil por defecto → profundidad sin ruido */
+  box-shadow: var(--shadow-soft);
+  transition:
+    box-shadow var(--dur-base) var(--ease-spring),
     border-color var(--dur-base) var(--ease-spring),
-    transform var(--dur-base) var(--ease-spring);
+    transform var(--dur-base) var(--ease-spring),
+    background-color var(--dur-base) var(--ease-spring);
 }
 
 .card-interactive {
@@ -204,57 +229,72 @@ body {
 }
 
 .card-interactive:hover {
-  border-color: var(--color-accent);
+  border-color: var(--color-hairline-strong);
+  box-shadow: var(--shadow-elevated);
   transform: translateY(-1px);
 }
 
 .hairline {
   height: 1px;
-  background: var(--color-hairline);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-hairline) 12%,
+    var(--color-hairline) 88%,
+    transparent 100%
+  );
+  border: 0;
 }
 
-/* Chip / status */
+/* Chip / status — Gilroy SemiBold + border sutil, bg soft, legible y suave */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 2px 8px;
+  padding: 2.5px 9px;
   border-radius: 9999px;
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   line-height: 1.4;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
+  border: 1px solid transparent;
 }
 
 .chip-neutral {
   background: var(--color-surface-sunken);
   color: var(--color-ink-2);
+  border-color: color-mix(in srgb, var(--color-hairline-strong) 60%, transparent);
 }
 
 .chip-accent {
   background: var(--color-accent-soft);
   color: var(--color-accent-ink);
+  border-color: color-mix(in srgb, var(--color-accent) 18%, transparent);
 }
 
 .chip-green {
   background: var(--color-green-soft);
   color: var(--color-green-ink);
+  border-color: color-mix(in srgb, var(--color-green-ink) 18%, transparent);
 }
 
 .chip-yellow {
   background: var(--color-yellow-soft);
   color: var(--color-yellow-ink);
+  border-color: color-mix(in srgb, var(--color-yellow-ink) 18%, transparent);
 }
 
 .chip-red {
   background: var(--color-red-soft);
   color: var(--color-red-ink);
+  border-color: color-mix(in srgb, var(--color-red-ink) 18%, transparent);
 }
 
 .chip-blue {
   background: var(--color-blue-soft);
   color: var(--color-blue-ink);
+  border-color: color-mix(in srgb, var(--color-blue-ink) 18%, transparent);
 }
 
 /* Keystroke visual */
@@ -323,26 +363,66 @@ kbd {
   background: var(--color-surface-sunken);
 }
 
+/* Label: rebajada en presencia visual — es etiqueta, no título.
+   Antes 12px semibold ink-2 competía con los inputs. Ahora 11.5px, uppercase
+   mini, color muted → el input manda. */
 .label {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--color-ink-2);
-  letter-spacing: -0.005em;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .label > :last-child.label-hint {
   margin-left: auto;
 }
 
+/* Help text: casi fantasmal — sólo aparece si tu ojo lo busca. */
 .help {
   margin-top: 6px;
   font-size: 11.5px;
-  color: var(--color-muted);
-  line-height: 1.5;
+  color: var(--color-muted-2);
+  line-height: 1.55;
+}
+.help strong { color: var(--color-ink-2); font-weight: 600; }
+
+/* ============================================================
+ * Section separator — espacio en blanco en lugar de línea.
+ * Reemplaza progresivamente el .hairline entre bloques de formulario.
+ * ============================================================ */
+.section-gap > * + * {
+  margin-top: 48px;
+}
+@media (max-width: 640px) {
+  .section-gap > * + * { margin-top: 36px; }
+}
+
+/* ============================================================
+ * Form grid — inputs agrupados en grid denso en vez de stack vertical.
+ * ============================================================ */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 540px) {
+  .form-row { grid-template-columns: 1fr; }
+}
+.form-row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 760px) {
+  .form-row-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 540px) {
+  .form-row-3 { grid-template-columns: 1fr; }
 }
 
 /* ============================================================
