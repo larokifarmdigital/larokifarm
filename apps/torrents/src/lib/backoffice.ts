@@ -13,21 +13,30 @@ import type { Farmacia, ResenaGoogle, ResumenResenas } from './sanity';
 
 const BACKOFFICE_URL = (import.meta.env.BACKOFFICE_URL?.trim() || 'http://localhost:3001').replace(/\/$/, '');
 
-async function getJson<T>(path: string): Promise<T | null> {
-  const res = await fetch(`${BACKOFFICE_URL}${path}`);
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`[backoffice] ${res.status} en ${path}`);
-  return (await res.json()) as T;
+/**
+ * Un fallo (red, 5xx) ROMPE el build a propósito: así el hosting mantiene la
+ * versión anterior en vez de publicar la web vacía. 404 = farmacia no
+ * publicada → null. Reintenta por si la función del backoffice está fría.
+ */
+async function getJson<T>(path: string, intentos = 3): Promise<T | null> {
+  for (let i = 1; ; i++) {
+    try {
+      const res = await fetch(`${BACKOFFICE_URL}${path}`, { signal: AbortSignal.timeout(20_000) });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return (await res.json()) as T;
+    } catch (error) {
+      if (i >= intentos) {
+        const msg = error instanceof Error ? error.message : String(error);
+        throw new Error(`[backoffice] ${BACKOFFICE_URL}${path}: ${msg}`);
+      }
+      await new Promise((r) => setTimeout(r, 1000 * i));
+    }
+  }
 }
 
-export async function obtenerFarmaciaBackoffice(slug: string): Promise<Farmacia | null> {
-  try {
-    return await getJson<Farmacia>(`/api/public/farmacias/${encodeURIComponent(slug)}`);
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.warn(`[backoffice] no se pudo cargar la farmacia "${slug}": ${msg}`);
-    return null;
-  }
+export function obtenerFarmaciaBackoffice(slug: string): Promise<Farmacia | null> {
+  return getJson<Farmacia>(`/api/public/farmacias/${encodeURIComponent(slug)}`);
 }
 
 // Una sola petición por build: home, /resenas y demás páginas comparten lista.
@@ -37,13 +46,7 @@ const cacheResenas = new Map<string, Promise<ResenaGoogle[]>>();
 export function listarResenasBackoffice(slug: string): Promise<ResenaGoogle[]> {
   let p = cacheResenas.get(slug);
   if (!p) {
-    p = getJson<ResenaGoogle[]>(`/api/public/farmacias/${encodeURIComponent(slug)}/resenas`)
-      .then((r) => r ?? [])
-      .catch((error) => {
-        const msg = error instanceof Error ? error.message : String(error);
-        console.warn(`[backoffice] no se pudieron listar reseñas de "${slug}": ${msg}`);
-        return [];
-      });
+    p = getJson<ResenaGoogle[]>(`/api/public/farmacias/${encodeURIComponent(slug)}/resenas`).then((r) => r ?? []);
     cacheResenas.set(slug, p);
   }
   return p;
