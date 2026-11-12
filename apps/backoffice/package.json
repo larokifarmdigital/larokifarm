@@ -10,6 +10,9 @@
     "check": "tsc --noEmit",
     "sync-schema": "cp ../conciliador-albaranes/prisma/schema.prisma prisma/schema.prisma && prisma generate",
     "migrate:sanity": "../conciliador-albaranes/node_modules/.bin/tsx scripts/migrate-sanity-to-neon.ts",
+    "migrate:resenas": "../conciliador-albaranes/node_modules/.bin/tsx --env-file=.env.local scripts/migrate-resenas-sanity-to-neon.ts",
+    "migrate:media": "../conciliador-albaranes/node_modules/.bin/tsx --env-file=.env.local scripts/migrate-sanity-media-to-r2.ts",
+    "migrate:richtext": "../conciliador-albaranes/node_modules/.bin/tsx --env-file=.env.local scripts/migrate-sanity-richtext.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -43,6 +46,7 @@
     "prisma": "^6.19.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "sharp": "^0.34.5",
     "sonner": "^2.0.5",
     "tailwind-merge": "^3.3.1",
     "zod": "^4.4.3"

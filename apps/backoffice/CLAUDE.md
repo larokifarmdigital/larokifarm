@@ -169,9 +169,9 @@ tienen UI en el backoffice. Tipos en `src/core/farmacias/domain/models/Farmacia.
 Diferencias schema vs UI documentadas:
 - **Redes sociales** — backoffice tiene `x` y `youtube` extra (Sanity solo
   ig/fb/tiktok). Mantener por si el cliente las quiere en el futuro.
-- **Horarios** — backoffice permite 2 tramos por día (Sanity 1). El
-  backoffice es más rico; al mapear a Sanity flatten al primer tramo o
-  ampliar el schema.
+- **Horarios** — backoffice permite 2 tramos por día (Sanity 1). La API
+  pública manda `tramos` y `agruparHorarios()` (packages/sanity-client) los
+  pinta "09:00 - 14:00 / 17:00 - 20:30".
 
 ## Decisiones UI/UX acordadas (usar en cualquier iteración)
 
@@ -229,11 +229,35 @@ Diferencias schema vs UI documentadas:
   y el submit del paso 3 llegaba vacío (no se podía crear ninguna farmacia) →
   pasos siempre montados con `hidden`. Errores del server vuelven al paso del
   campo + foco + toast. "Continuar" secondary, "Crear farmacia" accent ✅
+- **Landings leen del backoffice 12-11-2026** (en local; Sanity sigue siendo
+  la fuente por defecto de los deploys):
+  - API pública sin sesión (`src/proxy.ts` no cubre `/api`), solo farmacias
+    `published` (`getPublishedFarmaciaBySlug`, sin filtro de tenant):
+    `GET /api/public/farmacias/:slug`, `…/:slug/resenas`,
+    `/api/public/resenas/:id/avatar`.
+  - Contrato en `core/farmacias/application/publicContent.ts`: calca la
+    proyección GROQ de las landings (i18n `[{language,value}]`, HTML en
+    texto enriquecido, horarios `Mo..Su` + `tramos`). Tarjetas sin título no
+    se publican.
+  - `/api/content-images/:id` acepta los params del CDN de Sanity
+    (`?w=&h=&fit=&q=&auto=format`) → `shared/lib/imageTransform.ts` (sharp).
+  - Landings: `CONTENT_SOURCE=sanity|backoffice` + `BACKOFFICE_URL` en
+    `src/lib/sanity.ts` → `src/lib/backoffice.ts`. Build verificado: Chamarro
+    idéntico; Torrents solo difiere en contenido editado en el backoffice.
+  - Reseñas Google migradas a `content_resenas` (171, fotos re-alojadas en
+    R2). Migración Prisma `20261112090000_resenas_google_fields` (aditiva).
+  - Scripts: `pnpm migrate:resenas`, `migrate:media` (hero/sobre/logo/OG de
+    Sanity CDN → R2), `migrate:richtext` (descripción larga + legales que
+    la Fase D no copió: eran Portable Text → HTML). Todos dry-run por
+    defecto, `--write` para escribir, re-ejecutables.
+  - Arreglado: la imagen OG (`role='og'`) se subía pero el mapper no la leía.
 - **Pendientes**:
-  - Persistencia real en Neon (server actions ya están, falta conectar el
-    save) — se comparte DB con conciliador-albaranes, el `Business` del
-    conciliador se **extiende** a `Farmacia`, NO se renombra
-  - Worker de sincronización de reseñas Google (fuera del backoffice)
+  - UI de reseñas en el editor (ocultar/destacar) — hoy solo se ven
+  - Quitar Sanity de las landings (y `CONTENT_SOURCE`) cuando el backoffice
+    esté desplegado + deploy hook al publicar (reusar `workers/sanity-fanout`)
+  - Imágenes servidas en runtime desde el backoffice: valorar optimizarlas en
+    build (astro:assets) para no depender del backoffice en producción
+  - Worker de sincronización de reseñas Google → escribir en Neon, no Sanity
 
 ## Cómo trabajar en este proyecto
 

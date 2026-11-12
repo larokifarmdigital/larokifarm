@@ -14,8 +14,9 @@
 import { NextResponse } from 'next/server';
 import { GetContentImageFileUseCase, getContentImageRepository } from '@/core/farmacias';
 import { getStorage } from '@/core/storage';
+import { transformImage } from '@/shared/lib/imageTransform';
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const res = await new GetContentImageFileUseCase(getContentImageRepository(), getStorage()).execute(id);
 
@@ -25,11 +26,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       : NextResponse.json({ error: 'Storage read failed' }, { status: 502 });
   }
 
-  return new NextResponse(new Uint8Array(res.data), {
+  // Mismos params que el CDN de Sanity (?w=&h=&fit=&auto=format) → ver imageTransform.
+  const out = await transformImage(res.data, res.contentType, new URL(req.url).searchParams);
+  return new NextResponse(new Uint8Array(out.data), {
     status: 200,
     headers: {
-      'Content-Type': res.contentType,
-      'Content-Length': String(res.sizeBytes),
+      'Content-Type': out.contentType,
+      'Content-Length': String(out.data.byteLength),
       'Cache-Control': 'public, max-age=31536000, immutable',
     },
   });

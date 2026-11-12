@@ -146,7 +146,7 @@ function asSeoConfig(v: unknown): SeoConfig | undefined {
     title: o.title ? asMultilang(o.title) : undefined,
     description: o.description ? asMultilang(o.description) : undefined,
     robots: asString(o.robots),
-    // ogImage se ignora hasta Fase C (ContentImage con rol 'og')
+    // ogImage NO vive en seoConfig: sale de ContentImage(role='og'), ver mapBusinessToFarmacia.
   };
 }
 
@@ -196,12 +196,24 @@ function mapResena(row: PrismaResena): Resena {
   return {
     id: row.id,
     autor: row.autor,
+    googleReviewId: row.googleReviewId ?? undefined,
     puntuacion: row.puntuacion,
-    texto: row.texto,
+    texto: row.texto ?? undefined,
+    textoIdioma: row.textoIdioma ?? undefined,
+    respuesta: row.respuesta ?? undefined,
+    respuestaFecha: row.respuestaFecha?.toISOString(),
     fecha: row.fecha.toISOString(),
     fuente: row.fuente === 'google' || row.fuente === 'manual' ? row.fuente : 'google',
     avatarUrl: row.avatarUrl ?? undefined,
+    destacada: row.destacada,
+    oculta: row.oculta,
+    eliminadaEnGoogle: row.eliminadaEnGoogle,
   };
+}
+
+function withOgImage(seo: SeoConfig | undefined, ogRow: ContentImage | undefined): SeoConfig | undefined {
+  if (!ogRow) return seo;
+  return { ...seo, ogImage: mapImagen(ogRow) };
 }
 
 function mapImagen(row: ContentImage): ImagenAsset {
@@ -294,7 +306,7 @@ export function mapBusinessToFarmacia(b: BusinessWithContent): Farmacia {
     textosResenas: asTextosCabecera(b.textosResenas),
     googleLocationName: b.googleLocationName ?? undefined,
 
-    seo: asSeoConfig(b.seoConfig),
+    seo: withOgImage(asSeoConfig(b.seoConfig), imagenesByRole.og?.[0]),
 
     createdAt: b.createdAt.toISOString(),
     updatedAt: b.updatedAt.toISOString(),
@@ -390,7 +402,12 @@ export function splitFarmaciaPatch(patch: Partial<Farmacia>): {
   if (patch.textosServicios !== undefined) scalar.textosServicios = patch.textosServicios ?? null;
   if (patch.textosFaqs !== undefined) scalar.textosFaqs = patch.textosFaqs ?? null;
   if (patch.textosResenas !== undefined) scalar.textosResenas = patch.textosResenas ?? null;
-  if (patch.seo !== undefined) scalar.seoConfig = patch.seo ?? null;
+  if (patch.seo !== undefined) {
+    // ogImage vive en content_images (role='og'); no duplicarla en el JSON.
+    const seoSinOg = patch.seo ? { ...patch.seo } : null;
+    if (seoSinOg) delete seoSinOg.ogImage;
+    scalar.seoConfig = seoSinOg;
+  }
 
   // Children (replace-all strategy en la tx del repo)
   if (patch.servicios !== undefined) children.servicios = patch.servicios;

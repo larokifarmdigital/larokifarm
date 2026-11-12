@@ -7,6 +7,11 @@ export type FarmaciaRepository = {
   listFarmacias(): Promise<FarmaciaSummary[]>;
   getFarmacia(id: string): Promise<Farmacia | null>;
   getFarmaciaBySlug(slug: string): Promise<Farmacia | null>;
+  /**
+   * Lectura PÚBLICA (sin sesión ni filtro de tenant) para las landings.
+   * Solo devuelve farmacias con status `published`.
+   */
+  getPublishedFarmaciaBySlug(slug: string): Promise<Farmacia | null>;
   saveFarmacia(id: string, patch: Partial<Farmacia>): Promise<SaveResult<Farmacia>>;
   createFarmacia(
     input: Pick<Farmacia, 'nombre' | 'slug' | 'ciudad' | 'idiomasActivos'>,

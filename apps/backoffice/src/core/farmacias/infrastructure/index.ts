@@ -1,8 +1,9 @@
 // Factories de adapters de core/farmacias.
-import type { ContentImageRepository, FarmaciaRepository } from '@/core/farmacias/domain';
+import type { ContentImageRepository, FarmaciaRepository, ResenaRepository } from '@/core/farmacias/domain';
 import { contentImageRepositoryPrisma } from './ContentImageRepositoryPrisma';
 import { farmaciaRepositoryMock } from './FarmaciaRepositoryMock';
 import { farmaciaRepositoryPrisma } from './FarmaciaRepositoryPrisma';
+import { resenaRepositoryPrisma } from './ResenaRepositoryPrisma';
 
 /**
  * Flag: USE_NEON_CONTENT=true activa el repo real (Prisma → Neon).
@@ -16,4 +17,9 @@ export function getFarmaciaRepository(): FarmaciaRepository {
 /** Las imágenes solo existen en Neon (no hay mock). */
 export function getContentImageRepository(): ContentImageRepository {
   return contentImageRepositoryPrisma;
+}
+
+/** Las reseñas solo existen en Neon (migradas desde Sanity). */
+export function getResenaRepository(): ResenaRepository {
+  return resenaRepositoryPrisma;
 }

@@ -134,6 +134,14 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
     return mapBusinessToFarmacia(row as BusinessWithContent);
   },
 
+  async getPublishedFarmaciaBySlug(slug): Promise<Farmacia | null> {
+    const row = await prisma.business.findFirst({
+      where: { slug, publishedStatus: 'published' },
+      include: CONTENT_INCLUDE,
+    });
+    return row ? mapBusinessToFarmacia(row as BusinessWithContent) : null;
+  },
+
   async saveFarmacia(id, patch): Promise<SaveResult<Farmacia>> {
     try {
       await ensureCanAccessBusiness(id);

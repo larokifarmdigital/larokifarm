@@ -3,3 +3,4 @@
 // directamente vía getFarmaciaRepository().
 export * from './createFarmacia';
 export * from './contentImages';
+export * from './publicContent';

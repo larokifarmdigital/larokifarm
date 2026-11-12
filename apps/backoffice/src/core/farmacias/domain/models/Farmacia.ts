@@ -58,12 +58,21 @@ export type Faq = {
 
 export type Resena = {
   id: string;
+  googleReviewId?: string;
   autor: string;
   puntuacion: number;
-  texto: string;
+  /** Vacío = reseña de solo estrellas. */
+  texto?: string;
+  textoIdioma?: string;
+  respuesta?: string;
+  respuestaFecha?: string;
   fecha: string;
   fuente: 'google' | 'manual';
   avatarUrl?: string;
+  destacada: boolean;
+  /** Ocultada por el editor: no sale en la landing. */
+  oculta: boolean;
+  eliminadaEnGoogle: boolean;
 };
 
 /**

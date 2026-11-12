@@ -118,6 +118,9 @@ export const MOCK_FARMACIAS: Farmacia[] = [
         texto: 'Atención inmejorable, siempre me resuelven todas las dudas.',
         fecha: '2026-07-14',
         fuente: 'google',
+        destacada: false,
+        oculta: false,
+        eliminadaEnGoogle: false,
       },
       {
         id: 'res_2',
@@ -126,6 +129,9 @@ export const MOCK_FARMACIAS: Farmacia[] = [
         texto: 'La farmacia de toda la vida, con productos de dermofarmacia excelentes.',
         fecha: '2026-06-02',
         fuente: 'google',
+        destacada: false,
+        oculta: false,
+        eliminadaEnGoogle: false,
       },
     ],
     seo: {

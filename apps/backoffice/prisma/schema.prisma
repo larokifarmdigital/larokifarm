@@ -324,18 +324,27 @@ model Faq {
 }
 
 model Resena {
-  id         String   @id @default(cuid())
-  businessId String
-  autor      String
-  puntuacion Int
-  texto      String
-  fecha      DateTime
-  fuente     String // 'google' | 'manual'
-  avatarUrl  String?
-  orden      Int      @default(0)
+  id                String    @id @default(cuid())
+  businessId        String
+  googleReviewId    String? // id estable de GBP; null en reseñas manuales
+  autor             String
+  avatarUrl         String? // URL servible (backoffice /api/public/resenas/:id/avatar)
+  avatarStorageKey  String? // key en R2 de la foto re-alojada (cero cookies de Google)
+  puntuacion        Int
+  texto             String? // null = solo estrellas
+  textoIdioma       String? // idioma que detecta Google (es, ca, en…)
+  respuesta         String? // respuesta del propietario
+  respuestaFecha    DateTime?
+  fecha             DateTime // fecha de publicación en Google
+  fuente            String // 'google' | 'manual'
+  destacada         Boolean   @default(false)
+  oculta            Boolean   @default(false) // ocultada por el editor
+  eliminadaEnGoogle Boolean   @default(false)
+  orden             Int       @default(0)
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
+  @@unique([businessId, googleReviewId])
   @@index([businessId, fecha])
   @@map("content_resenas")
 }
