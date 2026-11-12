@@ -4,7 +4,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".astro/**", ".vercel/**", ".next/**", "!.next/cache/**"],
-      "env": ["PUBLIC_*", "SITE_URL", "NODE_VERSION", "SANITY_*"]
+      "env": ["PUBLIC_*", "SITE_URL", "NODE_VERSION", "SANITY_*", "CONTENT_SOURCE", "BACKOFFICE_URL"]
     },
     "dev": {
       "cache": false,
