@@ -3,7 +3,13 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/core/auth';
-import { CreateFarmaciaUseCase, getFarmaciaRepository } from '@/core/farmacias';
+import {
+  CreateFarmaciaUseCase,
+  PublishFarmaciaUseCase,
+  getFarmaciaRepository,
+  getLandingDeployer,
+  type LandingDeployResult,
+} from '@/core/farmacias';
 
 export async function duplicateFarmaciaAction(id: string) {
   await requireUser();
@@ -17,11 +23,16 @@ export async function archiveFarmaciaAction(id: string) {
   revalidatePath('/farmacias');
 }
 
-export async function publishFarmaciaAction(id: string, publish: boolean) {
+export type PublishFarmaciaResult =
+  | { ok: true; deploy?: LandingDeployResult }
+  | { ok: false; error: string };
+
+export async function publishFarmaciaAction(id: string, publish: boolean): Promise<PublishFarmaciaResult> {
   await requireUser();
-  await getFarmaciaRepository().publishFarmacia(id, publish ? 'published' : 'draft');
+  const res = await new PublishFarmaciaUseCase(getFarmaciaRepository(), getLandingDeployer()).execute(id, publish);
   revalidatePath('/farmacias');
   revalidatePath(`/farmacias/${id}`);
+  return res.ok ? { ok: true, deploy: res.data.deploy } : { ok: false, error: res.error };
 }
 
 export type CreateFarmaciaState =

@@ -10,9 +10,10 @@ import {
   duplicateFarmaciaAction,
   publishFarmaciaAction,
 } from '@/features/farmacias/actions/farmaciaActions';
+import { publishToast } from '@/features/farmacias/ui/lib/publishToast';
 
 /** Ejecuta la acción dentro del transition compartido de la lista. */
-export type RowActionRunner = (fn: () => void) => void;
+export type RowActionRunner = (fn: () => void | Promise<void>) => void;
 
 export function FarmaciaRowActions({
   farmacia,
@@ -74,8 +75,11 @@ export function FarmaciaRowActions({
               onSelect={(e) => {
                 e.preventDefault();
                 onAction(async () => {
-                  await publishFarmaciaAction(farmacia.id, false);
-                  toast.success(`"${farmacia.nombre}" pasada a borrador`);
+                  const res = await publishFarmaciaAction(farmacia.id, false);
+                  if (!res.ok) throw new Error(res.error);
+                  toast.success(`"${farmacia.nombre}" pasada a borrador`, {
+                    description: 'La web publicada sigue online hasta que la retires del hosting.',
+                  });
                 });
               }}
             >
@@ -87,8 +91,7 @@ export function FarmaciaRowActions({
               onSelect={(e) => {
                 e.preventDefault();
                 onAction(async () => {
-                  await publishFarmaciaAction(farmacia.id, true);
-                  toast.success(`"${farmacia.nombre}" publicada`);
+                  publishToast(await publishFarmaciaAction(farmacia.id, true), `"${farmacia.nombre}" publicada`);
                 });
               }}
             >

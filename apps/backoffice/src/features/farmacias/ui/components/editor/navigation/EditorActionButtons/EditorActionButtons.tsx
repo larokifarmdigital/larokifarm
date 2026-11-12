@@ -9,6 +9,7 @@ import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { publishFarmaciaAction } from '@/features/farmacias/actions/farmaciaActions';
 import { useI18nHealth } from '@/features/farmacias/ui/hooks/useI18nHealth';
 import { localeWithMostMissing } from '@/features/farmacias/ui/lib/i18nStatus';
+import { publishToast } from '@/features/farmacias/ui/lib/publishToast';
 import { cn } from '@/shared/lib/cn';
 import { PublishMissingDialog } from './PublishMissingDialog';
 
@@ -33,17 +34,18 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
     startTx(async () => {
       try {
         if (dirty) await saveNow();
-        await publishFarmaciaAction(farmacia.id, true);
+        publishToast(
+          await publishFarmaciaAction(farmacia.id, true),
+          'Cambios publicados',
+          remaining === 0
+            ? undefined
+            : `${remaining === 1 ? 'Queda 1 texto' : `Quedan ${remaining} textos`} por traducir.`,
+        );
       } catch {
         toast.error('No se pudo publicar. Vuelve a intentarlo.');
         return;
       }
       setWarnOpen(false);
-      toast.success(
-        remaining === 0
-          ? 'Cambios publicados en la landing'
-          : `Publicado. ${remaining === 1 ? 'Queda 1 texto' : `Quedan ${remaining} textos`} por traducir.`,
-      );
     });
   };
 

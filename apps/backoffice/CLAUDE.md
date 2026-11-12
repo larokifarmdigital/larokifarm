@@ -251,10 +251,22 @@ Diferencias schema vs UI documentadas:
     la Fase D no copió: eran Portable Text → HTML). Todos dry-run por
     defecto, `--write` para escribir, re-ejecutables.
   - Arreglado: la imagen OG (`role='og'`) se subía pero el mapper no la leía.
+- **Deploy en Vercel 12-11-2026**: `larokifarm.vercel.app`, región `fra1`
+  (Neon en eu-central-1). Root Directory `apps/backoffice`. URL pública
+  configurable con `BACKOFFICE_PUBLIC_URL` ✅
+- **Deploy automático al publicar 12-11-2026**: `PublishFarmaciaUseCase`
+  (application/publishFarmacia.ts) = marcar `published` + port
+  `LandingDeployer` → `LandingDeployerHttp` lanza los hooks de
+  `DEPLOY_HOOKS_<SLUG>` (N URLs por coma, en paralelo, timeout 10 s). Toast
+  según resultado (`ui/lib/publishToast.ts`). Pasar a borrador NO lanza
+  deploy (la API daría 404 → web vacía). No usa `workers/sanity-fanout`: el
+  backoffice llama a los hooks directo. Landings: un fallo del backoffice
+  en build rompe el build (3 reintentos) → el hosting conserva la versión
+  anterior ✅
 - **Pendientes**:
   - UI de reseñas en el editor (ocultar/destacar) — hoy solo se ven
-  - Quitar Sanity de las landings (y `CONTENT_SOURCE`) cuando el backoffice
-    esté desplegado + deploy hook al publicar (reusar `workers/sanity-fanout`)
+  - Quitar Sanity de las landings (y `CONTENT_SOURCE`) cuando estén todas
+    en backoffice; retirar el webhook de Sanity de `workers/sanity-fanout`
   - Imágenes servidas en runtime desde el backoffice: valorar optimizarlas en
     build (astro:assets) para no depender del backoffice en producción
   - Worker de sincronización de reseñas Google → escribir en Neon, no Sanity

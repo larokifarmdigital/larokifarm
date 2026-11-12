@@ -4,4 +4,9 @@
 // Dependencias cross-core: core/shared, core/auth (tenant), core/storage.
 export * from './domain';
 export * from './application';
-export { getFarmaciaRepository, getContentImageRepository, getResenaRepository } from './infrastructure';
+export {
+  getFarmaciaRepository,
+  getContentImageRepository,
+  getResenaRepository,
+  getLandingDeployer,
+} from './infrastructure';

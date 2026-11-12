@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import type { FarmaciaSummary } from '@/core/farmacias/domain';
 import { FarmaciasCardList } from './FarmaciasCardList';
+import type { RowActionRunner } from './FarmaciaRowActions';
 import { FarmaciasEmptyState } from './FarmaciasEmptyState';
 import { FarmaciasListFilters } from './FarmaciasListFilters';
 import { FarmaciasTable } from './FarmaciasTable';
@@ -32,7 +34,14 @@ export function FarmaciasList({ farmacias }: { farmacias: FarmaciaSummary[] }) {
     return c;
   }, [farmacias]);
 
-  const runAction = (fn: () => void) => startTransition(fn);
+  const runAction: RowActionRunner = (fn) =>
+    startTransition(async () => {
+      try {
+        await fn();
+      } catch (e) {
+        toast.error(e instanceof Error && e.message ? e.message : 'No se pudo completar la acción.');
+      }
+    });
 
   return (
     <section aria-label="Listado de farmacias">

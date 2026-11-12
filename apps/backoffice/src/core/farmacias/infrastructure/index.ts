@@ -1,8 +1,14 @@
 // Factories de adapters de core/farmacias.
-import type { ContentImageRepository, FarmaciaRepository, ResenaRepository } from '@/core/farmacias/domain';
+import type {
+  ContentImageRepository,
+  FarmaciaRepository,
+  LandingDeployer,
+  ResenaRepository,
+} from '@/core/farmacias/domain';
 import { contentImageRepositoryPrisma } from './ContentImageRepositoryPrisma';
 import { farmaciaRepositoryMock } from './FarmaciaRepositoryMock';
 import { farmaciaRepositoryPrisma } from './FarmaciaRepositoryPrisma';
+import { landingDeployerHttp } from './LandingDeployerHttp';
 import { resenaRepositoryPrisma } from './ResenaRepositoryPrisma';
 
 /**
@@ -22,4 +28,9 @@ export function getContentImageRepository(): ContentImageRepository {
 /** Las reseñas solo existen en Neon (migradas desde Sanity). */
 export function getResenaRepository(): ResenaRepository {
   return resenaRepositoryPrisma;
+}
+
+/** Deploy hooks de las landings (`DEPLOY_HOOKS_<SLUG>`). */
+export function getLandingDeployer(): LandingDeployer {
+  return landingDeployerHttp;
 }
