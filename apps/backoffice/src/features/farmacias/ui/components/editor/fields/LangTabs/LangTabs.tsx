@@ -1,15 +1,9 @@
 'use client';
 
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
-import { LOCALES, LOCALE_LABELS, type Locale } from '@/core/shared';
+import { LOCALES, LOCALE_FLAGS, LOCALE_LABELS } from '@/core/shared';
 import { countLocaleStatus } from '@/features/farmacias/ui/lib/i18nStatus';
 import { cn } from '@/shared/lib/cn';
-
-const FLAG: Record<Locale, string> = {
-  es: '🇪🇸',
-  en: '🇬🇧',
-  ca: '🇦🇩',
-};
 
 export function LangTabs() {
   const { farmacia, currentLocale, setLocale, patch } = useFarmaciaEditor();
@@ -48,7 +42,7 @@ export function LangTabs() {
                 : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-ink-2)]',
             )}
           >
-            <span aria-hidden className="text-[15px] sm:text-[17px] leading-none">{FLAG[l]}</span>
+            <span aria-hidden className="text-[15px] sm:text-[17px] leading-none">{LOCALE_FLAGS[l]}</span>
             <span className={cn(active ? 'font-medium' : '', 'hidden sm:inline')}>{LOCALE_LABELS[l]}</span>
             <span
               className={cn(active ? 'font-medium' : '', 'sm:hidden font-mono-tabular text-[12px]')}

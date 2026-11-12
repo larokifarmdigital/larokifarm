@@ -37,6 +37,7 @@ export async function createFarmaciaAction(
     nombre: String(formData.get('nombre') ?? ''),
     ciudad: String(formData.get('ciudad') ?? ''),
     slug: String(formData.get('slug') ?? ''),
+    idiomas: formData.getAll('idiomas').map(String),
   });
   if (!res.ok) {
     return { status: 'error', message: res.error, fieldErrors: res.fieldErrors };

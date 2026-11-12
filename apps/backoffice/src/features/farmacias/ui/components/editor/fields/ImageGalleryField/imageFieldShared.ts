@@ -3,12 +3,6 @@ import type { Locale } from '@/core/shared';
 
 export const ACCEPTED_IMAGE_TYPES = 'image/png,image/jpeg,image/webp,image/svg+xml,image/gif';
 
-export const LOCALE_FLAGS: Record<Locale, string> = {
-  es: '🇪🇸',
-  en: '🇬🇧',
-  ca: '🇦🇩',
-};
-
 type BaseProps = {
   businessId: string;
   role: ContentImageRole;

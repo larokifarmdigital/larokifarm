@@ -89,7 +89,7 @@ export const farmaciaRepositoryMock: FarmaciaRepository = {
       slug: input.slug,
       nombre: input.nombre,
       status: 'draft',
-      idiomasActivos: ['es'],
+      idiomasActivos: input.idiomasActivos,
       ciudad: input.ciudad,
       descripcionCorta: {},
       descripcionLarga: {},

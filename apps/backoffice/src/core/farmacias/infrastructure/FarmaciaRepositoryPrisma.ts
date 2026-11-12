@@ -248,7 +248,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
           name: input.nombre,
           ciudad: input.ciudad ?? null,
           publishedStatus: 'draft',
-          idiomasActivos: ['es'] as Prisma.InputJsonValue,
+          idiomasActivos: input.idiomasActivos as Prisma.InputJsonValue,
         },
         include: CONTENT_INCLUDE,
       });

@@ -1,11 +1,5 @@
-import type { Locale } from '@/core/shared';
+import { type Locale, LOCALE_FLAGS } from '@/core/shared';
 import type { LocaleStatus } from '@/features/farmacias/ui/lib/i18nStatus';
-
-const FLAG: Record<Locale, string> = {
-  es: '🇪🇸',
-  en: '🇬🇧',
-  ca: '🇦🇩',
-};
 
 const CODE: Record<Locale, string> = {
   es: 'ES',
@@ -51,7 +45,7 @@ export function LocaleChip({
       title={title}
       aria-hidden
     >
-      <span className="text-[12px] leading-none">{FLAG[locale]}</span>
+      <span className="text-[12px] leading-none">{LOCALE_FLAGS[locale]}</span>
       {CODE[locale]}
       {s === 'missing' && <span className="text-[8px] leading-none">●</span>}
     </span>

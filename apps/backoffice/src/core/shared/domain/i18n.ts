@@ -8,4 +8,11 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   ca: 'Català',
 };
 
+/** Bandera de cada idioma para la UI (catalán con la de Andorra). */
+export const LOCALE_FLAGS: Record<Locale, string> = {
+  es: '🇪🇸',
+  en: '🇬🇧',
+  ca: '🇦🇩',
+};
+
 export type MultilangText = Partial<Record<Locale, string>>;

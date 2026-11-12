@@ -2,14 +2,12 @@
 
 import { useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
-import { LOCALE_LABELS, type Locale } from '@/core/shared';
+import { LOCALE_LABELS, type Locale, LOCALE_FLAGS } from '@/core/shared';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { useI18nHealth } from '@/features/farmacias/ui/hooks/useI18nHealth';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { formatRelativeDate } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
-
-const FLAG: Record<Locale, string> = { es: '🇪🇸', en: '🇬🇧', ca: '🇦🇩' };
 
 type HealthLevel = 'saving' | 'dirty' | 'missing' | 'ok';
 
@@ -148,7 +146,7 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
                       className="w-full text-left flex items-center gap-2 group"
                     >
                       <span aria-hidden className="text-[13px] leading-none w-4 text-center shrink-0">
-                        {FLAG[l.locale]}
+                        {LOCALE_FLAGS[l.locale]}
                       </span>
                       <span className="text-[12px] text-[var(--color-ink-2)] w-[74px] shrink-0 group-hover:text-[var(--color-ink)]">
                         {LOCALE_LABELS[l.locale]}
@@ -197,7 +195,7 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
                           className="inline-flex items-center gap-1 h-5 px-1.5 rounded bg-[var(--color-red-soft)] text-[var(--color-red-ink)] text-[10.5px] font-mono-tabular hover:brightness-95"
                           title={`Faltan ${m.missing} en ${LOCALE_LABELS[m.locale]}`}
                         >
-                          <span aria-hidden>{FLAG[m.locale]}</span>
+                          <span aria-hidden>{LOCALE_FLAGS[m.locale]}</span>
                           {m.missing}
                         </button>
                       ))}

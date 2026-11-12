@@ -1,11 +1,10 @@
 import type { ImagenAsset } from '@/core/farmacias/domain';
-import { LOCALE_LABELS, type Locale } from '@/core/shared';
+import { LOCALE_FLAGS, LOCALE_LABELS, type Locale } from '@/core/shared';
 import { Button } from '@/shared/components/atoms/Button';
 import { Input } from '@/shared/components/atoms/Input';
 import { Label } from '@/shared/components/atoms/Label';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { Modal } from '@/shared/components/molecules/Modal';
-import { LOCALE_FLAGS } from './imageFieldShared';
 
 /** Modal de edición del texto alternativo por idioma (modo multi). */
 export function ImageDetailModal({
