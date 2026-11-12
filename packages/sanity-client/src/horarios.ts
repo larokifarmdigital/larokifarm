@@ -2,9 +2,12 @@ export type DiaSemana = 'Mo' | 'Tu' | 'We' | 'Th' | 'Fr' | 'Sa' | 'Su';
 
 export type HorarioDia = {
   dia: DiaSemana;
+  /** Jornada completa (primer tramo abre → último cierra). */
   apertura?: string;
   cierre?: string;
   cerrado?: boolean;
+  /** Solo backoffice: tramos reales del día (ej. mañana + tarde). */
+  tramos?: { apertura: string; cierre: string }[];
 };
 
 export type GrupoHorario = { etiqueta: string; horario: string };
@@ -26,14 +29,23 @@ function capitalizar(t: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
+/** Tramos del día: los del backoffice si vienen, si no la jornada única de Sanity. */
+function tramosDe(h: HorarioDia): { apertura: string; cierre: string }[] {
+  if (h.tramos?.length) return h.tramos;
+  return h.apertura && h.cierre ? [{ apertura: h.apertura, cierre: h.cierre }] : [];
+}
+
 function claveHorario(h: HorarioDia): string {
   if (h.cerrado) return 'cerrado';
-  return `${h.apertura ?? ''}-${h.cierre ?? ''}`;
+  const tramos = tramosDe(h);
+  if (!tramos.length) return `${h.apertura ?? ''}-${h.cierre ?? ''}`;
+  return tramos.map((t) => `${t.apertura}-${t.cierre}`).join(',');
 }
 
 function formateaHorario(h: HorarioDia, etiquetaCerrado: string): string {
   if (h.cerrado) return etiquetaCerrado;
-  if (h.apertura && h.cierre) return `${h.apertura} - ${h.cierre}`;
+  const tramos = tramosDe(h);
+  if (tramos.length) return tramos.map((t) => `${t.apertura} - ${t.cierre}`).join(' / ');
   return '—';
 }
 

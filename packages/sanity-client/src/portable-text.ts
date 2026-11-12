@@ -31,10 +31,13 @@ function bloqueInline(b: PortableBlock): string {
 
 /**
  * Renderiza un array de bloques Portable Text (Sanity) a HTML plano.
+ * Si recibe un string lo considera HTML ya renderizado (backoffice) y lo devuelve.
  * Soporta encabezados h1-h4, listas bullet/number, blockquote, strong/em/underline,
  * y enlaces (markDefs de tipo `link` con flag `externo`).
  */
-export function portableTextAHtml(bloques?: PortableBlock[] | null): string {
+export function portableTextAHtml(bloques?: PortableBlock[] | string | null): string {
+  // El backoffice ya entrega HTML (Tiptap): se usa tal cual.
+  if (typeof bloques === 'string') return bloques;
   if (!Array.isArray(bloques) || bloques.length === 0) return '';
   const salida: string[] = [];
   let listaAbierta: 'bullet' | 'number' | null = null;

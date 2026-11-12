@@ -34,4 +34,5 @@ export type EntradaI18n<T> = {
 
 export type LocalizedString = EntradaI18n<string>[];
 export type LocalizedText = EntradaI18n<string>[];
-export type LocalizedPortableText = EntradaI18n<PortableBlock[]>[];
+/** Portable Text (Sanity) o HTML ya renderizado (backoffice). */
+export type LocalizedPortableText = EntradaI18n<PortableBlock[] | string>[];

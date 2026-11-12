@@ -1,4 +1,9 @@
 import { crearSanityClient } from '@larokifarm/sanity-client';
+import {
+  listarResenasBackoffice,
+  obtenerFarmaciaBackoffice,
+  obtenerResenasBackoffice,
+} from './backoffice';
 import type {
   EntradaI18n,
   LocalizedString,
@@ -50,6 +55,14 @@ const dataset = requerirEnv(
 );
 
 export const sanity = crearSanityClient({ projectId, dataset });
+
+/**
+ * De dónde sale el contenido en build: `sanity` (por defecto, lo que usan los
+ * deploys actuales) o `backoffice` (API pública del backoffice → Neon + R2).
+ * Ver `lib/backoffice.ts`.
+ */
+const CONTENT_SOURCE: 'sanity' | 'backoffice' =
+  import.meta.env.CONTENT_SOURCE === 'backoffice' ? 'backoffice' : 'sanity';
 
 export type IconoNombre =
   | 'heart' | 'heart-pulse' | 'pill' | 'syringe' | 'stethoscope'
@@ -207,6 +220,7 @@ const FARMACIA_PROJECTION = `
 `;
 
 export async function obtenerFarmaciaPorSlug(slug: string): Promise<Farmacia | null> {
+  if (CONTENT_SOURCE === 'backoffice') return obtenerFarmaciaBackoffice(slug);
   try {
     return await sanity.fetch(
       `*[_type == "farmacia" && slug.current == $slug][0] { ${FARMACIA_PROJECTION} }`,
@@ -260,6 +274,7 @@ const RESENA_PROJECTION = `
 `;
 
 export async function listarResenasGoogle(farmaciaSlug: string): Promise<ResenaGoogle[]> {
+  if (CONTENT_SOURCE === 'backoffice') return listarResenasBackoffice(farmaciaSlug);
   try {
     return await sanity.fetch<ResenaGoogle[]>(
       `*[_type == "resenaGoogle"
@@ -282,6 +297,9 @@ export async function obtenerResenasGoogle(
   minRating = 0,
   soloConComentario = false,
 ): Promise<ResumenResenas> {
+  if (CONTENT_SOURCE === 'backoffice') {
+    return obtenerResenasBackoffice(farmaciaSlug, limite, minRating, soloConComentario);
+  }
   try {
     const filtroComentario = soloConComentario
       ? '&& defined(comentario) && comentario != ""'
