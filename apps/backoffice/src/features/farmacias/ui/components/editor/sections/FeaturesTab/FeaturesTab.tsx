@@ -219,6 +219,8 @@ function FeatureModal({
           <Button
             variant="accent"
             size="md"
+            disabled={!Object.values(draft.titulo ?? {}).some((v) => (v ?? '').trim())}
+            title={Object.values(draft.titulo ?? {}).some((v) => (v ?? '').trim()) ? undefined : 'Rellena el campo obligatorio'}
             onClick={() => {
               onSave(draft);
               onClose();

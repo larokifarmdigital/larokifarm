@@ -27,7 +27,8 @@ function ensureAllDays(horarios: Horario[]): Horario[] {
 function summarize(h: Horario): string {
   if (h.cerrado) return 'Cerrado';
   if (h.tramos.length === 0) return 'Sin tramos';
-  return h.tramos.map((t) => `${t.abre}–${t.cierra}`).join(' · ');
+  const txt = h.tramos.map((t) => `${t.abre}–${t.cierra}`).join(' · ');
+  return h.tramos.some((t, i) => tramoIssue(t, h.tramos[i - 1])) ? `${txt} ⚠` : txt;
 }
 
 /** Duración de un tramo en minutos, tolerando cruce de medianoche. */
@@ -37,6 +38,24 @@ function durationMinutes(abre: string, cierra: string): number {
   const start = ah * 60 + am;
   const end = ch * 60 + cm;
   return end >= start ? end - start : 24 * 60 - start + end;
+}
+
+const toMin = (t: string) => {
+  const [h, m] = t.split(':').map((n) => parseInt(n, 10) || 0);
+  return h * 60 + m;
+};
+
+/**
+ * Aviso (no bloquea: una farmacia de guardia puede cruzar la medianoche).
+ * - cierre ≤ apertura → casi siempre un error al elegir la hora
+ * - tramo 2 empieza antes de que acabe el 1 → solapados
+ */
+function tramoIssue(t: { abre: string; cierra: string }, prev?: { abre: string; cierra: string }): string | null {
+  if (!t.abre || !t.cierra) return null;
+  if (toMin(t.cierra) === toMin(t.abre)) return 'La hora de cierre es igual a la de apertura.';
+  if (toMin(t.cierra) < toMin(t.abre)) return 'Cierra antes de abrir: solo es correcto si el tramo cruza la medianoche.';
+  if (prev?.cierra && toMin(t.abre) < toMin(prev.cierra)) return 'Se solapa con el tramo anterior.';
+  return null;
 }
 
 /** Convierte minutos a formato humano "5h" o "4h 30min". */
@@ -172,10 +191,14 @@ export function HorarioSemanal({
                         )}
                         {h.tramos.map((t, ti) => {
                           const dur = humanDuration(durationMinutes(t.abre, t.cierra));
+                          const issue = tramoIssue(t, h.tramos[ti - 1]);
                           return (
                             <div
                               key={ti}
-                              className="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-3"
+                              className={cn(
+                                'rounded-[var(--radius-md)] border bg-[var(--color-surface)] p-3',
+                                issue ? 'border-[var(--color-yellow-ink)]' : 'border-[var(--color-hairline)]',
+                              )}
                             >
                               <div className="flex items-center justify-between mb-2">
                                 <span className="font-mono-tabular text-[10.5px] uppercase tracking-[0.08em] text-[var(--color-muted-2)]">
@@ -236,6 +259,12 @@ export function HorarioSemanal({
                                   />
                                 </div>
                               </div>
+                              {issue && (
+                                <p role="alert" className="mt-2 mb-0 flex items-center gap-1.5 text-[12px] text-[var(--color-yellow-ink)]">
+                                  <NavIcon name="Warning" size={12} />
+                                  {issue}
+                                </p>
+                              )}
                             </div>
                           );
                         })}

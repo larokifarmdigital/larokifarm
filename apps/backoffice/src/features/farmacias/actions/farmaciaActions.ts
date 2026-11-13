@@ -8,23 +8,28 @@ import {
   PublishFarmaciaUseCase,
   getFarmaciaRepository,
   getLandingDeployer,
+  type Farmacia,
   type LandingDeployResult,
 } from '@/core/farmacias';
 
-export async function duplicateFarmaciaAction(id: string) {
+type ActionResult = { ok: true } | { ok: false; error: string };
+
+export async function duplicateFarmaciaAction(id: string): Promise<ActionResult> {
   await requireUser();
-  await getFarmaciaRepository().duplicateFarmacia(id);
-  revalidatePath('/farmacias');
+  const res = await getFarmaciaRepository().duplicateFarmacia(id);
+  if (res.ok) revalidatePath('/farmacias');
+  return res.ok ? { ok: true } : { ok: false, error: res.error };
 }
 
-export async function archiveFarmaciaAction(id: string) {
+export async function archiveFarmaciaAction(id: string): Promise<ActionResult> {
   await requireUser();
-  await getFarmaciaRepository().archiveFarmacia(id);
-  revalidatePath('/farmacias');
+  const res = await getFarmaciaRepository().archiveFarmacia(id);
+  if (res.ok) revalidatePath('/farmacias');
+  return res.ok ? { ok: true } : { ok: false, error: res.error };
 }
 
 export type PublishFarmaciaResult =
-  | { ok: true; deploy?: LandingDeployResult }
+  | { ok: true; deploy?: LandingDeployResult; farmacia: Farmacia }
   | { ok: false; error: string };
 
 export async function publishFarmaciaAction(id: string, publish: boolean): Promise<PublishFarmaciaResult> {
@@ -32,7 +37,7 @@ export async function publishFarmaciaAction(id: string, publish: boolean): Promi
   const res = await new PublishFarmaciaUseCase(getFarmaciaRepository(), getLandingDeployer()).execute(id, publish);
   revalidatePath('/farmacias');
   revalidatePath(`/farmacias/${id}`);
-  return res.ok ? { ok: true, deploy: res.data.deploy } : { ok: false, error: res.error };
+  return res.ok ? { ok: true, deploy: res.data.deploy, farmacia: res.data.farmacia } : { ok: false, error: res.error };
 }
 
 export type CreateFarmaciaState =

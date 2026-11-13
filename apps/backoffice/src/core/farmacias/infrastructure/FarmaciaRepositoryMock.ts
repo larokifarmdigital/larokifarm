@@ -50,10 +50,13 @@ export const farmaciaRepositoryMock: FarmaciaRepository = {
     return f ? structuredClone(f) : null;
   },
 
-  async saveFarmacia(id, patch) {
+  async saveFarmacia(id, patch, opts) {
     await sleep(NETWORK_DELAY_MS);
     const current = store.get(id);
     if (!current) return { ok: false, error: 'Farmacia no encontrada' };
+    if (opts?.expectedUpdatedAt && opts.expectedUpdatedAt !== current.updatedAt) {
+      return { ok: false, code: 'conflict', error: 'Esta farmacia se ha modificado en otra pestaña o por otra persona.' };
+    }
 
     if (patch.slug && patch.slug !== current.slug) {
       for (const f of store.values()) {

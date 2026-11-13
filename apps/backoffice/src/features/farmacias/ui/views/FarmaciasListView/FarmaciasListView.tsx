@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { canEditContent, getCurrentUser } from '@/core/auth';
 import { getFarmaciaRepository } from '@/core/farmacias';
 import { Button } from '@/shared/components/atoms/Button';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
@@ -7,7 +8,9 @@ import { FarmaciaStats } from '@/features/farmacias/ui/components/FarmaciaStats'
 import { FarmaciasList } from '@/features/farmacias/ui/components/FarmaciasList';
 
 export async function FarmaciasListView() {
-  const farmacias = await getFarmaciaRepository().listFarmacias();
+  const [farmacias, user] = await Promise.all([getFarmaciaRepository().listFarmacias(), getCurrentUser()]);
+  // Crear/duplicar farmacias es de SUPER_ADMIN (el servidor también lo exige).
+  const isAdmin = user?.rol === 'admin';
 
   const counts = {
     total: farmacias.length,
@@ -44,6 +47,7 @@ export async function FarmaciasListView() {
             </p>
           )}
         </div>
+        {isAdmin && (
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="accent" size="md" asChild className="flex-1 sm:flex-none">
             <Link href="/farmacias/nueva">
@@ -52,11 +56,12 @@ export async function FarmaciasListView() {
             </Link>
           </Button>
         </div>
+        )}
       </header>
 
       <FarmaciaStats counts={counts} />
 
-      <FarmaciasList farmacias={farmacias} />
+      <FarmaciasList farmacias={farmacias} canDuplicate={isAdmin} canWrite={!!user && canEditContent(user)} />
     </div>
   );
 }

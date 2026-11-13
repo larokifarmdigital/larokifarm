@@ -13,10 +13,14 @@ export function FarmaciasTable({
   farmacias,
   pending,
   onAction,
+  canDuplicate,
+  canWrite,
 }: {
   farmacias: FarmaciaSummary[];
   pending: boolean;
   onAction: RowActionRunner;
+  canDuplicate: boolean;
+  canWrite: boolean;
 }) {
   return (
     <div className="hidden md:block card overflow-hidden">
@@ -89,6 +93,8 @@ export function FarmaciasTable({
                   farmacia={f}
                   pending={pending}
                   onAction={onAction}
+                  canDuplicate={canDuplicate}
+                  canWrite={canWrite}
                 />
               </td>
             </tr>

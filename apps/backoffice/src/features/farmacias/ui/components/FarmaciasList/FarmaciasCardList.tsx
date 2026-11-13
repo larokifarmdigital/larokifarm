@@ -12,10 +12,14 @@ export function FarmaciasCardList({
   farmacias,
   pending,
   onAction,
+  canDuplicate,
+  canWrite,
 }: {
   farmacias: FarmaciaSummary[];
   pending: boolean;
   onAction: RowActionRunner;
+  canDuplicate: boolean;
+  canWrite: boolean;
 }) {
   return (
     <ul className="md:hidden space-y-2">
@@ -54,6 +58,8 @@ export function FarmaciasCardList({
               farmacia={f}
               pending={pending}
               onAction={onAction}
+                  canDuplicate={canDuplicate}
+                  canWrite={canWrite}
             />
           </li>
         );

@@ -56,9 +56,9 @@ const COMPONENTS: Record<string, React.ComponentType> = {
   seo: SeoTab,
 };
 
-export function FarmaciaEditor({ initial }: { initial: Farmacia }) {
+export function FarmaciaEditor({ initial, readOnly = false }: { initial: Farmacia; readOnly?: boolean }) {
   return (
-    <FarmaciaEditorProvider initial={initial}>
+    <FarmaciaEditorProvider initial={initial} readOnly={readOnly}>
       <FarmaciaEditorLayout />
     </FarmaciaEditorProvider>
   );
@@ -67,14 +67,29 @@ export function FarmaciaEditor({ initial }: { initial: Farmacia }) {
 /** La sección activa vive en el contexto: el aviso de publicar y el chip de
  *  salud también navegan a una sección. */
 function FarmaciaEditorLayout() {
-  const { activeSectionKey, goToSection } = useFarmaciaEditor();
+  const { activeSectionKey, goToSection, readOnly } = useFarmaciaEditor();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const activeSection = SECTION_BY_KEY[activeSectionKey] ?? SECTION_BY_KEY.general;
   const ActiveComponent = COMPONENTS[activeSection.key] ?? GeneralTab;
 
+  // La sección vive en el hash (#hero, #seo…): al recargar se vuelve a ella.
+  useEffect(() => {
+    const syncFromHash = () => {
+      const fromHash = window.location.hash.slice(1) || 'general';
+      if (SECTION_BY_KEY[fromHash]) goToSection(fromHash);
+    };
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+    return () => window.removeEventListener('hashchange', syncFromHash);
+  }, [goToSection]);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    const hash = activeSectionKey === 'general' ? '' : `#${activeSectionKey}`;
+    if (window.location.hash !== hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search + hash);
+    }
   }, [activeSectionKey]);
 
   const selectSection = (key: string) => {
@@ -110,7 +125,15 @@ function FarmaciaEditorLayout() {
                 hint={activeSection.hint}
               />
               {activeSection.multilang && <LangTabs />}
-              <ActiveComponent />
+              {readOnly && (
+                <p role="status" className="mb-4 rounded-[8px] border border-[var(--color-hairline)] bg-[var(--color-surface-sunken)] px-3 py-2 text-[13px] text-[var(--color-ink-2)]">
+                  Modo solo lectura: tu usuario puede ver el contenido pero no modificarlo.
+                </p>
+              )}
+              {/* fieldset disabled desactiva todos los inputs/botones nativos de la sección */}
+              <fieldset disabled={readOnly} className="m-0 min-w-0 border-0 p-0">
+                <ActiveComponent />
+              </fieldset>
             </EditorSectionSwitcher>
           </div>
         </div>

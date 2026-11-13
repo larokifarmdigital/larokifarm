@@ -10,20 +10,31 @@ import { FarmaciasListFilters } from './FarmaciasListFilters';
 import { FarmaciasTable } from './FarmaciasTable';
 import type { StatusCounts, StatusFilter } from './statusMeta';
 
-export function FarmaciasList({ farmacias }: { farmacias: FarmaciaSummary[] }) {
+/** Sin acentos ni mayúsculas: "farmacia pediatrica" encuentra "Farmàcia Pediàtrica". */
+const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+export function FarmaciasList({
+  farmacias,
+  canDuplicate = false,
+  canWrite = true,
+}: {
+  farmacias: FarmaciaSummary[];
+  canDuplicate?: boolean;
+  canWrite?: boolean;
+}) {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('todos');
   const [pendingTx, startTransition] = useTransition();
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = normalize(query.trim());
     return farmacias.filter((f) => {
       if (status !== 'todos' && f.status !== status) return false;
       if (!q) return true;
       return (
-        f.nombre.toLowerCase().includes(q) ||
-        f.slug.toLowerCase().includes(q) ||
-        (f.ciudad ?? '').toLowerCase().includes(q)
+        normalize(f.nombre).includes(q) ||
+        normalize(f.slug).includes(q) ||
+        normalize(f.ciudad ?? '').includes(q)
       );
     });
   }, [farmacias, query, status]);
@@ -57,8 +68,8 @@ export function FarmaciasList({ farmacias }: { farmacias: FarmaciaSummary[] }) {
         <FarmaciasEmptyState hasQuery={Boolean(query) || status !== 'todos'} totalCount={farmacias.length} />
       ) : (
         <>
-          <FarmaciasCardList farmacias={filtered} pending={pendingTx} onAction={runAction} />
-          <FarmaciasTable farmacias={filtered} pending={pendingTx} onAction={runAction} />
+          <FarmaciasCardList farmacias={filtered} pending={pendingTx} onAction={runAction} canDuplicate={canDuplicate} canWrite={canWrite} />
+          <FarmaciasTable farmacias={filtered} pending={pendingTx} onAction={runAction} canDuplicate={canDuplicate} canWrite={canWrite} />
         </>
       )}
     </section>

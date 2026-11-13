@@ -9,7 +9,8 @@
  */
 
 import { createId as cuid } from '@paralleldrive/cuid2';
-import { getCurrentUser } from '@/core/auth';
+import { READ_ONLY_ERROR, canEditContent, getCurrentUser } from '@/core/auth';
+import { detectImageType } from '@/shared/lib/detectImageType';
 import type { MultilangText, SaveResult } from '@/core/shared';
 import type { StorageRepository } from '@/core/storage';
 import {
@@ -20,8 +21,8 @@ import {
   type ImagenAsset,
 } from '@/core/farmacias/domain';
 
-const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'image/gif'];
+/** Por debajo del límite de body de Vercel (4,5 MB). El editor comprime antes de subir. */
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
 type VoidResult = { ok: true } | { ok: false; error: string };
 
@@ -35,6 +36,7 @@ export type UploadContentImageInput = {
 async function ensureCanWriteBusiness(repo: ContentImageRepository, businessId: string): Promise<string> {
   const user = await getCurrentUser();
   if (!user) throw new Error('Sesión requerida');
+  if (!canEditContent(user)) throw new Error(READ_ONLY_ERROR);
   if (user.rol !== 'admin' && user.farmaciaId !== businessId) {
     throw new Error('Acceso denegado al negocio');
   }
@@ -59,16 +61,18 @@ export class UploadContentImageUseCase {
 
       const slug = await ensureCanWriteBusiness(this.images, businessId);
 
-      if (file.size > MAX_BYTES) {
-        return { ok: false, error: `Imagen muy grande (máx ${Math.round(MAX_BYTES / 1024 / 1024)} MB)` };
+      if (file.bytes.byteLength > MAX_IMAGE_BYTES) {
+        return { ok: false, error: `Imagen muy grande (máx ${MAX_IMAGE_BYTES / 1024 / 1024} MB)` };
       }
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        return { ok: false, error: `Formato no permitido: ${file.type}. Usa PNG, JPG, WebP, SVG o GIF.` };
+      // El tipo se saca de los bytes, no del MIME que manda el navegador.
+      const contentType = await detectImageType(file.bytes);
+      if (!contentType) {
+        return { ok: false, error: 'El archivo no es una imagen válida. Usa PNG, JPG, WebP, SVG o GIF.' };
       }
 
       const id = cuid();
       const storageKey = buildContentImageKey({ businessSlug: slug, role, cuid: id, filename: file.name });
-      await this.storage.upload(storageKey, file.bytes, file.type);
+      await this.storage.upload(storageKey, file.bytes, contentType);
 
       // NOTE: sin dimensiones (haría falta sharp/image-size) — fuera de scope.
       const row = await this.images.create({
@@ -128,6 +132,23 @@ export class ReorderContentImagesUseCase {
         return { ok: false, error: 'Lista inválida (ids no pertenecen al negocio)' };
       }
       await this.images.reorder(orderedIds);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: errorMessage(e, 'Error desconocido') };
+    }
+  }
+}
+
+export class UpdateContentImageAltUseCase {
+  constructor(private readonly images: ContentImageRepository) {}
+
+  async execute(businessId: string, imageId: string, alt: MultilangText): Promise<VoidResult> {
+    try {
+      await ensureCanWriteBusiness(this.images, businessId);
+      const img = await this.images.findById(imageId);
+      if (!img) return { ok: false, error: 'Imagen no encontrada' };
+      if (img.businessId !== businessId) return { ok: false, error: 'Imagen de otro negocio' };
+      await this.images.updateAlt(imageId, alt);
       return { ok: true };
     } catch (e) {
       return { ok: false, error: errorMessage(e, 'Error desconocido') };

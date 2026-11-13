@@ -35,7 +35,7 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     await signIn('credentials', {
       email: parsed.data.email,
       password: parsed.data.password,
-      redirectTo: '/farmacias',
+      redirectTo: safeReturnTo(formData.get('returnTo')),
     });
   } catch (err) {
     // NOTE: next-auth v5 lanza NEXT_REDIRECT internamente al redirigir tras
@@ -53,6 +53,22 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
 
   // No debería llegar aquí (signIn redirige), pero por seguridad:
   return { status: 'success' };
+}
+
+/**
+ * Solo rutas internas: de `http://host/farmacias/x?y` se queda con
+ * `/farmacias/x?y`. Nada de `//evil.com` ni otros dominios (open redirect).
+ */
+function safeReturnTo(raw: FormDataEntryValue | null): string {
+  if (typeof raw !== 'string' || !raw) return '/farmacias';
+  try {
+    const u = new URL(raw, 'http://local.invalid');
+    const path = u.pathname + u.search;
+    if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/login')) return '/farmacias';
+    return path;
+  } catch {
+    return '/farmacias';
+  }
 }
 
 export async function logoutAction() {

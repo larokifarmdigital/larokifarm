@@ -126,7 +126,7 @@ export function ResenasTab() {
         <SectionHeader
           id="sec-resenas-preview"
           title="Reseñas sincronizadas"
-          hint="Vista de solo lectura. Las reseñas se refrescan automáticamente cada 24h desde Google."
+          hint="Vista de solo lectura. Son las reseñas importadas de Google; las marcadas como ocultas no salen en la web."
           actions={
             mediaResenas && (
               <div className="flex items-center gap-4 text-[12px]">
@@ -161,6 +161,16 @@ export function ResenasTab() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[13.5px] font-medium text-[var(--color-ink)]">{r.autor || 'Anónimo'}</span>
+                    {(r.oculta || r.eliminadaEnGoogle) && (
+                      <span className="inline-flex h-5 items-center rounded-full bg-[var(--color-surface-sunken)] px-2 text-[10.5px] font-mono-tabular uppercase tracking-wider text-[var(--color-muted)]">
+                        {r.eliminadaEnGoogle ? 'Eliminada en Google' : 'Oculta en la web'}
+                      </span>
+                    )}
+                    {r.destacada && (
+                      <span className="inline-flex h-5 items-center rounded-full bg-[var(--color-accent-tint)] px-2 text-[10.5px] font-mono-tabular uppercase tracking-wider text-[var(--color-accent)]">
+                        Destacada
+                      </span>
+                    )}
                     <span aria-label={`${r.puntuacion} de 5 estrellas`} className="text-[12px] text-[#f7b500]">
                       {'★'.repeat(r.puntuacion)}
                       <span className="text-[var(--color-hairline-strong)]">{'★'.repeat(5 - r.puntuacion)}</span>

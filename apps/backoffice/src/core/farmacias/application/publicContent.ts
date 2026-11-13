@@ -14,6 +14,8 @@
  */
 
 import { LOCALES, type MultilangText } from '@/core/shared';
+import { isSafeHref } from '@/shared/lib/safeHref';
+import { sanitizeRichHtml } from '@/shared/lib/safeHtml';
 import type { StorageRepository } from '@/core/storage';
 import type {
   Farmacia,
@@ -67,10 +69,26 @@ function i18n(t: MultilangText | undefined, { html = false } = {}): I18n | undef
   const out = LOCALES.flatMap((language) => {
     const value = t[language];
     if (typeof value !== 'string' || value.trim() === '' || (html && isBlankHtml(value))) return [];
-    return [{ language, value }];
+    return [{ language, value: html ? sanitizeRichHtml(value) : value }];
   });
   return out.length ? out : undefined;
 }
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Enlaces que llegan a un `href`: solo los seguros (sin `javascript:` & co). */
+const safeHref = (u?: string) => (u && isSafeHref(u) ? u : undefined);
+const httpUrl = (u?: string) => (u && /^https?:\/\//i.test(u.trim()) ? u.trim() : undefined);
+/** El iframe del mapa solo puede ser de Google (la CSP de las landings tampoco admite otro). */
+const googleEmbed = (u?: string) => {
+  const url = httpUrl(u);
+  if (!url) return undefined;
+  try {
+    const host = new URL(url).hostname;
+    return /(^|\.)google\.[a-z.]+$/.test(host) ? url : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 /** Tarjetas sin título en ningún idioma = borrador a medias: no se publican. */
 const hasText = (t: MultilangText | undefined) => Boolean(i18n(t));
@@ -128,14 +146,19 @@ export function toLandingFarmacia(f: Farmacia, baseUrl: string) {
       provincia: f.direccion.provincia,
       pais: f.direccion.pais,
     },
-    mapaUrl: f.mapaUrl,
-    contacto: { telefono: f.telefono, whatsapp: f.whatsapp, email: f.email, web: f.web },
+    mapaUrl: googleEmbed(f.mapaUrl),
+    contacto: {
+      telefono: f.telefono,
+      whatsapp: f.whatsapp,
+      email: f.email && EMAIL_RE.test(f.email.trim()) ? f.email.trim() : undefined,
+      web: httpUrl(f.web),
+    },
     horarios: f.horarios.map(horario),
     servicios: f.servicios.filter((s) => hasText(s.nombre)).map((s) => ({
       nombre: i18n(s.nombre),
       descripcion: i18n(s.descripcion),
       icono: s.icono,
-      enlace: s.enlace?.url ? s.enlace : undefined,
+      enlace: safeHref(s.enlace?.url) ? s.enlace : undefined,
     })),
     redesSociales: f.redes,
     seo: {
@@ -144,7 +167,7 @@ export function toLandingFarmacia(f: Farmacia, baseUrl: string) {
       imagenOg: f.seo?.ogImage ? { asset: { url: abs(f.seo.ogImage.url) } } : undefined,
     },
     googleLocationName: f.googleLocationName,
-    googleMapsUrl: f.googleMapsUrl,
+    googleMapsUrl: httpUrl(f.googleMapsUrl),
     heroChip: i18n(f.heroChip),
     heroSubtitulo: i18n(f.heroSubtitulo),
     heroTarjetasFlotantes: (f.heroTarjetasFlotantes ?? []).filter((t) => hasText(t.titulo)).map((t) => ({

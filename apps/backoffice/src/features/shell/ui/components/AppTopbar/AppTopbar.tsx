@@ -14,6 +14,15 @@ import { NAV_ITEMS } from '@/features/shell/ui/lib/navConfig';
 
 type Crumb = { label: string; href?: string };
 
+/** Ids internos (cuid) no se enseñan: el nombre ya está en el h1 de la página. */
+function segmentLabel(parent: string | undefined, seg: string): string {
+  if (parent === 'farmacias') {
+    if (seg === 'nueva') return 'Nueva';
+    if (/^c[a-z0-9]{20,}$/.test(seg)) return 'Editar farmacia';
+  }
+  return decodeURIComponent(seg);
+}
+
 function buildCrumbs(pathname: string): Crumb[] {
   const segs = pathname.split('/').filter(Boolean);
   const crumbs: Crumb[] = [];
@@ -21,7 +30,7 @@ function buildCrumbs(pathname: string): Crumb[] {
   for (let i = 0; i < segs.length; i++) {
     acc += `/${segs[i]}`;
     const nav = NAV_ITEMS.find((n) => n.href === acc);
-    const label = nav?.label ?? decodeURIComponent(segs[i]);
+    const label = nav?.label ?? segmentLabel(segs[i - 1], segs[i]);
     crumbs.push({ label, href: i === segs.length - 1 ? undefined : acc });
   }
   return crumbs;

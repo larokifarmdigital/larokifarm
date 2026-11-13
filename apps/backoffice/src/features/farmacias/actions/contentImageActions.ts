@@ -14,6 +14,7 @@ import { revalidatePath } from 'next/cache';
 import {
   DeleteContentImageUseCase,
   ReorderContentImagesUseCase,
+  UpdateContentImageAltUseCase,
   UploadContentImageUseCase,
   getContentImageRepository,
   type ContentImageRole,
@@ -72,13 +73,27 @@ export async function reorderContentImages(
   return res;
 }
 
+export async function updateContentImageAlt(
+  businessId: string,
+  imageId: string,
+  alt: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const res = await new UpdateContentImageAltUseCase(getContentImageRepository()).execute(
+    businessId,
+    imageId,
+    safeParseAlt(JSON.stringify(alt ?? {})),
+  );
+  if (res.ok) revalidatePath(`/farmacias/${businessId}`);
+  return res;
+}
+
 function safeParseAlt(raw: string): MultilangText {
   try {
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === 'object') {
       const out: MultilangText = {};
       for (const l of LOCALES) {
-        if (typeof parsed[l] === 'string') out[l] = parsed[l];
+        if (typeof parsed[l] === 'string') out[l] = parsed[l].slice(0, 300);
       }
       return out;
     }

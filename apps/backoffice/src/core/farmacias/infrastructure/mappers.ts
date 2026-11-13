@@ -50,7 +50,7 @@ function asActiveLocales(v: unknown): Locale[] {
   return arr.length > 0 ? arr : ['es'];
 }
 
-function asStatus(v: string): FarmaciaStatus {
+export function asStatus(v: string): FarmaciaStatus {
   return v === 'published' || v === 'archived' ? v : 'draft';
 }
 

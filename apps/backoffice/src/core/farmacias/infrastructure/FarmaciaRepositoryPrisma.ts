@@ -9,19 +9,21 @@
 
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/shared/lib/prisma';
-import { getCurrentUser } from '@/core/auth';
+import { READ_ONLY_ERROR, canEditContent, getCurrentUser } from '@/core/auth';
 import type {
   Farmacia,
   FarmaciaRepository,
-  FarmaciaStatus,
   FarmaciaSummary,
 } from '@/core/farmacias/domain';
 import type { SaveResult } from '@/core/shared';
 import {
+  asStatus,
   mapBusinessToFarmacia,
   splitFarmaciaPatch,
   type BusinessWithContent,
 } from './mappers';
+
+class SaveConflictError extends Error {}
 
 // ───────────────────────────────────────────────────────────────────
 // Guards de tenant
@@ -42,6 +44,13 @@ async function ensureCanAccessBusiness(id: string): Promise<void> {
   if (filter !== null && filter !== id) {
     throw new Error('Acceso denegado al negocio');
   }
+}
+
+/** Acceso al negocio + rol con permiso de escritura (USER = solo lectura). */
+async function ensureCanWriteBusiness(id: string): Promise<void> {
+  await ensureCanAccessBusiness(id);
+  const user = await getCurrentUser();
+  if (!user || !canEditContent(user)) throw new Error(READ_ONLY_ERROR);
 }
 
 // ───────────────────────────────────────────────────────────────────
@@ -91,7 +100,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
         slug: r.slug,
         nombre: r.name,
         ciudad: r.ciudad ?? undefined,
-        status: (r.publishedStatus as FarmaciaStatus) || 'draft',
+        status: asStatus(r.publishedStatus),
         idiomasActivos: Array.isArray(r.idiomasActivos)
           ? (r.idiomasActivos as unknown as Farmacia['idiomasActivos'])
           : ['es'],
@@ -142,9 +151,9 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
     return row ? mapBusinessToFarmacia(row as BusinessWithContent) : null;
   },
 
-  async saveFarmacia(id, patch): Promise<SaveResult<Farmacia>> {
+  async saveFarmacia(id, patch, opts): Promise<SaveResult<Farmacia>> {
     try {
-      await ensureCanAccessBusiness(id);
+      await ensureCanWriteBusiness(id);
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : 'Acceso denegado' };
     }
@@ -165,13 +174,19 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
 
     try {
       const row = await prisma.$transaction(async (tx) => {
-        // 1) UPDATE escalares + JSON blobs
-        if (Object.keys(scalar).length > 0) {
-          await tx.business.update({
-            where: { id },
-            data: scalar as Prisma.BusinessUpdateInput,
-          });
+        // 0) Control optimista: si otra pestaña/persona guardó después de que
+        // este editor cargase, no pisamos sus cambios.
+        if (opts?.expectedUpdatedAt) {
+          const cur = await tx.business.findUnique({ where: { id }, select: { updatedAt: true } });
+          if (cur && cur.updatedAt.toISOString() !== opts.expectedUpdatedAt) throw new SaveConflictError();
         }
+
+        // 1) UPDATE escalares + JSON blobs. Siempre se toca `updatedAt` (también
+        // si solo cambian servicios/FAQs) para que el control optimista lo vea.
+        await tx.business.update({
+          where: { id },
+          data: { ...(scalar as Prisma.BusinessUpdateInput), updatedAt: new Date() },
+        });
 
         // 2) Children — replace-all por colección incluida en el patch
         if (children.servicios !== undefined) {
@@ -228,7 +243,11 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
       if (!row) return { ok: false, error: 'Farmacia no encontrada tras update' };
       return { ok: true, data: mapBusinessToFarmacia(row as BusinessWithContent) };
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : 'Error desconocido al guardar' };
+      if (e instanceof SaveConflictError) {
+        return { ok: false, code: 'conflict', error: 'Esta farmacia se ha modificado en otra pestaña o por otra persona.' };
+      }
+      console.error('[farmacias] saveFarmacia', e);
+      return { ok: false, error: 'No se pudo guardar. Revisa los datos y vuelve a intentarlo.' };
     }
   },
 

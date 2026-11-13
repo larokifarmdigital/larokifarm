@@ -14,6 +14,26 @@ const nextConfig: NextConfig = {
   devIndicators: {
     position: 'bottom-right',
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          // Nadie puede incrustar el backoffice en un iframe (clickjacking).
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+      {
+        // Páginas (no /api): las rutas de imágenes ponen su propia CSP
+        // restrictiva (sandbox) y esta la pisaría.
+        source: '/((?!api/).*)',
+        headers: [{ key: 'Content-Security-Policy', value: "frame-ancestors 'none'" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

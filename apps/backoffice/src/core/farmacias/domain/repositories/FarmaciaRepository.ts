@@ -12,7 +12,15 @@ export type FarmaciaRepository = {
    * Solo devuelve farmacias con status `published`.
    */
   getPublishedFarmaciaBySlug(slug: string): Promise<Farmacia | null>;
-  saveFarmacia(id: string, patch: Partial<Farmacia>): Promise<SaveResult<Farmacia>>;
+  /**
+   * `expectedUpdatedAt`: control optimista. Si la farmacia cambió desde esa
+   * fecha (otra pestaña/persona), no guarda y devuelve `code: 'conflict'`.
+   */
+  saveFarmacia(
+    id: string,
+    patch: Partial<Farmacia>,
+    opts?: { expectedUpdatedAt?: string },
+  ): Promise<SaveResult<Farmacia>>;
   createFarmacia(
     input: Pick<Farmacia, 'nombre' | 'slug' | 'ciudad' | 'idiomasActivos'>,
   ): Promise<SaveResult<Farmacia>>;

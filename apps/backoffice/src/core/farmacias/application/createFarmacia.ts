@@ -22,8 +22,11 @@ export class CreateFarmaciaUseCase {
 
     const fieldErrors: Record<string, string> = {};
     if (nombre.length < 2) fieldErrors.nombre = 'Nombre muy corto';
-    const slug = rawSlug ? slugify(rawSlug) : slugify(nombre);
+    if (nombre.length > 120) fieldErrors.nombre = 'Nombre demasiado largo (máx 120)';
+    // Sin guiones al principio/final y máx 60: es la URL pública.
+    const slug = (rawSlug ? slugify(rawSlug) : slugify(nombre)).slice(0, 60).replace(/^-+|-+$/g, '');
     if (!slug) fieldErrors.slug = 'Slug requerido';
+    else if (slug.length < 2) fieldErrors.slug = 'Slug demasiado corto (mín 2 caracteres)';
     const idiomasActivos = LOCALES.filter((l): l is Locale => input.idiomas.includes(l));
     if (idiomasActivos.length === 0) fieldErrors.idiomas = 'Elige al menos un idioma';
     if (Object.keys(fieldErrors).length > 0) {

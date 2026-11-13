@@ -7,7 +7,7 @@
 import { NextResponse } from 'next/server';
 import { GetResenaAvatarUseCase, getResenaRepository } from '@/core/farmacias';
 import { getStorage } from '@/core/storage';
-import { transformImage } from '@/shared/lib/imageTransform';
+import { USER_IMAGE_HEADERS, transformImage } from '@/shared/lib/imageTransform';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,6 +20,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const out = await transformImage(res.data, res.contentType, new URL(req.url).searchParams);
   return new NextResponse(new Uint8Array(out.data), {
     headers: {
+      ...USER_IMAGE_HEADERS,
       'Content-Type': out.contentType,
       'Cache-Control': 'public, max-age=86400',
     },

@@ -153,7 +153,9 @@ function TarjetaModal({
       footer={
         <>
           <Button variant="ghost" size="md" onClick={onClose}>Cancelar</Button>
-          <Button variant="accent" size="md" onClick={() => { onSave(draft); onClose(); }}>
+          <Button variant="accent" size="md"
+            disabled={!Object.values(draft.titulo ?? {}).some((v) => (v ?? '').trim())}
+            title={Object.values(draft.titulo ?? {}).some((v) => (v ?? '').trim()) ? undefined : 'Rellena el campo obligatorio'} onClick={() => { onSave(draft); onClose(); }}>
             {isNew ? 'Añadir tarjeta' : 'Guardar cambios'}
           </Button>
         </>

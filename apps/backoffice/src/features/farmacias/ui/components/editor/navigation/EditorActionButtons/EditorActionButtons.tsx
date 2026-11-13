@@ -23,7 +23,7 @@ import { PublishMissingDialog } from './PublishMissingDialog';
  * (confirmar, no bloquear).
  */
 export function EditorActionButtons({ compact = false }: { compact?: boolean }) {
-  const { farmacia, saveNow, dirty, goToSection } = useFarmaciaEditor();
+  const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly } = useFarmaciaEditor();
   const health = useI18nHealth();
   const [pending, startTx] = useTransition();
   const [warnOpen, setWarnOpen] = useState(false);
@@ -34,8 +34,10 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
     startTx(async () => {
       try {
         if (dirty) await saveNow();
+        const res = await publishFarmaciaAction(farmacia.id, true);
+        if (res.ok) syncFromServer(res.farmacia);
         publishToast(
-          await publishFarmaciaAction(farmacia.id, true),
+          res,
           'Cambios publicados',
           remaining === 0
             ? undefined
@@ -110,6 +112,7 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
         <NavIcon name="ArrowSquareOut" size={12} />
       </Button>
 
+      {!readOnly && (
       <Button
         variant="accent"
         size="sm"
@@ -126,6 +129,7 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
           <span className="sm:hidden">{pending ? '…' : 'Publicar'}</span>
         )}
       </Button>
+      )}
 
       <PublishMissingDialog
         open={warnOpen}

@@ -45,6 +45,10 @@ export const contentImageRepositoryPrisma: ContentImageRepository = {
     });
   },
 
+  async updateAlt(id, alt) {
+    await prisma.contentImage.update({ where: { id }, data: { alt } });
+  },
+
   async delete(id) {
     await prisma.contentImage.delete({ where: { id } });
   },

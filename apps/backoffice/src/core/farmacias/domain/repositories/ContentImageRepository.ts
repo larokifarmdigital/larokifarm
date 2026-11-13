@@ -29,6 +29,7 @@ export interface ContentImageRepository {
   /** Crea la fila al final del orden actual de ese role. */
   create(input: CreateContentImageInput): Promise<ContentImageRecord>;
   delete(id: string): Promise<void>;
+  updateAlt(id: string, alt: MultilangText): Promise<void>;
   /** Cuántos de `ids` pertenecen a ese negocio + role. */
   countOwned(ids: string[], businessId: string, role: ContentImageRole): Promise<number>;
   /** Asigna `orden = índice` a cada id, en una transacción. */

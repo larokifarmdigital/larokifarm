@@ -14,7 +14,7 @@
 import { NextResponse } from 'next/server';
 import { GetContentImageFileUseCase, getContentImageRepository } from '@/core/farmacias';
 import { getStorage } from '@/core/storage';
-import { transformImage } from '@/shared/lib/imageTransform';
+import { USER_IMAGE_HEADERS, transformImage } from '@/shared/lib/imageTransform';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -31,6 +31,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   return new NextResponse(new Uint8Array(out.data), {
     status: 200,
     headers: {
+      ...USER_IMAGE_HEADERS,
       'Content-Type': out.contentType,
       'Content-Length': String(out.data.byteLength),
       'Cache-Control': 'public, max-age=31536000, immutable',

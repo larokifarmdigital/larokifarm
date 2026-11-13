@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { FarmaciaSummary } from '@/core/farmacias/domain';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
+import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import {
   archiveFarmaciaAction,
   duplicateFarmaciaAction,
@@ -19,12 +21,20 @@ export function FarmaciaRowActions({
   farmacia,
   pending,
   onAction,
+  canDuplicate,
+  canWrite,
 }: {
   farmacia: FarmaciaSummary;
   pending: boolean;
   onAction: RowActionRunner;
+  /** Duplicar = crear farmacia → solo SUPER_ADMIN. */
+  canDuplicate: boolean;
+  /** Publicar/archivar: no para el rol de solo lectura. */
+  canWrite: boolean;
 }) {
+  const [confirmArchive, setConfirmArchive] = useState(false);
   return (
+    <>
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
         aria-label={`Acciones para ${farmacia.nombre}`}
@@ -47,18 +57,20 @@ export function FarmaciaRowActions({
               <NavIcon name="PencilSimple" size={13} /> Editar
             </Link>
           </DropdownMenu.Item>
+          {canDuplicate && (
           <DropdownMenu.Item
             className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none cursor-pointer"
-            onSelect={(e) => {
-              e.preventDefault();
+            onSelect={() => {
               onAction(async () => {
-                await duplicateFarmaciaAction(farmacia.id);
+                const res = await duplicateFarmaciaAction(farmacia.id);
+                if (!res.ok) throw new Error(res.error);
                 toast.success(`"${farmacia.nombre}" duplicada`);
               });
             }}
           >
             <NavIcon name="Copy" size={13} /> Duplicar
           </DropdownMenu.Item>
+          )}
           <DropdownMenu.Item asChild>
             <a
               href={`https://larokifarm.com/${farmacia.slug}`}
@@ -69,11 +81,10 @@ export function FarmaciaRowActions({
               <NavIcon name="ArrowSquareOut" size={13} /> Ver landing
             </a>
           </DropdownMenu.Item>
-          {farmacia.status === 'published' ? (
+          {canWrite && (farmacia.status === 'published' ? (
             <DropdownMenu.Item
               className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none cursor-pointer"
-              onSelect={(e) => {
-                e.preventDefault();
+              onSelect={() => {
                 onAction(async () => {
                   const res = await publishFarmaciaAction(farmacia.id, false);
                   if (!res.ok) throw new Error(res.error);
@@ -88,8 +99,7 @@ export function FarmaciaRowActions({
           ) : farmacia.status === 'draft' ? (
             <DropdownMenu.Item
               className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-green-ink)] hover:bg-[var(--color-green-soft)] outline-none cursor-pointer"
-              onSelect={(e) => {
-                e.preventDefault();
+              onSelect={() => {
                 onAction(async () => {
                   publishToast(await publishFarmaciaAction(farmacia.id, true), `"${farmacia.nombre}" publicada`);
                 });
@@ -97,22 +107,47 @@ export function FarmaciaRowActions({
             >
               <NavIcon name="Check" size={13} /> Publicar ahora
             </DropdownMenu.Item>
-          ) : null}
-          <DropdownMenu.Separator className="h-px bg-[var(--color-hairline)] my-1" />
+          ) : (
+            <DropdownMenu.Item
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none cursor-pointer"
+              onSelect={() => {
+                onAction(async () => {
+                  const res = await publishFarmaciaAction(farmacia.id, false);
+                  if (!res.ok) throw new Error(res.error);
+                  toast.success(`"${farmacia.nombre}" restaurada como borrador`);
+                });
+              }}
+            >
+              <NavIcon name="ArrowsClockwise" size={13} /> Restaurar como borrador
+            </DropdownMenu.Item>
+          ))}
+          {canWrite && <DropdownMenu.Separator className="h-px bg-[var(--color-hairline)] my-1" />}
+          {canWrite && farmacia.status !== 'archived' && (
           <DropdownMenu.Item
             className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)] outline-none cursor-pointer"
-            onSelect={(e) => {
-              e.preventDefault();
-              onAction(async () => {
-                await archiveFarmaciaAction(farmacia.id);
-                toast.message(`"${farmacia.nombre}" archivada`);
-              });
-            }}
+            onSelect={() => setConfirmArchive(true)}
           >
             <NavIcon name="Archive" size={13} /> Archivar
           </DropdownMenu.Item>
+          )}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
+    <ConfirmDialog
+      open={confirmArchive}
+      onOpenChange={setConfirmArchive}
+      title={`¿Archivar "${farmacia.nombre}"?`}
+      description="Dejará de estar disponible para la web en el próximo despliegue. Podrás recuperarla más adelante."
+      confirmLabel="Archivar"
+      onConfirm={() => {
+        setConfirmArchive(false);
+        onAction(async () => {
+          const res = await archiveFarmaciaAction(farmacia.id);
+          if (!res.ok) throw new Error(res.error);
+          toast.message(`"${farmacia.nombre}" archivada`);
+        });
+      }}
+    />
+    </>
   );
 }

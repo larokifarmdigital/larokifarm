@@ -34,6 +34,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { isSafeHref } from '@/shared/lib/safeHref';
 
 function crearServicioVacio(orden: number): Servicio {
   return {
@@ -209,6 +210,8 @@ function ServicioModal({
           <Button
             variant="accent"
             size="md"
+            disabled={!Object.values(draft.nombre ?? {}).some((v) => (v ?? '').trim()) || !isSafeHref(draft.enlace?.url ?? '')}
+            title={Object.values(draft.nombre ?? {}).some((v) => (v ?? '').trim()) ? undefined : 'Rellena el campo obligatorio'}
             onClick={() => {
               onSave(draft);
               onClose();
@@ -266,7 +269,13 @@ function ServicioModal({
               })
             }
             placeholder="https://…"
+            aria-invalid={!isSafeHref(draft.enlace?.url ?? '')}
           />
+          {!isSafeHref(draft.enlace?.url ?? '') && (
+            <p role="alert" className="mt-1.5 mb-0 text-[12px] text-[var(--color-red-ink)]">
+              Enlace no permitido. Usa https://, mailto:, tel:, #seccion o /ruta.
+            </p>
+          )}
           <label className="mt-2.5 flex items-center gap-2 text-[12.5px] text-[var(--color-ink-2)] cursor-pointer">
             <input
               type="checkbox"

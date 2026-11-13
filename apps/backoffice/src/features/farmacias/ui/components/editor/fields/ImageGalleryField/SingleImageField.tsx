@@ -19,6 +19,7 @@ import {
   dropZoneClass,
 } from './ImageFieldParts';
 import { useImageFilePicker } from './useImageFilePicker';
+import { UPLOAD_NETWORK_ERROR, prepareImageUpload } from './prepareImageUpload';
 
 /** Imagen legacy (Business.logoUrl) sin fila en content_images. */
 const LEGACY_LOGO_ID = 'legacy-logo';
@@ -37,11 +38,22 @@ export function SingleImageField({
   const [isPending, startTransition] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  function handleFile(file: File) {
-    const fd = new FormData();
-    fd.append('file', file);
+  function handleFile(raw: File) {
     startTransition(async () => {
-      const res = await uploadContentImage(businessId, role, fd);
+      const prepared = await prepareImageUpload(raw);
+      if (!prepared.ok) {
+        toast.error(prepared.error);
+        return;
+      }
+      const fd = new FormData();
+      fd.append('file', prepared.file);
+      let res: Awaited<ReturnType<typeof uploadContentImage>>;
+      try {
+        res = await uploadContentImage(businessId, role, fd);
+      } catch {
+        toast.error(UPLOAD_NETWORK_ERROR);
+        return;
+      }
       if (!res.ok) {
         toast.error(res.error);
         return;
@@ -66,7 +78,7 @@ export function SingleImageField({
       return;
     }
     startTransition(async () => {
-      const res = await deleteContentImage(businessId, value.id);
+      const res = await deleteContentImage(businessId, value.id).catch(() => ({ ok: false as const, error: 'No se pudo borrar. Revisa la conexión.' }));
       if (!res.ok) {
         toast.error(res.error);
         return;
@@ -148,7 +160,7 @@ export function SingleImageField({
               <NavIcon name="Image" size={20} />
               <span className="font-medium">Arrastra una imagen o haz click</span>
               <span className="text-[11px] text-[var(--color-muted-2)]">
-                PNG, JPG, WebP o SVG · máx 10 MB
+                PNG, JPG, WebP o SVG · se optimizan al subir
               </span>
             </>
           )}

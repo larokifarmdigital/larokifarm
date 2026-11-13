@@ -5,7 +5,7 @@ import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext
 import { formatRelativeDate } from '@/shared/lib/format';
 
 export function AutosaveIndicator() {
-  const { saveStatus, lastSavedAt, dirty } = useFarmaciaEditor();
+  const { saveStatus, errorKind, lastSavedAt, dirty } = useFarmaciaEditor();
   const [, forceTick] = useState(0);
 
   useEffect(() => {
@@ -21,6 +21,24 @@ export function AutosaveIndicator() {
           className="inline-block h-2.5 w-2.5 rounded-full border-2 border-[var(--color-muted-2)] border-t-[var(--color-accent)] animate-spin"
         />
         Guardando…
+      </span>
+    );
+  }
+
+  if (saveStatus === 'conflict') {
+    return (
+      <span role="status" className="flex items-center gap-1.5 text-[12px] text-[var(--color-red-ink)]">
+        <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-red-ink)]" />
+        Sin guardar · recarga la página
+      </span>
+    );
+  }
+
+  if (saveStatus === 'error' && dirty) {
+    return (
+      <span role="status" className="flex items-center gap-1.5 text-[12px] text-[var(--color-red-ink)]">
+        <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-red-ink)]" />
+        {errorKind === 'network' ? 'Sin conexión · reintentando' : 'No se pudo guardar'}
       </span>
     );
   }

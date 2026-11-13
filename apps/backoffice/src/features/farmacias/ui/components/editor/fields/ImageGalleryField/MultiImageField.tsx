@@ -9,6 +9,7 @@ import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { cn } from '@/shared/lib/cn';
 import {
   deleteContentImage,
+  updateContentImageAlt,
   uploadContentImage,
 } from '@/features/farmacias/actions/contentImageActions';
 import { AltStatusDot, getAltStatus } from './AltStatusDot';
@@ -23,6 +24,7 @@ import {
   dropZoneClass,
 } from './ImageFieldParts';
 import { useImageFilePicker } from './useImageFilePicker';
+import { UPLOAD_NETWORK_ERROR, prepareImageUpload } from './prepareImageUpload';
 
 /** Modo multi — hero, sobre, gallery. Grid de tiles + modal de alt por idioma. */
 export function MultiImageField({
@@ -41,14 +43,27 @@ export function MultiImageField({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const editing = value.find((x) => x.id === editingId) ?? null;
+  // Alt al abrir el modal: al cerrarlo se guarda solo si cambió.
+  const [altSnapshot, setAltSnapshot] = useState<string>('');
   const confirmDelete = value.find((x) => x.id === confirmDeleteId) ?? null;
   const canAdd = max === undefined || value.length < max;
 
-  function handleFile(file: File) {
-    const fd = new FormData();
-    fd.append('file', file);
+  function handleFile(raw: File) {
     startTransition(async () => {
-      const res = await uploadContentImage(businessId, role, fd);
+      const prepared = await prepareImageUpload(raw);
+      if (!prepared.ok) {
+        toast.error(prepared.error);
+        return;
+      }
+      const fd = new FormData();
+      fd.append('file', prepared.file);
+      let res: Awaited<ReturnType<typeof uploadContentImage>>;
+      try {
+        res = await uploadContentImage(businessId, role, fd);
+      } catch {
+        toast.error(UPLOAD_NETWORK_ERROR);
+        return;
+      }
       if (!res.ok) {
         toast.error(res.error);
         return;
@@ -62,7 +77,7 @@ export function MultiImageField({
 
   function doDelete(img: ImagenAsset) {
     startTransition(async () => {
-      const res = await deleteContentImage(businessId, img.id);
+      const res = await deleteContentImage(businessId, img.id).catch(() => ({ ok: false as const, error: 'No se pudo borrar. Revisa la conexión.' }));
       if (!res.ok) {
         toast.error(res.error);
         return;
@@ -97,7 +112,10 @@ export function MultiImageField({
               <ImageActionsOverlay>
                 <button
                   type="button"
-                  onClick={() => setEditingId(img.id)}
+                  onClick={() => {
+                    setAltSnapshot(JSON.stringify(img.alt ?? {}));
+                    setEditingId(img.id);
+                  }}
                   aria-label={`Editar imagen ${i + 1}`}
                   className={OVERLAY_PILL_BUTTON}
                 >
@@ -133,7 +151,7 @@ export function MultiImageField({
                     {value.length === 0 ? 'Añadir imagen' : 'Añadir otra'}
                   </span>
                   <span className="text-[10.5px] text-[var(--color-muted-2)] text-center px-2 leading-tight">
-                    PNG, JPG, WebP · máx 10 MB
+                    PNG, JPG, WebP · se optimizan al subir
                   </span>
                 </>
               )}
@@ -161,7 +179,20 @@ export function MultiImageField({
         image={editing}
         imageIndex={editing ? value.findIndex((x) => x.id === editing.id) : -1}
         idiomasActivos={idiomasActivos}
-        onClose={() => setEditingId(null)}
+        onClose={() => {
+          if (editing && JSON.stringify(editing.alt ?? {}) !== altSnapshot) {
+            const { id, alt } = editing;
+            startTransition(async () => {
+              const res = await updateContentImageAlt(businessId, id, alt).catch(() => ({
+                ok: false as const,
+                error: 'No se pudo guardar el texto alternativo. Revisa la conexión.',
+              }));
+              if (!res.ok) toast.error(res.error);
+              else toast.success('Texto alternativo guardado');
+            });
+          }
+          setEditingId(null);
+        }}
         onAltChange={updateAlt}
         onRequestDelete={(id) => {
           setEditingId(null);

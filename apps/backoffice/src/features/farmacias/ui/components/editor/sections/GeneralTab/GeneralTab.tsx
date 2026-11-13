@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { Input } from '@/shared/components/atoms/Input';
+import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { Label } from '@/shared/components/atoms/Label';
 import { Button } from '@/shared/components/atoms/Button';
 import { IconInput } from '@/shared/components/atoms/IconInput';
@@ -33,6 +35,7 @@ const HORARIO_TIPICO: Horario[] = [
 
 export function GeneralTab() {
   const { farmacia, patch } = useFarmaciaEditor();
+  const [confirmPlantilla, setConfirmPlantilla] = useState(false);
   const d = farmacia.direccion ?? {};
 
   const setDir = (field: string, value: string) => {
@@ -67,7 +70,12 @@ export function GeneralTab() {
               label="URL pública"
               prefix="larokifarm.com/"
               value={farmacia.slug}
-              onChange={(e) => patch({ slug: slugify(e.target.value) })}
+              onChange={(e) => patch({ slug: slugify(e.target.value).slice(0, 60) })}
+              onBlur={() => {
+                const clean = farmacia.slug.replace(/^-+|-+$/g, '');
+                if (clean !== farmacia.slug) patch({ slug: clean });
+              }}
+              maxLength={60}
               placeholder="mi-farmacia"
               className="font-mono-tabular"
             />
@@ -345,7 +353,11 @@ export function GeneralTab() {
               type="button"
               variant="secondary"
               size="sm"
-              onClick={() => patch({ horarios: HORARIO_TIPICO })}
+              onClick={() =>
+                farmacia.horarios.some((h) => h.tramos.length > 0)
+                  ? setConfirmPlantilla(true)
+                  : patch({ horarios: HORARIO_TIPICO })
+              }
             >
               <NavIcon name="Lightning" size={13} />
               <span className="hidden sm:inline">Plantilla típica</span>
@@ -357,6 +369,18 @@ export function GeneralTab() {
         <HorarioSemanal
           horarios={farmacia.horarios}
           onChange={(next) => patch({ horarios: next })}
+        />
+        <ConfirmDialog
+          open={confirmPlantilla}
+          onOpenChange={setConfirmPlantilla}
+          title="¿Sustituir el horario actual?"
+          description="La plantilla típica reemplaza el horario de los 7 días (L-V 9-14 y 17-20:30, sábado 9:30-14, domingo cerrado)."
+          confirmLabel="Usar plantilla"
+          variant="accent"
+          onConfirm={() => {
+            patch({ horarios: HORARIO_TIPICO });
+            setConfirmPlantilla(false);
+          }}
         />
       </section>
     </div>

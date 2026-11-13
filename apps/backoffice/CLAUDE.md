@@ -14,7 +14,7 @@ archivos — evita re-leer las 500-1000 líneas del editor solo para orientarse.
 - **@dnd-kit** para drag-to-reorder
 - **@phosphor-icons/react** — todos los iconos van vía `<NavIcon name="..." />`
 - **next-auth v5** (adoptado de conciliador-albaranes)
-- Login demo: `admin@larokifarm.com` / `demo1234`
+- Login: usuarios reales de la tabla `users` (Neon compartida). No hay credenciales demo
 
 ## Paleta y DNA visual (Humblytics-inspired)
 
@@ -263,7 +263,35 @@ Diferencias schema vs UI documentadas:
   backoffice llama a los hooks directo. Landings: un fallo del backoffice
   en build rompe el build (3 reintentos) → el hosting conserva la versión
   anterior ✅
+- **QA + fixes 13-11-2026** (informe completo con usuarios de cada rol):
+  - Autoguardado (`EditorContext`): envía SOLO lo cambiado (diff contra
+    `baseline`), nunca `status`/imágenes/reseñas; `rev` para no perder lo
+    tecleado durante un guardado; control optimista (`expectedUpdatedAt` →
+    `code:'conflict'` + toast "Recargar"); try/catch + reintento si falla la
+    red; `syncFromServer` tras publicar.
+  - `saveFarmaciaPatchAction` valida con zod (`application/farmaciaPatch.ts`):
+    whitelist de campos, slug `^[a-z0-9-]{1,60}$`, enlaces sin
+    `javascript:` (`shared/lib/safeHref.ts`), HTML saneado
+    (`shared/lib/safeHtml.ts`, sanitize-html), tarjetas sin título fuera.
+  - Roles: USER (`viewer`) = solo lectura (servidor `READ_ONLY_ERROR` +
+    editor con `fieldset disabled`); crear/duplicar solo SUPER_ADMIN.
+    Sesión JWT re-validada contra la BD cada 5 min (desactivar = fuera).
+  - Imágenes: tipo real por bytes (`detectImageType`), máx 4 MB, compresión
+    en navegador (`prepareImageUpload`: 2560 px + WebP), HEIC rechazado con
+    mensaje; CSP `sandbox` en `/api/content-images` (SVG con script no
+    ejecuta); transform sin 500; alt persistido (`updateContentImageAlt`).
+  - API pública: HTML saneado, email/web/mapa (solo Google)/enlaces filtrados.
+    Landings: JSON-LD con `<` escapado, enlaces de servicio seguros y el build
+    FALLA si la farmacia da 404 (no publica la web vacía).
+  - UX: búsqueda sin acentos, aviso de tramo erróneo, confirmar plantilla y
+    archivar, restaurar archivadas, sección en el hash (`#hero`), miga sin
+    ids, `callbackUrl` tras login, cabeceras de seguridad (`next.config`).
 - **Pendientes**:
+  - Borrador vs publicado: hoy el autoguardado escribe el contenido que lee
+    la API; un deploy incluye ediciones a medias aunque no se pulse
+    "Publicar cambios" (necesita snapshot publicado)
+  - Reordenar imágenes (la action existe, falta UI) · enlaces de Tiptap sin
+    `window.prompt` · rate-limit del login
   - UI de reseñas en el editor (ocultar/destacar) — hoy solo se ven
   - Quitar Sanity de las landings (y `CONTENT_SOURCE`) cuando estén todas
     en backoffice; retirar el webhook de Sanity de `workers/sanity-fanout`
