@@ -44,6 +44,8 @@ type EnlaceResuelto = { href: string; target?: '_blank'; rel?: string };
 function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): EnlaceResuelto | null {
   const url = enlace?.url?.trim();
   if (!url) return null;
+  // Esquemas peligrosos (javascript:, data:…) → sin enlace.
+  if (/^[a-z][a-z0-9+.-]*:/i.test(url.replace(/[\u0000-\u0020]/g, '')) && !/^(https?|mailto|tel):/i.test(url)) return null;
   const esExterno = /^https?:\/\//i.test(url);
   const esEsquema = /^(mailto:|tel:|#)/i.test(url);
   const abrirNueva = enlace?.nuevaPestana ?? esExterno;

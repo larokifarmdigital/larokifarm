@@ -35,8 +35,19 @@ async function getJson<T>(path: string, intentos = 3): Promise<T | null> {
   }
 }
 
-export function obtenerFarmaciaBackoffice(slug: string): Promise<Farmacia | null> {
-  return getJson<Farmacia>(`/api/public/farmacias/${encodeURIComponent(slug)}`);
+/**
+ * Esta landing es de UNA farmacia: si la API responde 404 (pasada a
+ * borrador, archivada o con el slug cambiado) el build falla en vez de
+ * publicar la web vacía. El hosting conserva el deploy anterior.
+ */
+export async function obtenerFarmaciaBackoffice(slug: string): Promise<Farmacia | null> {
+  const f = await getJson<Farmacia>(`/api/public/farmacias/${encodeURIComponent(slug)}`);
+  if (!f) {
+    throw new Error(
+      `[backoffice] la farmacia "${slug}" no está publicada en ${BACKOFFICE_URL} (¿borrador, archivada o slug cambiado?). Build abortado para no publicar la web vacía.`,
+    );
+  }
+  return f;
 }
 
 // Una sola petición por build: home, /resenas y demás páginas comparten lista.

@@ -38,7 +38,9 @@ const subtitulo = localizar(textos?.subtitulo, lang) || t('servicios.subtitulo',
         {lista.map((s, i) => {
           const nombre = localizar(s.nombre, lang);
           const descripcion = localizar(s.descripcion, lang);
-          const url = s.enlace?.url;
+          // Solo enlaces seguros: nada de javascript:, data:…
+          const rawUrl = s.enlace?.url?.trim();
+          const url = rawUrl && (!/^[a-z][a-z0-9+.-]*:/i.test(rawUrl.replace(/[\u0000-\u0020]/g, '')) || /^(https?|mailto|tel):/i.test(rawUrl)) ? rawUrl : undefined;
           const externo = s.enlace?.nuevaPestana;
 
           const contenido = (
