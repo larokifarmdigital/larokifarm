@@ -51,33 +51,47 @@ export async function obtenerFarmaciaBackoffice(slug: string): Promise<Farmacia 
 }
 
 // Una sola petición por build: home, /resenas y demás páginas comparten lista.
-const cacheResenas = new Map<string, Promise<ResenaGoogle[]>>();
+const cacheResenas = new Map<string, Promise<(ResenaGoogle & { enWeb?: boolean })[]>>();
 
-/** Reseñas visibles (no ocultas ni eliminadas), más recientes primero. */
-export function listarResenasBackoffice(slug: string): Promise<ResenaGoogle[]> {
+function todasLasResenas(slug: string) {
   let p = cacheResenas.get(slug);
   if (!p) {
-    p = getJson<ResenaGoogle[]>(`/api/public/farmacias/${encodeURIComponent(slug)}/resenas`).then((r) => r ?? []);
+    p = getJson<(ResenaGoogle & { enWeb?: boolean })[]>(`/api/public/farmacias/${encodeURIComponent(slug)}/resenas`).then((r) => r ?? []);
     cacheResenas.set(slug, p);
   }
   return p;
 }
 
-/** Mismo cálculo que la query GROQ de `obtenerResenasGoogle`, en memoria. */
+/**
+ * Reseñas que se pintan en la web: las que cumplen las reglas del editor
+ * (switch por reseña, mínimo de estrellas, solo con comentario). Más
+ * recientes primero.
+ */
+export async function listarResenasBackoffice(slug: string): Promise<ResenaGoogle[]> {
+  return (await todasLasResenas(slug)).filter((r) => r.enWeb !== false);
+}
+
+/**
+ * Resumen para la landing. Las reglas las decide el editor en el backoffice,
+ * así que `minRating` / `soloConComentario` (fijos en el código de la
+ * landing) se ignoran en este modo. Media y total cuentan TODAS las reseñas
+ * no ocultas (los datos reales de Google), no solo las que se pintan.
+ */
 export async function obtenerResenasBackoffice(
   slug: string,
   limite: number,
-  minRating: number,
-  soloConComentario: boolean,
+  _minRating?: number,
+  _soloConComentario?: boolean,
 ): Promise<ResumenResenas> {
-  const visibles = (await listarResenasBackoffice(slug)).filter(
-    (r) => r.rating >= minRating && (!soloConComentario || Boolean(r.comentario?.trim())),
-  );
-  const total = visibles.length;
+  void _minRating;
+  void _soloConComentario;
+  const todas = await todasLasResenas(slug);
+  const enWeb = todas.filter((r) => r.enWeb !== false);
+  const total = todas.length;
   return {
     total,
-    media: total ? visibles.reduce((s, r) => s + r.rating, 0) / total : 0,
-    destacadas: visibles.filter((r) => r.destacada),
-    recientes: visibles.filter((r) => !r.destacada).slice(0, limite),
+    media: total ? todas.reduce((s, r) => s + r.rating, 0) / total : 0,
+    destacadas: enWeb.filter((r) => r.destacada),
+    recientes: enWeb.filter((r) => !r.destacada).slice(0, limite),
   };
 }

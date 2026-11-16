@@ -177,6 +177,8 @@ export type Farmacia = {
   textosServicios?: TextosCabecera;
   textosFaqs?: TextosCabecera;
   textosResenas?: TextosCabecera;
+  /** Solo backoffice: switch del editor. Sin valor → MOSTRAR_RESENAS_POR_DEFECTO. */
+  mostrarResenas?: boolean;
   avisoLegal?: LegalTexto;
   politicaPrivacidad?: LegalTexto;
 };
