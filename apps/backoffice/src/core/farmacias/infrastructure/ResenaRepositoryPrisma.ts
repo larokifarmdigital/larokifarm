@@ -10,6 +10,11 @@ export const resenaRepositoryPrisma: ResenaRepository = {
     return row?.avatarStorageKey ?? null;
   },
 
+  async findAvatar(resenaId) {
+    const row = await prisma.resena.findUnique({ where: { id: resenaId }, select: { avatarStorageKey: true, businessId: true } });
+    return row ? { key: row.avatarStorageKey, businessId: row.businessId } : null;
+  },
+
   async findBusinessId(resenaId) {
     const row = await prisma.resena.findUnique({ where: { id: resenaId }, select: { businessId: true } });
     return row?.businessId ?? null;

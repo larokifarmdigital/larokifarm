@@ -6,12 +6,18 @@
  */
 import { NextResponse } from 'next/server';
 import { GetResenaAvatarUseCase, getResenaRepository } from '@/core/farmacias';
+import { getCurrentUser } from '@/core/auth';
 import { getStorage } from '@/core/storage';
 import { USER_IMAGE_HEADERS, transformImage } from '@/shared/lib/imageTransform';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const res = await new GetResenaAvatarUseCase(getResenaRepository(), getStorage()).execute(id);
+  // En el editor (sesión del backoffice) también se ven las fotos de reseñas ocultas.
+  const editor = new URL(req.url).searchParams.has('editor') ? await getCurrentUser() : null;
+  const res = await new GetResenaAvatarUseCase(getResenaRepository(), getStorage()).execute(
+    id,
+    editor ? { esAdmin: editor.rol === 'admin', farmaciaId: editor.farmaciaId } : undefined,
+  );
   if (!res.ok) {
     return NextResponse.json({ error: res.reason === 'not-found' ? 'Not found' : 'Storage read failed' }, {
       status: res.reason === 'not-found' ? 404 : 502,
@@ -22,7 +28,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     headers: {
       ...USER_IMAGE_HEADERS,
       'Content-Type': out.contentType,
-      'Cache-Control': 'public, max-age=86400',
+      // Con ?editor la respuesta depende de la sesión: nada de caché compartida.
+      'Cache-Control': editor ? 'private, no-store' : 'public, max-age=86400',
     },
   });
 }

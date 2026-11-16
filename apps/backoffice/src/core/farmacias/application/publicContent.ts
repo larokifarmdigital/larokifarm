@@ -251,10 +251,19 @@ export class GetResenaAvatarUseCase {
     private readonly storage: StorageRepository,
   ) {}
 
+  /**
+   * Público: solo reseñas visibles. Con `editor` (usuario del backoffice con
+   * acceso a esa farmacia) también las ocultas, para verlas en el editor.
+   */
   async execute(
     resenaId: string,
+    editor?: { esAdmin: boolean; farmaciaId?: string },
   ): Promise<{ ok: true; data: Buffer; contentType: string } | { ok: false; reason: 'not-found' | 'storage-error' }> {
-    const key = await this.resenas.findVisibleAvatarKey(resenaId);
+    let key = await this.resenas.findVisibleAvatarKey(resenaId);
+    if (!key && editor) {
+      const any = await this.resenas.findAvatar(resenaId);
+      if (any?.key && (editor.esAdmin || editor.farmaciaId === any.businessId)) key = any.key;
+    }
     if (!key) return { ok: false, reason: 'not-found' };
     try {
       return { ok: true, ...(await this.storage.read(key)) };

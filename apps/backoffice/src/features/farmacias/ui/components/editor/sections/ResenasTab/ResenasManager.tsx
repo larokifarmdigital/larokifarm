@@ -6,6 +6,8 @@ import { resenaEnWeb, type Resena, type ResenasReglas } from '@/core/farmacias/d
 import { setResenaVisibleAction } from '@/features/farmacias/actions/resenaActions';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { Switch } from '@/shared/components/atoms/Switch';
+import { Select, StarsLeading } from '@/shared/components/atoms/Select';
+import { IconInput } from '@/shared/components/atoms/IconInput';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';
 import { cn } from '@/shared/lib/cn';
@@ -16,11 +18,37 @@ type ComentarioFiltro = 'todas' | 'con' | 'sin';
 const PAGE = 30;
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
+/** Foto del autor (servida desde R2 por el backoffice) o sus iniciales si no hay o falla. */
+function Avatar({ autor, url }: { autor: string; url?: string }) {
+  const [error, setError] = useState(false);
+  const iniciales = autor.trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase() || '—';
+  if (url && !error) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`${url}?editor&w=72`}
+        alt=""
+        width={36}
+        height={36}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={() => setError(true)}
+        className="shrink-0 h-9 w-9 rounded-full object-cover bg-[var(--color-surface-sunken)]"
+      />
+    );
+  }
+  return (
+    <div aria-hidden className="shrink-0 h-9 w-9 rounded-full bg-[var(--color-surface-sunken)] flex items-center justify-center text-[12px] font-medium text-[var(--color-ink-2)]">
+      {iniciales}
+    </div>
+  );
+}
+
 /** Por qué una reseña no sale en la web (null = sí sale). */
 function motivoFuera(r: Resena, reglas: ResenasReglas): string | null {
   if (r.eliminadaEnGoogle) return 'Eliminada en Google';
   if (r.oculta) return 'Ocultada a mano';
-  if (reglas.minRating != null && r.puntuacion < reglas.minRating) return `Menos de ${reglas.minRating}★`;
+  if (reglas.minRating != null && r.puntuacion < reglas.minRating) return `Menos de ${reglas.minRating} estrellas`;
   if (reglas.soloConComentario && !(r.texto ?? '').trim()) return 'Sin comentario';
   return null;
 }
@@ -47,6 +75,8 @@ export function ResenasManager() {
 
   const resenas = farmacia.resenas;
   const enWebCount = resenas.filter((r) => resenaEnWeb(r, reglas)).length;
+  const conTexto = resenas.filter((r) => (r.texto ?? '').trim()).length;
+  const porEstrellas = resenas.reduce<Record<number, number>>((acc, r) => ({ ...acc, [r.puntuacion]: (acc[r.puntuacion] ?? 0) + 1 }), {});
   const noOcultas = resenas.filter((r) => !r.oculta && !r.eliminadaEnGoogle);
   const media = noOcultas.length ? noOcultas.reduce((s, r) => s + r.puntuacion, 0) / noOcultas.length : null;
 
@@ -86,8 +116,6 @@ export function ResenasManager() {
     });
   };
 
-  const selectCls =
-    'h-8 rounded-[6px] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-2 text-[12.5px] text-[var(--color-ink-2)] focus:outline-none focus:border-[var(--color-accent)]';
 
   return (
     <>
@@ -105,23 +133,28 @@ export function ResenasManager() {
                 Mínimo de estrellas
               </label>
               <p className="m-0 mt-0.5 text-[12px] text-[var(--color-muted-2)]">
-                {reglas.minRating != null ? `Solo salen las de ${reglas.minRating}★ o más.` : 'Salen todas, tengan las estrellas que tengan.'}
+                {reglas.minRating != null
+                  ? reglas.minRating === 5
+                    ? 'Solo salen las de 5 estrellas.'
+                    : reglas.minRating === 1
+                      ? 'Salen las de 1 estrella o más.'
+                      : `Solo salen las de ${reglas.minRating} estrellas o más.`
+                  : 'Salen todas, tengan las estrellas que tengan.'}
               </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              <select
+              <Select
                 aria-label="Mínimo de estrellas"
-                value={reglas.minRating ?? 4}
+                value={String(reglas.minRating ?? 4)}
                 disabled={reglas.minRating == null || readOnly}
-                onChange={(e) => setReglas({ minRating: Number(e.target.value) })}
-                className={selectCls}
-              >
-                {[5, 4, 3, 2, 1].map((n) => (
-                  <option key={n} value={n}>
-                    {n}★ o más
-                  </option>
-                ))}
-              </select>
+                onValueChange={(v) => setReglas({ minRating: Number(v) })}
+                className="w-[168px] sm:w-[180px]"
+                options={[5, 4, 3, 2, 1].map((n) => ({
+                  value: String(n),
+                  label: n === 5 ? 'Solo 5' : `${n} o más`,
+                  leading: <StarsLeading n={n} />,
+                }))}
+              />
               <Switch
                 id="regla-min"
                 checked={reglas.minRating != null}
@@ -178,40 +211,56 @@ export function ResenasManager() {
           </div>
         ) : (
           <>
-            <div role="search" className="mb-3 flex flex-wrap items-center gap-2">
-              <select aria-label="Filtrar por estado" value={estado} onChange={(e) => { setEstado(e.target.value as EstadoFiltro); setVisibles(PAGE); }} className={selectCls}>
-                <option value="todas">Todas</option>
-                <option value="en-web">Salen en la web</option>
-                <option value="fuera">No salen</option>
-              </select>
-              <select
-                aria-label="Filtrar por estrellas"
-                value={estrellas}
-                onChange={(e) => { setEstrellas(e.target.value === 'todas' ? 'todas' : Number(e.target.value)); setVisibles(PAGE); }}
-                className={selectCls}
-              >
-                <option value="todas">★ Todas</option>
-                {[5, 4, 3, 2, 1].map((n) => (
-                  <option key={n} value={n}>
-                    {n}★
-                  </option>
-                ))}
-              </select>
-              <select aria-label="Filtrar por comentario" value={comentario} onChange={(e) => { setComentario(e.target.value as ComentarioFiltro); setVisibles(PAGE); }} className={selectCls}>
-                <option value="todas">Con y sin comentario</option>
-                <option value="con">Con comentario</option>
-                <option value="sin">Sin comentario</option>
-              </select>
-              <input
-                type="search"
-                aria-label="Buscar en reseñas"
-                placeholder="Buscar autor o texto…"
-                value={q}
-                onChange={(e) => { setQ(e.target.value); setVisibles(PAGE); }}
-                className={cn(selectCls, 'min-w-[180px] flex-1')}
+            <div role="search" className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)_minmax(0,1.15fr)_minmax(0,1.3fr)]">
+              <Select
+                aria-label="Filtrar por estado"
+                value={estado}
+                onValueChange={(v) => { setEstado(v as EstadoFiltro); setVisibles(PAGE); }}
+                options={[
+                  { value: 'todas', label: 'Todos los estados', hint: String(resenas.length) },
+                  { value: 'en-web', label: 'Salen en la web', hint: String(enWebCount) },
+                  { value: 'fuera', label: 'No salen', hint: String(resenas.length - enWebCount) },
+                ]}
               />
-              <span className="text-[12px] text-[var(--color-muted)] font-mono-tabular">{filtradas.length} resultados</span>
+              <Select
+                aria-label="Filtrar por estrellas"
+                value={String(estrellas)}
+                onValueChange={(v) => { setEstrellas(v === 'todas' ? 'todas' : Number(v)); setVisibles(PAGE); }}
+                options={[
+                  { value: 'todas', label: 'Todas las estrellas', hint: String(resenas.length) },
+                  ...[5, 4, 3, 2, 1].map((n) => ({
+                    value: String(n),
+                    label: n === 1 ? '1 estrella' : `${n} estrellas`,
+                    leading: <StarsLeading n={n} />,
+                    hint: String(porEstrellas[n] ?? 0),
+                  })),
+                ]}
+              />
+              <Select
+                aria-label="Filtrar por comentario"
+                value={comentario}
+                onValueChange={(v) => { setComentario(v as ComentarioFiltro); setVisibles(PAGE); }}
+                options={[
+                  { value: 'todas', label: 'Con y sin comentario', hint: String(resenas.length) },
+                  { value: 'con', label: 'Con comentario', hint: String(conTexto) },
+                  { value: 'sin', label: 'Sin comentario', hint: String(resenas.length - conTexto) },
+                ]}
+              />
+              <div className="sm:col-span-3 lg:col-span-1">
+                <IconInput
+                  type="search"
+                  icon={<NavIcon name="MagnifyingGlass" size={14} />}
+                  label="Buscar en reseñas"
+                  aria-label="Buscar en reseñas"
+                  placeholder="Buscar autor o texto…"
+                  value={q}
+                  onChange={(e) => { setQ(e.target.value); setVisibles(PAGE); }}
+                />
+              </div>
             </div>
+            <p className="m-0 mb-2 text-right text-[12px] text-[var(--color-muted)] font-mono-tabular" aria-live="polite">
+              {filtradas.length} {filtradas.length === 1 ? 'resultado' : 'resultados'}
+            </p>
 
             {filtradas.length === 0 ? (
               <p className="card p-6 m-0 text-center text-[13px] text-[var(--color-muted)]">Ninguna reseña coincide con los filtros.</p>
@@ -222,9 +271,7 @@ export function ResenasManager() {
                   const manualVisible = !r.oculta && !r.eliminadaEnGoogle;
                   return (
                     <li key={r.id} className={cn('card p-4 flex items-start gap-3', motivo && 'opacity-70')}>
-                      <div className="shrink-0 h-9 w-9 rounded-full bg-[var(--color-surface-sunken)] flex items-center justify-center text-[12px] font-medium text-[var(--color-ink-2)]">
-                        {r.autor.slice(0, 2).toUpperCase() || '—'}
-                      </div>
+                      <Avatar autor={r.autor} url={r.avatarUrl} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[13.5px] font-medium text-[var(--color-ink)]">{r.autor || 'Anónimo'}</span>
