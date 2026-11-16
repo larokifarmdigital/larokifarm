@@ -7,6 +7,8 @@ import { Label } from '@/shared/components/atoms/Label';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { LocaleChip } from '@/features/farmacias/ui/components/editor/status/LocaleChip';
 import { computeLocaleStatus } from '@/features/farmacias/ui/lib/i18nStatus';
+import { useFieldBinding } from '@/features/farmacias/ui/hooks/useFieldError';
+import { FieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 
 export function MultilangInput({
   label,
@@ -15,6 +17,7 @@ export function MultilangInput({
   placeholder,
   required,
   help,
+  field,
 }: {
   label: string;
   value: MultilangText;
@@ -22,9 +25,11 @@ export function MultilangInput({
   placeholder?: string;
   required?: boolean;
   help?: string;
+  /** Clave de validación (core/farmacias/domain/validation), p. ej. `heroChip.es`. */
+  field?: string;
 }) {
   const { currentLocale, farmacia } = useFarmaciaEditor();
-  const id = useId();
+  const { id, error } = useFieldBinding(field, useId());
   const current = value[currentLocale] ?? '';
   const status = computeLocaleStatus(value, currentLocale, farmacia.idiomasActivos);
 
@@ -38,7 +43,9 @@ export function MultilangInput({
         value={current}
         onChange={(e) => onChange({ ...value, [currentLocale]: e.target.value })}
         placeholder={placeholder}
+        {...error?.inputProps}
       />
+      {error && <FieldError {...error} />}
       {help && <p className="help">{help}</p>}
     </div>
   );

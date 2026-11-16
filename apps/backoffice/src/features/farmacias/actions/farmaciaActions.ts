@@ -3,8 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/core/auth';
+import { getStorage } from '@/core/storage';
 import {
   CreateFarmaciaUseCase,
+  DeleteFarmaciaUseCase,
   PublishFarmaciaUseCase,
   getFarmaciaRepository,
   getLandingDeployer,
@@ -24,6 +26,13 @@ export async function duplicateFarmaciaAction(id: string): Promise<ActionResult>
 export async function archiveFarmaciaAction(id: string): Promise<ActionResult> {
   await requireUser();
   const res = await getFarmaciaRepository().archiveFarmacia(id);
+  if (res.ok) revalidatePath('/farmacias');
+  return res.ok ? { ok: true } : { ok: false, error: res.error };
+}
+
+export async function deleteFarmaciaAction(id: string): Promise<ActionResult> {
+  await requireUser();
+  const res = await new DeleteFarmaciaUseCase(getFarmaciaRepository(), getStorage()).execute(id);
   if (res.ok) revalidatePath('/farmacias');
   return res.ok ? { ok: true } : { ok: false, error: res.error };
 }

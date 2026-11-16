@@ -1,10 +1,17 @@
 import { cn } from '@/shared/lib/cn';
 
-export function FieldHeading({ label, hint }: { label?: string; hint?: string }) {
+export function FieldHeading({ label, hint, required }: { label?: string; hint?: string; required?: boolean }) {
   if (!label) return null;
   return (
     <div>
-      <div className="text-[13px] font-semibold text-[var(--color-ink)]">{label}</div>
+      <div className="text-[13px] font-semibold text-[var(--color-ink)]">
+        {label}
+        {required && (
+          <span className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none" aria-label="obligatorio" title="Campo obligatorio">
+            *
+          </span>
+        )}
+      </div>
       {hint && <div className="text-[12px] text-[var(--color-muted)] mt-0.5">{hint}</div>}
     </div>
   );

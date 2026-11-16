@@ -183,7 +183,7 @@ Diferencias schema vs UI documentadas:
    will-change`).
 5. **Chip health = solo dot con anillo de color**. Popover con detalle.
 6. **LangTabs con dot rojo mini** cuando hay missing, sin texto "N faltan".
-7. **Required = asterisco `*` naranja**, no chip `OBLIGATORIO`.
+7. **Required = asterisco `*` rojo** (`--color-red-ink`), no chip `OBLIGATORIO`.
 8. **`<p class="help">` → `LabelHelpIcon` con tooltip** — la ayuda pesa cero
    cuando no la necesitas.
 9. **Screenshots evitados** por consumo de tokens. Verificar con

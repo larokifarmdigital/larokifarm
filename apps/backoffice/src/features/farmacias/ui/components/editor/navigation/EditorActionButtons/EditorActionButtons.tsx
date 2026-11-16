@@ -12,6 +12,8 @@ import { localeWithMostMissing } from '@/features/farmacias/ui/lib/i18nStatus';
 import { publishToast } from '@/features/farmacias/ui/lib/publishToast';
 import { cn } from '@/shared/lib/cn';
 import { PublishMissingDialog } from './PublishMissingDialog';
+import { PublishBlockedDialog } from './PublishBlockedDialog';
+import type { FieldIssue } from '@/core/farmacias/domain';
 
 /**
  * Trío de acciones del editor (Ver preview · Ver landing · Publicar cambios).
@@ -23,7 +25,8 @@ import { PublishMissingDialog } from './PublishMissingDialog';
  * (confirmar, no bloquear).
  */
 export function EditorActionButtons({ compact = false }: { compact?: boolean }) {
-  const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly } = useFarmaciaEditor();
+  const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly, issues, revealErrors } = useFarmaciaEditor();
+  const [blockedOpen, setBlockedOpen] = useState(false);
   const health = useI18nHealth();
   const [pending, startTx] = useTransition();
   const [warnOpen, setWarnOpen] = useState(false);
@@ -52,8 +55,25 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
   };
 
   const publish = () => {
+    // 1º errores (bloquean) · 2º traducciones pendientes (solo confirman)
+    if (issues.length > 0) {
+      revealErrors();
+      setBlockedOpen(true);
+      return;
+    }
     if (health.totalMissing > 0) setWarnOpen(true);
     else doPublish();
+  };
+
+  const reviewIssue = (issue: FieldIssue) => {
+    setBlockedOpen(false);
+    goToSection(issue.sectionKey, issue.locale);
+    // Espera a que la sección se monte (transición) y lleva el foco al campo.
+    window.setTimeout(() => {
+      const el = issue.inputId ? document.getElementById(issue.inputId) : null;
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) el.focus({ preventScroll: true });
+    }, 450);
   };
 
   const review = (sectionKey?: string) => {
@@ -130,6 +150,13 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
         )}
       </Button>
       )}
+
+      <PublishBlockedDialog
+        open={blockedOpen}
+        onOpenChange={setBlockedOpen}
+        issues={issues}
+        onReview={reviewIssue}
+      />
 
       <PublishMissingDialog
         open={warnOpen}

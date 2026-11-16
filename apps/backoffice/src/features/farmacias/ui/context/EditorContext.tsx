@@ -8,8 +8,9 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
 } from 'react';
-import type { Farmacia } from '@/core/farmacias/domain';
+import { validateFarmacia, type Farmacia, type FieldIssue } from '@/core/farmacias/domain';
 import type { Locale } from '@/core/shared';
 import { saveFarmaciaPatchAction } from '@/features/farmacias/actions/saveFarmaciaAction';
 import { toast } from 'sonner';
@@ -138,6 +139,13 @@ type EditorContextValue = State & {
   saveNow: () => Promise<void>;
   /** Aplica status/updatedAt devueltos por publicar (evita un falso conflicto). */
   syncFromServer: (f: Farmacia) => void;
+  /** Problemas que impiden publicar (core/farmacias/domain/validation). */
+  issues: FieldIssue[];
+  /** El error de un campo solo se enseña tras salir de él (o tras intentar publicar). */
+  isErrorVisible: (field: string) => boolean;
+  touch: (field: string) => void;
+  /** Muestra todos los errores (se llama al intentar publicar). */
+  revealErrors: () => void;
 };
 
 const EditorContext = createContext<EditorContextValue | null>(null);
@@ -172,6 +180,14 @@ export function FarmaciaEditorProvider({
   }, [state]);
 
   const readOnlyRef = useRef(readOnly);
+  const [touched, setTouched] = useState<ReadonlySet<string>>(() => new Set());
+  const [showAllErrors, setShowAllErrors] = useState(false);
+  const issues = useMemo(() => validateFarmacia(state.farmacia), [state.farmacia]);
+  const touch = useCallback((field: string) => {
+    setTouched((prev) => (prev.has(field) ? prev : new Set(prev).add(field)));
+  }, []);
+  const revealErrors = useCallback(() => setShowAllErrors(true), []);
+  const isErrorVisible = useCallback((field: string) => showAllErrors || touched.has(field), [showAllErrors, touched]);
 
   // Evita repetir el toast de "sin conexión" en cada reintento.
   const networkToastShown = useRef(false);
@@ -271,8 +287,20 @@ export function FarmaciaEditorProvider({
   }, [state.dirty, readOnly]);
 
   const value = useMemo<EditorContextValue>(
-    () => ({ ...state, readOnly, patch, setLocale, goToSection, saveNow, syncFromServer }),
-    [state, readOnly, patch, setLocale, goToSection, saveNow, syncFromServer],
+    () => ({
+      ...state,
+      readOnly,
+      patch,
+      setLocale,
+      goToSection,
+      saveNow,
+      syncFromServer,
+      issues,
+      isErrorVisible,
+      touch,
+      revealErrors,
+    }),
+    [state, readOnly, patch, setLocale, goToSection, saveNow, syncFromServer, issues, isErrorVisible, touch, revealErrors],
   );
 
   return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;

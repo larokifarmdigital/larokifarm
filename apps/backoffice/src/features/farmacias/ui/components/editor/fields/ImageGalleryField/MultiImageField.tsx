@@ -37,6 +37,7 @@ export function MultiImageField({
   label,
   hint,
   className,
+  required,
 }: MultiProps) {
   const [isPending, startTransition] = useTransition();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -95,7 +96,7 @@ export function MultiImageField({
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
-      <FieldHeading label={label} hint={hint} />
+      <FieldHeading label={label} hint={hint} required={required} />
 
       {(value.length > 0 || canAdd) && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

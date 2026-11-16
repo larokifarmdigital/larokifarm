@@ -33,6 +33,7 @@ export function SingleImageField({
   label,
   hint,
   className,
+  required,
   aspect = 'square',
 }: SingleProps) {
   const [isPending, startTransition] = useTransition();
@@ -93,7 +94,7 @@ export function SingleImageField({
 
   return (
     <div className={cn('flex flex-col gap-2.5', className)}>
-      <FieldHeading label={label} hint={hint} />
+      <FieldHeading label={label} hint={hint} required={required} />
 
       <input
         ref={inputRef}

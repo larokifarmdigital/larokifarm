@@ -8,11 +8,16 @@ import { useEffect, useRef } from 'react';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
 
+import { useFieldBinding } from '@/features/farmacias/ui/hooks/useFieldError';
+import { FieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
+
 type Props = {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
   minHeight?: number;
+  /** Clave de validación (p. ej. `descripcionLarga.es`): id estable + error. */
+  field?: string;
 };
 
 function ToolbarButton({
@@ -122,7 +127,8 @@ function Toolbar({ editor }: { editor: Editor }) {
   );
 }
 
-export function TiptapField({ value, onChange, placeholder, minHeight = 200 }: Props) {
+export function TiptapField({ value, onChange, placeholder, minHeight = 200, field }: Props) {
+  const { id, error } = useFieldBinding(field, '');
   const onChangeRef = useRef(onChange);
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -164,7 +170,13 @@ export function TiptapField({ value, onChange, placeholder, minHeight = 200 }: P
   }
 
   return (
-    <div className="border border-[var(--color-hairline)] rounded-[8px] bg-[var(--color-surface)] overflow-hidden">
+    <div id={id || undefined} onBlur={error?.inputProps.onBlur}>
+    <div
+      className={cn(
+        'border rounded-[8px] bg-[var(--color-surface)] overflow-hidden',
+        error?.message ? 'border-[var(--color-red-ink)]' : 'border-[var(--color-hairline)]',
+      )}
+    >
       <Toolbar editor={editor} />
       <div
         className="px-4 py-3"
@@ -173,6 +185,8 @@ export function TiptapField({ value, onChange, placeholder, minHeight = 200 }: P
       >
         <EditorContent editor={editor} />
       </div>
+    </div>
+    {error && <FieldError {...error} />}
     </div>
   );
 }

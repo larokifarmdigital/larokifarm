@@ -110,6 +110,8 @@ export const MOCK_FARMACIAS: Farmacia[] = [
         orden: 1,
       },
     ],
+    mostrarResenas: true,
+    resenasReglas: { minRating: 4, soloConComentario: true },
     resenas: [
       {
         id: 'res_1',
@@ -224,6 +226,8 @@ export const MOCK_FARMACIAS: Farmacia[] = [
       },
     ],
     resenas: [],
+    mostrarResenas: true,
+    resenasReglas: { minRating: 4, soloConComentario: true },
     seo: {
       title: { es: 'Farmacia Chamarro · Huacho' },
       description: { es: 'Farmacia comunitaria en Huacho con delivery y precios accesibles.' },
@@ -248,6 +252,8 @@ export const MOCK_FARMACIAS: Farmacia[] = [
     servicios: [],
     faqs: [],
     resenas: [],
+    mostrarResenas: true,
+    resenasReglas: { minRating: 4, soloConComentario: true },
     createdAt: '2026-09-01T09:00:00.000Z',
     updatedAt: '2026-09-10T09:00:00.000Z',
   },

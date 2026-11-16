@@ -13,14 +13,17 @@ import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext
 import { HorarioSemanal } from '@/features/farmacias/ui/components/editor/fields/HorarioSemanal';
 import { ImageGalleryField } from '@/features/farmacias/ui/components/editor/fields/ImageGalleryField';
 import { slugify } from '@/shared/lib/slugify';
+import { cn } from '@/shared/lib/cn';
+import { useFieldErrors } from '@/features/farmacias/ui/hooks/useFieldError';
+import { FieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 import type { Horario } from '@/core/farmacias/domain';
 
 const REDES: { key: 'instagram' | 'facebook' | 'x' | 'tiktok' | 'youtube'; label: string; icon: IconName; placeholder: string }[] = [
-  { key: 'instagram', label: 'Instagram', icon: 'InstagramLogo', placeholder: 'usuario' },
-  { key: 'facebook', label: 'Facebook', icon: 'FacebookLogo', placeholder: 'usuario' },
-  { key: 'x', label: 'X (Twitter)', icon: 'XLogo', placeholder: 'usuario' },
-  { key: 'tiktok', label: 'TikTok', icon: 'TiktokLogo', placeholder: 'usuario' },
-  { key: 'youtube', label: 'YouTube', icon: 'YoutubeLogo', placeholder: 'usuario' },
+  { key: 'instagram', label: 'Instagram', icon: 'InstagramLogo', placeholder: '@usuario o enlace al perfil' },
+  { key: 'facebook', label: 'Facebook', icon: 'FacebookLogo', placeholder: '@usuario o enlace al perfil' },
+  { key: 'x', label: 'X (Twitter)', icon: 'XLogo', placeholder: '@usuario o enlace al perfil' },
+  { key: 'tiktok', label: 'TikTok', icon: 'TiktokLogo', placeholder: '@usuario o enlace al perfil' },
+  { key: 'youtube', label: 'YouTube', icon: 'YoutubeLogo', placeholder: '@usuario o enlace al perfil' },
 ];
 
 const HORARIO_TIPICO: Horario[] = [
@@ -33,10 +36,43 @@ const HORARIO_TIPICO: Horario[] = [
   { dia: 'dom', tramos: [], cerrado: true },
 ];
 
+/** Asterisco rojo para campos obligatorios que no tienen label visible. */
+function RequiredMark({ floating = false }: { floating?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      title="Obligatorio para publicar"
+      className={cn(
+        'text-[var(--color-red-ink)] text-[24px] font-bold leading-none select-none',
+        floating ? 'pointer-events-none absolute right-3 top-[27px] -translate-y-1/2' : 'flex items-center pr-1 pt-[9px]',
+      )}
+    >
+      *
+    </span>
+  );
+}
+
 export function GeneralTab() {
   const { farmacia, patch } = useFarmaciaEditor();
   const [confirmPlantilla, setConfirmPlantilla] = useState(false);
+  const fieldError = useFieldErrors();
   const d = farmacia.direccion ?? {};
+  const feDireccionNumero = fieldError('direccion.numero');
+  const feDireccionProvincia = fieldError('direccion.provincia');
+  const feDireccionPais = fieldError('direccion.pais');
+  const feMapa = fieldError('mapa');
+  const feHorarios = fieldError('horarios');
+  const feNombre = fieldError('nombre');
+  const feNumerocolegiado = fieldError('numeroColegiado');
+  const feTelefono = fieldError('telefono');
+  const feWhatsapp = fieldError('whatsapp');
+  const feEmail = fieldError('email');
+  const feWeb = fieldError('web');
+  const feDireccionCalle = fieldError('direccion.calle');
+  const feDireccionCp = fieldError('direccion.cp');
+  const feDireccionCiudad = fieldError('direccion.ciudad');
+  const feGooglemapsurl = fieldError('googleMapsUrl');
+  const feMapaurl = fieldError('mapaUrl');
 
   const setDir = (field: string, value: string) => {
     patch({ direccion: { ...d, [field]: value } });
@@ -57,10 +93,12 @@ export function GeneralTab() {
             <Label htmlFor="nombre" required>Nombre comercial</Label>
             <Input
               id="nombre"
+              {...feNombre.inputProps}
               value={farmacia.nombre}
               onChange={(e) => patch({ nombre: e.target.value })}
               placeholder="Farmàcia Torrents"
             />
+            <FieldError {...feNombre} />
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor="slug" required>URL pública</Label>
@@ -107,6 +145,7 @@ export function GeneralTab() {
             <Label htmlFor="colegiado">Nº colegiado</Label>
             <IconInput
               id="colegiado"
+              {...feNumerocolegiado.inputProps}
               icon={<NavIcon name="IdentificationCard" size={15} />}
               label="Número de colegiado"
               value={farmacia.numeroColegiado ?? ''}
@@ -114,6 +153,7 @@ export function GeneralTab() {
               placeholder="08-3421"
               className="font-mono-tabular"
             />
+            <FieldError {...feNumerocolegiado} />
           </div>
 
           {/* Logotipo — sube a R2 vía uploadContentImage server action */}
@@ -122,6 +162,8 @@ export function GeneralTab() {
               mode="single"
               businessId={farmacia.id}
               role="logo"
+              field="logo"
+              required
               label="Logotipo"
               hint="240×240 mín · cuadrado · PNG o SVG con fondo transparente"
               value={farmacia.logo}
@@ -139,48 +181,67 @@ export function GeneralTab() {
         <SectionHeader
           id="sec-contacto"
           title="Contacto"
-          hint="Canales de contacto que se muestran en el pie de la landing y en la ficha de Google."
+          hint="Canales de contacto que se muestran en el pie de la landing y en la ficha de Google. Teléfono, correo y web son obligatorios para publicar."
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <IconInput
-            id="telefono"
-            type="tel"
-            icon={<NavIcon name="Phone" size={15} />}
-            label="Teléfono"
-            value={farmacia.telefono ?? ''}
-            onChange={(e) => patch({ telefono: e.target.value })}
-            placeholder="+34 934 12 34 56"
-            className="font-mono-tabular"
-          />
-          <IconInput
-            id="whatsapp"
-            type="tel"
-            icon={<NavIcon name="WhatsappLogo" size={15} />}
-            label="WhatsApp"
-            value={farmacia.whatsapp ?? ''}
-            onChange={(e) => patch({ whatsapp: e.target.value })}
-            placeholder="+34 600 12 34 56"
-            className="font-mono-tabular"
-          />
-          <IconInput
-            id="email"
-            type="email"
-            icon={<NavIcon name="EnvelopeSimple" size={15} />}
-            label="Correo electrónico"
-            value={farmacia.email ?? ''}
-            onChange={(e) => patch({ email: e.target.value })}
-            placeholder="hola@farmacia.com"
-          />
-          <IconInput
-            id="web"
-            type="url"
-            icon={<NavIcon name="Globe" size={15} />}
-            label="Web propia"
-            value={farmacia.web ?? ''}
-            onChange={(e) => patch({ web: e.target.value })}
-            placeholder="https://..."
-          />
+          <div>
+            <IconInput
+              id="telefono"
+              {...feTelefono.inputProps}
+              type="tel"
+              icon={<NavIcon name="Phone" size={15} />}
+              label="Teléfono"
+              value={farmacia.telefono ?? ''}
+              onChange={(e) => patch({ telefono: e.target.value })}
+              placeholder="+34 934 12 34 56"
+              className="font-mono-tabular"
+            suffix={<RequiredMark />}
+            />
+            <FieldError {...feTelefono} />
+          </div>
+          <div>
+            <IconInput
+              id="whatsapp"
+              {...feWhatsapp.inputProps}
+              type="tel"
+              icon={<NavIcon name="WhatsappLogo" size={15} />}
+              label="WhatsApp"
+              value={farmacia.whatsapp ?? ''}
+              onChange={(e) => patch({ whatsapp: e.target.value })}
+              placeholder="+34 600 12 34 56"
+              className="font-mono-tabular"
+            />
+            <FieldError {...feWhatsapp} />
+          </div>
+          <div>
+            <IconInput
+              id="email"
+              {...feEmail.inputProps}
+              type="email"
+              icon={<NavIcon name="EnvelopeSimple" size={15} />}
+              label="Correo electrónico"
+              value={farmacia.email ?? ''}
+              onChange={(e) => patch({ email: e.target.value })}
+              placeholder="hola@farmacia.com"
+            suffix={<RequiredMark />}
+            />
+            <FieldError {...feEmail} />
+          </div>
+          <div>
+            <IconInput
+              id="web"
+              {...feWeb.inputProps}
+              type="url"
+              icon={<NavIcon name="Globe" size={15} />}
+              label="Web propia"
+              value={farmacia.web ?? ''}
+              onChange={(e) => patch({ web: e.target.value })}
+              placeholder="https://..."
+            suffix={<RequiredMark />}
+            />
+            <FieldError {...feWeb} />
+          </div>
         </div>
       </section>
 
@@ -191,17 +252,19 @@ export function GeneralTab() {
         <SectionHeader
           id="sec-redes"
           title="Redes sociales"
-          hint="Solo las que rellenes aparecerán como iconos en el pie de la landing."
+          hint="Tu usuario (@mifarmacia) o el enlace a tu perfil. Solo las que rellenes aparecerán en el pie de la landing."
         />
 
         <div className="card divide-y divide-[var(--color-hairline)] overflow-hidden">
           {REDES.map(({ key, label, icon, placeholder }) => {
             const value = farmacia.redes?.[key] ?? '';
             const filled = value.trim().length > 0;
+            const fe = fieldError(`redes.${key}`);
             return (
+              <div key={key}>
               <IconInput
-                key={key}
                 id={`red-${key}`}
+                {...fe.inputProps}
                 type="text"
                 bare
                 icon={
@@ -219,6 +282,12 @@ export function GeneralTab() {
                 }
                 placeholder={placeholder}
               />
+              {fe.message && (
+                <div className="px-3 pb-2">
+                  <FieldError {...fe} />
+                </div>
+              )}
+              </div>
             );
           })}
         </div>
@@ -231,65 +300,95 @@ export function GeneralTab() {
         <SectionHeader
           id="sec-direccion"
           title="Dirección"
-          hint="Sirve como base para el mapa y el botón «Cómo llegar» de la landing."
+          hint="Sirve como base para el mapa y el botón «Cómo llegar» de la landing. Todos los campos son obligatorios para publicar, salvo el número."
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-6 gap-3">
           <div className="sm:col-span-4">
-            <Input
+            <div className="relative">
+<Input
               id="calle"
+              {...feDireccionCalle.inputProps}
               aria-label="Calle"
               value={d.calle ?? ''}
               onChange={(e) => setDir('calle', e.target.value)}
               placeholder="Calle"
             />
+            <FieldError {...feDireccionCalle} />
+            <RequiredMark floating />
+            </div>
           </div>
           <div className="sm:col-span-2">
-            <Input
+            <div className="relative">
+<Input
               id="numero"
+              {...feDireccionNumero.inputProps}
               aria-label="Número"
               value={d.numero ?? ''}
               onChange={(e) => setDir('numero', e.target.value)}
               placeholder="Nº"
               className="font-mono-tabular"
             />
+            <FieldError {...feDireccionNumero} />
+            
+            </div>
           </div>
           <div className="sm:col-span-2">
-            <Input
+            <div className="relative">
+<Input
               id="cp"
+              {...feDireccionCp.inputProps}
               aria-label="Código postal"
               value={d.cp ?? ''}
               onChange={(e) => setDir('cp', e.target.value)}
               placeholder="CP"
               className="font-mono-tabular"
             />
+            <FieldError {...feDireccionCp} />
+            <RequiredMark floating />
+            </div>
           </div>
           <div className="sm:col-span-4">
-            <Input
+            <div className="relative">
+<Input
               id="ciudad-dir"
+              {...feDireccionCiudad.inputProps}
               aria-label="Ciudad"
               value={d.ciudad ?? farmacia.ciudad ?? ''}
               onChange={(e) => setDir('ciudad', e.target.value)}
               placeholder="Ciudad"
             />
+            <FieldError {...feDireccionCiudad} />
+            <RequiredMark floating />
+            </div>
           </div>
           <div className="sm:col-span-3">
-            <Input
+            <div className="relative">
+<Input
               id="provincia"
+              {...feDireccionProvincia.inputProps}
               aria-label="Provincia"
               value={d.provincia ?? ''}
               onChange={(e) => setDir('provincia', e.target.value)}
               placeholder="Provincia"
             />
+            <FieldError {...feDireccionProvincia} />
+            <RequiredMark floating />
+            </div>
           </div>
           <div className="sm:col-span-3">
-            <Input
+            <div className="relative">
+<Input
               id="pais"
+              {...feDireccionPais.inputProps}
               aria-label="País"
               value={d.pais ?? ''}
               onChange={(e) => setDir('pais', e.target.value)}
               placeholder="País"
             />
+            <FieldError {...feDireccionPais} />
+            <RequiredMark floating />
+            </div>
           </div>
 
           <div className="sm:col-span-6">
@@ -306,6 +405,9 @@ export function GeneralTab() {
             </Label>
             <IconInput
               id="gmaps"
+              {...feGooglemapsurl.inputProps}
+              invalid={feGooglemapsurl.inputProps.invalid || feMapa.inputProps.invalid}
+              onBlur={() => { feGooglemapsurl.inputProps.onBlur(); feMapa.inputProps.onBlur(); }}
               type="url"
               icon={<NavIcon name="MapPin" size={15} />}
               label="Enlace de Google Maps"
@@ -313,6 +415,8 @@ export function GeneralTab() {
               onChange={(e) => patch({ googleMapsUrl: e.target.value })}
               placeholder="https://maps.google.com/?cid=..."
             />
+            <FieldError {...feGooglemapsurl} />
+            {!feGooglemapsurl.message && <FieldError {...feMapa} />}
           </div>
 
           <div className="sm:col-span-6">
@@ -329,6 +433,7 @@ export function GeneralTab() {
             </Label>
             <IconInput
               id="mapa-embed"
+              {...feMapaurl.inputProps}
               type="url"
               icon={<NavIcon name="Globe" size={15} />}
               label="URL del mapa embebido"
@@ -336,6 +441,7 @@ export function GeneralTab() {
               onChange={(e) => patch({ mapaUrl: e.target.value })}
               placeholder="https://www.google.com/maps/embed?pb=..."
             />
+            <FieldError {...feMapaurl} />
           </div>
         </div>
       </section>
@@ -368,8 +474,12 @@ export function GeneralTab() {
 
         <HorarioSemanal
           horarios={farmacia.horarios}
-          onChange={(next) => patch({ horarios: next })}
+          onChange={(next) => {
+            patch({ horarios: next });
+            feHorarios.inputProps.onBlur();
+          }}
         />
+        <FieldError {...feHorarios} />
         <ConfirmDialog
           open={confirmPlantilla}
           onOpenChange={setConfirmPlantilla}

@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
+import { fieldDomId } from '@/core/farmacias/domain';
+import { ListFieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 import { MultilangInput } from '@/features/farmacias/ui/components/editor/fields/MultilangInput';
 import { MultilangTextarea } from '@/features/farmacias/ui/components/editor/fields/MultilangTextarea';
 import { FieldPreview } from '@/features/farmacias/ui/components/editor/fields/FieldPreview';
@@ -355,6 +357,8 @@ export function FeaturesTab() {
   return (
     <div className="space-y-6 max-w-3xl">
       <SectionHeader
+        id={fieldDomId('featuresLista')}
+        required
         title="Tarjetas de features"
         hint={`Franja bajo el hero con tarjetas de valor (${countHint}). Si el icono es «reloj» y la descripción está vacía, la landing muestra el horario auto-calculado.`}
         actions={
@@ -414,6 +418,8 @@ export function FeaturesTab() {
         onSave={handleSave}
         onClose={closeModal}
       />
+
+      <ListFieldError field="featuresLista" />
 
       <ConfirmDialog
         open={deleteTarget !== null}

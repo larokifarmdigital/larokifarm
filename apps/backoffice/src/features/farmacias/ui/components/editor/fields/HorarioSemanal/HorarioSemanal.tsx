@@ -6,7 +6,7 @@ import { Button } from '@/shared/components/atoms/Button';
 import { TimePicker } from '@/shared/components/molecules/TimePicker';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
-import type { Horario } from '@/core/farmacias/domain';
+import { tramoError, type Horario } from '@/core/farmacias/domain';
 
 const DIAS: { key: Horario['dia']; label: string; short: string }[] = [
   { key: 'lun', label: 'Lunes', short: 'Lun' },
@@ -46,15 +46,18 @@ const toMin = (t: string) => {
 };
 
 /**
- * Aviso (no bloquea: una farmacia de guardia puede cruzar la medianoche).
- * - cierre ≤ apertura → casi siempre un error al elegir la hora
- * - tramo 2 empieza antes de que acabe el 1 → solapados
+ * Error (bloquea publicar, regla compartida en core) o aviso (cierre antes de
+ * apertura: válido si el tramo cruza la medianoche, p. ej. farmacia de guardia).
  */
-function tramoIssue(t: { abre: string; cierra: string }, prev?: { abre: string; cierra: string }): string | null {
-  if (!t.abre || !t.cierra) return null;
-  if (toMin(t.cierra) === toMin(t.abre)) return 'La hora de cierre es igual a la de apertura.';
-  if (toMin(t.cierra) < toMin(t.abre)) return 'Cierra antes de abrir: solo es correcto si el tramo cruza la medianoche.';
-  if (prev?.cierra && toMin(t.abre) < toMin(prev.cierra)) return 'Se solapa con el tramo anterior.';
+function tramoIssue(
+  t: { abre: string; cierra: string },
+  prev?: { abre: string; cierra: string },
+): { level: 'error' | 'warning'; message: string } | null {
+  const error = tramoError(t, prev);
+  if (error) return { level: 'error', message: error };
+  if (toMin(t.cierra) < toMin(t.abre)) {
+    return { level: 'warning', message: 'Cierra antes de abrir: solo es correcto si el tramo cruza la medianoche.' };
+  }
   return null;
 }
 
@@ -197,7 +200,11 @@ export function HorarioSemanal({
                               key={ti}
                               className={cn(
                                 'rounded-[var(--radius-md)] border bg-[var(--color-surface)] p-3',
-                                issue ? 'border-[var(--color-yellow-ink)]' : 'border-[var(--color-hairline)]',
+                                issue?.level === 'error'
+                                  ? 'border-[var(--color-red-ink)]'
+                                  : issue
+                                    ? 'border-[var(--color-yellow-ink)]'
+                                    : 'border-[var(--color-hairline)]',
                               )}
                             >
                               <div className="flex items-center justify-between mb-2">
@@ -260,9 +267,15 @@ export function HorarioSemanal({
                                 </div>
                               </div>
                               {issue && (
-                                <p role="alert" className="mt-2 mb-0 flex items-center gap-1.5 text-[12px] text-[var(--color-yellow-ink)]">
+                                <p
+                                  role="alert"
+                                  className={cn(
+                                    'mt-2 mb-0 flex items-center gap-1.5 text-[12px]',
+                                    issue.level === 'error' ? 'text-[var(--color-red-ink)]' : 'text-[var(--color-yellow-ink)]',
+                                  )}
+                                >
                                   <NavIcon name="Warning" size={12} />
-                                  {issue}
+                                  {issue.message}
                                 </p>
                               )}
                             </div>

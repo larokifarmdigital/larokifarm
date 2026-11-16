@@ -79,6 +79,26 @@ export type Resena = {
  * Datos estructurados de la sección "Sobre nosotros" en la landing.
  * Coincide con el objeto `sobreNosotros` del schema Sanity.
  */
+/**
+ * Reglas de publicación de reseñas, cada una con su switch en el editor.
+ * `minRating: null` = regla apagada (salen todas las estrellas).
+ */
+export type ResenasReglas = {
+  minRating: number | null;
+  soloConComentario: boolean;
+};
+
+/** Lo que tenía fijo la portada de las landings antes de ser configurable. */
+export const RESENAS_REGLAS_POR_DEFECTO: ResenasReglas = { minRating: 4, soloConComentario: true };
+
+/** ¿Esta reseña sale en la web? (no oculta, no borrada en Google y cumple las reglas). */
+export function resenaEnWeb(r: Pick<Resena, 'oculta' | 'eliminadaEnGoogle' | 'puntuacion' | 'texto'>, reglas: ResenasReglas): boolean {
+  if (r.oculta || r.eliminadaEnGoogle) return false;
+  if (reglas.minRating != null && r.puntuacion < reglas.minRating) return false;
+  if (reglas.soloConComentario && !(r.texto ?? '').trim()) return false;
+  return true;
+}
+
 export type SobreNosotros = {
   /** Etiqueta pequeña sobre el título. Por defecto: "Sobre nosotros". */
   chip?: MultilangText;
@@ -208,6 +228,10 @@ export type Farmacia = {
    */
   resenas: Resena[];
   textosResenas?: TextosCabecera;
+  /** Switch del editor: si es false la landing no muestra la sección Reseñas. */
+  mostrarResenas: boolean;
+  /** Qué reseñas salen en la web (además de las ocultas a mano). */
+  resenasReglas: ResenasReglas;
   googleLocationName?: string;
 
   seo?: SeoConfig;

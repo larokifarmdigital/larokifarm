@@ -34,6 +34,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useFieldErrors } from '@/features/farmacias/ui/hooks/useFieldError';
+import { FieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 
 const MAX_PUNTOS = 8;
 const RECOMENDADO_PUNTOS = 4;
@@ -208,6 +210,7 @@ function PuntoModal({
 
 export function SobreTab() {
   const { farmacia, patch, currentLocale } = useFarmaciaEditor();
+  const anyosError = useFieldErrors()('sobreNosotros.anyosExperiencia');
   const sobre: SobreNosotros = farmacia.sobreNosotros ?? {};
   const puntos = sobre.puntos ?? [];
   const imagenes = farmacia.imagenesSobre ?? [];
@@ -300,13 +303,17 @@ export function SobreTab() {
         <div className="space-y-4">
           <MultilangInput
             label="Chip (etiqueta superior)"
+            required
+            field="sobreNosotros.chip.es"
             value={sobre.chip ?? {}}
             onChange={(v) => setSobre({ chip: v })}
             placeholder="Sobre nosotros"
-            help="Texto pequeño sobre el título. Por defecto: «Sobre nosotros»."
+            help="Texto pequeño sobre el título."
           />
           <MultilangInput
             label="Título"
+            required
+            field="sobreNosotros.titulo.es"
             value={sobre.titulo ?? {}}
             onChange={(v) => setSobre({ titulo: v })}
             placeholder="Una farmacia para familias"
@@ -318,6 +325,7 @@ export function SobreTab() {
             </Label>
             <Input
               id="anyos-experiencia"
+              {...anyosError.inputProps}
               type="number"
               min={0}
               max={200}
@@ -329,6 +337,7 @@ export function SobreTab() {
               placeholder="45"
               className="font-mono-tabular max-w-[180px]"
             />
+            <FieldError {...anyosError} />
             <p className="help">Si lo dejas vacío, no aparece badge en la landing.</p>
           </div>
         </div>
@@ -413,10 +422,12 @@ export function SobreTab() {
             />
           }
           className="mb-3"
+          required
         >
           Cuerpo
         </Label>
         <TiptapField
+          field="descripcionLarga.es"
           value={farmacia.descripcionLarga[currentLocale] ?? ''}
           onChange={(html) =>
             patch({
@@ -437,6 +448,7 @@ export function SobreTab() {
       <section aria-labelledby="sec-sobre-imagenes">
         <SectionHeader
           id="sec-sobre-imagenes"
+          required
           title="Imágenes"
           hint={`Aparecen junto a la descripción en la landing. Entre 1 y ${MAX_IMAGENES} imágenes.`}
         />
@@ -444,6 +456,7 @@ export function SobreTab() {
         <ImageGalleryField
           businessId={farmacia.id}
           role="sobre"
+          field="imagenesSobre"
           value={imagenes}
           onChange={(imagenesSobre) => patch({ imagenesSobre })}
           idiomasActivos={farmacia.idiomasActivos}

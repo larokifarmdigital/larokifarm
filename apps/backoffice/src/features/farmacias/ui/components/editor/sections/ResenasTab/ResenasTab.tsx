@@ -1,6 +1,11 @@
 'use client';
 
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
+import { useFieldErrors } from '@/features/farmacias/ui/hooks/useFieldError';
+import { rules } from '@/core/farmacias/domain';
+import { Switch } from '@/shared/components/atoms/Switch';
+import { ResenasManager } from './ResenasManager';
+import { FieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 import { MultilangInput } from '@/features/farmacias/ui/components/editor/fields/MultilangInput';
 import { MultilangTextarea } from '@/features/farmacias/ui/components/editor/fields/MultilangTextarea';
 import { Label } from '@/shared/components/atoms/Label';
@@ -17,15 +22,41 @@ export function ResenasTab() {
     patch({ textosResenas: { ...textos, [field]: value } });
   };
 
-  const locationOk = farmacia.googleLocationName
-    ? /^accounts\/\d+\/locations\/\d+$/.test(farmacia.googleLocationName)
+  const fieldError = useFieldErrors();
+  const locationError = fieldError('googleLocationName');
+  const mapsError = fieldError('googleMapsUrl');
+  // Chip verde/rojo junto al label: estado del formato (vacío = sin chip).
+  const locationOk = farmacia.googleLocationName?.trim()
+    ? rules.googleLocationName(farmacia.googleLocationName) === null
     : null;
-  const mediaResenas = farmacia.resenas.length > 0
-    ? (farmacia.resenas.reduce((a, r) => a + r.puntuacion, 0) / farmacia.resenas.length).toFixed(1)
-    : null;
+
+  const visible = farmacia.mostrarResenas;
 
   return (
     <div className="space-y-10 max-w-3xl">
+      {/* ============= VISIBILIDAD ============= */}
+      <section aria-labelledby="sec-resenas-visibilidad">
+        <div className="card flex items-start justify-between gap-4 p-4">
+          <div className="min-w-0">
+            <h3 id="sec-resenas-visibilidad" className="m-0 text-[14px] font-bold text-[var(--color-ink)]">
+              <label htmlFor="mostrar-resenas" className="cursor-pointer">Mostrar reseñas en la web</label>
+            </h3>
+            <p id="mostrar-resenas-hint" className="m-0 mt-1 text-[12.5px] leading-[1.55] text-[var(--color-muted-2)]">
+              {visible
+                ? 'La landing muestra la sección de reseñas, el enlace «Reseñas» del menú y la valoración media en Google.'
+                : 'Oculto: la landing no muestra la sección de reseñas ni su página. Se aplica al publicar.'}
+            </p>
+          </div>
+          <Switch
+            id="mostrar-resenas"
+            checked={visible}
+            onCheckedChange={(v) => patch({ mostrarResenas: v })}
+            aria-describedby="mostrar-resenas-hint"
+          />
+        </div>
+      </section>
+
+      <div className={visible ? 'space-y-10' : 'space-y-10 opacity-50'} aria-disabled={!visible || undefined}>
       {/* ============= TEXTOS DE CABECERA ============= */}
       <section aria-labelledby="sec-resenas-textos">
         <SectionHeader
@@ -92,8 +123,9 @@ export function ResenasTab() {
               onChange={(e) => patch({ googleLocationName: e.target.value })}
               placeholder="accounts/1234/locations/5678"
               className="font-mono-tabular"
-              invalid={locationOk === false}
+              {...locationError.inputProps}
             />
+            <FieldError {...locationError} />
             <p className="help">
               Formato <code className="font-mono text-[11.5px] bg-[var(--color-surface-sunken)] px-1 py-0.5 rounded">accounts/&lt;accountId&gt;/locations/&lt;locationId&gt;</code>.
               Lo obtienes cuando Google apruebe el acceso a la Business Profile API.
@@ -110,7 +142,9 @@ export function ResenasTab() {
               value={farmacia.googleMapsUrl ?? ''}
               onChange={(e) => patch({ googleMapsUrl: e.target.value })}
               placeholder="https://maps.google.com/?cid=..."
+              {...mapsError.inputProps}
             />
+            <FieldError {...mapsError} errorId={`${mapsError.errorId}-resenas`} />
             <p className="help">
               La usa la landing para el botón «Ver en Google». Cópiala desde
               maps.google.com → buscar la farmacia → «Compartir» → «Copiar enlace».
@@ -122,70 +156,8 @@ export function ResenasTab() {
       <div className="hairline" />
 
       {/* ============= PREVIEW READ-ONLY ============= */}
-      <section aria-labelledby="sec-resenas-preview">
-        <SectionHeader
-          id="sec-resenas-preview"
-          title="Reseñas sincronizadas"
-          hint="Vista de solo lectura. Son las reseñas importadas de Google; las marcadas como ocultas no salen en la web."
-          actions={
-            mediaResenas && (
-              <div className="flex items-center gap-4 text-[12px]">
-                <span className="text-[var(--color-muted)]">
-                  Media <strong className="font-mono-tabular text-[var(--color-ink)] text-[13px]">{mediaResenas}</strong>/5
-                </span>
-                <span className="text-[var(--color-muted)]">
-                  Total <strong className="font-mono-tabular text-[var(--color-ink)] text-[13px]">{farmacia.resenas.length}</strong>
-                </span>
-              </div>
-            )
-          }
-        />
-
-        {farmacia.resenas.length === 0 ? (
-          <div className="card p-8 text-center">
-            <div className="mx-auto w-10 h-10 rounded-full bg-[var(--color-surface-sunken)] flex items-center justify-center mb-3">
-              <NavIcon name="ChatCircleText" size={18} className="text-[var(--color-muted)]" />
-            </div>
-            <p className="text-[13.5px] text-[var(--color-ink-2)] m-0">Aún no hay reseñas sincronizadas.</p>
-            <p className="mt-1 text-[12px] text-[var(--color-muted)] m-0">
-              Cuando conectemos la Business Profile API, aparecerán aquí automáticamente.
-            </p>
-          </div>
-        ) : (
-          <ul className="space-y-2 list-none p-0 m-0">
-            {farmacia.resenas.map((r) => (
-              <li key={r.id} className="card p-4 flex items-start gap-3">
-                <div className="shrink-0 h-9 w-9 rounded-full bg-[var(--color-surface-sunken)] flex items-center justify-center text-[12px] font-medium text-[var(--color-ink-2)]">
-                  {r.autor.slice(0, 2).toUpperCase() || '—'}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[13.5px] font-medium text-[var(--color-ink)]">{r.autor || 'Anónimo'}</span>
-                    {(r.oculta || r.eliminadaEnGoogle) && (
-                      <span className="inline-flex h-5 items-center rounded-full bg-[var(--color-surface-sunken)] px-2 text-[10.5px] font-mono-tabular uppercase tracking-wider text-[var(--color-muted)]">
-                        {r.eliminadaEnGoogle ? 'Eliminada en Google' : 'Oculta en la web'}
-                      </span>
-                    )}
-                    {r.destacada && (
-                      <span className="inline-flex h-5 items-center rounded-full bg-[var(--color-accent-tint)] px-2 text-[10.5px] font-mono-tabular uppercase tracking-wider text-[var(--color-accent)]">
-                        Destacada
-                      </span>
-                    )}
-                    <span aria-label={`${r.puntuacion} de 5 estrellas`} className="text-[12px] text-[#f7b500]">
-                      {'★'.repeat(r.puntuacion)}
-                      <span className="text-[var(--color-hairline-strong)]">{'★'.repeat(5 - r.puntuacion)}</span>
-                    </span>
-                    <span className="text-[11px] font-mono-tabular text-[var(--color-muted-2)] ml-auto">
-                      {r.fecha.slice(0, 10)}
-                    </span>
-                  </div>
-                  <p className="text-[13px] text-[var(--color-ink-2)] leading-[1.55] mt-1 mb-0">{r.texto}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <ResenasManager />
+      </div>
     </div>
   );
 }

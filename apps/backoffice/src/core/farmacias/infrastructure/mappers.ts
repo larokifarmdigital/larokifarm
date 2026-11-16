@@ -12,7 +12,8 @@ import type {
   Resena as PrismaResena,
   Servicio as PrismaServicio,
 } from '@prisma/client';
-import type { Direccion, Farmacia, FeatureTarjeta, Horario, HeroTarjetaFlotante, ImagenAsset, Redes, Resena, Servicio, SobreNosotros, TextosCabecera, Faq, SeoConfig, FarmaciaStatus } from '@/core/farmacias/domain';
+import type { Direccion, Farmacia, FeatureTarjeta, Horario, HeroTarjetaFlotante, ImagenAsset, Redes, Resena, ResenasReglas, Servicio, SobreNosotros, TextosCabecera, Faq, SeoConfig, FarmaciaStatus } from '@/core/farmacias/domain';
+import { RESENAS_REGLAS_POR_DEFECTO } from '@/core/farmacias/domain';
 import type { Locale, MultilangText } from '@/core/shared';
 import { LOCALES } from '@/core/shared';
 
@@ -48,6 +49,17 @@ function asArray<T>(v: unknown, mapper: (x: unknown) => T | null): T[] {
 function asActiveLocales(v: unknown): Locale[] {
   const arr = asArray(v, (x) => (typeof x === 'string' && (LOCALES as string[]).includes(x) ? (x as Locale) : null));
   return arr.length > 0 ? arr : ['es'];
+}
+
+/** JSON de BD → reglas; NULL o mal formado = las de siempre (4★ + con comentario). */
+function asResenasReglas(v: unknown): ResenasReglas {
+  if (!v || typeof v !== 'object') return { ...RESENAS_REGLAS_POR_DEFECTO };
+  const o = v as Record<string, unknown>;
+  const min = typeof o.minRating === 'number' && o.minRating >= 1 && o.minRating <= 5 ? Math.round(o.minRating) : null;
+  return {
+    minRating: 'minRating' in o ? min : RESENAS_REGLAS_POR_DEFECTO.minRating,
+    soloConComentario: typeof o.soloConComentario === 'boolean' ? o.soloConComentario : RESENAS_REGLAS_POR_DEFECTO.soloConComentario,
+  };
 }
 
 export function asStatus(v: string): FarmaciaStatus {
@@ -305,6 +317,8 @@ export function mapBusinessToFarmacia(b: BusinessWithContent): Farmacia {
     resenas: [...b.resenas].sort((a, c) => (a.fecha > c.fecha ? -1 : 1)).map(mapResena),
     textosResenas: asTextosCabecera(b.textosResenas),
     googleLocationName: b.googleLocationName ?? undefined,
+    mostrarResenas: b.mostrarResenas ?? true,
+    resenasReglas: asResenasReglas(b.resenasReglas),
 
     seo: withOgImage(asSeoConfig(b.seoConfig), imagenesByRole.og?.[0]),
 
@@ -334,6 +348,8 @@ export type BusinessScalarPatch = {
   googleMapsUrl?: string | null;
   mapaUrl?: string | null;
   googleLocationName?: string | null;
+  mostrarResenas?: boolean;
+  resenasReglas?: unknown;
   publishedStatus?: string;
   lastEditedByUserId?: string | null;
   lastPublishedAt?: Date | null;
@@ -381,6 +397,8 @@ export function splitFarmaciaPatch(patch: Partial<Farmacia>): {
   if (patch.googleMapsUrl !== undefined) scalar.googleMapsUrl = patch.googleMapsUrl ?? null;
   if (patch.mapaUrl !== undefined) scalar.mapaUrl = patch.mapaUrl ?? null;
   if (patch.googleLocationName !== undefined) scalar.googleLocationName = patch.googleLocationName ?? null;
+  if (patch.mostrarResenas !== undefined) scalar.mostrarResenas = patch.mostrarResenas;
+  if (patch.resenasReglas !== undefined) scalar.resenasReglas = patch.resenasReglas;
 
   if (patch.status !== undefined) {
     scalar.publishedStatus = patch.status;

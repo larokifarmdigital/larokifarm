@@ -6,3 +6,5 @@ export * from './contentImages';
 export * from './publicContent';
 export * from './publishFarmacia';
 export * from './farmaciaPatch';
+export * from './resenas';
+export * from './deleteFarmacia';

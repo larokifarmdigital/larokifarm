@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
+import { ListFieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 import { MultilangInput } from '@/features/farmacias/ui/components/editor/fields/MultilangInput';
 import { MultilangTextarea } from '@/features/farmacias/ui/components/editor/fields/MultilangTextarea';
 import { TextosCabeceraFields } from '@/features/farmacias/ui/components/editor/fields/TextosCabeceraFields';
@@ -173,7 +174,7 @@ function FaqModal({
           <Button
             variant="accent"
             size="md"
-            disabled={!Object.values(draft.pregunta ?? {}).some((v) => (v ?? '').trim())}
+            disabled={!(draft.pregunta?.es ?? '').trim() || !(draft.respuesta?.es ?? '').trim()}
             title={Object.values(draft.pregunta ?? {}).some((v) => (v ?? '').trim()) ? undefined : 'Rellena el campo obligatorio'}
             onClick={() => {
               onSave(draft);
@@ -195,6 +196,7 @@ function FaqModal({
         />
         <MultilangTextarea
           label="Respuesta"
+          required
           value={draft.respuesta}
           onChange={(v) => setDraft({ ...draft, respuesta: v })}
           placeholder="Escribe la respuesta clara y breve."
@@ -276,9 +278,11 @@ export function FaqsTab() {
         <SectionHeader
           id="sec-faqs-textos"
           title="Textos de la sección"
-          hint="Cabecera de la sección «Preguntas frecuentes» en la landing. Deja los campos vacíos para usar los textos por defecto del sitio."
+          hint="Cabecera de la sección «Preguntas frecuentes» en la landing. Obligatorios en castellano para publicar."
         />
         <TextosCabeceraFields
+          required
+          fieldPrefix="textosFaqs"
           value={farmacia.textosFaqs ?? {}}
           onChange={(v) => patch({ textosFaqs: v })}
           defaults={{
@@ -293,6 +297,7 @@ export function FaqsTab() {
       <section aria-labelledby="sec-faqs-lista">
         <SectionHeader
           id="sec-faqs-lista"
+          required
           title={count === 0 ? 'Lista de preguntas' : `${count} ${count === 1 ? 'pregunta' : 'preguntas'}`}
           hint="Aparecen como bloque de FAQ en la landing y se publican como FAQ schema en Google. Recomendado 4-8."
           actions={
@@ -340,6 +345,7 @@ export function FaqsTab() {
             </SortableContext>
           </DndContext>
         )}
+        <ListFieldError field="faqs" />
       </section>
 
       <FaqModal

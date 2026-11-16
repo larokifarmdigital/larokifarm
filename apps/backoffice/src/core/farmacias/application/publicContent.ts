@@ -24,7 +24,9 @@ import type {
   ImagenAsset,
   Resena,
   ResenaRepository,
+  ResenasReglas,
 } from '../domain';
+import { resenaEnWeb, socialUrl } from '../domain';
 
 // ───────────────────────────────────────────────────────────────────
 // Contrato
@@ -52,6 +54,11 @@ export type LandingResena = {
   respuestaOwnerFecha?: string;
   fechaPublicacion: string;
   destacada: boolean;
+  /**
+   * true = sale en la web (cumple las reglas del editor). Las que no, vienen
+   * igual para que la media y el total de valoraciones sean los reales.
+   */
+  enWeb: boolean;
 };
 
 const DIA_LANDING: Record<Horario['dia'], LandingHorarioDia['dia']> = {
@@ -160,7 +167,14 @@ export function toLandingFarmacia(f: Farmacia, baseUrl: string) {
       icono: s.icono,
       enlace: safeHref(s.enlace?.url) ? s.enlace : undefined,
     })),
-    redesSociales: f.redes,
+    // Usuario (@farmacia) → URL completa: las landings la ponen en un href.
+    redesSociales: f.redes && {
+      instagram: socialUrl('instagram', f.redes.instagram),
+      facebook: socialUrl('facebook', f.redes.facebook),
+      x: socialUrl('x', f.redes.x),
+      tiktok: socialUrl('tiktok', f.redes.tiktok),
+      youtube: socialUrl('youtube', f.redes.youtube),
+    },
     seo: {
       titulo: i18n(f.seo?.title),
       descripcion: i18n(f.seo?.description),
@@ -183,6 +197,8 @@ export function toLandingFarmacia(f: Farmacia, baseUrl: string) {
     textosServicios: cabecera(f.textosServicios),
     textosFaqs: cabecera(f.textosFaqs),
     textosResenas: cabecera(f.textosResenas),
+    mostrarResenas: f.mostrarResenas,
+    resenasReglas: f.resenasReglas,
     avisoLegal: i18n(f.avisoLegal, { html: true }),
     politicaPrivacidad: i18n(f.politicaPrivacidad, { html: true }),
   };
@@ -190,8 +206,13 @@ export function toLandingFarmacia(f: Farmacia, baseUrl: string) {
 
 export type LandingFarmacia = ReturnType<typeof toLandingFarmacia>;
 
-/** Reseñas visibles (no ocultas ni borradas en Google), más recientes primero. */
-export function toLandingResenas(resenas: Resena[], baseUrl: string): LandingResena[] {
+/**
+ * Reseñas no ocultas a mano ni borradas en Google, más recientes primero.
+ * `enWeb` marca las que además cumplen las reglas del editor (mínimo de
+ * estrellas, solo con comentario): son las que la landing pinta. Las demás
+ * solo cuentan para la media y el total.
+ */
+export function toLandingResenas(resenas: Resena[], baseUrl: string, reglas: ResenasReglas): LandingResena[] {
   return resenas
     .filter((r) => !r.oculta && !r.eliminadaEnGoogle)
     .sort((a, b) => (a.fecha > b.fecha ? -1 : 1))
@@ -207,6 +228,7 @@ export function toLandingResenas(resenas: Resena[], baseUrl: string): LandingRes
       respuestaOwnerFecha: r.respuestaFecha,
       fechaPublicacion: r.fecha,
       destacada: r.destacada,
+      enWeb: resenaEnWeb(r, reglas),
     }));
 }
 

@@ -20,7 +20,7 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(
         {children}
         {required && (
           <span
-            className="ml-0.5 text-[var(--color-accent)] font-medium"
+            className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none align-[-0.05em]"
             aria-label="obligatorio"
             title="Campo obligatorio"
           >

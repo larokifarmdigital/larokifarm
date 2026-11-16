@@ -7,8 +7,10 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { FarmaciaSummary } from '@/core/farmacias/domain';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
+import { DeleteFarmaciaDialog } from './DeleteFarmaciaDialog';
 import {
   archiveFarmaciaAction,
+  deleteFarmaciaAction,
   duplicateFarmaciaAction,
   publishFarmaciaAction,
 } from '@/features/farmacias/actions/farmaciaActions';
@@ -33,6 +35,7 @@ export function FarmaciaRowActions({
   canWrite: boolean;
 }) {
   const [confirmArchive, setConfirmArchive] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   return (
     <>
     <DropdownMenu.Root>
@@ -41,7 +44,7 @@ export function FarmaciaRowActions({
         disabled={pending}
         className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] text-[var(--color-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-surface)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
       >
-        <NavIcon name="DotsSixVertical" size={16} weight="bold" />
+        <NavIcon name="DotsThreeVertical" size={18} weight="bold" />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
@@ -130,6 +133,17 @@ export function FarmaciaRowActions({
             <NavIcon name="Archive" size={13} /> Archivar
           </DropdownMenu.Item>
           )}
+          {canDuplicate && farmacia.status === 'archived' && (
+            <>
+              <DropdownMenu.Separator className="h-px bg-[var(--color-hairline)] my-1" />
+              <DropdownMenu.Item
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)] outline-none cursor-pointer"
+                onSelect={() => setConfirmDelete(true)}
+              >
+                <NavIcon name="Trash" size={13} /> Eliminar definitivamente
+              </DropdownMenu.Item>
+            </>
+          )}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -137,7 +151,7 @@ export function FarmaciaRowActions({
       open={confirmArchive}
       onOpenChange={setConfirmArchive}
       title={`¿Archivar "${farmacia.nombre}"?`}
-      description="Dejará de estar disponible para la web en el próximo despliegue. Podrás recuperarla más adelante."
+      description="Dejará de estar disponible para la web. Podrás restaurarla como borrador o, si no tiene datos del conciliador, eliminarla definitivamente."
       confirmLabel="Archivar"
       onConfirm={() => {
         setConfirmArchive(false);
@@ -145,6 +159,19 @@ export function FarmaciaRowActions({
           const res = await archiveFarmaciaAction(farmacia.id);
           if (!res.ok) throw new Error(res.error);
           toast.message(`"${farmacia.nombre}" archivada`);
+        });
+      }}
+    />
+    <DeleteFarmaciaDialog
+      open={confirmDelete}
+      onOpenChange={setConfirmDelete}
+      nombre={farmacia.nombre}
+      onConfirm={() => {
+        setConfirmDelete(false);
+        onAction(async () => {
+          const res = await deleteFarmaciaAction(farmacia.id);
+          if (!res.ok) throw new Error(res.error);
+          toast.success(`"${farmacia.nombre}" eliminada`);
         });
       }}
     />

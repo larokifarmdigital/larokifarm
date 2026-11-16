@@ -26,5 +26,11 @@ export type FarmaciaRepository = {
   ): Promise<SaveResult<Farmacia>>;
   publishFarmacia(id: string, status: FarmaciaStatus): Promise<SaveResult<Farmacia>>;
   duplicateFarmacia(id: string): Promise<SaveResult<Farmacia>>;
+  /**
+   * Borrado definitivo. Solo SUPER_ADMIN, solo archivadas y sin datos del
+   * conciliador (usuarios, conciliaciones, scout, uso). Devuelve las keys de
+   * storage (imágenes, avatares) para que el caso de uso las borre.
+   */
+  deleteFarmacia(id: string): Promise<SaveResult<{ storageKeys: string[] }>>;
   archiveFarmacia(id: string): Promise<SaveResult<Farmacia>>;
 };

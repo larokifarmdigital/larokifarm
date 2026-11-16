@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
+import { ListFieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 import { MultilangInput } from '@/features/farmacias/ui/components/editor/fields/MultilangInput';
 import { MultilangTextarea } from '@/features/farmacias/ui/components/editor/fields/MultilangTextarea';
 import { FieldPreview } from '@/features/farmacias/ui/components/editor/fields/FieldPreview';
@@ -154,7 +155,7 @@ function TarjetaModal({
         <>
           <Button variant="ghost" size="md" onClick={onClose}>Cancelar</Button>
           <Button variant="accent" size="md"
-            disabled={!Object.values(draft.titulo ?? {}).some((v) => (v ?? '').trim())}
+            disabled={!Object.values(draft.titulo ?? {}).some((v) => (v ?? '').trim()) || !Object.values(draft.subtitulo ?? {}).some((v) => (v ?? '').trim())}
             title={Object.values(draft.titulo ?? {}).some((v) => (v ?? '').trim()) ? undefined : 'Rellena el campo obligatorio'} onClick={() => { onSave(draft); onClose(); }}>
             {isNew ? 'Añadir tarjeta' : 'Guardar cambios'}
           </Button>
@@ -251,13 +252,15 @@ export function HeroTab() {
         <SectionHeader
           id="sec-hero-textos"
           title="Textos del hero"
-          hint="Chip, subtítulo y claim que aparecen sobre la primera pantalla de la landing. Si dejas el chip o el subtítulo vacíos, se usan los textos por defecto del sitio."
+          hint="Chip, subtítulo y claim que aparecen sobre la primera pantalla de la landing. Los tres son obligatorios en castellano para publicar."
         />
 
         <div className="space-y-5">
           <div className="grid gap-3 md:grid-cols-[1fr_200px] md:items-start">
             <MultilangInput
               label="Chip (etiqueta superior)"
+              required
+              field="heroChip.es"
               value={farmacia.heroChip ?? {}}
               onChange={(v) => patch({ heroChip: v })}
               placeholder="Farmacia en Barcelona"
@@ -271,6 +274,8 @@ export function HeroTab() {
           <div className="grid gap-3 md:grid-cols-[1fr_200px] md:items-start">
             <MultilangInput
               label="Subtítulo"
+              required
+              field="heroSubtitulo.es"
               value={farmacia.heroSubtitulo ?? {}}
               onChange={(v) => patch({ heroSubtitulo: v })}
               placeholder="Tu farmacia familiar en el Eixample"
@@ -283,12 +288,14 @@ export function HeroTab() {
           </div>
           <MultilangTextarea
             label="Claim / descripción corta"
+            required
+            field="descripcionCorta.es"
             value={farmacia.descripcionCorta}
             onChange={(v) => patch({ descripcionCorta: v })}
             placeholder="Frase de apoyo bajo el subtítulo. Aparece también como meta description en Google."
             rows={2}
             maxLength={180}
-            help="Máximo 180 caracteres por idioma."
+            help="Obligatorio en castellano. Máximo 180 caracteres por idioma."
           />
         </div>
       </section>
@@ -299,6 +306,7 @@ export function HeroTab() {
       <section aria-labelledby="sec-hero-imagenes">
         <SectionHeader
           id="sec-hero-imagenes"
+          required
           title="Imágenes del hero"
           hint="Se rotan en la cabecera de la landing. Recomendado 1-6 imágenes horizontales, mínimo 1920×800."
         />
@@ -306,6 +314,7 @@ export function HeroTab() {
         <ImageGalleryField
           businessId={farmacia.id}
           role="hero"
+          field="heroImages"
           value={farmacia.heroImages}
           onChange={(heroImages) => patch({ heroImages })}
           idiomasActivos={farmacia.idiomasActivos}
@@ -319,8 +328,9 @@ export function HeroTab() {
       <section aria-labelledby="sec-hero-tarjetas">
         <SectionHeader
           id="sec-hero-tarjetas"
+          required
           title="Tarjetas flotantes"
-          hint="Hasta 3 tarjetas que flotan sobre la imagen principal del hero. La posición visual se asigna automáticamente."
+          hint="De 1 a 3 tarjetas que flotan sobre la imagen principal del hero. La posición visual se asigna automáticamente."
           actions={
             <Button
               variant="accent"
@@ -373,6 +383,7 @@ export function HeroTab() {
           onSave={saveTarjeta}
           onClose={closeModal}
         />
+        <ListFieldError field="heroTarjetasFlotantes" />
       </section>
     </div>
   );

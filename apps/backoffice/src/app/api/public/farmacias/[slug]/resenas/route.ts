@@ -1,8 +1,8 @@
 /**
- * GET /api/public/farmacias/:slug/resenas — reseñas visibles, recientes primero.
+ * GET /api/public/farmacias/:slug/resenas — reseñas no ocultas, recientes primero.
  *
- * PÚBLICO, solo lectura, solo farmacias `published`. La landing calcula el
- * resumen (media, destacadas, filtros) sobre esta lista.
+ * PÚBLICO, solo lectura, solo farmacias `published`. `enWeb` = cumple las
+ * reglas del editor (la landing solo pinta esas; media y total, sobre todas).
  */
 import { NextResponse } from 'next/server';
 import { GetPublishedFarmaciaUseCase, getFarmaciaRepository, toLandingResenas } from '@/core/farmacias';
@@ -14,7 +14,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const farmacia = await new GetPublishedFarmaciaUseCase(getFarmaciaRepository()).execute(slug);
   if (!farmacia) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(toLandingResenas(farmacia.resenas, publicBaseUrl(req)), {
+  return NextResponse.json(toLandingResenas(farmacia.resenas, publicBaseUrl(req), farmacia.resenasReglas), {
     headers: { 'Cache-Control': 'no-store' },
   });
 }

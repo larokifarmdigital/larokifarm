@@ -106,6 +106,8 @@ export const farmaciaRepositoryMock: FarmaciaRepository = {
       servicios: [],
       faqs: [],
       resenas: [],
+      mostrarResenas: true,
+      resenasReglas: { minRating: 4, soloConComentario: true },
       createdAt: now,
       updatedAt: now,
     };
@@ -133,6 +135,15 @@ export const farmaciaRepositoryMock: FarmaciaRepository = {
     };
     store.set(copy.id, copy);
     return { ok: true, data: structuredClone(copy) };
+  },
+
+  async deleteFarmacia(id) {
+    await sleep(NETWORK_DELAY_MS);
+    const f = store.get(id);
+    if (!f) return { ok: false, error: 'Farmacia no encontrada' };
+    if (f.status !== 'archived') return { ok: false, error: 'Archívala antes de eliminarla.' };
+    store.delete(id);
+    return { ok: true, data: { storageKeys: [] } };
   },
 
   async archiveFarmacia(id) {

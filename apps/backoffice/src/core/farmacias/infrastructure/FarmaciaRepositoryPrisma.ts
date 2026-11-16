@@ -289,6 +289,39 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
     return this.saveFarmacia(id, { status });
   },
 
+  async deleteFarmacia(id) {
+    const user = await getCurrentUser();
+    if (!user) return { ok: false, error: 'Sesión requerida' };
+    if (user.rol !== 'admin') return { ok: false, error: 'Solo un SUPER_ADMIN puede eliminar farmacias' };
+
+    const b = await prisma.business.findUnique({
+      where: { id },
+      select: {
+        publishedStatus: true,
+        _count: { select: { users: true, comparisons: true, batchJobs: true, usage: true } },
+        imagenes: { select: { storageKey: true } },
+        resenas: { select: { avatarStorageKey: true } },
+      },
+    });
+    if (!b) return { ok: false, error: 'Farmacia no encontrada' };
+    if (b.publishedStatus !== 'archived') return { ok: false, error: 'Archívala antes de eliminarla.' };
+    const c = b._count;
+    if (c.users + c.comparisons + c.batchJobs + c.usage > 0) {
+      return {
+        ok: false,
+        error: `No se puede eliminar: tiene datos del conciliador (${c.users} usuarios, ${c.comparisons} conciliaciones). Déjala archivada.`,
+      };
+    }
+
+    // Servicios, FAQs, features, reseñas e imágenes se borran en cascada.
+    await prisma.business.delete({ where: { id } });
+    const storageKeys = [
+      ...b.imagenes.map((i) => i.storageKey),
+      ...b.resenas.map((r) => r.avatarStorageKey).filter((k): k is string => Boolean(k)),
+    ].filter((k) => !k.startsWith('sanity:'));
+    return { ok: true, data: { storageKeys } };
+  },
+
   async archiveFarmacia(id) {
     return this.saveFarmacia(id, { status: 'archived' });
   },

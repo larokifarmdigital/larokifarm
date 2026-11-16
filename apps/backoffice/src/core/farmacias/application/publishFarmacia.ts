@@ -1,5 +1,5 @@
 import type { SaveResult } from '@/core/shared';
-import type { Farmacia, FarmaciaRepository, LandingDeployer, LandingDeployResult } from '../domain';
+import { describeIssues, validateFarmacia, type Farmacia, type FarmaciaRepository, type LandingDeployer, type LandingDeployResult } from '../domain';
 
 /**
  * Publicar = marcar `published` + rebuild de la landing (SSG: sin rebuild,
@@ -19,6 +19,16 @@ export class PublishFarmaciaUseCase {
     id: string,
     publish: boolean,
   ): Promise<SaveResult<{ farmacia: Farmacia; deploy?: LandingDeployResult }>> {
+    // Mismas reglas que el editor: no se publica con datos obligatorios
+    // vacíos o con formato inválido (aunque se llame a la action directamente).
+    if (publish) {
+      const current = await this.repo.getFarmacia(id);
+      if (!current) return { ok: false, error: 'Farmacia no encontrada' };
+      const issues = validateFarmacia(current);
+      if (issues.length > 0) {
+        return { ok: false, error: `No se puede publicar: revisa ${describeIssues(issues)}.` };
+      }
+    }
     const res = await this.repo.publishFarmacia(id, publish ? 'published' : 'draft');
     if (!res.ok) return res;
     if (!publish) return { ok: true, data: { farmacia: res.data } };

@@ -1,5 +1,9 @@
-// PORT: lectura puntual de reseñas (la lista completa viaja con la Farmacia).
+// PORT: reseñas sueltas (la lista completa viaja con la Farmacia).
 export type ResenaRepository = {
   /** Key de storage de la foto del autor, solo si la reseña es visible. */
   findVisibleAvatarKey(resenaId: string): Promise<string | null>;
+  /** Farmacia a la que pertenece (null si no existe). */
+  findBusinessId(resenaId: string): Promise<string | null>;
+  /** Switch del editor: ocultar/mostrar una reseña en la web. */
+  setOculta(resenaId: string, oculta: boolean): Promise<void>;
 };

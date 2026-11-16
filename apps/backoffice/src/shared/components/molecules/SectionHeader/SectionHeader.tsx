@@ -7,8 +7,11 @@ export function SectionHeader({
   actions,
   className,
   id,
+  required,
 }: {
   title: string;
+  /** Asterisco rojo: la sección es obligatoria para publicar (p. ej. al menos 1 elemento). */
+  required?: boolean;
   hint?: ReactNode;
   actions?: ReactNode;
   className?: string;
@@ -22,6 +25,11 @@ export function SectionHeader({
           className="text-[14px] font-bold leading-[1.3] tracking-[-0.012em] text-[var(--color-ink)] m-0"
         >
           {title}
+          {required && (
+            <span className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none" aria-label="obligatorio" title="Obligatorio para publicar">
+              *
+            </span>
+          )}
         </h3>
         {hint && (
           <p className="text-[12.5px] leading-[1.55] text-[var(--color-muted-2)] mt-1 m-0">

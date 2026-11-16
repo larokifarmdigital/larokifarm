@@ -9,6 +9,10 @@ type BaseProps = {
   label?: string;
   hint?: string;
   className?: string;
+  /** Clave de validación (p. ej. `heroImages`, `logo`): id estable + error bajo el campo. */
+  field?: string;
+  /** Asterisco rojo en el título del campo. */
+  required?: boolean;
 };
 
 export type MultiProps = BaseProps & {

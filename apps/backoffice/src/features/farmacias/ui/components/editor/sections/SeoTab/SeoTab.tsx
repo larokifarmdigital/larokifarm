@@ -20,12 +20,14 @@ export function SeoTab() {
         <SectionHeader
           id="sec-seo-textos"
           title="Título y descripción"
-          hint="Textos que aparecen en la pestaña del navegador y en los resultados de Google. Si los dejas vacíos, se usan el nombre y la descripción corta como fallback."
+          hint="Textos que aparecen en la pestaña del navegador y en los resultados de Google. Obligatorios en castellano para publicar."
         />
 
         <div className="space-y-4">
           <MultilangInput
             label="Título SEO (title tag)"
+            required
+            field="seo.title.es"
             value={seo.title ?? {}}
             onChange={(v) => patch({ seo: { ...seo, title: v } })}
             placeholder="Farmàcia Torrents · Farmacia en el Eixample de Barcelona"
@@ -33,6 +35,8 @@ export function SeoTab() {
           />
           <MultilangTextarea
             label="Descripción SEO (meta description)"
+            required
+            field="seo.description.es"
             value={seo.description ?? {}}
             onChange={(v) => patch({ seo: { ...seo, description: v } })}
             placeholder="Farmacia familiar en el Eixample con dermofarmacia, servicio a domicilio…"
@@ -49,6 +53,7 @@ export function SeoTab() {
       <section aria-labelledby="sec-seo-og">
         <SectionHeader
           id="sec-seo-og"
+          required
           title="Imagen Open Graph"
           hint="Se muestra al compartir la landing en WhatsApp, Facebook, LinkedIn, etc. Formato 1200×630 px (relación 1.91:1), JPG o PNG, menos de 1 MB. Compartida entre idiomas."
         />
@@ -57,6 +62,7 @@ export function SeoTab() {
           mode="single"
           businessId={farmacia.id}
           role="og"
+          field="seo.ogImage"
           aspect="og"
           value={seo.ogImage}
           onChange={(ogImage) =>

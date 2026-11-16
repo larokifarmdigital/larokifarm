@@ -5,3 +5,4 @@ export type * from './repositories/FarmaciaRepository';
 export type * from './repositories/ContentImageRepository';
 export type * from './repositories/ResenaRepository';
 export type * from './repositories/LandingDeployer';
+export * from './validation';

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
+import { ListFieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 import { MultilangInput } from '@/features/farmacias/ui/components/editor/fields/MultilangInput';
 import { MultilangTextarea } from '@/features/farmacias/ui/components/editor/fields/MultilangTextarea';
 import { Input } from '@/shared/components/atoms/Input';
@@ -210,7 +211,7 @@ function ServicioModal({
           <Button
             variant="accent"
             size="md"
-            disabled={!Object.values(draft.nombre ?? {}).some((v) => (v ?? '').trim()) || !isSafeHref(draft.enlace?.url ?? '')}
+            disabled={!(draft.nombre?.es ?? '').trim() || !(draft.descripcion?.es ?? '').trim() || !isSafeHref(draft.enlace?.url ?? '')}
             title={Object.values(draft.nombre ?? {}).some((v) => (v ?? '').trim()) ? undefined : 'Rellena el campo obligatorio'}
             onClick={() => {
               onSave(draft);
@@ -246,6 +247,7 @@ function ServicioModal({
 
         <MultilangTextarea
           label="Descripción"
+          required
           value={draft.descripcion ?? {}}
           onChange={(v) => setDraft({ ...draft, descripcion: v })}
           placeholder="Breve descripción del servicio…"
@@ -367,9 +369,11 @@ export function ServiciosTab() {
         <SectionHeader
           id="sec-servicios-textos"
           title="Textos de la sección"
-          hint="Cabecera de la sección «Nuestros servicios» en la landing. Deja los campos vacíos para usar los textos por defecto del sitio."
+          hint="Cabecera de la sección «Nuestros servicios» en la landing. Obligatorios en castellano para publicar."
         />
         <TextosCabeceraFields
+          required
+          fieldPrefix="textosServicios"
           value={farmacia.textosServicios ?? {}}
           onChange={(v) => patch({ textosServicios: v })}
           defaults={{
@@ -384,6 +388,7 @@ export function ServiciosTab() {
       <section aria-labelledby="sec-servicios-lista">
         <SectionHeader
           id="sec-servicios-lista"
+          required
           title={count === 0 ? 'Lista de servicios' : `${count} ${count === 1 ? 'servicio' : 'servicios'}`}
           hint="Cada servicio aparece como card en la landing. Arrastra las filas para reordenar."
           actions={
@@ -434,6 +439,7 @@ export function ServiciosTab() {
             </SortableContext>
           </DndContext>
         )}
+        <ListFieldError field="servicios" />
       </section>
 
       <ServicioModal

@@ -115,6 +115,11 @@ const patchSchema = z
     googleMapsUrl: safeUrl().nullish(),
     mapaUrl: safeUrl(4000).nullish(),
     googleLocationName: optStr(300),
+    mostrarResenas: z.boolean(),
+    resenasReglas: z.object({
+      minRating: z.number().int().min(1).max(5).nullable(),
+      soloConComentario: z.boolean(),
+    }),
     descripcionCorta: ml(400),
     descripcionLarga: richMl,
     avisoLegal: richMl.nullish(),
