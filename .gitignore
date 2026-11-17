@@ -68,3 +68,6 @@ playwright/
 
 # Backups y notas privadas de infra (dumps de BD, inventarios de secrets, etc.)
 _backups/
+
+# Configuración local del editor
+.vscode/

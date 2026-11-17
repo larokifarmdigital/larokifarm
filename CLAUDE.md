@@ -152,11 +152,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-11T09:07:55Z).
+Actualizado automáticamente al hacer commit (2026-11-16T12:18:08Z).
 
-- `2e7d262` 2026-11-11 — Feat(backoffice): ImageGalleryField mode=single + jubilar ImageUploader + ServiciosTab modal
-- `522eb88` 2026-11-11 — Feat(backoffice): revamp UX del editor de farmacias (Gilroy, modales, galería compacta)
-- `4b84a3e` 2026-11-11 — Fix(backoffice): migración Sanity → mapear language (no _key) + traducir días Mo→lun
-- `205fbfb` 2026-11-11 — Feat(backoffice): integrar ImageUploader en HeroTab/SobreTab/GeneralTab
-- `79f5b68` 2026-11-10 — Feat(backoffice): Fase C — imágenes a R2 (storage + server actions + proxy + uploader)
+- `131568a` 2026-11-16 — Feat(backoffice): select personalizado y avatares en las reseñas
+- `a71b739` 2026-11-16 — Feat(landings): reseñas según el backoffice
+- `7695ca4` 2026-11-16 — Feat(backoffice): validación para publicar, gestión de reseñas y eliminar farmacias
+- `cd86d37` 2026-11-13 — Fix(landings): no publicar la web vacía y enlaces/JSON-LD seguros
+- `27e3cf9` 2026-11-13 — Fix(backoffice): correcciones del QA — autoguardado, validación, permisos e imágenes
 <!-- auto:recent-commits:end -->
