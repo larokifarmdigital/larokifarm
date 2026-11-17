@@ -101,12 +101,24 @@ export function GeneralTab() {
             <FieldError {...feNombre} />
           </div>
           <div className="sm:col-span-2">
-            <Label htmlFor="slug" required>URL pública</Label>
+            <Label
+              htmlFor="slug"
+              required
+              hint={
+                <LabelHelpIcon>
+                  Código interno con el que la web de la farmacia lee su contenido. No es la dirección
+                  de la web (esa va en Contacto → Web). Con la web publicada no se puede cambiar: la web
+                  dejaría de actualizarse.
+                </LabelHelpIcon>
+              }
+            >
+              Identificador
+            </Label>
             <IconInput
               id="slug"
-              icon={<NavIcon name="Globe" size={15} />}
-              label="URL pública"
-              prefix="larokifarm.com/"
+              icon={<NavIcon name="Hash" size={15} />}
+              label="Identificador"
+              readOnly={farmacia.status === 'published'}
               value={farmacia.slug}
               onChange={(e) => patch({ slug: slugify(e.target.value).slice(0, 60) })}
               onBlur={() => {

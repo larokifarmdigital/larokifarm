@@ -5,12 +5,15 @@ import { MultilangInput } from '@/features/farmacias/ui/components/editor/fields
 import { MultilangTextarea } from '@/features/farmacias/ui/components/editor/fields/MultilangTextarea';
 import { ImageGalleryField } from '@/features/farmacias/ui/components/editor/fields/ImageGalleryField';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';
+import { landingUrl } from '@/shared/lib/landingUrl';
 
 export function SeoTab() {
   const { farmacia, patch, currentLocale } = useFarmaciaEditor();
   const seo = farmacia.seo ?? {};
 
   const titleValue = seo.title?.[currentLocale] ?? '';
+  const web = landingUrl(farmacia.web);
+  const dominio = web ? new URL(web).host : null;
   const descValue = seo.description?.[currentLocale] ?? '';
 
   return (
@@ -82,7 +85,7 @@ export function SeoTab() {
         />
         <div className="card p-5 bg-white">
           <div className="text-[12px] text-[#5f6368]">
-            larokifarm.com › {farmacia.slug}
+            {dominio ?? 'tu-dominio.com'}
           </div>
           <div className="text-[18px] leading-tight text-[#1a0dab] hover:underline cursor-pointer mt-0.5">
             {titleValue || farmacia.nombre}

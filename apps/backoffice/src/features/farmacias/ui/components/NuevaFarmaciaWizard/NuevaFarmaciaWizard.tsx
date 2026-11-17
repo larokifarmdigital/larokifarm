@@ -159,9 +159,14 @@ export function NuevaFarmaciaWizard() {
             <Label
               htmlFor="slug"
               required
-              hint={<LabelHelpIcon>Se autocompleta desde el nombre. Solo minúsculas, números y guiones.</LabelHelpIcon>}
+              hint={
+                <LabelHelpIcon>
+                  Código interno con el que la web de la farmacia lee su contenido. Se autocompleta desde el
+                  nombre. Solo minúsculas, números y guiones.
+                </LabelHelpIcon>
+              }
             >
-              Slug (URL)
+              Identificador
             </Label>
             <Input
               id="slug"
@@ -175,12 +180,6 @@ export function NuevaFarmaciaWizard() {
               className="font-mono-tabular"
               invalid={Boolean(fieldError('slug'))}
             />
-            <p className="help">
-              Tu web:{' '}
-              <code className="font-mono text-[11.5px] bg-[var(--color-surface-sunken)] px-1 py-0.5 rounded">
-                larokifarm.com/{slug || 'tu-slug'}
-              </code>
-            </p>
             {fieldError('slug') && (
               <p className="help help-error" role="alert">
                 {fieldError('slug')}
@@ -240,8 +239,8 @@ export function NuevaFarmaciaWizard() {
             <dl className="grid grid-cols-[120px_1fr] gap-y-3 gap-x-4 text-[13px]">
               <dt className="text-[var(--color-muted)]">Nombre</dt>
               <dd className="text-[var(--color-ink)]">{nombre}</dd>
-              <dt className="text-[var(--color-muted)]">URL</dt>
-              <dd className="text-[var(--color-ink)] font-mono-tabular">larokifarm.com/{slug}</dd>
+              <dt className="text-[var(--color-muted)]">Identificador</dt>
+              <dd className="text-[var(--color-ink)] font-mono-tabular">{slug}</dd>
               {ciudad && (
                 <>
                   <dt className="text-[var(--color-muted)]">Ciudad</dt>
