@@ -152,11 +152,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-17T09:07:37Z).
+Actualizado automáticamente al hacer commit (2026-11-17T09:08:54Z).
 
+- `003d292` 2026-11-17 — Chore: actualizar cambios recientes del CLAUDE.md
 - `acf25fe` 2026-11-17 — Feat(backoffice): pestañas de idioma en los modales del editor
 - `21675bb` 2026-11-17 — Chore: ignorar .vscode y actualizar cambios recientes del CLAUDE.md
 - `131568a` 2026-11-16 — Feat(backoffice): select personalizado y avatares en las reseñas
 - `a71b739` 2026-11-16 — Feat(landings): reseñas según el backoffice
-- `7695ca4` 2026-11-16 — Feat(backoffice): validación para publicar, gestión de reseñas y eliminar farmacias
 <!-- auto:recent-commits:end -->

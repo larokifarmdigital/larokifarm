@@ -20,6 +20,7 @@ function toSummary(f: Farmacia): FarmaciaSummary {
     idiomasActivos: f.idiomasActivos,
     updatedAt: f.updatedAt,
     logo: f.logo,
+    web: f.web,
   };
 }
 

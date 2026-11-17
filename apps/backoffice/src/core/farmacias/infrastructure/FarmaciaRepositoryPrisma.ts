@@ -80,6 +80,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
         slug: true,
         name: true,
         ciudad: true,
+        web: true,
         publishedStatus: true,
         idiomasActivos: true,
         updatedAt: true,
@@ -100,6 +101,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
         slug: r.slug,
         nombre: r.name,
         ciudad: r.ciudad ?? undefined,
+        web: r.web ?? undefined,
         status: asStatus(r.publishedStatus),
         idiomasActivos: Array.isArray(r.idiomasActivos)
           ? (r.idiomasActivos as unknown as Farmacia['idiomasActivos'])

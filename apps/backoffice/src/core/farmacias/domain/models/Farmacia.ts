@@ -243,5 +243,5 @@ export type Farmacia = {
 
 export type FarmaciaSummary = Pick<
   Farmacia,
-  'id' | 'slug' | 'nombre' | 'ciudad' | 'status' | 'idiomasActivos' | 'updatedAt' | 'logo'
+  'id' | 'slug' | 'nombre' | 'ciudad' | 'status' | 'idiomasActivos' | 'updatedAt' | 'logo' | 'web'
 >;

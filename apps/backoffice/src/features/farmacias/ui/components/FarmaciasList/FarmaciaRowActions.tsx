@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { FarmaciaSummary } from '@/core/farmacias/domain';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
+import { landingUrl } from '@/shared/lib/landingUrl';
 import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { DeleteFarmaciaDialog } from './DeleteFarmaciaDialog';
 import {
@@ -34,6 +35,7 @@ export function FarmaciaRowActions({
   /** Publicar/archivar: no para el rol de solo lectura. */
   canWrite: boolean;
 }) {
+  const webUrl = landingUrl(farmacia.web);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   return (
@@ -74,16 +76,27 @@ export function FarmaciaRowActions({
             <NavIcon name="Copy" size={13} /> Duplicar
           </DropdownMenu.Item>
           )}
-          <DropdownMenu.Item asChild>
-            <a
-              href={`https://larokifarm.com/${farmacia.slug}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none"
+          {webUrl ? (
+            <DropdownMenu.Item asChild>
+              <a
+                href={webUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none"
+              >
+                <NavIcon name="ArrowSquareOut" size={13} /> Ver landing
+              </a>
+            </DropdownMenu.Item>
+          ) : (
+            <DropdownMenu.Item
+              disabled
+              title="Añade la web de la farmacia en Datos → General"
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-muted-2)] outline-none"
             >
               <NavIcon name="ArrowSquareOut" size={13} /> Ver landing
-            </a>
-          </DropdownMenu.Item>
+              <span className="ml-auto text-[11px]">Sin web</span>
+            </DropdownMenu.Item>
+          )}
           {canWrite && (farmacia.status === 'published' ? (
             <DropdownMenu.Item
               className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none cursor-pointer"

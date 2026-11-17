@@ -11,6 +11,7 @@ import { useI18nHealth } from '@/features/farmacias/ui/hooks/useI18nHealth';
 import { localeWithMostMissing } from '@/features/farmacias/ui/lib/i18nStatus';
 import { publishToast } from '@/features/farmacias/ui/lib/publishToast';
 import { cn } from '@/shared/lib/cn';
+import { landingUrl } from '@/shared/lib/landingUrl';
 import { PublishMissingDialog } from './PublishMissingDialog';
 import { PublishBlockedDialog } from './PublishBlockedDialog';
 import type { FieldIssue } from '@/core/farmacias/domain';
@@ -84,6 +85,7 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
   };
 
   const publishLabel = farmacia.status === 'published' ? 'Publicar cambios' : 'Publicar';
+  const webUrl = landingUrl(farmacia.web);
 
   return (
     <div
@@ -122,9 +124,9 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
       <Button
         variant="secondary"
         size="sm"
-        onClick={() =>
-          window.open(`https://larokifarm.com/${farmacia.slug}`, '_blank', 'noopener,noreferrer')
-        }
+        disabled={!webUrl}
+        title={webUrl ? undefined : 'Añade la web de la farmacia en Datos → General'}
+        onClick={() => webUrl && window.open(webUrl, '_blank', 'noopener,noreferrer')}
         aria-label="Abrir la landing publicada en nueva pestaña"
         className={cn(compact && 'flex-1 justify-center')}
       >

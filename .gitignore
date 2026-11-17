@@ -71,3 +71,6 @@ _backups/
 
 # Configuración local del editor
 .vscode/
+
+# Guía del cliente (contiene contraseña)
+GUIA-BACKOFFICE.md
