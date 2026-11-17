@@ -1,0 +1,480 @@
+import { z } from 'zod';
+import type { DeliveryNoteData } from './types';
+
+// NOTE: usamos fetch (no SDK) para poder correr en Workers.
+const MODEL = 'gemini-2.5-flash';
+
+// NOTE: prompt en español a propósito — describe conceptos de farmacia ES y opera sobre PDFs ES.
+const PROMPT = `Eres un extractor de albaranes y facturas de proveedores farmacéuticos.
+Vienen en muchos formatos; adáptate. Extrae cabecera y TODAS las líneas
+(puede haber varias páginas: no te dejes ninguna).
+
+- "documentKind" = clasifica el PDF según su cabecera/título:
+    "deliveryNote" si aparece "ALBARÁN", "ALBARÁN DE ENTREGA", "DELIVERY NOTE", etc.
+    "invoice"      si aparece "FACTURA", "INVOICE", "Nº Factura", etc.
+    "other"        si no es claro.
+  Este campo es OBLIGATORIO.
+
+- "quantity" = valor de la columna UDS TAL CUAL aparece (unidades servidas totales; no
+  restes la bonificación, eso lo hace el sistema).
+- "unitPrice" = precio base por unidad de la columna PVL/PRECIO/Tarifa General (NO el
+  precio neto ni el importe). Léelo de la línea facturada; nunca pongas 0 si la columna
+  PVL/Tarifa tiene valor. Si el PDF SOLO trae precio neto (sin tarifa base), usa el neto
+  como unitPrice.
+- ATENCIÓN CRÍTICA al DENOMINADOR del precio: algunos proveedores (PEROXFARMA es un
+  ejemplo) muestran un precio aparentemente "por unidad" en la fila principal, pero
+  añaden una línea aclaratoria del tipo "TARIFA GENERAL 37,18 € / 100 Un." (o "/ 1 Un.",
+  "/ 6 Un.", "/12 UN", etc.) que indica el verdadero número de unidades de referencia
+  del precio. Cuando ese denominador N sea distinto de 1, DEBES dividir el precio por N
+  para devolver el precio por UNA unidad. Ejemplos:
+    "37,18 € / 100 Un." → unitPrice = 0,3718
+    "3,42 € / 1 Un."    → unitPrice = 3,42 (sin dividir, N=1)
+    "60,00 € / 6 UN"    → unitPrice = 10,00
+  La misma regla aplica al precio neto, al PVL y a cualquier otro precio del documento.
+  Si NO ves una línea aclaratoria con denominador, asume N=1 y deja el precio como está.
+- "discount" = porcentaje de descuento de ESA línea (solo el número, ej. 21 ó 21,5).
+  El descuento NO es la bonificación: son cosas distintas.
+- "discountAmount" = importe absoluto en € del descuento de ESA línea, siempre
+  positivo (aunque en el PDF venga con signo -). Es el número que aparece a la
+  derecha del porcentaje en la línea B ("10,00% -7,60" → discountAmount = 7,60).
+  Si el descuento va compuesto en varias filas (Nestlé), suma los importes
+  igual que sumas los porcentajes. Si no hay descuento, deja discountAmount
+  en 0. Este campo es una SEÑAL REDUNDANTE de "discount": rellénalo aunque ya
+  hayas rellenado "discount", nunca es "o uno o el otro".
+- "netUnitPrice" = precio NETO por unidad tras descuento, si el PDF trae la
+  columna (típico de Hartmann: "Precio Bruto Unit EUR" + "Precio Neto Unit EUR"
+  como dos columnas separadas por línea). Se aplica la misma regla del
+  denominador que a "unitPrice" (dividir si el precio es por N unidades).
+  Es OTRA señal redundante para reconstruir "discount" cuando falla:
+  discount% = (1 − netUnitPrice / unitPrice) × 100. Si el proveedor no
+  imprime precio neto, deja el campo vacío o 0.
+- EDGE CASE CRÍTICO — colisión posición N + descuento N,00 %: cuando la fila
+  del artículo empieza con un número de posición (10, 20, 30…) y su línea B
+  de descuento es exactamente ese mismo número seguido de coma cero cero por
+  ciento (ej. posición "10" con dto "10,00%"), es fácil confundirse y perder
+  el descuento. NO son el mismo número: el primero es un ordinal de línea; el
+  segundo es un porcentaje. Rellena SIEMPRE "discount" y "discountAmount" en
+  estos casos. Ejemplo real del PDF:
+    "10    1734051 / RICOLA CARAM.S/AZ 50g REGALIZ   40 UN   1,90   76,00"
+    "                                                       10,00%  -7,60"
+    "     Lote: 2000217140 / Caducidad: 04.2028"
+  Salida correcta: quantity=40, unitPrice=1,90, discount=10, discountAmount=7,60.
+- IMPORTANTE sobre descuentos compuestos: algunos proveedores (ej. Nestlé) aplican
+  VARIOS descuentos % a la misma línea en filas separadas ("Descuento del 20.00%",
+  "Descuento del 1.50%"). En ese caso devuelve la SUMA de los porcentajes explícitos
+  (20 + 1,5 = 21,5). Las filas que digan solo "Descuento" sin % son ajustes financieros
+  adicionales: IGNÓRALAS para "discount". Si solo hay un único % de descuento por
+  línea, devuelve ese número tal cual.
+- "freeUnits" = valor de la columna BONIF. TAL CUAL (unidades de regalo/muestra/
+  promoción de esa línea). Si no hay, 0.
+- IMPORTANTE sobre bonificaciones: a veces el regalo NO va en columna BONIF. sino como
+  una LÍNEA APARTE del mismo producto con precio 0 (o 100% de descuento). En ese caso
+  extrae esa línea tal cual: su "quantity" = sus unidades y "unitPrice" = 0. NO
+  la fusiones con la línea facturada; el sistema la reconocerá como bonificación.
+- "nationalCode" = Código Nacional español (columna C.N., "Cód. Nacional", "CN",
+  "C. Nacional"). FORMATO OBLIGATORIO DE SALIDA: EXACTAMENTE 6 DÍGITOS numéricos,
+  sin punto, sin dígito de control, sin espacios, sin sufijos. El C.N. español se
+  imprime habitualmente como "XXXXXX.X" (6 dígitos base + 1 dígito de control) —
+  DESCARTA el punto y el dígito de control y devuelve los 6 primeros. Ejemplos
+  OBLIGATORIOS (aplícalos siempre):
+    "159259.0"  → "159259"
+    "369694.4"  → "369694"
+    "192332.P"  → "192332"   (sufijos con letras como .P/.S/.R son formato del proveedor, IGNÓRALOS)
+    "159259 0"  → "159259"
+    "1592590"   → "159259"   (si vienen 7 dígitos pegados, quédate con los 6 primeros)
+    "1.59259E+05" → "159259"  (notación científica de Excel: reconstruye y toma 6 dígitos)
+    "159259"    → "159259"   (si ya vienen 6, déjalos igual)
+  Si en la línea NO hay C.N., devuelve "". NUNCA devuelvas más de 6 dígitos ni
+  incluyas puntos ni letras en este campo.
+- "ean" = código de barras / EAN / GTIN del artículo si aparece (solo el código,
+  normalmente 8-13 dígitos); si no, "".
+- "code" = código interno del proveedor (ej. "UN14080", "12578223", "5000036689").
+  Es el identificador que el proveedor usa internamente y suele aparecer en TODOS los
+  documentos del mismo envío (albarán + factura). NO lo confundas con C.N. ni EAN.
+  REGLA DURA: si el valor parece un C.N. español (numérico de 6-7 dígitos con o sin
+  punto/dígito de control/sufijo de letra, ej. "159259.0", "369694", "1592590",
+  "192332.P"), NO lo pongas en "code" — va en "nationalCode" (aplicando las reglas
+  de extracción de 6 dígitos). "code" es para identificadores alfanuméricos propios
+  del proveedor (con letras al principio o intercaladas, con guiones, o numéricos de
+  longitud claramente distinta a 6-7 como los EAN de 13 dígitos o los internos
+  largos como "5000036689" o "UN14080").
+- "supplier" = nombre del proveedor que emite el documento (ej. "DENTAID", "NESTLÉ",
+  "PEROXFARMA").
+- Fechas en formato YYYY-MM-DD.
+
+FORMATOS DE TABLA — IMPORTANTE:
+- Algunos proveedores (Perrigo y similares) usan CABECERAS Y FILAS APILADAS en 2
+  líneas visuales: arriba "Cód. Art." / "Descripción" y debajo "Uds." / "PV" /
+  "Dto" / "Precio neto" / "Importe" / "% IVA". Cada artículo ocupa también 2 líneas:
+  arriba código + descripción, debajo "{uds} ST {PV} {dto} {neto} {importe} {%iva}".
+  Trátalas como UNA SOLA línea de artículo, no como dos. La columna "Uds." aparece
+  DEBAJO de "Cód. Art." (apilada), no a su derecha: no confundas el código con las
+  unidades.
+- Cuando veas la unidad "ST" (o "UN", "UDS") detrás de un número (ej. "36 ST",
+  "120 ST"), la cantidad es ese número. Nunca tomes dígitos del código de artículo
+  ni del EAN como cantidad.
+- En la descripción pueden aparecer notaciones de envase como "2X6", "1X12",
+  "6x10": son el formato del pack del proveedor, NO son cantidades, multiplicadores
+  ni unidades. Ignóralas para "quantity".
+- Sanity check OBLIGATORIO antes de devolver cada línea:
+  quantity × unitPrice × (1 − discount/100) ≈ importe_de_la_linea.
+  Si no cuadra ni de lejos (orden de magnitud mal), has leído mal alguna columna o
+  no aplicaste el denominador del precio: vuelve a mirarla. Esto es especialmente
+  importante cuando el resultado se desvía en factor 10, 100 o 1000 — suele ser
+  señal de que el precio venía "por N unidades" y no lo dividiste.
+
+NÚMEROS PEGADOS SIN ESPACIO — IMPORTANTE:
+- Cuando en el texto veas un número seguido inmediatamente por otro que empieza con
+  1-2 dígitos y termina con "%" (sin espacio de separación), son DOS números
+  distintos que hay que separar: el primero es un importe/precio, el segundo es un
+  descuento. Ejemplo real:
+    "61,6230,00%"       → importe = 61,62   +   descuento = 30,00%
+    "10,275,50%"        → precio  = 10,27   +   descuento = 5,50%
+    "1.234,5620%"       → importe = 1.234,56 +  descuento = 20%
+  Regla de corte: localiza el "%" y retrocede hasta encontrar un dígito con "," o
+  "." decimal que forme un porcentaje razonable (0-100). Lo anterior es el otro
+  número.
+- La misma regla aplica a números pegados a "€" o "$" al final.
+
+DESCUENTOS EN LÍNEA APILADA (formato FAES FARMA, DENTAID y muchos otros) — CRÍTICO:
+- Muchos proveedores imprimen cada artículo en DOS líneas visuales apiladas:
+    Línea A (superior):  N  código  /  DESCRIPCIÓN  cant UN  precio  subtotal
+    Línea B (inferior, indentada bajo las columnas de dto/importe):  dto%  -importe_dto
+  Ejemplo textual literal:
+    "20 2140929 / ARCID COMPRIMIDOS, 24 COMPRIMIDOS 2 UN 9,40 18,80"
+    "                                                   30,00% -5,64"
+  La línea B pertenece al artículo de la línea A inmediatamente anterior — el 30,00%
+  es el "discount" de ARCID. NUNCA generes una línea separada para el fragmento B:
+  fusiónalo con la línea A anterior.
+- Cómo reconocer una línea B "huérfana":
+  * Empieza con un porcentaje (X,XX% o X.XX%) posiblemente precedido por espacios.
+  * NO tiene código de artículo ni descripción al principio.
+  * Suele ir seguida de un importe negativo (-Y,YY) que es el importe del descuento.
+  * Puede haber varias líneas B seguidas (descuentos compuestos): súmalas todas al
+    "discount" del artículo anterior — mismo criterio que la sección de descuentos
+    compuestos de Nestlé (arriba).
+
+LÍNEAS PARTIDAS POR SALTO DE PÁGINA — MUY IMPORTANTE:
+- El salto de página puede caer entre la línea A y la línea B del formato apilado
+  de arriba: entonces la línea A queda al final de la página N (sin descuento
+  visible) y la línea B ("30,00% -5,64") queda al inicio de la página N+1 (sin
+  código de artículo delante). SIGUEN SIENDO EL MISMO ARTÍCULO: asigna el
+  descuento a la última línea de la página anterior.
+- Regla dura: si al INICIO de una página aparece un fragmento cuya primera cosa es
+  un porcentaje o un importe negativo, SIN código de artículo delante, ese
+  fragmento pertenece a la ÚLTIMA línea que emitiste de la página anterior.
+- El salto también puede caer entre código+descripción y unidades+precio de una
+  misma línea A. Mismo criterio: fusiona los fragmentos, devuelve UNA línea.
+- Aplica también la regla de "números pegados sin espacio" (arriba) tras la fusión.
+
+CABECERA REPETIDA EN CADA PÁGINA — MUY IMPORTANTE:
+- Muchos proveedores (FAES FARMA entre ellos) REPITEN la cabecera completa de la
+  tabla ("Posición Código Nacional/Descripción Cantidad Precio unitario Importe")
+  al inicio de CADA página del documento. Esa repetición es un artefacto de la
+  maquetación: NO significa que empiece una tabla nueva ni que el flujo de líneas
+  se reinicie. Ignórala como "cabecera decorativa" y sigue el flujo continuo de
+  artículos de la página anterior.
+- La consecuencia práctica: si acabas la página N con la fila de un artículo
+  (línea A) SIN descuento, y la página N+1 empieza con esta secuencia:
+    "Posición Código Nacional/Descripción ... Importe"   ← cabecera repetida
+    "                                                   30,00% -90,15"   ← línea B huérfana
+    "Lote: Z03/1 / Caducidad: 11.2027"                                   ← lote del artículo cortado
+    " 130  ...                                          "                ← siguiente artículo
+  ese 30,00% -90,15 ES el descuento del último artículo de la página N (línea A),
+  NO es un artículo nuevo. Igual con el "Lote:" siguiente (pertenece al artículo
+  cortado, no al 130).
+
+LAYOUT BAYER (2 códigos APILADOS en la columna "Código de producto") — CRÍTICO:
+- Algunos proveedores (BAYER es el caso claro) imprimen en la columna "Código
+  de producto" DOS códigos apilados verticalmente por cada artículo, dentro de
+  la misma celda de la tabla:
+    Arriba: un código INTERNO del proveedor (típicamente 8 dígitos, ej. "87430014",
+            "88872835", "10013001"; también puede aparecer con 7 dígitos como
+            "3222016"). Es el material/SAP del proveedor.
+    Abajo:  el CÓDIGO NACIONAL español, casi siempre con 7 dígitos que son el
+            CN de 6 dígitos + su dígito de control (ej. "1593245" → CN 159324,
+            "9077419" → CN 907741, "6545713" → CN 654571). A veces vienen 6
+            dígitos exactos si el proveedor no imprime el dígito de control.
+- Regla dura: cuando veas 2 códigos apilados en la misma celda de "Código de
+  producto", el C.N. español (nationalCode) es el de ABAJO (aplicando la regla
+  general: los 6 primeros dígitos, descarta dígito de control), y el de ARRIBA
+  va a "code" (código interno del proveedor). NUNCA metas el interno de 8 dígitos
+  en "nationalCode" — se truncaría a 6 y perdería el sentido, rompiendo el cruce
+  con el pedido.
+- Cómo reconocer el layout: cabecera "Código de producto" (no "C.N."/"Cód.
+  Nacional"), y cada fila de artículo tiene 2 líneas visuales donde la 1ª y la
+  2ª columna llevan números distintos. Ejemplo textual literal del PDF:
+    "10  87430014  REDOXON EXTRA DEFENSAS COMP EFERV   30   20 PI   13,02  260,40"
+    "    1593245   DESCUENTO POR VOLUMEN                                          -24,00% -62,50"
+    "              IVA"
+    "              Nº Batch: CB13596"
+  Salida correcta: nationalCode="159324" (6 primeros de "1593245"), code="87430014",
+  quantity=20, unitPrice=13,02, discount=24, discountAmount=62,50.
+  Salida INCORRECTA: nationalCode="874300" (truncaste el interno) — el cruce con
+  el pedido fallará.
+- Aplica la misma jerarquía de campos incluso si el proveedor no es Bayer: siempre
+  que veas 2 códigos apilados en la celda del código, el que encaje con formato
+  C.N. español (6-7 dígitos) va a nationalCode; el otro a code.
+
+LAYOUT HARTMANN (etiqueta "Dto. por articulo -XX,00%") — IMPORTANTE:
+- Otros proveedores (Hartmann/Peha-soft) usan un formato donde cada ítem trae
+  columnas "Precio Bruto Unit EUR" y "Precio Neto Unit EUR" separadas. El
+  descuento va debajo del ítem como líneas etiquetadas "Dto. por articulo
+  -XX,00%". Puede haber VARIAS por ítem (compuestos) y se SUMAN igual que en
+  Nestlé (no se componen).
+- Regla del salto de página aplica igual: si un ítem queda al final de una
+  página y su "Dto. por articulo" aparece al INICIO de la siguiente
+  (después de la cabecera repetida "CN / Código / Descripción..."), pertenece
+  al ÚLTIMO ítem de la página anterior, NO al primer ítem de la nueva.
+- Doble-verifica con la columna "Precio Neto Unit EUR": el discount que
+  emitas debe cuadrar con "1 − netUnitPrice / unitPrice". Ejemplo real
+  de este PDF Hartmann, transición pág 5 → pág 6:
+    Final página 5:
+      "163578    9032913    Kneipp Valeriana Classic 200mg 30Grg E    6    5,200    3,588    21,530    10,00"
+    Inicio página 6:
+      "CN / Código  Descripción Articulo ... Precio Bruto  Precio Neto  Importe  IVA"  ← cabecera
+      "                                                   Dto. por articulo    -31,00%"  ← ¡de 163578!
+      "163579    9032924    KNEIPP Valeriana Classic 200mg 60Grg E    6    8,850    6,106    36,640    10,00"
+  Salida correcta:
+    - 163578: unitPrice=5,200, netUnitPrice=3,588, discount=31 (¡NO 39!)
+    - 163579: unitPrice=8,850, netUnitPrice=6,106, discount=31
+
+EJEMPLO REAL de tu PDF (FAES FARMA factura multi-página), transición página 2 → 3:
+    Final página 2:
+      "120  2085848 / CANNAFAES FORTE CREMA 60ML  25 UN  12,02  300,50"
+    Inicio página 3:
+      "Posición Código Nacional/Descripción Cantidad Precio unitario Importe"
+      "                                                   30,00% -90,15"
+      "Lote: Z03/1 / Caducidad: 11.2027"
+      "130  2130555 / RICOLA CARAM.50g MIEL Y HIERBAS  40 UN  1,90  76,00"
+      ...
+  Salida correcta:
+    - artículo 120 CANNAFAES: quantity=25, unitPrice=12,02, discount=30 (¡no 0!)
+    - artículo 130 RICOLA: quantity=40, unitPrice=1,90, discount=10 (su propia línea B)
+  Salida INCORRECTA (a evitar):
+    - artículo 120 CANNAFAES con discount=0 (perdiste su línea B por el salto de página)
+    - una línea extra con solo 30% -90,15 y sin código (sería una línea "huérfana"
+      que rompe la reconciliación con el pedido)`;
+
+const RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    deliveryNoteNumber: { type: 'string' },
+    supplier: { type: 'string' },
+    date: { type: 'string' },
+    orderNumber: { type: 'string' },
+    documentKind: { type: 'string', enum: ['deliveryNote', 'invoice', 'other'] },
+    lines: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          code: { type: 'string' },
+          nationalCode: { type: 'string' },
+          ean: { type: 'string' },
+          description: { type: 'string' },
+          quantity: { type: 'number' },
+          unitPrice: { type: 'number' },
+          discount: { type: 'number' },
+          discountAmount: { type: 'number' },
+          netUnitPrice: { type: 'number' },
+          freeUnits: { type: 'number' },
+        },
+        required: ['description', 'quantity', 'unitPrice'],
+      },
+    },
+  },
+  required: ['deliveryNoteNumber', 'lines'],
+} as const;
+
+const lineSchema = z.object({
+  code: z.string().optional(),
+  nationalCode: z.string().optional(),
+  ean: z.string().optional(),
+  description: z.string(),
+  quantity: z.number(),
+  unitPrice: z.number(),
+  discount: z.number().optional(),
+  discountAmount: z.number().optional(),
+  netUnitPrice: z.number().optional(),
+  freeUnits: z.number().optional(),
+});
+const deliveryNoteSchema = z.object({
+  deliveryNoteNumber: z.string(),
+  supplier: z.string().optional(),
+  date: z.string().optional(),
+  orderNumber: z.string().optional(),
+  documentKind: z.enum(['deliveryNote', 'invoice', 'other']).optional(),
+  lines: z.array(lineSchema),
+});
+
+export interface ExtractionOptions {
+  apiKey: string;
+  /** Allows injecting a fetch implementation (tests / runtime). Defaults to the global. */
+  fetchImpl?: typeof fetch;
+}
+
+export interface UsageMetadata {
+  promptTokens: number;
+  candidatesTokens: number;
+  totalTokens: number;
+}
+
+export interface ExtractionResult {
+  data: DeliveryNoteData;
+  usage: UsageMetadata;
+}
+
+export async function extractDeliveryNote(
+  pdfBase64: string,
+  { apiKey, fetchImpl = fetch }: ExtractionOptions,
+): Promise<ExtractionResult> {
+  if (!apiKey) throw new Error('Falta GEMINI_API_KEY');
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+  const body = {
+    contents: [
+      {
+        parts: [
+          { text: PROMPT },
+          { inlineData: { mimeType: 'application/pdf', data: pdfBase64 } },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature: 0,
+      responseMimeType: 'application/json',
+      responseSchema: RESPONSE_SCHEMA,
+    },
+  };
+
+  const res = await fetchImpl(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(geminiErrorMessage(res.status, detail));
+  }
+
+  const data = (await res.json()) as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    usageMetadata?: {
+      promptTokenCount?: number;
+      candidatesTokenCount?: number;
+      totalTokenCount?: number;
+    };
+  };
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    throw new Error(
+      'El servicio de IA no devolvió respuesta para este PDF. Vuelve a intentarlo en unos segundos.',
+    );
+  }
+
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error(
+      'El servicio de IA devolvió una respuesta corrupta. Vuelve a intentarlo; si persiste, avisa al administrador.',
+    );
+  }
+
+  const parsed = deliveryNoteSchema.safeParse(json);
+  if (!parsed.success) {
+    throw new Error(
+      'El servicio de IA devolvió datos en un formato inesperado. Es probable que el PDF tenga un formato muy poco habitual; avisa al administrador adjuntando el archivo.',
+    );
+  }
+
+  const usage: UsageMetadata = {
+    promptTokens: data.usageMetadata?.promptTokenCount ?? 0,
+    candidatesTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
+    totalTokens: data.usageMetadata?.totalTokenCount ?? 0,
+  };
+
+  return { data: reconstructMissingDiscounts(parsed.data), usage };
+}
+
+// NOTE: Gemini a veces omite el porcentaje de descuento aunque haya visto
+// otras señales redundantes (importe del descuento en € o precio neto
+// unitario). Este post-proceso reconstruye el % matemáticamente cuando falta.
+// Es una red de seguridad determinista para los one-offs del modelo. No
+// sobreescribe descuentos ya presentes.
+//
+// Prioridad de señales (la primera que dispare gana):
+//   1. netUnitPrice (columna "Precio Neto" de Hartmann/similar):
+//        discount% = (1 − netUnitPrice / unitPrice) × 100
+//   2. discountAmount (línea B "10,00% -7,60" de Faes/DENTAID/etc.):
+//        discount% = discountAmount / (qty × unitPrice) × 100
+//
+// Descarta reconstrucciones fuera del rango razonable (0, 100].
+export function reconstructMissingDiscounts(data: DeliveryNoteData): DeliveryNoteData {
+  return {
+    ...data,
+    lines: data.lines.map((line) => {
+      if ((line.discount ?? 0) > 0) return line;
+
+      const bruto = line.unitPrice;
+      const neto = line.netUnitPrice ?? 0;
+      if (bruto > 0 && neto > 0 && neto < bruto) {
+        const reconstructed = (1 - neto / bruto) * 100;
+        if (reconstructed > 0 && reconstructed <= 100) {
+          return { ...line, discount: round2(reconstructed) };
+        }
+      }
+
+      const amt = line.discountAmount ?? 0;
+      const subtotal = line.quantity * bruto;
+      if (amt > 0 && subtotal > 0) {
+        const reconstructed = (amt / subtotal) * 100;
+        if (reconstructed > 0 && reconstructed <= 100) {
+          return { ...line, discount: round2(reconstructed) };
+        }
+      }
+
+      return line;
+    }),
+  };
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+function geminiErrorMessage(status: number, detail: string): string {
+  let geminiMsg = '';
+  try {
+    const j = JSON.parse(detail) as { error?: { message?: string } };
+    geminiMsg = j.error?.message ?? '';
+  } catch {
+    /* not JSON: ignore */
+  }
+
+  switch (status) {
+    case 400:
+      return 'No se pudo leer el PDF: puede estar dañado, protegido con contraseña o tener un formato no soportado. Comprueba el archivo y vuelve a intentarlo.';
+    case 401:
+    case 403:
+      return 'No se pudo autenticar con el servicio de IA. Avisa al administrador para que revise la configuración (clave de API).';
+    case 404:
+      return 'El servicio de IA no está disponible. Avisa al administrador para que revise la configuración.';
+    case 413:
+      return 'El PDF es demasiado grande para procesarlo. Prueba con un archivo más pequeño (idealmente menos de 20 MB).';
+    case 429:
+      return 'Demasiadas peticiones a la vez al servicio de IA. Espera unos segundos y vuelve a intentarlo.';
+    case 500:
+      return 'El servicio de IA tuvo un error interno. Vuelve a intentarlo en uno o dos minutos.';
+    case 503:
+      return 'El servicio de IA está saturado por mucha demanda (es algo temporal). Espera 1-2 minutos y pulsa "Comparar" otra vez.';
+    case 504:
+      return 'El PDF está tardando demasiado en procesarse. Si tiene muchas páginas, divídelo o vuelve a intentarlo.';
+    default: {
+      const hint = geminiMsg ? ` (${geminiMsg.slice(0, 140)})` : '';
+      return `Error inesperado al contactar con el servicio de IA (HTTP ${status})${hint}. Vuelve a intentarlo.`;
+    }
+  }
+}

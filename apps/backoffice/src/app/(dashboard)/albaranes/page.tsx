@@ -1,23 +1,18 @@
-import { requireUser } from '@/core/auth';
-import { DashboardView, getConciliadorDashboard } from '@/features/conciliador';
+import { requireUser, auth } from '@/core/auth';
+import { GetBudgetStatusUseCase, getComparisonRepository } from '@/core/comparisons';
+import { getBusinessRepository } from '@/core/businesses';
+import { ReconcilerView } from '@/features/conciliador';
 
-export const metadata = { title: 'Albaranes · Backoffice' };
-
-// NOTE: siempre datos frescos. Cada conciliación cambia los KPIs y no queremos
-// ver un panel obsoleto.
+export const metadata = { title: 'Conciliador · Backoffice' };
 export const dynamic = 'force-dynamic';
 
-const DEFAULT_STANDALONE_URL =
-  process.env.NODE_ENV === 'production'
-    ? 'https://conciliador.larokifarm.com'
-    : 'http://localhost:3000';
-
-export default async function AlbaranesPage() {
-  const user = await requireUser();
-  const businessId = user.farmaciaId ?? null;
-
-  const data = await getConciliadorDashboard(businessId);
-  const standaloneUrl = process.env.CONCILIADOR_STANDALONE_URL ?? DEFAULT_STANDALONE_URL;
-
-  return <DashboardView data={data} standaloneUrl={standaloneUrl} />;
+export default async function ConciliadorPage() {
+  await requireUser();
+  const session = await auth();
+  const businessId = session?.user?.businessId ?? null;
+  const budgetStatus = businessId
+    ? await new GetBudgetStatusUseCase(getBusinessRepository(), getComparisonRepository()).execute(businessId)
+    : null;
+  const currentUser = session?.user ? { id: session.user.id, role: session.user.role } : null;
+  return <ReconcilerView budgetStatus={budgetStatus} currentUser={currentUser} />;
 }

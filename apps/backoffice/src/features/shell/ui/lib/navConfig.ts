@@ -22,7 +22,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/farmacias', label: 'Farmacias', icon: 'Storefront', section: 'principal' },
   // WIP ocultos del sidebar hasta que estén listos. Siguen accesibles por URL.
   { href: '/scout', label: 'Scout precios', icon: 'MagnifyingGlass', section: 'operaciones', badge: 'nuevo', hidden: true },
-  { href: '/albaranes', label: 'Albaranes', icon: 'Receipt', section: 'operaciones', badge: 'nuevo', hidden: true },
+  { href: '/albaranes', label: 'Conciliador', icon: 'Receipt', section: 'operaciones' },
   { href: '/inventario', label: 'Inventario', icon: 'Package', section: 'operaciones', badge: 'wip', hidden: true },
   { href: '/admin/uso', label: 'Uso', icon: 'Scales', section: 'sistema', requiresRole: 'admin', badge: 'nuevo', hidden: true },
   { href: '/ajustes', label: 'Ajustes', icon: 'GearSix', section: 'sistema' },
@@ -40,4 +40,11 @@ export function visibleNavItems(role: NavRole | null): NavItem[] {
   return NAV_ITEMS.filter(
     (i) => !i.hidden && (!i.requiresRole || i.requiresRole === role),
   );
+}
+
+/** Activo = la ruta más específica que coincide (así /albaranes no se marca en /albaranes/historial). */
+export function isNavItemActive(href: string, pathname: string): boolean {
+  const matches = (h: string) => pathname === h || pathname.startsWith(`${h}/`);
+  if (!matches(href)) return false;
+  return !NAV_ITEMS.some((i) => i.href !== href && i.href.startsWith(`${href}/`) && matches(i.href));
 }

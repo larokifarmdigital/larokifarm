@@ -286,6 +286,18 @@ Diferencias schema vs UI documentadas:
   - UX: búsqueda sin acentos, aviso de tramo erróneo, confirmar plantilla y
     archivar, restaurar archivadas, sección en el hash (`#hero`), miga sin
     ids, `callbackUrl` tras login, cabeceras de seguridad (`next.config`).
+- **Conciliador integrado 17-11-2026**: copiado de `apps/conciliador-albaranes`
+  solo lo de operar — subir PDFs/Excels y conciliar (`/albaranes`) + historial
+  y detalle (`/albaranes/historial`, `/albaranes/historial/[id]`). Core
+  copiado: `core/{engine,comparisons,reports,businesses}`, `Scope` y errores en
+  `core/shared`, `buildStorageKey` en `core/storage` (mismo bucket R2). APIs:
+  `/api/conciliar` (maxDuration 300), `/api/files/[...key]`,
+  `/api/comparisons/[id]/reports`, `/api/reports/[id]/resolve`. UI en
+  `features/conciliador` (estilos slate originales; `--brand-*` → tokens del
+  BO en globals.css). Un solo item «Conciliador» en el sidebar; dentro,
+  pestañas «Nueva conciliación · Historial» (`albaranes/layout.tsx` +
+  `ConciliadorTabs`). Envs: `GEMINI_API_KEY` y `ENCRYPTION_KEY` (claves Gemini
+  por negocio). Usuarios/negocios/uso: pendiente, irán a Ajustes ✅
 - **Pendientes**:
   - Borrador vs publicado: hoy el autoguardado escribe el contenido que lee
     la API; un deploy incluye ediciones a medias aunque no se pulse

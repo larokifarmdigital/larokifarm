@@ -9,6 +9,7 @@ import {
   visibleNavItems,
   type NavRole,
   type NavSection,
+  isNavItemActive,
 } from '@/features/shell/ui/lib/navConfig';
 import { NavIcon, type IconName } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
@@ -78,8 +79,7 @@ export function MobileNavDrawer({
                   </div>
                   <ul className="space-y-0.5">
                     {items.map((item) => {
-                      const active =
-                        pathname === item.href || pathname.startsWith(`${item.href}/`);
+                      const active = isNavItemActive(item.href, pathname);
                       return (
                         <li key={item.href}>
                           <Link

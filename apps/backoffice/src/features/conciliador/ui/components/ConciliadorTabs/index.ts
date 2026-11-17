@@ -1,0 +1,1 @@
+export { ConciliadorTabs } from './ConciliadorTabs';

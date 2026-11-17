@@ -8,6 +8,7 @@ import {
   visibleNavItems,
   type NavRole,
   type NavSection,
+  isNavItemActive,
 } from '@/features/shell/ui/lib/navConfig';
 import { NavIcon, type IconName } from '@/shared/components/atoms/NavIcon';
 import { useSidebar } from '@/features/shell/ui/components/SidebarProvider';
@@ -74,8 +75,7 @@ export function AppSidebar({
                   )}
                   <ul className="space-y-0.5">
                     {sectionItems.map((item) => {
-                      const active =
-                        pathname === item.href || pathname.startsWith(`${item.href}/`);
+                      const active = isNavItemActive(item.href, pathname);
                       const link = (
                         <Link
                           href={item.href}
