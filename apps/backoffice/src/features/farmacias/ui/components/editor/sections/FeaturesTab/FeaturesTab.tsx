@@ -10,6 +10,7 @@ import { FieldPreview } from '@/features/farmacias/ui/components/editor/fields/F
 import { Button } from '@/shared/components/atoms/Button';
 import { Label } from '@/shared/components/atoms/Label';
 import { Modal } from '@/shared/components/molecules/Modal';
+import { ModalLocaleScope } from '@/features/farmacias/ui/components/editor/fields/ModalLocaleScope';
 import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';
 import { IconPicker } from '@/shared/components/molecules/IconPicker';
@@ -188,14 +189,12 @@ function FeatureModal({
   open,
   initial,
   mode,
-  currentLocale,
   onSave,
   onClose,
 }: {
   open: boolean;
   initial: FeatureTarjeta | null;
   mode: 'create' | 'edit';
-  currentLocale: Locale;
   onSave: (f: FeatureTarjeta) => void;
   onClose: () => void;
 }) {
@@ -244,40 +243,46 @@ function FeatureModal({
 
         <div className="hairline" />
 
-        <MultilangInput
-          label="Título"
-          value={draft.titulo}
-          onChange={(v) => setDraft({ ...draft, titulo: v })}
-          placeholder="Ej.: Atención personalizada"
-          required
-        />
-        <MultilangTextarea
-          label={isClock ? 'Descripción (opcional)' : 'Descripción'}
-          value={draft.descripcion ?? {}}
-          onChange={(v) => setDraft({ ...draft, descripcion: v })}
-          placeholder={
-            isClock
-              ? 'Déjalo vacío para mostrar el horario auto-calculado.'
-              : 'Frase corta que explica el valor.'
-          }
-          rows={2}
-          help={
-            isClock
-              ? 'Icono «reloj» + descripción vacía → la landing muestra el horario auto-calculado (Lunes a Sábado…).'
-              : undefined
-          }
-        />
+        <ModalLocaleScope values={[draft.titulo, draft.descripcion]}>
+          {(locale) => (
+            <>
+            <MultilangInput
+              label="Título"
+              value={draft.titulo}
+              onChange={(v) => setDraft({ ...draft, titulo: v })}
+              placeholder="Ej.: Atención personalizada"
+              required
+            />
+            <MultilangTextarea
+              label={isClock ? 'Descripción (opcional)' : 'Descripción'}
+              value={draft.descripcion ?? {}}
+              onChange={(v) => setDraft({ ...draft, descripcion: v })}
+              placeholder={
+                isClock
+                  ? 'Déjalo vacío para mostrar el horario auto-calculado.'
+                  : 'Frase corta que explica el valor.'
+              }
+              rows={2}
+              help={
+                isClock
+                  ? 'Icono «reloj» + descripción vacía → la landing muestra el horario auto-calculado (Lunes a Sábado…).'
+                  : undefined
+              }
+            />
 
-        <div className="hairline" />
+            <div className="hairline" />
 
-        <FieldPreview
-          kind="featureCard"
-          value={{
-            titulo: draft.titulo[currentLocale] ?? '',
-            descripcion: draft.descripcion?.[currentLocale],
-            icono: draft.icono,
-          }}
-        />
+            <FieldPreview
+              kind="featureCard"
+              value={{
+                titulo: draft.titulo[locale] ?? '',
+                descripcion: draft.descripcion?.[locale],
+                icono: draft.icono,
+              }}
+            />
+            </>
+          )}
+        </ModalLocaleScope>
       </div>
     </Modal>
   );
@@ -414,7 +419,6 @@ export function FeaturesTab() {
         open={modalOpen}
         initial={editingDraft}
         mode={modalMode}
-        currentLocale={currentLocale}
         onSave={handleSave}
         onClose={closeModal}
       />

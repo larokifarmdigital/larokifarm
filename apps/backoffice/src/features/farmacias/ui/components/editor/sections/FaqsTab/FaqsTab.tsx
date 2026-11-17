@@ -8,6 +8,7 @@ import { MultilangTextarea } from '@/features/farmacias/ui/components/editor/fie
 import { TextosCabeceraFields } from '@/features/farmacias/ui/components/editor/fields/TextosCabeceraFields';
 import { Button } from '@/shared/components/atoms/Button';
 import { Modal } from '@/shared/components/molecules/Modal';
+import { ModalLocaleScope } from '@/features/farmacias/ui/components/editor/fields/ModalLocaleScope';
 import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
@@ -187,21 +188,23 @@ function FaqModal({
       }
     >
       <div className="space-y-5">
-        <MultilangInput
-          label="Pregunta"
-          value={draft.pregunta}
-          onChange={(v) => setDraft({ ...draft, pregunta: v })}
-          placeholder="¿Hacéis guardia nocturna?"
-          required
-        />
-        <MultilangTextarea
-          label="Respuesta"
-          required
-          value={draft.respuesta}
-          onChange={(v) => setDraft({ ...draft, respuesta: v })}
-          placeholder="Escribe la respuesta clara y breve."
-          rows={4}
-        />
+        <ModalLocaleScope values={[draft.pregunta, draft.respuesta]}>
+          <MultilangInput
+            label="Pregunta"
+            value={draft.pregunta}
+            onChange={(v) => setDraft({ ...draft, pregunta: v })}
+            placeholder="¿Hacéis guardia nocturna?"
+            required
+          />
+          <MultilangTextarea
+            label="Respuesta"
+            required
+            value={draft.respuesta}
+            onChange={(v) => setDraft({ ...draft, respuesta: v })}
+            placeholder="Escribe la respuesta clara y breve."
+            rows={4}
+          />
+        </ModalLocaleScope>
       </div>
     </Modal>
   );

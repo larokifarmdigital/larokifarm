@@ -9,6 +9,7 @@ import { LocaleChip } from '@/features/farmacias/ui/components/editor/status/Loc
 import { computeLocaleStatus } from '@/features/farmacias/ui/lib/i18nStatus';
 import { useFieldBinding } from '@/features/farmacias/ui/hooks/useFieldError';
 import { FieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
+import { useEditingLocale } from '@/features/farmacias/ui/components/editor/fields/ModalLocaleScope';
 
 export function MultilangInput({
   label,
@@ -28,7 +29,8 @@ export function MultilangInput({
   /** Clave de validación (core/farmacias/domain/validation), p. ej. `heroChip.es`. */
   field?: string;
 }) {
-  const { currentLocale, farmacia } = useFarmaciaEditor();
+  const { farmacia } = useFarmaciaEditor();
+  const currentLocale = useEditingLocale();
   const { id, error } = useFieldBinding(field, useId());
   const current = value[currentLocale] ?? '';
   const status = computeLocaleStatus(value, currentLocale, farmacia.idiomasActivos);

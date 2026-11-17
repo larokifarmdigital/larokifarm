@@ -9,6 +9,7 @@ import { cn } from '@/shared/lib/cn';
 import type { MultilangText } from '@/core/shared';
 import { useFieldBinding } from '@/features/farmacias/ui/hooks/useFieldError';
 import { FieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
+import { useEditingLocale } from '@/features/farmacias/ui/components/editor/fields/ModalLocaleScope';
 
 export function MultilangTextarea({
   label,
@@ -32,7 +33,8 @@ export function MultilangTextarea({
   /** Clave de validación (core/farmacias/domain/validation), p. ej. `descripcionCorta.es`. */
   field?: string;
 }) {
-  const { currentLocale, farmacia } = useFarmaciaEditor();
+  const { farmacia } = useFarmaciaEditor();
+  const currentLocale = useEditingLocale();
   const { id, error } = useFieldBinding(field, useId());
   const showError = error?.message ? error : undefined;
   const current = value[currentLocale] ?? '';

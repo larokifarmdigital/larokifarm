@@ -9,6 +9,7 @@ import { Input } from '@/shared/components/atoms/Input';
 import { Button } from '@/shared/components/atoms/Button';
 import { Label } from '@/shared/components/atoms/Label';
 import { Modal } from '@/shared/components/molecules/Modal';
+import { ModalLocaleScope } from '@/features/farmacias/ui/components/editor/fields/ModalLocaleScope';
 import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';
 import { TextosCabeceraFields } from '@/features/farmacias/ui/components/editor/fields/TextosCabeceraFields';
@@ -237,22 +238,24 @@ function ServicioModal({
 
         <div className="hairline" />
 
-        <MultilangInput
-          label="Nombre del servicio"
-          value={draft.nombre}
-          onChange={(v) => setDraft({ ...draft, nombre: v })}
-          placeholder="Consulta dermofarmacéutica"
-          required
-        />
+        <ModalLocaleScope values={[draft.nombre, draft.descripcion]}>
+          <MultilangInput
+            label="Nombre del servicio"
+            value={draft.nombre}
+            onChange={(v) => setDraft({ ...draft, nombre: v })}
+            placeholder="Consulta dermofarmacéutica"
+            required
+          />
 
-        <MultilangTextarea
-          label="Descripción"
-          required
-          value={draft.descripcion ?? {}}
-          onChange={(v) => setDraft({ ...draft, descripcion: v })}
-          placeholder="Breve descripción del servicio…"
-          rows={3}
-        />
+          <MultilangTextarea
+            label="Descripción"
+            required
+            value={draft.descripcion ?? {}}
+            onChange={(v) => setDraft({ ...draft, descripcion: v })}
+            placeholder="Breve descripción del servicio…"
+            rows={3}
+          />
+        </ModalLocaleScope>
 
         <div className="hairline" />
 

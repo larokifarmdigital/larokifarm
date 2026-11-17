@@ -10,6 +10,7 @@ import { ImageGalleryField } from '@/features/farmacias/ui/components/editor/fie
 import { Button } from '@/shared/components/atoms/Button';
 import { Label } from '@/shared/components/atoms/Label';
 import { Modal } from '@/shared/components/molecules/Modal';
+import { ModalLocaleScope } from '@/features/farmacias/ui/components/editor/fields/ModalLocaleScope';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';
 import { IconPicker } from '@/shared/components/molecules/IconPicker';
 import { IconoSVG } from '@/shared/components/atoms/IconoSVG';
@@ -129,11 +130,13 @@ function TarjetaRow({
 function TarjetaModal({
   open,
   initial,
+  mode,
   onSave,
   onClose,
 }: {
   open: boolean;
   initial: HeroTarjetaFlotante | null;
+  mode: 'create' | 'edit';
   onSave: (t: HeroTarjetaFlotante) => void;
   onClose: () => void;
 }) {
@@ -143,7 +146,7 @@ function TarjetaModal({
   if (!initial && draft !== null) setDraft(null);
   if (!draft) return null;
 
-  const isNew = !initial?.titulo.es && !initial?.titulo.en && !initial?.titulo.ca;
+  const isNew = mode === 'create';
 
   return (
     <Modal
@@ -171,20 +174,22 @@ function TarjetaModal({
           />
         </div>
         <div className="hairline" />
-        <MultilangInput
-          label="Título"
-          value={draft.titulo}
-          onChange={(v) => setDraft({ ...draft, titulo: v })}
-          placeholder="Ej.: Consulta gratuita"
-          required
-        />
-        <MultilangInput
-          label="Subtítulo"
-          value={draft.subtitulo}
-          onChange={(v) => setDraft({ ...draft, subtitulo: v })}
-          placeholder="Ej.: Sin cita previa"
-          required
-        />
+        <ModalLocaleScope values={[draft.titulo, draft.subtitulo]}>
+          <MultilangInput
+            label="Título"
+            value={draft.titulo}
+            onChange={(v) => setDraft({ ...draft, titulo: v })}
+            placeholder="Ej.: Consulta gratuita"
+            required
+          />
+          <MultilangInput
+            label="Subtítulo"
+            value={draft.subtitulo}
+            onChange={(v) => setDraft({ ...draft, subtitulo: v })}
+            placeholder="Ej.: Sin cita previa"
+            required
+          />
+        </ModalLocaleScope>
       </div>
     </Modal>
   );
@@ -193,46 +198,43 @@ function TarjetaModal({
 export function HeroTab() {
   const { farmacia, patch, currentLocale } = useFarmaciaEditor();
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // La tarjeta en edición vive fuera de `farmacia` hasta que se guarda: si se
+  // añadiera vacía, el autoguardado la descartaría (sin título) y cerraría el modal.
+  const [editingDraft, setEditingDraft] = useState<HeroTarjetaFlotante | null>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   const tarjetas = farmacia.heroTarjetasFlotantes ?? [];
-  const editingTarjeta = tarjetas.find((t) => t.id === editingId) ?? null;
 
   const setTarjetas = (list: HeroTarjetaFlotante[]) =>
     patch({ heroTarjetasFlotantes: list.map((t, i) => ({ ...t, orden: i })) });
 
   const addTarjeta = () => {
     if (tarjetas.length >= 3) return;
-    const nueva = crearTarjetaVacia(tarjetas.length);
-    setTarjetas([...tarjetas, nueva]);
-    setEditingId(nueva.id);
+    setModalMode('create');
+    setEditingDraft(crearTarjetaVacia(tarjetas.length));
     setModalOpen(true);
   };
 
   const editTarjeta = (id: string) => {
-    setEditingId(id);
+    const t = tarjetas.find((x) => x.id === id);
+    if (!t) return;
+    setModalMode('edit');
+    setEditingDraft(t);
     setModalOpen(true);
   };
 
   const saveTarjeta = (t: HeroTarjetaFlotante) => {
-    setTarjetas(tarjetas.map((x) => (x.id === t.id ? t : x)));
+    if (modalMode === 'create') setTarjetas([...tarjetas, t]);
+    else setTarjetas(tarjetas.map((x) => (x.id === t.id ? t : x)));
   };
 
   const closeModal = () => {
-    if (editingTarjeta) {
-      const empty =
-        !editingTarjeta.titulo.es &&
-        !editingTarjeta.titulo.en &&
-        !editingTarjeta.titulo.ca &&
-        !editingTarjeta.icono;
-      if (empty) setTarjetas(tarjetas.filter((x) => x.id !== editingTarjeta.id));
-    }
     setModalOpen(false);
-    setEditingId(null);
+    setEditingDraft(null);
   };
 
   const removeTarjeta = (id: string) =>
@@ -379,7 +381,8 @@ export function HeroTab() {
 
         <TarjetaModal
           open={modalOpen}
-          initial={editingTarjeta}
+          initial={editingDraft}
+          mode={modalMode}
           onSave={saveTarjeta}
           onClose={closeModal}
         />

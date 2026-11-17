@@ -11,6 +11,7 @@ import { Button } from '@/shared/components/atoms/Button';
 import { Input } from '@/shared/components/atoms/Input';
 import { Label } from '@/shared/components/atoms/Label';
 import { Modal } from '@/shared/components/molecules/Modal';
+import { ModalLocaleScope } from '@/features/farmacias/ui/components/editor/fields/ModalLocaleScope';
 import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
@@ -196,13 +197,15 @@ function PuntoModal({
       }
     >
       <div className="space-y-4">
-        <MultilangInput
-          label="Texto del punto"
-          value={draft}
-          onChange={setDraft}
-          placeholder="Ej.: Equipo formado en pediatría"
-          required
-        />
+        <ModalLocaleScope values={[draft]}>
+          <MultilangInput
+            label="Texto del punto"
+            value={draft}
+            onChange={setDraft}
+            placeholder="Ej.: Equipo formado en pediatría"
+            required
+          />
+        </ModalLocaleScope>
       </div>
     </Modal>
   );
