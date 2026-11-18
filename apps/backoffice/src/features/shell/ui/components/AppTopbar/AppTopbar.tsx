@@ -20,6 +20,8 @@ function segmentLabel(parent: string | undefined, seg: string): string {
     if (seg === 'nueva') return 'Nueva';
     if (/^c[a-z0-9]{20,}$/.test(seg)) return 'Editar farmacia';
   }
+  if (parent === 'albaranes' && seg === 'historial') return 'Historial';
+  if (parent === 'historial') return 'Detalle';
   return decodeURIComponent(seg);
 }
 

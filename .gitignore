@@ -74,3 +74,9 @@ _backups/
 
 # Guía del cliente (contiene contraseña)
 GUIA-BACKOFFICE.md
+
+# Vídeos y guion del tutorial para el cliente (no van al repo)
+tutorial/
+
+# Documentación para el cliente (contiene emails de cuentas)
+documentacion-cliente/

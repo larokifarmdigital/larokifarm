@@ -152,11 +152,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-17T10:09:16Z).
+Actualizado automáticamente al hacer commit (2026-11-17T10:28:55Z).
 
+- `b26294a` 2026-11-17 — Chore(backoffice): script para migrar el storage a otro bucket R2
 - `398835d` 2026-11-17 — Feat(backoffice): integrar el conciliador de albaranes
 - `a74492c` 2026-11-17 — Fix(backoffice): el slug es un identificador interno, no la URL pública
 - `973bf5d` 2026-11-17 — Fix(backoffice): "Ver landing" abre el dominio propio de cada farmacia
 - `003d292` 2026-11-17 — Chore: actualizar cambios recientes del CLAUDE.md
-- `acf25fe` 2026-11-17 — Feat(backoffice): pestañas de idioma en los modales del editor
 <!-- auto:recent-commits:end -->
