@@ -152,11 +152,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-19T12:05:30Z).
+Actualizado automáticamente al hacer commit (2026-11-19T12:28:21Z).
 
+- `61a09d1` 2026-11-19 — Fix(chamarro): accesibilidad con teclado y carrusel pausable (auditoría 0 incidencias)
 - `a03c2bf` 2026-11-19 — Fix(chamarro): accesibilidad y señales de clic (axe 0 incidencias)
 - `0c8d54f` 2026-11-19 — Feat(chamarro): rediseño "moderna y clínica"
 - `4fd21f9` 2026-11-19 — Feat(conciliador): las muestras no pedidas salen como REGALO
 - `fed4e07` 2026-11-19 — Fix(conciliador): segunda columna de descuento y unidades bonificadas (Naos)
-- `3046960` 2026-11-19 — Fix(conciliador): cruzar el C.N. probando todos los códigos de la celda
 <!-- auto:recent-commits:end -->

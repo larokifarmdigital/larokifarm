@@ -126,7 +126,9 @@
   box-shadow: 0 14px 32px color-mix(in srgb, var(--c-primary) 42%, transparent);
 }
 .cima-fab:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--c-primary) 45%, transparent);
+  /* Color de marca sólido: al 45 % de opacidad el anillo daba 1,9:1 sobre
+     blanco (WCAG 2.4.11/1.4.11 piden 3:1). Sólido da ~5:1 con #12804a. */
+  outline: 3px solid var(--c-primary);
   outline-offset: 3px;
 }
 
