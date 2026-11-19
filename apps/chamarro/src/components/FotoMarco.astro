@@ -1,0 +1,26 @@
+---
+/* Foto sin recortar: se muestra entera (object-fit: contain) y el espacio
+   sobrante se rellena con la misma foto en pequeño y desenfocada. Ocupa todo
+   su contenedor (que debe ser position: relative y tener altura). */
+interface Props {
+  url: string;
+  alt: string;
+  ancho?: number;
+  prioridad?: boolean;
+  class?: string;
+}
+const { url, alt, ancho = 900, prioridad = false, class: clase = '' } = Astro.props;
+const conAncho = (w: number) => `${url}${url.includes('?') ? '&' : '?'}w=${w}&auto=format`;
+---
+
+<div class={`foto-marco ${clase}`}>
+  <img src={conAncho(64)} alt='' aria-hidden='true' class='foto-marco-fondo' loading={prioridad ? 'eager' : 'lazy'} decoding='async' />
+  <img
+    src={conAncho(ancho)}
+    alt={alt}
+    class='foto-marco-img'
+    loading={prioridad ? 'eager' : 'lazy'}
+    fetchpriority={prioridad ? 'high' : undefined}
+    decoding='async'
+  />
+</div>

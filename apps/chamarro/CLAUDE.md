@@ -12,21 +12,33 @@ Landing pública de **Farmacia Chamarro** (cliente real). Mismo patrón que
 - **cima-chat** embebido vía `<script src="…pages.dev/cima-chat.iife.js">`
 - **i18n**: `es` (defecto), `ca`, `en` — rutas `[...lang]`
 
-## Identidad visual
+## Identidad visual — "Moderna y clínica" (rediseño 19-11-2026)
 
-- **Fuente única**: Manrope 300–800 (via Google Fonts). Los tres vars CSS
-  (`--font-sans`, `--font-serif`, `--font-mono`) apuntan todos a Manrope para
-  que componentes legados que usan `font-serif`/`font-mono` hereden sin tocar.
-- **Paleta**: blanco + 3 verdes del logo:
-  - `--brand-deep: #44A460` (CTA, primary, success)
-  - `--brand-mid: #6DC261` (accent)
-  - `--brand-lime: #C8E845` (highlights, ambient background)
-- **Headings**: Manrope 700 con letter-spacing apretado. `<em>` dentro de
-  h-display/h-section se pinta con **gradiente verde clipeado al texto**
-  (`background-clip: text`) — es el ancla visual al logo.
-- **Badges** (`.section-eyebrow` y `.chip`): píldora verde suave con borde,
-  punto verde pulsante al inicio, hover magnético. `.section-eyebrow` siempre
-  es `fit-content` globalmente (no necesita `self-start` por componente).
+Tokens en `src/styles/global.css`. (La alternativa "Con historia" —serif,
+crema, arcos— quedó guardada en la rama local `diseno/chamarro-con-historia`.)
+
+- **Fuente única**: Manrope; títulos 800 con tracking muy apretado. `<em>` en
+  títulos = verde `--primary` (lima `--brand-lime` sobre bloques verdes).
+- **Paleta**: blanco + gris frío `--canvas-alt #F2F6F3`; bloques en verde
+  intenso `--green #0F6B3C`; footer `--ink #0B1510`; CTA `--primary #12804A`
+  (AA). Lima del logo `--brand-lime` como acento sobre verde/oscuro.
+- **Bento**: `.tile` (tarjeta base), `.tile-soft` (gris), `.tile-green`
+  (bloque verde, ajusta títulos/eyebrow), `.tile-ink`. Botones `.btn-light` /
+  `.btn-outline-light` para fondos verdes.
+- **Hero**: bloque verde grande con titular + ventajas; a la derecha foto
+  (carrusel) y tarjeta con estado "Abierto ahora / Cerrado" REAL calculado en
+  el navegador con la hora de Madrid a partir de `horarios`.
+- **Servicios**: el 1º va destacado en verde (2 filas en escritorio).
+- **FAQs**: `<details>` nativo (funciona sin JS) + JS que anima apertura y
+  CIERRE (`data-expanded`) y fija `min-height` de la lista con la respuesta
+  más larga: abrir/cerrar no desplaza el resto de la página.
+- **Fotos sin recorte**: `FotoMarco.astro` muestra la foto entera (contain) y
+  rellena el hueco con la misma foto desenfocada. Úsalo para cualquier foto
+  subida desde el backoffice (proporciones variables).
+- **About**: usa la ÚLTIMA foto de "imágenes sobre" como principal para no
+  repetir la que abre la portada; tarjeta verde con los años.
+- **Ritmo**: Hero/Ventajas (blanco) → Servicios (gris) → La farmacia (blanco)
+  → FAQs (gris) → Contacto (blanco) → Footer (ink).
 
 ## Favicon + PWA
 
@@ -55,6 +67,11 @@ El `BaseLayout.astro` enlaza: `favicon.svg`, `favicon-32.png`,
 
 ## Reglas que ya se rompieron una vez
 
+- **CSS fuera de `@layer`**: una regla sin capa pisa a las utilidades de
+  Tailwind. `.link-anim` tenía `color: inherit` fuera de capa y los enlaces del
+  footer salían oscuros sobre fondo oscuro (contraste 1,1:1). Las clases de
+  componente van dentro de `@layer components`.
+
 - **Sticky headers en secciones**: NO poner `sticky top-X` en el `<header>` de
   una sección si el contenido lateral es scrollable (ej. FAQs). Se ve raro al
   hacer scroll porque el título se queda clavado mientras la lista sigue.
@@ -67,12 +84,11 @@ El `BaseLayout.astro` enlaza: `favicon.svg`, `favicon-32.png`,
 ## Motion system
 
 Toda la motion vive en `src/styles/global.css`:
-- `[data-reveal]` — fade + blur + translate on scroll (IntersectionObserver
+- `[data-reveal]` — fade + translate on scroll (sin blur) (IntersectionObserver
   global en BaseLayout).
 - `[data-reveal-word]` — word-stagger para el hero.
 - `.motion-float` — levitación 9s loop.
 - `.motion-pulse` — dot pulsante (badges, status).
-- `.motion-ambient` — radial gradients verde drift en fondo (`opacity: 0.18`).
 - `.spotlight` — border radial cursor-tracked en cards (verde deep).
 - `.motion-marquee` — loop infinito horizontal.
 - `.motion-magnetic` — lift sutil al hover.

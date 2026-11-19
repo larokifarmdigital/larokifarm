@@ -152,11 +152,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-19T10:07:53Z).
+Actualizado automáticamente al hacer commit (2026-11-19T11:03:49Z).
 
+- `4fd21f9` 2026-11-19 — Feat(conciliador): las muestras no pedidas salen como REGALO
 - `fed4e07` 2026-11-19 — Fix(conciliador): segunda columna de descuento y unidades bonificadas (Naos)
 - `3046960` 2026-11-19 — Fix(conciliador): cruzar el C.N. probando todos los códigos de la celda
 - `3f656e2` 2026-11-18 — Fix(backoffice): migas de pan del historial del conciliador
 - `b26294a` 2026-11-17 — Chore(backoffice): script para migrar el storage a otro bucket R2
-- `398835d` 2026-11-17 — Feat(backoffice): integrar el conciliador de albaranes
 <!-- auto:recent-commits:end -->

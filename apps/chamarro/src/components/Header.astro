@@ -61,7 +61,7 @@ const enlaces = [
         height='72'
         loading='eager'
       />
-      <span class='font-bold text-base -tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis'>{nombre}</span>
+      <span class='font-extrabold text-[1.02rem] -tracking-[0.03em] whitespace-nowrap overflow-hidden text-ellipsis text-[color:var(--foreground-strong)]'>{nombre}</span>
     </a>
 
     <nav class='hidden min-[960px]:inline-flex justify-self-center gap-7' aria-label={t('header.nav.aria', lang)}>
@@ -164,7 +164,7 @@ const enlaces = [
 <style>
   /* Fondo con color-mix (transparencia adaptativa según tema) — no expresable en utility inline. */
   .corp-header {
-    background: color-mix(in oklch, var(--background) 96%, transparent);
+    background: rgba(255, 255, 255, 0.9);
   }
 
   /* Hover del link de nav — token custom, más simple mantenerlo global. */

@@ -1,5 +1,7 @@
 {
-  "html": { "lang": "en" },
+  "html": {
+    "lang": "en"
+  },
   "dias": {
     "Mo": "Monday",
     "Tu": "Tuesday",
@@ -48,6 +50,14 @@
       "horarioSub": "When you need us",
       "consejo": "Walk-in advice",
       "consejoSub": "No appointment needed"
+    },
+    "estado": {
+      "abierto": "Open now",
+      "cerrado": "Closed now",
+      "cierra": "closes at {hora}",
+      "abreHoy": "opens today at {hora}",
+      "abreManana": "opens tomorrow at {hora}",
+      "verHorario": "See opening hours"
     }
   },
   "about": {
@@ -69,7 +79,8 @@
     "chip": "Services",
     "titulo": "What we offer",
     "subtitulo": "Pharmacy and health services for the whole family. Ask our team if you need more information.",
-    "placeholder": "Services coming soon."
+    "placeholder": "Services coming soon.",
+    "verMas": "Learn more"
   },
   "faqs": {
     "chip": "FAQs",
@@ -107,7 +118,9 @@
     "nCol": "Reg. no.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
-    "ariaTiktok": "TikTok"
+    "ariaTiktok": "TikTok",
+    "ctaTitulo": "Need a hand?",
+    "ctaEm": "We're here."
   },
   "features": {
     "atencionTitulo": "Personal attention",
@@ -117,7 +130,8 @@
     "equipoTitulo": "Qualified team",
     "equipoDesc": "Continuous training",
     "horarioTitulo": "Extended hours",
-    "horarioDescFallback": "Monday to Saturday"
+    "horarioDescFallback": "Monday to Saturday",
+    "aria": "Why choose us"
   },
   "legal": {
     "volver": "Back to home",

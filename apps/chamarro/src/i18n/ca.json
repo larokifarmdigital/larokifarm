@@ -1,5 +1,7 @@
 {
-  "html": { "lang": "ca" },
+  "html": {
+    "lang": "ca"
+  },
   "dias": {
     "Mo": "dilluns",
     "Tu": "dimarts",
@@ -48,6 +50,14 @@
       "horarioSub": "Quan ho necessites",
       "consejo": "Consell sense cita",
       "consejoSub": "Sense esperes"
+    },
+    "estado": {
+      "abierto": "Obert ara",
+      "cerrado": "Tancat ara",
+      "cierra": "tanca a les {hora}",
+      "abreHoy": "obre avui a les {hora}",
+      "abreManana": "obre demà a les {hora}",
+      "verHorario": "Veure horari"
     }
   },
   "about": {
@@ -69,7 +79,8 @@
     "chip": "Serveis",
     "titulo": "El que oferim",
     "subtitulo": "Serveis farmacèutics i de salut per a tota la família. Pregunta al nostre equip si necessites més informació.",
-    "placeholder": "Serveis en preparació."
+    "placeholder": "Serveis en preparació.",
+    "verMas": "Més informació"
   },
   "faqs": {
     "chip": "Preguntes freqüents",
@@ -107,7 +118,9 @@
     "nCol": "Núm. col.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
-    "ariaTiktok": "TikTok"
+    "ariaTiktok": "TikTok",
+    "ctaTitulo": "Necessites ajuda?",
+    "ctaEm": "Som aquí."
   },
   "features": {
     "atencionTitulo": "Atenció personalitzada",
@@ -117,7 +130,8 @@
     "equipoTitulo": "Equip qualificat",
     "equipoDesc": "Formació contínua",
     "horarioTitulo": "Horari ampli",
-    "horarioDescFallback": "Dilluns a dissabte"
+    "horarioDescFallback": "Dilluns a dissabte",
+    "aria": "Els nostres avantatges"
   },
   "legal": {
     "volver": "Tornar a l'inici",

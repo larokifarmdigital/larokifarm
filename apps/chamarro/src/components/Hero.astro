@@ -1,7 +1,8 @@
 ---
-import { localizar, type ImagenConAlt, type LocalizedString, type TarjetaFlotante } from '@/lib/sanity';
+import { localizar, type HorarioDia, type ImagenConAlt, type LocalizedString, type TarjetaFlotante } from '@/lib/sanity';
 import { t, type Locale } from '@/lib/i18n';
 import IconoServicio from '@/components/IconoServicio.astro';
+import FotoMarco from '@/components/FotoMarco.astro';
 
 interface Props {
   nombre: string;
@@ -12,316 +13,352 @@ interface Props {
   titulo?: LocalizedString;
   claim?: string;
   tarjetasFlotantes?: TarjetaFlotante[];
+  horarios?: HorarioDia[];
   lang: Locale;
 }
 
-const { nombre, ciudad, imagenes, telefono, chip, titulo, claim, tarjetasFlotantes, lang } = Astro.props;
+const { nombre, ciudad, imagenes, telefono, chip, titulo, claim, tarjetasFlotantes, horarios, lang } = Astro.props;
 
 const listaImagenes = (imagenes ?? []).filter((i) => i?.url).slice(0, 6);
 const tieneCarrusel = listaImagenes.length > 1;
-const imagenHero = listaImagenes[0]?.url;
 
 const chipTexto =
   localizar(chip, lang) ||
-  (ciudad
-    ? t('hero.chip.conCiudad', lang, { ciudad })
-    : t('hero.chip.sinCiudad', lang));
+  (ciudad ? t('hero.chip.conCiudad', lang, { ciudad }) : t('hero.chip.sinCiudad', lang));
 
 const tituloTexto = localizar(titulo, lang) || t('hero.tituloDefecto', lang);
-const subtituloTexto = claim;
-
-/* Palabras del título para word-by-word reveal. */
 const palabrasTitulo = tituloTexto.split(/\s+/).filter(Boolean);
+const retrasoFinal = 120 + palabrasTitulo.length * 60;
 
-const tarjetasSanity = (tarjetasFlotantes ?? [])
-  .map((tj) => ({
-    icono: tj.icono,
-    titulo: localizar(tj.titulo, lang),
-    subtitulo: localizar(tj.subtitulo, lang),
-  }))
+const tarjetasBackoffice = (tarjetasFlotantes ?? [])
+  .map((tj) => ({ icono: tj.icono, titulo: localizar(tj.titulo, lang), subtitulo: localizar(tj.subtitulo, lang) }))
   .filter((tj) => Boolean(tj.titulo));
-
 const tarjetasDefault = [
   { icono: 'shield', titulo: t('hero.trust.colegiados', lang), subtitulo: t('hero.trust.colegiadosSub', lang) },
   { icono: 'clock', titulo: t('hero.trust.horario', lang), subtitulo: t('hero.trust.horarioSub', lang) },
   { icono: 'heart-pulse', titulo: t('hero.trust.consejo', lang), subtitulo: t('hero.trust.consejoSub', lang) },
-] as const;
+];
+const tarjetas = tarjetasBackoffice.length > 0 ? tarjetasBackoffice : tarjetasDefault;
 
-const tarjetasFinal = tarjetasSanity.length > 0 ? tarjetasSanity : tarjetasDefault;
+/* Estado "abierto/cerrado" real: se calcula en el navegador con la hora de
+   Madrid (la web es estática). Sin horarios la tarjeta no se muestra. */
+const horariosLimpios = (horarios ?? []).map((h) => ({
+  dia: h.dia,
+  cerrado: Boolean(h.cerrado),
+  tramos: (h.tramos?.length ? h.tramos : h.apertura && h.cierre ? [{ apertura: h.apertura, cierre: h.cierre }] : [])
+    .filter((tr) => tr?.apertura && tr?.cierre),
+}));
+const textosEstado = JSON.stringify({
+  abierto: t('hero.estado.abierto', lang),
+  cerrado: t('hero.estado.cerrado', lang),
+  cierra: t('hero.estado.cierra', lang, { hora: '{hora}' }),
+  abreHoy: t('hero.estado.abreHoy', lang, { hora: '{hora}' }),
+  abreManana: t('hero.estado.abreManana', lang, { hora: '{hora}' }),
+});
 ---
 
-<section
-  class='hero relative min-h-[100dvh] flex items-center pt-[clamp(5rem,12vw,8rem)] pb-[clamp(4rem,8vw,6rem)] overflow-hidden'
-  aria-label={t('hero.altInterior', lang, { nombre })}
->
-  <div class='container-app relative w-full'>
-    <div class='grid grid-cols-1 min-[900px]:grid-cols-[1.15fr_1fr] gap-[clamp(3rem,6vw,6rem)] items-center'>
+<section class='hero' aria-label={t('hero.altInterior', lang, { nombre })}>
+  <div class='container-app pt-[clamp(1rem,2.5vw,1.75rem)] pb-[clamp(2.5rem,5vw,4rem)]'>
+    <div class='hero-grid'>
 
-      <!-- IZQUIERDA · texto editorial con word-by-word stagger -->
-      <div class='hero-text flex flex-col gap-[clamp(1.75rem,2.5vw,2.25rem)]'>
-        <span class='section-eyebrow self-start' data-reveal>{chipTexto}</span>
+      <!-- Bloque verde con el titular -->
+      <div class='tile tile-green hero-main'>
+        <div class='hero-main-glow' aria-hidden='true'></div>
+        <div class='relative flex flex-col gap-[clamp(1.25rem,2.2vw,1.75rem)] h-full'>
+          <span class='section-eyebrow' data-reveal>{chipTexto}</span>
 
-        <h1 class='h-display m-0 max-w-[15ch]'>
-          {palabrasTitulo.map((palabra, i) => (
-            <>
-              <span class='inline-block' style={`--reveal-delay:${120 + i * 90}ms`} data-reveal-word>{palabra}</span>
-              {i < palabrasTitulo.length - 1 && ' '}
-            </>
-          ))}
-        </h1>
+          <h1 class='h-display m-0 max-w-[13ch]'>
+            {palabrasTitulo.map((palabra, i) => (
+              <>
+                <span style={`--reveal-delay:${120 + i * 60}ms`} data-reveal-word>{palabra}</span>
+                {i < palabrasTitulo.length - 1 && ' '}
+              </>
+            ))}
+          </h1>
 
-        {subtituloTexto && (
-          <p class='hero-sub text-[clamp(1.05rem,1vw+0.75rem,1.2rem)] leading-[1.65] text-[color:var(--muted-foreground)] max-w-[48ch] m-0'
-             style={`--reveal-delay:${120 + palabrasTitulo.length * 90 + 100}ms`}
-             data-reveal>
-            {subtituloTexto}
-          </p>
-        )}
+          {claim && (
+            <p class='m-0 max-w-[50ch] text-[clamp(1rem,0.5vw+0.85rem,1.12rem)] leading-[1.65] text-[color:var(--on-green-muted)]'
+               style={`--reveal-delay:${retrasoFinal + 60}ms`} data-reveal>
+              {claim}
+            </p>
+          )}
 
-        <div class='inline-flex gap-3 flex-wrap' style={`--reveal-delay:${120 + palabrasTitulo.length * 90 + 200}ms`} data-reveal>
-          <a href='#servicios' class='btn btn-primary'>
-            {t('hero.btnServicios', lang)}
-            <span class='btn-icon-nested' aria-hidden='true'>
-              <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>
-                <path d='M5 12h14M13 6l6 6-6 6' />
-              </svg>
-            </span>
-          </a>
-          {telefono && (
-            <a href={`tel:${telefono.replace(/\s+/g, '')}`} class='btn btn-secondary'>
-              {t('hero.btnLlamar', lang)}
+          <div class='flex flex-wrap gap-3' style={`--reveal-delay:${retrasoFinal + 140}ms`} data-reveal>
+            <a href='#servicios' class='btn btn-light'>
+              {t('hero.btnServicios', lang)}
+              <span class='btn-icon-nested' aria-hidden='true'>
+                <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14M13 6l6 6-6 6' /></svg>
+              </span>
             </a>
+            {telefono && (
+              <a href={`tel:${telefono.replace(/\s+/g, '')}`} class='btn btn-outline-light'>
+                <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' /></svg>
+                {t('hero.btnLlamar', lang)}
+              </a>
+            )}
+          </div>
+
+          {tarjetas.length > 0 && (
+            <ul class='hero-trust list-none p-0 m-0 mt-auto grid grid-cols-1 min-[620px]:grid-cols-3 gap-3'>
+              {tarjetas.map((tj, idx) => (
+                <li class='hero-trust-item' style={`--reveal-delay:${retrasoFinal + 220 + idx * 70}ms`} data-reveal>
+                  <span class='hero-trust-icon' aria-hidden='true'><IconoServicio nombre={tj.icono ?? 'shield'} size={17} /></span>
+                  <span class='flex flex-col min-w-0 leading-tight'>
+                    <span class='text-[0.88rem] font-bold text-white'>{tj.titulo}</span>
+                    {tj.subtitulo && <span class='hero-trust-sub text-[0.8rem] text-[color:var(--on-green-muted)] mt-1'>{tj.subtitulo}</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
+      </div>
 
-        {tarjetasFinal.length > 0 && (
-          <ul class='hero-trust list-none p-0 mt-[clamp(2rem,4vw,3rem)] pt-8 border-t border-[color:var(--border)] grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-5 m-0'>
-            {tarjetasFinal.map((tj, idx) => (
-              <li
-                class='flex flex-col gap-2'
-                style={`--reveal-delay:${120 + palabrasTitulo.length * 90 + 400 + idx * 90}ms`}
-                data-reveal
-              >
-                <span class='inline-flex items-center justify-center w-6 h-6 text-[color:var(--muted)]' aria-hidden='true'>
-                  <IconoServicio nombre={tj.icono ?? 'shield'} size={16} />
-                </span>
-                <div class='flex flex-col leading-tight min-w-0'>
-                  <span class='text-[0.9rem] font-medium text-[color:var(--foreground-strong)] tracking-[-0.01em]'>{tj.titulo}</span>
-                  {tj.subtitulo && (
-                    <span class='text-[0.82rem] text-[color:var(--muted)] mt-1 leading-[1.5]'>{tj.subtitulo}</span>
-                  )}
-                </div>
-              </li>
+      <!-- Foto -->
+      <div class='tile hero-foto !p-0' data-hero-slider={tieneCarrusel ? 'true' : undefined} style='--reveal-delay:160ms' data-reveal>
+        {listaImagenes.length > 0 ? (
+          listaImagenes.map((img, i) => (
+            <FotoMarco
+              url={img.url}
+              alt={localizar(img.alt, lang) || (i === 0 ? nombre : '')}
+              prioridad={i === 0}
+              class={`hero-slide ${i === 0 ? 'is-active' : ''}`}
+            />
+          ))
+        ) : (
+          <div class='absolute inset-0 bg-[color:var(--canvas-alt)]' aria-hidden='true'></div>
+        )}
+        {tieneCarrusel && (
+          <div class='hero-dots' role='tablist' aria-label={t('hero.altInterior', lang, { nombre })}>
+            {listaImagenes.map((_, i) => (
+              <button type='button' class={`hero-dot ${i === 0 ? 'is-active' : ''}`} data-hero-dot={String(i)}
+                      aria-label={`${i + 1} / ${listaImagenes.length}`} aria-selected={i === 0 ? 'true' : 'false'} role='tab'></button>
             ))}
-          </ul>
+          </div>
         )}
       </div>
 
-      <!-- DERECHA · imagen protagonista con float sutil y kickers flotantes -->
-      <div class='hero-visual relative' style='--reveal-delay:280ms' data-reveal>
-        <div class='hero-visual-inner motion-float'>
-          <div class='hero-image-frame relative aspect-[4/5] max-w-[520px] mx-auto rounded-[var(--radius-lg)] overflow-hidden bg-[color:var(--surface)] border border-[color:var(--border)]'
-               data-hero-slider={tieneCarrusel ? 'true' : undefined}>
-            {imagenHero ? (
-              listaImagenes.map((img, i) => (
-                <img
-                  src={img.url}
-                  alt={i === 0 ? nombre : ''}
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  fetchpriority={i === 0 ? 'high' : undefined}
-                  class={`hero-slide absolute inset-0 w-full h-full object-cover block ${i === 0 ? 'is-active' : ''}`}
-                  data-idx={String(i)}
-                />
-              ))
-            ) : (
-              <div class='absolute inset-0 flex items-center justify-center text-[color:var(--muted)] font-mono text-xs' aria-hidden='true'>
-                <span>Farmacia Chamarro</span>
-              </div>
-            )}
-
-            {tieneCarrusel && (
-              <div
-                class='absolute bottom-4 left-1/2 -translate-x-1/2 inline-flex gap-1.5 z-10 bg-white/90 px-2.5 py-1.5 border border-[color:var(--border)]'
-                style='border-radius: var(--radius-xs);'
-                role='tablist'
-                aria-label='Cambiar imagen del hero'
-              >
-                {listaImagenes.map((_, i) => (
-                  <button
-                    type='button'
-                    class={`hero-dot h-1.5 rounded-full bg-[color:var(--muted)]/40 border-none cursor-pointer ${i === 0 ? 'is-active' : ''}`}
-                    data-hero-dot={String(i)}
-                    aria-label={`Imagen ${i + 1} de ${listaImagenes.length}`}
-                    aria-selected={i === 0 ? 'true' : 'false'}
-                    role='tab'
-                  ></button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Kicker · "Abierto ahora" con dot pulsante */}
-          <div class='hero-kicker hero-kicker--open' aria-hidden='true'>
-            <span class='inline-flex items-center gap-2'>
-              <span class='w-1.5 h-1.5 rounded-full bg-[color:var(--success)] motion-pulse'></span>
-              <span class='text-[0.78rem] font-medium text-[color:var(--foreground)] tracking-[-0.005em]'>Abierto ahora</span>
-            </span>
-          </div>
-
-          {/* Kicker · marca serif itálica */}
-          <div class='hero-kicker hero-kicker--serif hidden min-[900px]:flex' aria-hidden='true'>
-            <span class='hero-kicker-line'></span>
-            <span class='hero-kicker-text'>Farmacia · Barcelona</span>
-          </div>
-        </div>
-      </div>
+      <!-- Estado de apertura en tiempo real -->
+      {horariosLimpios.length > 0 && (
+        <a href='#contacto' class='tile tile-soft hero-estado' data-hero-estado data-horarios={JSON.stringify(horariosLimpios)} data-textos={textosEstado}
+           style='--reveal-delay:240ms' data-reveal>
+          <span class='flex items-center gap-3'>
+            <span class='hero-estado-dot' aria-hidden='true'></span>
+            <span class='hero-estado-titulo' data-estado-titulo>&nbsp;</span>
+          </span>
+          <span class='hero-estado-detalle' data-estado-detalle>&nbsp;</span>
+          <span class='hero-estado-link'>
+            {t('hero.estado.verHorario', lang)}
+            <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 12h14M13 6l6 6-6 6' /></svg>
+          </span>
+        </a>
+      )}
     </div>
   </div>
 </section>
 
 <style>
-  .hero {
-    background: var(--background);
+  .hero-grid {
+    display: grid;
+    gap: clamp(0.75rem, 1.4vw, 1rem);
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 960px) {
+    .hero-grid {
+      grid-template-columns: 1.45fr 1fr;
+      grid-template-rows: 1fr auto;
+      min-height: min(78vh, 720px);
+    }
+    .hero-main { grid-row: 1 / span 2; }
   }
 
-  .hero-visual-inner { position: relative; max-width: 520px; margin-inline: auto; }
-
-  /* Kicker "Abierto ahora" — pill top-right del visual, con entrada sutil */
-  .hero-kicker--open {
+  .hero-main { padding: clamp(1.75rem, 4vw, 3.25rem); }
+  .hero-main-glow {
     position: absolute;
-    top: -12px;
-    right: -8px;
-    padding: 0.55rem 0.95rem;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 9999px;
-    z-index: 3;
-    box-shadow: var(--shadow-hover);
-    animation: kicker-in 800ms var(--ease-editorial) 1400ms both;
+    right: -20%;
+    top: -30%;
+    width: 70%;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(200, 232, 69, 0.28), transparent 65%);
+    pointer-events: none;
   }
 
-  /* Kicker serif — chip inferior con línea + serif */
-  .hero-kicker--serif {
-    position: absolute;
-    bottom: -14px;
-    left: -20px;
+  .hero-trust { padding-top: clamp(1.5rem, 3vw, 2.5rem); }
+  @media (min-width: 620px) {
+    .hero-trust-item { flex-direction: column; }
+  }
+  @media (min-width: 960px) {
+    .hero-trust-sub { display: none; }
+  }
+  .hero-trust-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--green-line);
+  }
+  .hero-trust-icon {
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 0.5rem 0.95rem;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 9999px;
-    box-shadow: var(--shadow-hover);
-    z-index: 3;
-    animation: kicker-in 800ms var(--ease-editorial) 1600ms both;
-  }
-  .hero-kicker-line {
-    width: 16px;
-    height: 1px;
-    background: var(--foreground);
-  }
-  .hero-kicker-text {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: 0.9rem;
-    color: var(--muted-foreground);
-  }
-  @keyframes kicker-in {
-    from { opacity: 0; transform: translateY(-8px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: var(--radius-sm);
+    background: var(--brand-lime);
+    color: var(--green-2);
   }
 
-  /* Cross-fade carrusel */
-  .hero-slide {
-    opacity: 0;
-    transition: opacity 700ms var(--ease-out);
+  .hero-foto { aspect-ratio: 4 / 3; min-width: 0; }
+  @media (min-width: 960px) {
+    .hero-foto { aspect-ratio: auto; min-height: 0; }
   }
-  .hero-slide.is-active { opacity: 1; }
-
+  .hero-foto :global(.hero-slide) { opacity: 0; transition: opacity 800ms var(--ease-in-out); }
+  .hero-foto :global(.hero-slide.is-active) { opacity: 1; }
+  .hero-dots {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 2;
+    display: inline-flex;
+    gap: 6px;
+    padding: 7px 9px;
+    border-radius: 999px;
+    background: rgba(11, 21, 16, 0.45);
+    backdrop-filter: blur(8px);
+  }
   .hero-dot {
-    width: 5px;
-    transition:
-      width var(--dur-fast) var(--ease-out),
-      background-color var(--dur-fast) var(--ease-out);
+    width: 7px;
+    height: 7px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: width var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
   }
-  .hero-dot.is-active {
-    background: var(--foreground-strong);
-    width: 18px;
+  .hero-dot.is-active { width: 20px; background: #fff; }
+
+  .hero-estado {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    text-decoration: none;
+    color: var(--foreground-strong);
+    transition: background-color var(--dur) var(--ease-out);
   }
+  .hero-estado-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--primary);
+    box-shadow: 0 0 0 5px color-mix(in oklab, var(--primary) 18%, transparent);
+    animation: motion-pulse 2.5s var(--ease-in-out) infinite;
+  }
+  .hero-estado.is-closed .hero-estado-dot {
+    background: var(--danger);
+    box-shadow: 0 0 0 5px rgba(180, 35, 24, 0.14);
+    animation: none;
+  }
+  .hero-estado-titulo {
+    font-size: clamp(1.35rem, 1.4vw + 0.9rem, 1.75rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+  .hero-estado-detalle { font-size: 0.95rem; color: var(--muted-foreground); }
+  .hero-estado-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .hero-estado-link svg { transition: transform var(--dur) var(--ease-magnetic); }
   @media (hover: hover) and (pointer: fine) {
-    .hero-dot:hover { background: var(--foreground); }
+    .hero-estado:hover { background: var(--surface-strong); }
+    .hero-estado:hover .hero-estado-link svg { transform: translateX(3px); }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .hero-slide { transition: none; }
-    .hero-visual-inner.motion-float { animation: none; }
-    .hero-kicker--open, .hero-kicker--serif { animation: none; }
+    .hero-foto :global(.hero-slide) { transition: none; }
+    .hero-estado-dot { animation: none; }
   }
 </style>
 
 <script>
+  /* Carrusel de la foto. */
   const slider = document.querySelector<HTMLElement>('[data-hero-slider]');
   if (slider) {
-    const slides = Array.from(slider.querySelectorAll<HTMLImageElement>('.hero-slide'));
-    const dots = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-hero-dot]'));
-    if (slides.length > 1) {
-      let indice = 0;
-      let timerId: number | undefined;
-      const INTERVALO = 6000;
-
-      function mostrar(i: number) {
-        indice = ((i % slides.length) + slides.length) % slides.length;
-        slides.forEach((s, idx) => s.classList.toggle('is-active', idx === indice));
-        dots.forEach((d, idx) => {
-          const activo = idx === indice;
-          d.classList.toggle('is-active', activo);
-          d.setAttribute('aria-selected', activo ? 'true' : 'false');
-        });
-      }
-
-      function siguiente() { mostrar(indice + 1); }
-
-      function iniciar() {
-        detener();
-        timerId = window.setInterval(siguiente, INTERVALO);
-      }
-      function detener() {
-        if (timerId !== undefined) {
-          window.clearInterval(timerId);
-          timerId = undefined;
-        }
-      }
-
-      dots.forEach((d, i) => {
-        d.addEventListener('click', () => {
-          mostrar(i);
-          iniciar();
-        });
+    const slides = Array.from(slider.querySelectorAll<HTMLElement>('.hero-slide'));
+    const dots = Array.from(slider.querySelectorAll<HTMLButtonElement>('[data-hero-dot]'));
+    let indice = 0;
+    let timer: number | undefined;
+    const mostrar = (i: number) => {
+      indice = (i + slides.length) % slides.length;
+      slides.forEach((s, k) => s.classList.toggle('is-active', k === indice));
+      dots.forEach((d, k) => {
+        d.classList.toggle('is-active', k === indice);
+        d.setAttribute('aria-selected', k === indice ? 'true' : 'false');
       });
-
-      const preferSinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (!preferSinMovimiento) {
-        iniciar();
-        document.addEventListener('visibilitychange', () => {
-          if (document.hidden) detener();
-          else iniciar();
-        });
-      }
+    };
+    const iniciar = () => {
+      window.clearInterval(timer);
+      timer = window.setInterval(() => mostrar(indice + 1), 6000);
+    };
+    dots.forEach((d, i) => d.addEventListener('click', () => { mostrar(i); iniciar(); }));
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      iniciar();
+      document.addEventListener('visibilitychange', () => (document.hidden ? window.clearInterval(timer) : iniciar()));
     }
   }
 
-  /* Word reveal · trigger propio para las palabras del hero, ya que están
-     fuera del observer global (usan data-reveal-word). */
-  const words = document.querySelectorAll<HTMLElement>('[data-reveal-word]');
-  if (words.length > 0 && 'IntersectionObserver' in window) {
-    const io = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          (entry.target as HTMLElement).classList.add('in-view');
-          io.unobserve(entry.target);
-        }
+  /* Reveal palabra a palabra del titular. */
+  const palabras = document.querySelectorAll<HTMLElement>('[data-reveal-word]');
+  requestAnimationFrame(() => palabras.forEach((p) => p.classList.add('in-view')));
+
+  /* Abierto / cerrado con la hora de Madrid. */
+  const estado = document.querySelector<HTMLElement>('[data-hero-estado]');
+  if (estado) {
+    type Tramo = { apertura: string; cierre: string };
+    type Dia = { dia: string; cerrado: boolean; tramos: Tramo[] };
+    try {
+      const horarios: Dia[] = JSON.parse(estado.dataset.horarios ?? '[]');
+      const tx = JSON.parse(estado.dataset.textos ?? '{}');
+      const partes = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Madrid', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+      }).formatToParts(new Date());
+      const get = (k: string) => partes.find((p) => p.type === k)?.value ?? '';
+      const codigos = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+      const hoy = codigos.indexOf(get('weekday').slice(0, 2));
+      const ahora = (Number(get('hour')) % 24) * 60 + Number(get('minute'));
+      const min = (h: string) => { const [a, b] = h.split(':').map(Number); return a * 60 + (b || 0); };
+      const tramosDe = (i: number) => {
+        const d = horarios.find((h) => h.dia === codigos[(i + 7) % 7]);
+        return d && !d.cerrado ? d.tramos : [];
+      };
+      const titulo = estado.querySelector<HTMLElement>('[data-estado-titulo]')!;
+      const detalle = estado.querySelector<HTMLElement>('[data-estado-detalle]')!;
+      const actual = tramosDe(hoy).find((tr) => ahora >= min(tr.apertura) && ahora < min(tr.cierre));
+      if (actual) {
+        titulo.textContent = tx.abierto;
+        detalle.textContent = tx.cierra.replace('{hora}', actual.cierre);
+      } else {
+        estado.classList.add('is-closed');
+        titulo.textContent = tx.cerrado;
+        const luego = tramosDe(hoy).find((tr) => min(tr.apertura) > ahora);
+        const manana = tramosDe(hoy + 1)[0];
+        detalle.textContent = luego
+          ? tx.abreHoy.replace('{hora}', luego.apertura)
+          : manana ? tx.abreManana.replace('{hora}', manana.apertura) : '';
       }
-    }, { threshold: 0.1 });
-    words.forEach((w) => io.observe(w));
+    } catch {
+      estado.hidden = true;
+    }
   }
 </script>

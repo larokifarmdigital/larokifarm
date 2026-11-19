@@ -44,7 +44,7 @@ const googleMapsQuery = urlGoogleMaps
 
 <section
   id='contacto'
-  class='py-[clamp(4rem,7vw,6rem)] bg-[color:var(--surface)] border-t border-[color:var(--border)]'
+  class='py-[clamp(4rem,7vw,6rem)] bg-[color:var(--background)]'
 >
   <div class='container-app'>
     <header class='max-w-[62ch] mb-[clamp(2.5rem,4vw,3.5rem)] flex flex-col gap-4'>
@@ -55,10 +55,10 @@ const googleMapsQuery = urlGoogleMaps
 
     <div class='grid grid-cols-1 min-[900px]:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] gap-6 min-[900px]:gap-8 items-stretch'>
       {/* -------- CARD DE INFORMACIÓN -------- */}
-      <div class='card flex flex-col gap-0 bg-[color:var(--card)] overflow-hidden !p-0'>
+      <div class='card flex flex-col gap-0 bg-[color:var(--card)] overflow-hidden !p-0 !rounded-[var(--radius-xl)]'>
         {/* Dirección */}
         <div class='flex gap-4 p-6 items-start'>
-          <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent)] shrink-0'>
+          <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--primary-soft)] text-[color:var(--primary)] shrink-0'>
             <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
               <path d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' />
               <circle cx='12' cy='10' r='3' />
@@ -82,7 +82,7 @@ const googleMapsQuery = urlGoogleMaps
 
         {/* Horario */}
         <div class='flex gap-4 p-6 items-start'>
-          <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent)] shrink-0'>
+          <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--primary-soft)] text-[color:var(--primary)] shrink-0'>
             <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
               <circle cx='12' cy='12' r='10' />
               <polyline points='12 6 12 12 16 14' />
@@ -111,7 +111,7 @@ const googleMapsQuery = urlGoogleMaps
 
         {/* Contacto */}
         <div class='flex gap-4 p-6 items-start'>
-          <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent)] shrink-0'>
+          <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--primary-soft)] text-[color:var(--primary)] shrink-0'>
             <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
               <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
             </svg>
@@ -174,7 +174,7 @@ const googleMapsQuery = urlGoogleMaps
 
       {/* -------- MAPA -------- */}
       <div
-        class='mapa-wrap relative w-full min-h-[420px] min-[900px]:min-h-full bg-[color:var(--primary-soft)] border border-[color:var(--border)] rounded-[var(--radius-lg)] overflow-hidden'
+        class='mapa-wrap relative w-full min-h-[420px] min-[900px]:min-h-full bg-[color:var(--primary-soft)] border border-[color:var(--border)] rounded-[var(--radius-xl)] overflow-hidden'
         data-mapa-wrap
       >
         {/* Botón flotante "Cómo llegar" — visible siempre, incluso tras cargar el mapa */}
@@ -229,10 +229,10 @@ const googleMapsQuery = urlGoogleMaps
      evoca la textura de un mapa sin coste de red. */
   .mapa-pattern {
     background-image:
-      radial-gradient(circle at 20% 30%, rgb(51 65 85 / 0.08), transparent 40%),
-      radial-gradient(circle at 80% 70%, rgb(51 65 85 / 0.08), transparent 40%),
-      linear-gradient(to right, rgb(51 65 85 / 0.04) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(51 65 85 / 0.04) 1px, transparent 1px);
+      radial-gradient(circle at 20% 30%, rgb(15 107 60 / 0.08), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgb(15 107 60 / 0.08), transparent 40%),
+      linear-gradient(to right, rgb(15 107 60 / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(15 107 60 / 0.05) 1px, transparent 1px);
     background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
   }
 

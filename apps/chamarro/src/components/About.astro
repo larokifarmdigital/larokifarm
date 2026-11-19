@@ -7,6 +7,7 @@ import {
   type LocalizedPortableText,
 } from '@/lib/sanity';
 import { t, tArray, type Locale } from '@/lib/i18n';
+import FotoMarco from '@/components/FotoMarco.astro';
 
 interface Props {
   imagenes?: ImagenConAlt[];
@@ -21,7 +22,10 @@ interface Props {
 const { imagenes, titulo, descripcionLarga, puntos, anyosExperiencia, chip, lang } = Astro.props;
 
 const listaImagenes = (imagenes ?? []).filter((i) => i?.url).slice(0, 6);
-const tieneCarrusel = listaImagenes.length > 1;
+// La 1ª foto suele ser la misma que abre la portada: aquí empezamos por la
+// última para no repetirla.
+const principal = listaImagenes[listaImagenes.length - 1];
+const secundaria = listaImagenes.length > 2 ? listaImagenes[1] : undefined;
 const chipTexto = localizar(chip, lang) || t('about.chip', lang);
 const tituloTexto = localizar(titulo, lang) || t('about.tituloDefecto', lang);
 const cuerpoHtml = portableTextAHtml(localizar(descripcionLarga, lang));
@@ -34,96 +38,43 @@ const puntosResueltos = (() => {
 })();
 ---
 
-<section
-  id='sobre'
-  class='py-[clamp(6rem,10vw,9rem)] bg-[color:var(--background)]'
->
-  <div class='container-app grid grid-cols-1 min-[900px]:grid-cols-[1fr_1.15fr] gap-[clamp(2.5rem,5vw,5rem)] items-center'>
-    <div class='about-slider relative motion-float' data-about-slider={tieneCarrusel ? 'true' : undefined} data-reveal>
-      <div class='about-frame aspect-[4/5] relative overflow-hidden rounded-[var(--radius-xl)] bg-[color:var(--surface)] border border-[color:var(--border)]'
-           style='box-shadow: var(--shadow-lift);'>
-        {listaImagenes.length > 0 ? (
-          listaImagenes.map((img, i) => (
-            <img
-              src={img.url}
-              alt={i === 0 ? (localizar(img.alt, lang) || tituloTexto) : ''}
-              loading={i === 0 ? 'eager' : 'lazy'}
-              class={`about-slide absolute inset-0 w-full h-full object-cover block ${i === 0 ? 'is-active' : ''}`}
-              data-idx={String(i)}
-            />
-          ))
-        ) : (
-          <div class='absolute inset-0' aria-hidden='true'></div>
-        )}
-      </div>
+<section id='sobre' class='py-[clamp(4rem,7vw,6rem)]'>
+  <div class='container-app about-grid'>
+    <div class='tile about-foto !p-0' data-reveal>
+      {principal ? (
+        <FotoMarco url={principal.url} alt={localizar(principal.alt, lang) || tituloTexto} ancho={1000} />
+      ) : (
+        <div class='absolute inset-0 bg-[color:var(--canvas-alt)]' aria-hidden='true'></div>
+      )}
+    </div>
 
-      {/* Badge años · con count-up animation al entrar en viewport */}
+    <div class='about-lateral'>
       {anyosExperiencia && (
-        <div class='about-badge absolute -bottom-6 -left-5 z-10 inline-flex items-center gap-3 bg-[color:var(--card)] px-4 py-3 border border-[color:var(--border)] rounded-[var(--radius-lg)]'
-             style='box-shadow: var(--shadow-lift);'>
-          <div class='flex flex-col leading-tight'>
-            <span class='text-[1.75rem] leading-none tabular-nums text-[color:var(--foreground-strong)] tracking-[-0.03em] shrink-0'
-                  style='font-family: var(--font-serif); font-weight: 400;'
-                  data-count-up={anyosExperiencia}
-                  data-count-suffix='+'
-                  data-count-duration='1400'>0+</span>
-            <span class='text-[0.68rem] font-medium tracking-[0.12em] uppercase text-[color:var(--muted)] mt-1 leading-tight whitespace-nowrap'
-                  style='font-family: var(--font-mono);'>
-              {t('about.badge.anyos', lang)} {t('about.badge.experiencia', lang)}
-            </span>
-          </div>
+        <div class='tile tile-green about-stat' data-reveal style='--reveal-delay:80ms'>
+          <span class='about-stat-num tabular-nums' data-count-up={anyosExperiencia} data-count-suffix='+' data-count-duration='1400'>{anyosExperiencia}+</span>
+          <span class='about-stat-txt'>{t('about.badge.anyos', lang)} {t('about.badge.experiencia', lang)}</span>
         </div>
       )}
-
-      {tieneCarrusel && (
-        <div
-          class='absolute bottom-4 right-4 inline-flex gap-2 z-10 rounded-full bg-black/30 backdrop-blur-md px-3 py-2'
-          role='tablist'
-          aria-label='Cambiar imagen'
-        >
-          {listaImagenes.map((_, i) => (
-            <button
-              type='button'
-              class={`about-dot h-2 rounded-full bg-white/40 border-none cursor-pointer transition-all duration-300 ${i === 0 ? 'is-active' : ''}`}
-              data-about-dot={String(i)}
-              aria-label={`Imagen ${i + 1} de ${listaImagenes.length}`}
-              aria-selected={i === 0 ? 'true' : 'false'}
-              role='tab'
-            ></button>
-          ))}
+      {secundaria && (
+        <div class='tile about-foto-mini !p-0' data-reveal style='--reveal-delay:140ms' aria-hidden='true'>
+          <FotoMarco url={secundaria.url} alt='' ancho={600} />
         </div>
       )}
     </div>
 
-    <div class='flex flex-col gap-6'>
-      <span class='section-eyebrow self-start' data-reveal>{chipTexto}</span>
+    <div class='about-texto flex flex-col gap-5 min-w-0'>
+      <span class='section-eyebrow' data-reveal>{chipTexto}</span>
       <h2 class='h-section m-0 max-w-[18ch]' style='--reveal-delay:100ms' data-reveal>{tituloTexto}</h2>
-
       {cuerpoHtml ? (
-        <div class='about-corp__cuerpo text-[color:var(--muted-foreground)] leading-[1.75] text-[1.02rem] max-w-[52ch]'
-             style='--reveal-delay:200ms'
-             data-reveal
-             set:html={cuerpoHtml} />
+        <div class='about-cuerpo text-[color:var(--muted-foreground)] leading-[1.75] text-[1.02rem] max-w-[60ch]' style='--reveal-delay:180ms' data-reveal set:html={cuerpoHtml} />
       ) : (
-        <p class='text-[color:var(--muted-foreground)] leading-[1.75] text-[1.02rem] max-w-[52ch]'
-           style='--reveal-delay:200ms'
-           data-reveal>{t('about.cuerpoFallback', lang)}</p>
+        <p class='text-[color:var(--muted-foreground)] leading-[1.75] text-[1.02rem] max-w-[60ch]' style='--reveal-delay:180ms' data-reveal>{t('about.cuerpoFallback', lang)}</p>
       )}
-
       {puntosResueltos.length > 0 && (
-        <ul class='list-none p-0 mt-2 grid grid-cols-1 min-[500px]:grid-cols-2 gap-3 min-[500px]:gap-x-6'>
+        <ul class='list-none p-0 m-0 mt-1 flex flex-wrap gap-2'>
           {puntosResueltos.map((p, i) => (
-            <li class='inline-flex items-start gap-2.5 text-[0.9rem] text-[color:var(--foreground)] leading-[1.5]'
-                style={`--reveal-delay:${300 + i * 60}ms`}
-                data-reveal>
-              <span
-                class='inline-flex items-center justify-center w-5 h-5 bg-[color:var(--foreground-strong)] text-[color:var(--background)] rounded-full shrink-0 mt-[1px]'
-                aria-hidden='true'
-              >
-                <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'>
-                  <path d='M20 6 9 17l-5-5' />
-                </svg>
-              </span>
+            <li class='about-punto' style={`--reveal-delay:${260 + i * 50}ms`} data-reveal>
+              <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20 6 9 17l-5-5' /></svg>
               {p}
             </li>
           ))}
@@ -134,88 +85,40 @@ const puntosResueltos = (() => {
 </section>
 
 <style>
-  /* CMS content injected via set:html — necesita selectores :global() para alcanzar los
-     <p> y <strong> que vienen del portable text. Tailwind no puede tocarlos inline. */
-  .about-corp__cuerpo :global(p) { margin: 0 0 1rem; }
-  .about-corp__cuerpo :global(p:last-child) { margin-bottom: 0; }
-  .about-corp__cuerpo :global(strong) { color: var(--foreground); font-weight: 600; }
+  .about-grid {
+    display: grid;
+    gap: clamp(0.75rem, 1.4vw, 1rem);
+    grid-template-columns: 1fr;
+  }
+  .about-foto { aspect-ratio: 4 / 3; }
+  .about-lateral { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.75rem, 1.4vw, 1rem); }
+  .about-texto { padding: clamp(1.5rem, 3vw, 2.5rem) clamp(0.25rem, 1vw, 0.5rem) 0; }
+  @media (min-width: 960px) {
+    .about-grid { grid-template-columns: 1.05fr 0.45fr 1.3fr; align-items: stretch; }
+    .about-foto { aspect-ratio: auto; min-height: 520px; }
+    .about-lateral { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .about-texto { padding: clamp(1rem, 2vw, 1.5rem) 0 clamp(1rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2.5rem); justify-content: center; }
+  }
+  .about-foto-mini { min-height: 160px; }
 
-  /* Slider — cross-fade editorial 900ms. */
-  .about-slide {
-    opacity: 0;
-    transition: opacity 900ms var(--ease-in-out);
-  }
-  .about-slide.is-active { opacity: 1; }
+  .about-stat { display: flex; flex-direction: column; justify-content: flex-end; gap: 0.4rem; min-height: 160px; }
+  .about-stat-num { font-size: clamp(3rem, 3vw + 1.8rem, 4.2rem); font-weight: 800; letter-spacing: -0.05em; line-height: 0.95; color: var(--brand-lime); }
+  .about-stat-txt { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-green-muted); }
 
-  .about-dot {
-    width: 6px;
-    transition:
-      width var(--dur-fast) var(--ease-out),
-      background-color var(--dur-fast) var(--ease-out);
-  }
-  .about-dot.is-active {
-    background: rgb(255 255 255 / 0.95);
-    width: 20px;
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .about-dot:hover { background: rgb(255 255 255 / 0.75); }
-  }
+  .about-cuerpo :global(p) { margin: 0 0 1rem; }
+  .about-cuerpo :global(p:last-child) { margin-bottom: 0; }
+  .about-cuerpo :global(strong) { color: var(--foreground-strong); font-weight: 700; }
+  .about-cuerpo :global(a) { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
 
-  @media (prefers-reduced-motion: reduce) {
-    .about-slide { transition: none; }
+  .about-punto {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 999px;
+    background: var(--primary-soft);
+    color: var(--green-2);
+    font-size: 0.86rem;
+    font-weight: 700;
   }
 </style>
-
-<script>
-  /* Slider About — cross-fade automático cada 6s. Pausa al cambiar de pestaña.
-     Respeta prefers-reduced-motion. */
-  const slider = document.querySelector<HTMLElement>('[data-about-slider]');
-  if (slider) {
-    const slides = Array.from(slider.querySelectorAll<HTMLImageElement>('.about-slide'));
-    const dots = Array.from(slider.querySelectorAll<HTMLButtonElement>('[data-about-dot]'));
-    if (slides.length > 1) {
-      let indice = 0;
-      let timerId: number | undefined;
-      const INTERVALO = 6000;
-
-      function mostrar(i: number) {
-        indice = ((i % slides.length) + slides.length) % slides.length;
-        slides.forEach((s, idx) => s.classList.toggle('is-active', idx === indice));
-        dots.forEach((d, idx) => {
-          const activo = idx === indice;
-          d.classList.toggle('is-active', activo);
-          d.setAttribute('aria-selected', activo ? 'true' : 'false');
-        });
-      }
-
-      function siguiente() { mostrar(indice + 1); }
-
-      function iniciar() {
-        detener();
-        timerId = window.setInterval(siguiente, INTERVALO);
-      }
-      function detener() {
-        if (timerId !== undefined) {
-          window.clearInterval(timerId);
-          timerId = undefined;
-        }
-      }
-
-      dots.forEach((d, i) => {
-        d.addEventListener('click', () => {
-          mostrar(i);
-          iniciar();
-        });
-      });
-
-      const preferSinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (!preferSinMovimiento) {
-        iniciar();
-        document.addEventListener('visibilitychange', () => {
-          if (document.hidden) detener();
-          else iniciar();
-        });
-      }
-    }
-  }
-</script>

@@ -31,29 +31,15 @@ const items = featuresSanity.length > 0 ? featuresSanity : featuresFallback;
 if (items.length === 0) return null;
 ---
 
-<section
-  class='py-[clamp(6rem,10vw,9rem)] bg-[color:var(--canvas-alt)] border-y border-[color:var(--border)]'
-  aria-label='Nuestras ventajas'
->
-  <div class='container-app'>
-    <ul class='list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 min-[960px]:grid-cols-4 gap-0 border border-[color:var(--border)] rounded-[var(--radius-lg)] overflow-hidden bg-[color:var(--card)]'>
+<section class='features' aria-label={t('features.aria', lang)}>
+  <div class='container-app pb-[clamp(3rem,6vw,5rem)]'>
+    <ul class='list-none p-0 m-0 grid grid-cols-1 min-[560px]:grid-cols-2 min-[1000px]:grid-cols-4 gap-[clamp(0.75rem,1.4vw,1rem)]'>
       {items.map((f, i) => (
-        <li
-          class='feature-item p-7 flex items-start gap-4 border-b border-[color:var(--border)] relative'
-          data-reveal
-          data-spotlight
-          style={`--reveal-delay:${i * 100}ms;`}
-        >
-          <span class='feature-icon inline-flex items-center justify-center w-10 h-10 rounded-[var(--radius-sm)] bg-[color:var(--surface)] border border-[color:var(--border)] text-[color:var(--foreground)] shrink-0 mt-[2px]' aria-hidden='true'>
-            <IconoServicio nombre={f.icono} size={20} />
-          </span>
-          <div class='flex flex-col gap-1.5 min-w-0 flex-1'>
-            <h3 class='m-0 font-medium tracking-[-0.015em] leading-[1.3] text-[1.02rem] text-[color:var(--foreground-strong)]'>
-              {f.titulo}
-            </h3>
-            {f.descripcion && (
-              <p class='m-0 text-[0.9rem] text-[color:var(--muted)] leading-[1.55]'>{f.descripcion}</p>
-            )}
+        <li class='tile feature-item flex items-start gap-4 min-w-0' data-reveal style={`--reveal-delay:${i * 80}ms;`}>
+          <span class='feature-icon' aria-hidden='true'><IconoServicio nombre={f.icono} size={20} /></span>
+          <div class='flex flex-col gap-1 min-w-0'>
+            <h3 class='m-0 text-[1.02rem] font-bold leading-[1.3] tracking-[-0.02em] text-[color:var(--foreground-strong)]'>{f.titulo}</h3>
+            {f.descripcion && <p class='m-0 text-[0.88rem] leading-[1.5] text-[color:var(--muted-foreground)]'>{f.descripcion}</p>}
           </div>
         </li>
       ))}
@@ -62,44 +48,22 @@ if (items.length === 0) return null;
 </section>
 
 <style>
-  /* Grid interior tipo Notion · líneas divisorias internas mediante borders.
-     Todos los items llevan border-b + border-right, luego quitamos los de
-     última columna y última fila con nth-child. */
-  .feature-item { border-right: none; }
-
-  @media (min-width: 640px) and (max-width: 959px) {
-    .feature-item:nth-child(2n-1) { border-right: 1px solid var(--border); }
-  }
-  @media (min-width: 960px) {
-    .feature-item:nth-child(4n-3),
-    .feature-item:nth-child(4n-2),
-    .feature-item:nth-child(4n-1) { border-right: 1px solid var(--border); }
-  }
-
-  /* Icono con motion sutil al hover del container */
+  .feature-item { padding: 1.25rem 1.3rem; border-radius: var(--radius-lg); transition: border-color var(--dur) var(--ease-out), transform var(--dur) var(--ease-magnetic); }
   .feature-icon {
-    transition:
-      background-color var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      transform var(--dur) var(--ease-magnetic);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: var(--radius);
+    background: var(--primary-soft);
+    color: var(--primary);
   }
   @media (hover: hover) and (pointer: fine) {
-    .feature-item:hover .feature-icon {
-      background: var(--foreground-strong);
-      color: var(--background);
-      border-color: var(--foreground-strong);
-      transform: scale(1.08) rotate(-3deg);
-    }
-    .feature-item {
-      transition: background-color var(--dur) var(--ease-out);
-    }
-    .feature-item:hover {
-      background: var(--surface);
-    }
+    .feature-item:hover { border-color: var(--primary); transform: translateY(-2px); }
   }
-
   @media (prefers-reduced-motion: reduce) {
-    .feature-item:hover .feature-icon { transform: none; }
+    .feature-item:hover { transform: none; }
   }
 </style>

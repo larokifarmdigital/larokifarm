@@ -17,24 +17,24 @@ const titulo = localizar(textos?.titulo, lang) || t('servicios.titulo', lang);
 const subtitulo = localizar(textos?.subtitulo, lang) || t('servicios.subtitulo', lang);
 ---
 
-<section id='servicios' class='py-[clamp(4.5rem,8vw,7rem)] bg-[color:var(--canvas-alt)]'>
-  <div class='container-app'>
-    <header class='max-w-[62ch] mb-[clamp(2.5rem,4vw,3.5rem)] flex flex-col gap-4'>
-      <span class='section-eyebrow self-start' data-reveal>{chip}</span>
-      <h2 class='h-section m-0' style='--reveal-delay:80ms' data-reveal>{titulo}</h2>
+<section id='servicios' class='bg-[color:var(--canvas-alt)]'>
+  <div class='container-app py-[clamp(4rem,7vw,6rem)]'>
+    <header class='flex flex-col min-[900px]:flex-row min-[900px]:items-end min-[900px]:justify-between gap-5 mb-[clamp(2rem,4vw,3rem)]'>
+      <div class='flex flex-col gap-4 max-w-[40rem]'>
+        <span class='section-eyebrow' data-reveal>{chip}</span>
+        <h2 class='h-section m-0' style='--reveal-delay:80ms' data-reveal>{titulo}</h2>
+      </div>
       {subtitulo && (
-        <p class='mt-1 text-[color:var(--muted-foreground)] text-[1.05rem] leading-[1.65] max-w-[54ch]' style='--reveal-delay:160ms' data-reveal>
-          {subtitulo}
-        </p>
+        <p class='m-0 max-w-[36ch] text-[1.05rem] leading-[1.6] text-[color:var(--muted-foreground)]' style='--reveal-delay:160ms' data-reveal>{subtitulo}</p>
       )}
     </header>
 
     {lista.length === 0 ? (
-      <p class='py-12 px-4 text-center text-[color:var(--muted)] bg-[color:var(--surface)] border border-dashed border-[color:var(--border-strong)] rounded-[var(--radius-lg)]'>
+      <p class='py-12 px-4 text-center text-[color:var(--muted)] bg-[color:var(--card)] border border-dashed border-[color:var(--border-strong)] rounded-[var(--radius-xl)]'>
         {t('servicios.placeholder', lang)}
       </p>
     ) : (
-      <ul class='list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 min-[960px]:grid-cols-3 gap-4 sm:gap-5'>
+      <ul class='servicios-grid list-none p-0 m-0'>
         {lista.map((s, i) => {
           const nombre = localizar(s.nombre, lang);
           const descripcion = localizar(s.descripcion, lang);
@@ -42,53 +42,35 @@ const subtitulo = localizar(textos?.subtitulo, lang) || t('servicios.subtitulo',
           const rawUrl = s.enlace?.url?.trim();
           const url = rawUrl && (!/^[a-z][a-z0-9+.-]*:/i.test(rawUrl.replace(/[\u0000-\u0020]/g, '')) || /^(https?|mailto|tel):/i.test(rawUrl)) ? rawUrl : undefined;
           const externo = s.enlace?.nuevaPestana;
+          const destacado = i === 0;
+          const clases = `tile servicio-card ${destacado ? 'tile-green servicio-card--destacado' : ''} ${url ? 'servicio-card--link' : ''}`;
 
           const contenido = (
             <>
-              <div class='flex items-center justify-between gap-3'>
-                <span class='servicio-icon inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius-sm)] bg-[color:var(--surface)] border border-[color:var(--border)] text-[color:var(--foreground)] shrink-0' aria-hidden='true'>
-                  <IconoServicio nombre={s.icono} size={20} />
+              <span class='servicio-icon' aria-hidden='true'><IconoServicio nombre={s.icono} size={destacado ? 26 : 22} /></span>
+              {destacado && <span class='servicio-marca' aria-hidden='true'><IconoServicio nombre={s.icono} size={220} /></span>}
+              <h3 class={`h-card m-0 ${destacado ? 'servicio-titulo-grande' : ''}`}>{nombre}</h3>
+              {descripcion && <p class='servicio-desc m-0'>{descripcion}</p>}
+              {url && (
+                <span class='servicio-mas' aria-hidden='true'>
+                  {t('servicios.verMas', lang)}
+                  <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'>
+                    {externo ? <path d='M7 17L17 7M9 7h8v8' /> : <path d='M5 12h14M13 6l6 6-6 6' />}
+                  </svg>
                 </span>
-                {url && (
-                  <span class='servicio-arrow inline-flex items-center justify-center w-8 h-8 rounded-[var(--radius-xs)] text-[color:var(--muted)] border border-[color:var(--border)] shrink-0' aria-hidden='true'>
-                    <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>
-                      {externo ? <path d='M7 17L17 7M9 7h8v8' /> : <path d='M5 12h14M13 6l6 6-6 6' />}
-                    </svg>
-                  </span>
-                )}
-              </div>
-
-              <div class='flex flex-col gap-2 mt-4'>
-                <h3 class='m-0 h-card'>{nombre}</h3>
-                {descripcion && (
-                  <p class='m-0 text-[0.9rem] text-[color:var(--muted-foreground)] leading-[1.6] line-clamp-3'>
-                    {descripcion}
-                  </p>
-                )}
-              </div>
+              )}
             </>
           );
 
           return (
-            <li>
+            <li class={`min-w-0 ${destacado ? 'servicios-destacado' : ''}`}>
               {url ? (
-                <a
-                  href={url}
-                  target={externo ? '_blank' : undefined}
-                  rel={externo ? 'noopener noreferrer' : undefined}
-                  class='servicio-card servicio-card--link card flex flex-col no-underline text-[color:var(--foreground)] cursor-pointer h-full min-h-[200px]'
-                  data-reveal
-                  data-spotlight
-                  style={`--reveal-delay:${i * 90}ms`}
-                >
+                <a href={url} target={externo ? '_blank' : undefined} rel={externo ? 'noopener noreferrer' : undefined}
+                   class={clases} data-reveal style={`--reveal-delay:${i * 70}ms`}>
                   {contenido}
                 </a>
               ) : (
-                <div class='servicio-card card flex flex-col h-full min-h-[200px]'
-                     data-reveal
-                     style={`--reveal-delay:${i * 90}ms`}>
-                  {contenido}
-                </div>
+                <div class={clases} data-reveal style={`--reveal-delay:${i * 70}ms`}>{contenido}</div>
               )}
             </li>
           );
@@ -99,58 +81,76 @@ const subtitulo = localizar(textos?.subtitulo, lang) || t('servicios.subtitulo',
 </section>
 
 <style>
+  .servicios-grid {
+    display: grid;
+    gap: clamp(0.75rem, 1.4vw, 1rem);
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .servicios-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .servicios-destacado { grid-column: 1 / -1; }
+  }
+  @media (min-width: 1000px) {
+    .servicios-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .servicios-destacado { grid-column: auto; grid-row: span 2; }
+  }
+
   .servicio-card {
-    transition:
-      border-color var(--dur) var(--ease-out),
-      box-shadow var(--dur) var(--ease-out),
-      background-color var(--dur) var(--ease-out),
-      transform var(--dur) var(--ease-magnetic);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    height: 100%;
+    text-decoration: none;
+    color: var(--foreground);
+    transition: border-color var(--dur) var(--ease-out), transform var(--dur) var(--ease-magnetic), box-shadow var(--dur) var(--ease-out);
   }
-  .servicio-icon,
-  .servicio-arrow {
-    transition:
-      background-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      transform var(--dur) var(--ease-magnetic);
+  .servicio-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 0.9rem;
+    border-radius: var(--radius);
+    background: var(--primary-soft);
+    color: var(--primary);
   }
+  .servicio-desc { font-size: 0.93rem; line-height: 1.6; color: var(--muted-foreground); }
+  .servicio-mas {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: auto;
+    padding-top: 1rem;
+    font-size: 0.87rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .servicio-mas svg { transition: transform var(--dur) var(--ease-magnetic); }
+
+  /* Destacado (primer servicio) en bloque verde */
+  .servicio-card--destacado { justify-content: flex-start; }
+  .servicio-marca {
+    position: absolute;
+    right: -2.5rem;
+    bottom: -2.5rem;
+    color: var(--brand-lime);
+    opacity: 0.12;
+    pointer-events: none;
+    transform: rotate(-12deg);
+  }
+  .servicio-card--destacado > :not(.servicio-marca) { position: relative; }
+  .servicio-card--destacado .servicio-icon { width: 60px; height: 60px; background: var(--brand-lime); color: var(--green-2); }
+  .servicio-card--destacado .servicio-titulo-grande { font-size: clamp(1.5rem, 1.6vw + 1rem, 2.1rem); line-height: 1.12; letter-spacing: -0.035em; }
+  .servicio-card--destacado .servicio-desc { color: var(--on-green-muted); font-size: 1rem; max-width: 40ch; }
+  .servicio-card--destacado .servicio-mas { color: var(--brand-lime); }
 
   @media (hover: hover) and (pointer: fine) {
-    .servicio-card--link:hover {
-      border-color: var(--foreground-strong);
-      box-shadow: var(--shadow-lift);
-      transform: translateY(-4px);
-    }
-    .servicio-card--link:hover .servicio-arrow {
-      background: var(--foreground-strong);
-      color: var(--background);
-      border-color: var(--foreground-strong);
-      transform: translateX(3px);
-    }
-    .servicio-card--link:hover .servicio-icon {
-      background: var(--foreground-strong);
-      color: var(--background);
-      border-color: var(--foreground-strong);
-      transform: scale(1.05) rotate(-3deg);
-    }
+    .servicio-card--link:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--shadow-soft); }
+    .servicio-card--destacado.servicio-card--link:hover { border-color: transparent; }
+    .servicio-card--link:hover .servicio-mas svg { transform: translateX(3px); }
   }
-
-  .servicio-card--link:active {
-    transform: scale(0.99);
-    transition-duration: var(--dur-press);
-  }
-
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .servicio-card--link:hover,
-    .servicio-card--link:active { transform: none; }
-    .servicio-card--link:hover .servicio-arrow,
-    .servicio-card--link:hover .servicio-icon { transform: none; }
+    .servicio-card--link:hover { transform: none; }
   }
 </style>

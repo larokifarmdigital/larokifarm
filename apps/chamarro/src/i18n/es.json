@@ -1,5 +1,7 @@
 {
-  "html": { "lang": "es" },
+  "html": {
+    "lang": "es"
+  },
   "dias": {
     "Mo": "lunes",
     "Tu": "martes",
@@ -48,6 +50,14 @@
       "horarioSub": "Cuando lo necesitas",
       "consejo": "Consejo sin cita",
       "consejoSub": "Sin esperas"
+    },
+    "estado": {
+      "abierto": "Abierto ahora",
+      "cerrado": "Cerrado ahora",
+      "cierra": "cierra a las {hora}",
+      "abreHoy": "abre hoy a las {hora}",
+      "abreManana": "abre mañana a las {hora}",
+      "verHorario": "Ver horario"
     }
   },
   "about": {
@@ -69,7 +79,8 @@
     "chip": "Servicios",
     "titulo": "Lo que ofrecemos",
     "subtitulo": "Servicios farmacéuticos y de salud para toda la familia. Consulta a nuestro equipo si necesitas más información.",
-    "placeholder": "Servicios en preparación."
+    "placeholder": "Servicios en preparación.",
+    "verMas": "Más información"
   },
   "faqs": {
     "chip": "Preguntas frecuentes",
@@ -107,7 +118,9 @@
     "nCol": "Nº col.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
-    "ariaTiktok": "TikTok"
+    "ariaTiktok": "TikTok",
+    "ctaTitulo": "¿Necesitas ayuda?",
+    "ctaEm": "Estamos aquí."
   },
   "features": {
     "atencionTitulo": "Atención personalizada",
@@ -117,7 +130,8 @@
     "equipoTitulo": "Equipo cualificado",
     "equipoDesc": "Formación continua",
     "horarioTitulo": "Horario amplio",
-    "horarioDescFallback": "Lunes a sábado"
+    "horarioDescFallback": "Lunes a sábado",
+    "aria": "Nuestras ventajas"
   },
   "legal": {
     "volver": "Volver al inicio",

@@ -8,55 +8,64 @@
    ========================================================================== */
 
 :root {
+  /* Moderna y clínica · blanco limpio, gris frío, verde intenso del logo */
   --background: #FFFFFF;
-  --canvas-alt: #F6FBF4;
-  --surface: #F8FBF6;
-  --surface-strong: #EDF5E8;
-  --foreground: #1F2A22;
-  --foreground-strong: #0E1810;
-  --muted: #6B7A6E;
-  --muted-foreground: #4B5750;
-  --border: #E5ECE2;
-  --border-soft: rgba(68, 164, 96, 0.08);
-  --border-strong: #C9D4C3;
+  --canvas-alt: #F2F6F3;
+  --surface: #F6F8F7;
+  --surface-strong: #E7EEE9;
+  --foreground: #16211B;
+  --foreground-strong: #0B1510;
+  --muted: #66716B;
+  --muted-foreground: #47524C;
+  --border: #E2E8E4;
+  --border-soft: rgba(11, 21, 16, 0.06);
+  --border-strong: #C9D3CD;
   --card: #FFFFFF;
 
   --brand-lime: #C8E845;
   --brand-mid: #6DC261;
   --brand-deep: #44A460;
 
-  --primary: #44A460;
-  --primary-hover: #388450;
-  --primary-foreground: #FFFFFF;
-  --primary-soft: #EDF7EF;
+  /* Bloques de color */
+  --green: #0F6B3C;          /* verde intenso para bloques grandes */
+  --green-2: #0B5631;
+  --ink: #0B1510;            /* casi negro verdoso (footer) */
+  --on-green: #FFFFFF;
+  --on-green-muted: rgba(255, 255, 255, 0.74);
+  --green-line: rgba(255, 255, 255, 0.16);
 
-  --accent: #6DC261;
-  --accent-hover: #5BB050;
-  --accent-soft: #E8F5E3;
+  --primary: #12804A;        /* CTA (AA sobre blanco) */
+  --primary-hover: #0F6B3C;
+  --primary-foreground: #FFFFFF;
+  --primary-soft: #E6F4EB;
+
+  --accent: #12804A;
+  --accent-hover: #0F6B3C;
+  --accent-soft: #E6F4EB;
 
   --pastel-red-bg: #FDEBEC;    --pastel-red-fg: #9F2F2D;
   --pastel-blue-bg: #E1F3FE;   --pastel-blue-fg: #1F6C9F;
-  --pastel-green-bg: #EDF7EF;  --pastel-green-fg: #2E6E42;
+  --pastel-green-bg: #E6F4EB;  --pastel-green-fg: #2E6E42;
   --pastel-yellow-bg: #FBF3DB; --pastel-yellow-fg: #956400;
 
-  --success: #44A460;
-  --success-soft: #EDF7EF;
+  --success: #12804A;
+  --success-soft: #E6F4EB;
   --warning: #956400;
-  --danger: #9F2F2D;
+  --danger: #B42318;
   --whatsapp: #1FAF38;
 
-  --font-sans: 'Manrope', 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
-  --font-serif: 'Manrope', 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
-  --font-mono: 'Manrope', 'SF Mono', 'JetBrains Mono', monospace;
+  --font-sans: 'Manrope', 'Helvetica Neue', system-ui, sans-serif;
+  --font-serif: 'Manrope', 'Helvetica Neue', system-ui, sans-serif;
+  --font-mono: 'Manrope', 'SF Mono', ui-monospace, monospace;
 
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius: 12px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
 
-  /* Motion tokens · variedad rica de easings/duraciones. */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-editorial: cubic-bezier(0.16, 1, 0.3, 1);
@@ -67,15 +76,14 @@
   --dur-fast: 180ms;
   --dur: 240ms;
   --dur-slow: 400ms;
-  --dur-cinematic: 700ms;
-  --dur-editorial: 900ms;
+  --dur-cinematic: 650ms;
+  --dur-editorial: 800ms;
 
-  /* Sombras extremadamente sutiles — mantiene look Notion. */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-soft: 0 6px 20px -8px rgba(0, 0, 0, 0.06);
-  --shadow-lift: 0 12px 32px -12px rgba(0, 0, 0, 0.08);
-  --shadow-float: 0 24px 48px -16px rgba(0, 0, 0, 0.10);
+  --shadow-xs: 0 1px 2px rgba(11, 21, 16, 0.05);
+  --shadow-hover: 0 2px 10px rgba(11, 21, 16, 0.06);
+  --shadow-soft: 0 8px 24px -10px rgba(11, 21, 16, 0.16);
+  --shadow-lift: 0 18px 40px -18px rgba(11, 21, 16, 0.24);
+  --shadow-float: 0 30px 60px -26px rgba(11, 21, 16, 0.32);
 }
 
 @theme inline {
@@ -118,46 +126,40 @@ body {
 @layer components {
   .h-display {
     font-family: var(--font-sans);
-    font-weight: 700;
-    letter-spacing: -0.04em;
-    line-height: 1.02;
-    font-size: clamp(2.75rem, 6vw + 0.5rem, 5.5rem);
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 0.98;
+    font-size: clamp(2.5rem, 4.8vw + 0.4rem, 4.6rem);
     color: var(--foreground-strong);
     text-wrap: balance;
   }
   .h-display em {
     font-style: normal;
     font-weight: 800;
-    background: linear-gradient(100deg, var(--brand-deep) 0%, var(--brand-mid) 55%, var(--brand-lime) 100%);
-    -webkit-background-clip: text;
-            background-clip: text;
-    color: transparent;
+    color: var(--primary);
   }
 
   .h-section {
     font-family: var(--font-sans);
-    font-weight: 700;
-    letter-spacing: -0.035em;
-    line-height: 1.08;
-    font-size: clamp(2rem, 3.5vw + 0.5rem, 3.25rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.04;
+    font-size: clamp(2rem, 3.4vw + 0.5rem, 3.4rem);
     color: var(--foreground-strong);
     text-wrap: balance;
   }
   .h-section em {
     font-style: normal;
     font-weight: 800;
-    background: linear-gradient(100deg, var(--brand-deep) 0%, var(--brand-mid) 55%, var(--brand-lime) 100%);
-    -webkit-background-clip: text;
-            background-clip: text;
-    color: transparent;
+    color: var(--primary);
   }
 
   .h-card {
     font-family: var(--font-sans);
-    font-weight: 600;
-    letter-spacing: -0.015em;
-    line-height: 1.25;
-    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.22;
+    font-size: 1.2rem;
     color: var(--foreground);
   }
 
@@ -170,10 +172,10 @@ body {
     align-items: center;
     gap: 0.55rem;
     font-family: var(--font-sans);
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    color: var(--brand-deep);
+    letter-spacing: 0.1em;
+    color: var(--primary);
     padding: 0.4rem 0.85rem 0.4rem 0.75rem;
     background: var(--primary-soft);
     border: 1px solid color-mix(in oklab, var(--brand-deep) 18%, transparent);
@@ -186,6 +188,15 @@ body {
       transform var(--dur) var(--ease-magnetic),
       box-shadow var(--dur) var(--ease-out);
   }
+  .tile-green .section-eyebrow,
+  .on-green .section-eyebrow {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--green-line);
+    box-shadow: none;
+  }
+  .tile-green .section-eyebrow::before,
+  .on-green .section-eyebrow::before { background: var(--brand-lime); box-shadow: 0 0 0 3px rgba(200, 232, 69, 0.25); }
   .section-eyebrow::before {
     content: '';
     display: inline-block;
@@ -203,6 +214,53 @@ body {
       transform: translateY(-1px);
       box-shadow: var(--shadow-soft);
     }
+  }
+
+  /* Foto enmarcada sin recorte: la imagen se ve ENTERA (contain) y el hueco
+     se rellena con la misma foto desenfocada. Sirve para fotos de cualquier
+     proporción subidas desde el backoffice. */
+  .foto-marco { position: absolute; inset: 0; overflow: hidden; background: var(--surface-strong); }
+  .foto-marco-fondo {
+    position: absolute;
+    inset: -8%;
+    width: 116%;
+    height: 116%;
+    object-fit: cover;
+    filter: blur(22px) saturate(1.15);
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+  .foto-marco-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+
+  /* Bloques bento */
+  .tile {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: clamp(1.4rem, 2.4vw, 2rem);
+    overflow: hidden;
+  }
+  .tile-soft { background: var(--canvas-alt); border-color: transparent; }
+  .tile-green {
+    background: var(--green);
+    border-color: transparent;
+    color: var(--on-green);
+  }
+  .tile-green .h-display,
+  .tile-green .h-section,
+  .tile-green .h-card { color: var(--on-green); }
+  .tile-green .h-display em,
+  .tile-green .h-section em { color: var(--brand-lime); }
+  .tile-ink { background: var(--ink); border-color: transparent; color: var(--on-green); }
+
+  .btn-light { background: #fff; color: var(--green-2); border-color: #fff; }
+  /* `.btn` (más abajo) pone border transparente: aquí el borde completo con
+     doble clase para ganar en especificidad. */
+  .btn.btn-outline-light { background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, 0.45); }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-light:hover { background: var(--brand-lime); border-color: var(--brand-lime); transform: translateY(-1px); }
+    .btn.btn-outline-light:hover { border-color: #fff; background: rgba(255, 255, 255, 0.06); transform: translateY(-1px); }
   }
 
   .container-app {
@@ -231,12 +289,13 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.7rem 1.15rem;
+    min-height: 48px;
+    padding: 0.75rem 1.3rem;
     font-family: var(--font-sans);
-    font-weight: 500;
-    font-size: 0.9rem;
-    letter-spacing: -0.005em;
-    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.93rem;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius);
     cursor: pointer;
     text-decoration: none;
     transition:
@@ -369,17 +428,14 @@ body {
   --reveal-delay: 0ms;
   opacity: 0;
   transform: translateY(20px);
-  filter: blur(8px);
   transition:
     opacity var(--dur-cinematic) var(--ease-editorial),
-    transform var(--dur-cinematic) var(--ease-editorial),
-    filter var(--dur-cinematic) var(--ease-editorial);
+    transform var(--dur-cinematic) var(--ease-editorial);
   transition-delay: var(--reveal-delay);
 }
 [data-reveal].in-view {
   opacity: 1;
   transform: translateY(0);
-  filter: blur(0);
 }
 
 /* Reveal word · para word-by-word stagger en el hero. Más punchy. */
@@ -388,18 +444,15 @@ body {
   display: inline-block;
   opacity: 0;
   transform: translateY(28px);
-  filter: blur(10px);
   transition:
     opacity var(--dur-editorial) var(--ease-editorial),
-    transform var(--dur-editorial) var(--ease-editorial),
-    filter var(--dur-editorial) var(--ease-editorial);
+    transform var(--dur-editorial) var(--ease-editorial);
   transition-delay: var(--reveal-delay);
   will-change: transform, filter;
 }
 [data-reveal-word].in-view {
   opacity: 1;
   transform: translateY(0);
-  filter: blur(0);
 }
 
 /* Float sutil permanente — imagen protagonista. */
@@ -426,6 +479,7 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  display: none;
   opacity: 0.18;
   background:
     radial-gradient(ellipse 45% 35% at 15% 25%, var(--brand-lime), transparent 65%),
@@ -495,6 +549,10 @@ body {
 }
 
 /* Underline animated (para links no-btn) */
+/* Dentro de la capa de componentes: así las utilidades (text-white…) mandan
+   sobre el color heredado. Fuera de capa pisaba el color y en el footer los
+   enlaces salían oscuros sobre fondo oscuro. */
+@layer components {
 .link-anim {
   position: relative;
   color: inherit;
@@ -515,6 +573,7 @@ body {
 }
 @media (hover: hover) and (pointer: fine) {
   .link-anim:hover::after { transform: scaleX(1); transform-origin: left; }
+}
 }
 
 :focus-visible {

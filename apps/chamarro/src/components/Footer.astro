@@ -2,6 +2,7 @@
 import { rutaConLocale, t, type Locale } from '@/lib/i18n';
 import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
 import type { Contacto, Direccion, RedesSociales } from '@/lib/sanity';
+import WhatsappIcon from '@/assets/svg/whatsapp.svg';
 
 interface Props {
   nombre: string;
@@ -74,26 +75,26 @@ const grupos = [
 ];
 ---
 
-<footer class='footer relative bg-[color:var(--canvas-alt)] border-t border-[color:var(--border)]'>
+<footer class='footer relative bg-[color:var(--ink)]'>
   <div class='container-app pt-[clamp(4rem,7vw,6rem)] pb-8'>
 
     {/* CTA hero superior con serif italic y underline animation */}
-    <div class='footer-cta flex flex-col min-[720px]:flex-row min-[720px]:items-end min-[720px]:justify-between gap-8 pb-[clamp(3rem,5vw,4rem)] border-b border-[color:var(--border)]'
+    <div class='footer-cta flex flex-col min-[720px]:flex-row min-[720px]:items-end min-[720px]:justify-between gap-8 pb-[clamp(3rem,5vw,4rem)] border-b border-[color:var(--green-line)]'
          data-reveal>
-      <div class='flex flex-col gap-4 max-w-[36ch]'>
-        <span class='inline-flex items-center gap-2 text-[color:var(--muted)] text-[0.7rem] tracking-[0.06em]'
+      <div class='flex flex-col gap-4 max-w-[34rem]'>
+        <span class='inline-flex items-center gap-2 text-[color:var(--on-green-muted)] text-[0.7rem] tracking-[0.06em]'
               style='font-family: var(--font-mono);'>
-          <span class='w-1.5 h-1.5 rounded-full bg-[color:var(--success)] motion-pulse'></span>
+          <span class='w-1.5 h-1.5 rounded-full bg-[color:var(--brand-lime)] motion-pulse'></span>
           {t('footer.badgeColegiada', lang)}
         </span>
         <h2 class='m-0'
-            style='font-family: var(--font-serif); font-weight: 400; font-size: clamp(1.75rem, 3vw + 0.5rem, 2.5rem); letter-spacing: -0.03em; line-height: 1.08; color: var(--foreground-strong);'>
-          ¿Necesitas ayuda? <em>Estamos aquí</em>.
+            style='font-weight: 800; font-size: clamp(1.9rem, 3vw + 0.6rem, 2.9rem); letter-spacing: -0.04em; line-height: 1.05; color: #fff;'>
+          {t('footer.ctaTitulo', lang)} <span class='text-[color:var(--brand-lime)]'>{t('footer.ctaEm', lang)}</span>
         </h2>
       </div>
       <div class='inline-flex gap-2.5 flex-wrap'>
         {contacto?.telefono && (
-          <a href={`tel:${contacto.telefono.replace(/\s+/g, '')}`} class='btn btn-primary'>
+          <a href={`tel:${contacto.telefono.replace(/\s+/g, '')}`} class='btn btn-light'>
             <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
               <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
             </svg>
@@ -104,10 +105,8 @@ const grupos = [
           <a href={`https://wa.me/${contacto.whatsapp.replace(/[^0-9]/g, '')}`}
              target='_blank'
              rel='noopener noreferrer'
-             class='btn btn-secondary'>
-            <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
-              <path d='M20.5 3.5A11 11 0 0 0 3.4 17l-1.4 5 5.1-1.3A11 11 0 1 0 20.5 3.5zM12 20a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20zm4.5-5.9c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1c-.2.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.6-1.2a.4.4 0 0 0 0-.4c0-.1-.6-1.4-.8-1.9s-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-1 2.3 5.4 5.4 0 0 0 1.1 2.9c.1.2 2 3 4.8 4.2a15.9 15.9 0 0 0 1.6.6 3.9 3.9 0 0 0 1.7.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.2-1.2-.2-.2-.4-.3z' />
-            </svg>
+             class='btn btn-outline-light'>
+            <WhatsappIcon width='19' height='19' aria-hidden='true' />
             WhatsApp
           </a>
         )}
@@ -118,11 +117,11 @@ const grupos = [
     <div class='grid grid-cols-1 min-[720px]:grid-cols-[1.4fr_1fr_1fr_1fr] gap-x-10 gap-y-10 pt-[clamp(3rem,5vw,4rem)]'>
 
       <div class='footer-col flex flex-col gap-5' data-reveal>
-        <a href={home} class='inline-flex items-center gap-2.5 no-underline text-[color:var(--foreground-strong)]' aria-label={nombre}>
+        <a href={home} class='inline-flex items-center gap-2.5 no-underline text-white' aria-label={nombre}>
           <img
             src={logoUrl}
             alt={nombre}
-            class='block w-9 h-9 object-contain'
+            class='block w-11 h-11 object-contain rounded-[var(--radius)] bg-white p-1.5'
             width='72'
             height='72'
             loading='lazy'
@@ -131,7 +130,7 @@ const grupos = [
         </a>
 
         {lineasDireccion.length > 0 && (
-          <address class='not-italic flex flex-col gap-0.5 text-[color:var(--muted)] text-[0.85rem] leading-[1.55]'>
+          <address class='not-italic flex flex-col gap-0.5 text-[color:var(--on-green-muted)] text-[0.85rem] leading-[1.55]'>
             {lineasDireccion.map((l) => <span>{l}</span>)}
           </address>
         )}
@@ -141,7 +140,7 @@ const grupos = [
             {redes.instagram && (
               <a href={redes.instagram} target='_blank' rel='noopener noreferrer'
                  aria-label={t('footer.ariaInstagram', lang)}
-                 class='footer-social inline-flex items-center justify-center w-9 h-9 text-[color:var(--muted)] border border-[color:var(--border)] bg-[color:var(--card)]'
+                 class='footer-social inline-flex items-center justify-center w-9 h-9 text-[color:var(--on-green-muted)] border border-[color:var(--green-line)] bg-transparent'
                  style='border-radius: var(--radius-xs);'>
                 <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>
                   <rect x='2' y='2' width='20' height='20' rx='5' />
@@ -153,7 +152,7 @@ const grupos = [
             {redes.facebook && (
               <a href={redes.facebook} target='_blank' rel='noopener noreferrer'
                  aria-label={t('footer.ariaFacebook', lang)}
-                 class='footer-social inline-flex items-center justify-center w-9 h-9 text-[color:var(--muted)] border border-[color:var(--border)] bg-[color:var(--card)]'
+                 class='footer-social inline-flex items-center justify-center w-9 h-9 text-[color:var(--on-green-muted)] border border-[color:var(--green-line)] bg-transparent'
                  style='border-radius: var(--radius-xs);'>
                 <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>
                   <path d='M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z' />
@@ -163,7 +162,7 @@ const grupos = [
             {redes.tiktok && (
               <a href={redes.tiktok} target='_blank' rel='noopener noreferrer'
                  aria-label={t('footer.ariaTiktok', lang)}
-                 class='footer-social inline-flex items-center justify-center w-9 h-9 text-[color:var(--muted)] border border-[color:var(--border)] bg-[color:var(--card)]'
+                 class='footer-social inline-flex items-center justify-center w-9 h-9 text-[color:var(--on-green-muted)] border border-[color:var(--green-line)] bg-transparent'
                  style='border-radius: var(--radius-xs);'>
                 <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>
                   <path d='M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5' />
@@ -176,7 +175,7 @@ const grupos = [
 
       {grupos.map((g, gi) => (
         <div class='footer-col flex flex-col gap-4' style={`--reveal-delay:${(gi + 1) * 100}ms`} data-reveal>
-          <h3 class='m-0 text-[color:var(--muted)] text-[0.72rem] font-normal tracking-[0.06em]'
+          <h3 class='m-0 text-[color:var(--on-green-muted)] text-[0.72rem] font-normal tracking-[0.06em]'
               style='font-family: var(--font-mono);'>
             {g.label}
           </h3>
@@ -185,7 +184,7 @@ const grupos = [
               <li>
                 <a href={l.href}
                    {...(l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                   class={`footer-link link-anim inline-block text-[color:var(--foreground)] no-underline text-[0.9rem] ${l.mono ? 'tabular-nums' : ''}`}>
+                   class={`footer-link link-anim inline-block text-white no-underline text-[0.9rem] ${l.mono ? 'tabular-nums' : ''}`}>
                   {l.label}
                 </a>
               </li>
@@ -196,13 +195,13 @@ const grupos = [
     </div>
 
     {/* BOTTOM BAR */}
-    <div class='pt-8 mt-[clamp(3rem,5vw,4rem)] border-t border-[color:var(--border)] flex flex-col-reverse min-[720px]:flex-row min-[720px]:items-center min-[720px]:justify-between gap-4'>
-      <p class='m-0 text-[color:var(--muted)] text-[0.78rem]'>
+    <div class='pt-8 mt-[clamp(3rem,5vw,4rem)] border-t border-[color:var(--green-line)] flex flex-col-reverse min-[720px]:flex-row min-[720px]:items-center min-[720px]:justify-between gap-4'>
+      <p class='m-0 text-[color:var(--on-green-muted)] text-[0.78rem]'>
         {t('footer.copyright', lang, { anyo, nombre })}
       </p>
 
       {(titular || numeroColegiado) && (
-        <div class='flex flex-col min-[720px]:text-right text-[color:var(--muted)] text-[0.72rem] leading-[1.5]'>
+        <div class='flex flex-col min-[720px]:text-right text-[color:var(--on-green-muted)] text-[0.72rem] leading-[1.5]'>
           {titular && <span>{titular}</span>}
           {numeroColegiado && (
             <span class='tabular-nums' style='font-family: var(--font-mono);'>
@@ -226,12 +225,12 @@ const grupos = [
         transform var(--dur) var(--ease-magnetic);
     }
     .footer-social:hover {
-      color: var(--background);
-      background: var(--foreground-strong);
-      border-color: var(--foreground-strong);
+      color: var(--ink);
+      background: var(--brand-lime);
+      border-color: var(--brand-lime);
       transform: translateY(-2px);
     }
-    .footer-link:hover { color: var(--foreground-strong); }
+    .footer-link:hover { color: var(--brand-lime); }
   }
 
   @media (prefers-reduced-motion: reduce) {
