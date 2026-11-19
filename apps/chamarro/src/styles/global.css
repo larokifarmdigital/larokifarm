@@ -209,14 +209,7 @@ body {
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand-deep) 20%, transparent);
     animation: motion-pulse 2.5s var(--ease-in-out) infinite;
   }
-  @media (hover: hover) and (pointer: fine) {
-    .section-eyebrow:hover {
-      background: var(--accent-soft);
-      border-color: color-mix(in oklab, var(--brand-deep) 32%, transparent);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-soft);
-    }
-  }
+  /* Sin efecto hover: el antetítulo no es clicable (falsa señal de clic). */
 
   /* Foto enmarcada sin recorte: la imagen se ve ENTERA (contain) y el hueco
      se rellena con la misma foto desenfocada. Sirve para fotos de cualquier
@@ -389,7 +382,7 @@ body {
     gap: 0.5rem;
     padding: 0.35rem 0.85rem 0.35rem 0.7rem;
     background: var(--primary-soft);
-    color: var(--brand-deep);
+    color: var(--green);
     border: 1px solid color-mix(in oklab, var(--brand-deep) 20%, transparent);
     border-radius: 9999px;
     font-family: var(--font-sans);

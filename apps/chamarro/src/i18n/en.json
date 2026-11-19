@@ -58,6 +58,11 @@
       "abreHoy": "opens today at {hora}",
       "abreManana": "opens tomorrow at {hora}",
       "verHorario": "See opening hours"
+    },
+    "carrusel": {
+      "foto": "Photo {n} of {total}",
+      "pausar": "Pause photos",
+      "reanudar": "Play photos"
     }
   },
   "about": {

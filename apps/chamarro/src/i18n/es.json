@@ -58,6 +58,11 @@
       "abreHoy": "abre hoy a las {hora}",
       "abreManana": "abre mañana a las {hora}",
       "verHorario": "Ver horario"
+    },
+    "carrusel": {
+      "foto": "Foto {n} de {total}",
+      "pausar": "Pausar fotos",
+      "reanudar": "Reanudar fotos"
     }
   },
   "about": {

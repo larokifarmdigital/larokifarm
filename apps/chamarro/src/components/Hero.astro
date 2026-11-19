@@ -129,10 +129,18 @@ const textosEstado = JSON.stringify({
           <div class='absolute inset-0 bg-[color:var(--canvas-alt)]' aria-hidden='true'></div>
         )}
         {tieneCarrusel && (
-          <div class='hero-dots' role='tablist' aria-label={t('hero.altInterior', lang, { nombre })}>
+          <div class='hero-dots'>
+            {/* WCAG 2.2.2: el carrusel automático debe poder pausarse */}
+            <button type='button' class='hero-pausa' data-hero-pausa aria-pressed='false'
+                    data-label-pausar={t('hero.carrusel.pausar', lang)} data-label-reanudar={t('hero.carrusel.reanudar', lang)}
+                    aria-label={t('hero.carrusel.pausar', lang)}>
+              <svg class='icono-pausa' width='10' height='10' viewBox='0 0 10 10' aria-hidden='true'><rect x='1.5' y='1' width='2.4' height='8' rx='0.6' fill='currentColor'/><rect x='6.1' y='1' width='2.4' height='8' rx='0.6' fill='currentColor'/></svg>
+              <svg class='icono-play' width='10' height='10' viewBox='0 0 10 10' aria-hidden='true'><path d='M2.5 1.2v7.6L8.8 5z' fill='currentColor'/></svg>
+            </button>
             {listaImagenes.map((_, i) => (
               <button type='button' class={`hero-dot ${i === 0 ? 'is-active' : ''}`} data-hero-dot={String(i)}
-                      aria-label={`${i + 1} / ${listaImagenes.length}`} aria-selected={i === 0 ? 'true' : 'false'} role='tab'></button>
+                      aria-label={t('hero.carrusel.foto', lang, { n: String(i + 1), total: String(listaImagenes.length) })}
+                      aria-current={i === 0 ? 'true' : undefined}></button>
             ))}
           </div>
         )}
@@ -224,26 +232,56 @@ const textosEstado = JSON.stringify({
     bottom: 1rem;
     z-index: 2;
     display: inline-flex;
-    gap: 6px;
-    padding: 7px 9px;
+    gap: 0;
+    padding: 2px 6px;
     border-radius: 999px;
     background: rgba(11, 21, 16, 0.45);
     backdrop-filter: blur(8px);
   }
-  .hero-dot {
-    position: relative;
-    width: 7px;
-    height: 7px;
+  .hero-pausa {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    margin-right: 2px;
     padding: 0;
     border: none;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.5);
+    background: transparent;
+    color: #fff;
     cursor: pointer;
+  }
+  .hero-pausa[hidden] { display: none; }
+  .hero-pausa .icono-play { display: none; }
+  .hero-pausa[aria-pressed='true'] .icono-play { display: block; }
+  .hero-pausa[aria-pressed='true'] .icono-pausa { display: none; }
+  @media (hover: hover) and (pointer: fine) {
+    .hero-pausa:hover { background: rgba(255, 255, 255, 0.18); }
+  }
+
+  /* Botón de 24×24 (zona táctil WCAG 2.5.8) con el punto dibujado dentro */
+  .hero-dot {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  .hero-dot::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.55);
     transition: width var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
   }
-  .hero-dot.is-active { width: 20px; background: #fff; }
-  /* zona táctil de 24px de alto sin cambiar el tamaño visible */
-  .hero-dot::after { content: ''; position: absolute; inset: -9px -4px; }
+  .hero-dot.is-active::before { width: 20px; background: #fff; }
+  @media (hover: hover) and (pointer: fine) {
+    .hero-dot:not(.is-active):hover::before { background: rgba(255, 255, 255, 0.85); }
+  }
 
   .hero-estado {
     display: flex;
@@ -306,17 +344,37 @@ const textosEstado = JSON.stringify({
       slides.forEach((s, k) => s.classList.toggle('is-active', k === indice));
       dots.forEach((d, k) => {
         d.classList.toggle('is-active', k === indice);
-        d.setAttribute('aria-selected', k === indice ? 'true' : 'false');
+        if (k === indice) d.setAttribute('aria-current', 'true');
+        else d.removeAttribute('aria-current');
       });
     };
     const iniciar = () => {
       window.clearInterval(timer);
       timer = window.setInterval(() => mostrar(indice + 1), 6000);
     };
-    dots.forEach((d, i) => d.addEventListener('click', () => { mostrar(i); iniciar(); }));
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const pausa = slider.querySelector<HTMLButtonElement>('[data-hero-pausa]');
+    let pausadoPorUsuario = false;
+    const detener = () => window.clearInterval(timer);
+    const reanudar = () => { if (!pausadoPorUsuario && !sinMovimiento) iniciar(); };
+    const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    dots.forEach((d, i) => d.addEventListener('click', () => { mostrar(i); reanudar(); }));
+    if (sinMovimiento) {
+      pausadoPorUsuario = true; // con movimiento reducido no avanza solo
+      pausa?.setAttribute('hidden', '');
+    } else {
       iniciar();
-      document.addEventListener('visibilitychange', () => (document.hidden ? window.clearInterval(timer) : iniciar()));
+      document.addEventListener('visibilitychange', () => (document.hidden ? detener() : reanudar()));
+      // se para mientras el usuario mira o navega por las fotos
+      slider.addEventListener('mouseenter', detener);
+      slider.addEventListener('mouseleave', reanudar);
+      slider.addEventListener('focusin', detener);
+      slider.addEventListener('focusout', reanudar);
+      pausa?.addEventListener('click', () => {
+        pausadoPorUsuario = !pausadoPorUsuario;
+        pausa.setAttribute('aria-pressed', String(pausadoPorUsuario));
+        pausa.setAttribute('aria-label', pausadoPorUsuario ? pausa.dataset.labelReanudar! : pausa.dataset.labelPausar!);
+        if (pausadoPorUsuario) detener();
+      });
     }
   }
 

@@ -87,11 +87,10 @@ const enlaces = [
               <path d='m6 9 6 6 6-6' />
             </svg>
           </summary>
-          <ul class='lang-menu absolute right-0 list-none p-[0.35rem] m-0 bg-[color:var(--card)] border border-[color:var(--border)] rounded-[var(--radius-lg)] min-w-[180px] z-50' role='menu'>
+          <ul class='lang-menu absolute right-0 list-none p-[0.35rem] m-0 bg-[color:var(--card)] border border-[color:var(--border)] rounded-[var(--radius-lg)] min-w-[180px] z-50'>
             {idiomasVisibles.map((l) => (
-              <li role='none'>
+              <li>
                 <a
-                  role='menuitem'
                   href={rutaConLocale(rutaActual, l)}
                   class={`lang-item grid grid-cols-[auto_1fr_auto] items-center gap-3 py-[0.55rem] px-3 rounded-[var(--radius-sm)] no-underline text-[color:var(--foreground)] text-[0.85rem] transition-colors duration-200 ${l === lang ? 'is-active' : ''}`}
                   aria-current={l === lang ? 'true' : undefined}
@@ -232,6 +231,13 @@ const enlaces = [
         menu.setAttribute('hidden', '');
       }),
     );
+    // Escape cierra el menú móvil y devuelve el foco al botón
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || toggle.getAttribute('aria-expanded') !== 'true') return;
+      toggle.setAttribute('aria-expanded', 'false');
+      menu.setAttribute('hidden', '');
+      toggle.focus();
+    });
   }
 
   // Cerrar dropdown de idiomas al hacer clic fuera o presionar Escape
@@ -241,8 +247,13 @@ const enlaces = [
         langDetails.open = false;
       }
     });
+    // Escape cierra el selector; si el foco estaba dentro, vuelve al botón
+    // (si no, el enlace enfocado se oculta y el foco cae en <body>)
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') langDetails.open = false;
+      if (e.key !== 'Escape' || !langDetails.open) return;
+      const dentro = langDetails.contains(document.activeElement);
+      langDetails.open = false;
+      if (dentro) langDetails.querySelector('summary')?.focus();
     });
   }
 </script>
