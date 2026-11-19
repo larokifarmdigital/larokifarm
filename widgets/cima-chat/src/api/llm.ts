@@ -21,7 +21,8 @@ export interface ChatCitation {
 }
 
 export interface ChatResponse {
-  ok: boolean;
+  // `true` literal (no boolean): así `res.ok` discrimina ChatResponse | ChatError
+  ok: true;
   cached?: boolean;
   text: string;
   citations: ChatCitation[];

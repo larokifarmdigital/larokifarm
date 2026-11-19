@@ -45,4 +45,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy widgets/cima-chat/dist --project-name=larokifarm-cima-chat --branch=main --commit-message="${{ github.event.head_commit.message || 'manual deploy' }}"
+          # Solo el hash: el mensaje del commit puede tener varias líneas y rompía
+          # el comando de wrangler (todos los despliegues fallaban desde 11-11).
+          command: pages deploy widgets/cima-chat/dist --project-name=larokifarm-cima-chat --branch=main --commit-hash=${{ github.sha }}
