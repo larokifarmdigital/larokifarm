@@ -31,7 +31,7 @@
   --green-2: #0B5631;
   --ink: #0B1510;            /* casi negro verdoso (footer) */
   --on-green: #FFFFFF;
-  --on-green-muted: rgba(255, 255, 255, 0.74);
+  --on-green-muted: rgba(255, 255, 255, 0.88);
   --green-line: rgba(255, 255, 255, 0.16);
 
   --primary: #12804A;        /* CTA (AA sobre blanco) */
@@ -52,7 +52,9 @@
   --success-soft: #E6F4EB;
   --warning: #956400;
   --danger: #B42318;
-  --whatsapp: #1FAF38;
+  /* Verde WhatsApp oscurecido: el oficial #1FAF38 con texto blanco da 2,9:1;
+     este da 5:1 (AA). El logo del icono conserva sus colores. */
+  --whatsapp: #15803D;
 
   --font-sans: 'Manrope', 'Helvetica Neue', system-ui, sans-serif;
   --font-serif: 'Manrope', 'Helvetica Neue', system-ui, sans-serif;
@@ -175,7 +177,7 @@ body {
     font-weight: 700;
     font-size: 0.72rem;
     letter-spacing: 0.1em;
-    color: var(--primary);
+    color: var(--green-2);
     padding: 0.4rem 0.85rem 0.4rem 0.75rem;
     background: var(--primary-soft);
     border: 1px solid color-mix(in oklab, var(--brand-deep) 18%, transparent);
@@ -581,6 +583,9 @@ body {
   outline-offset: 2px;
   border-radius: var(--radius-xs);
 }
+/* Sobre bloques verdes y el footer oscuro el anillo oscuro no se vería */
+.tile-green :focus-visible,
+.footer :focus-visible { outline-color: var(--brand-lime); }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

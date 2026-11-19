@@ -120,7 +120,7 @@ const grupos = [
         <a href={home} class='inline-flex items-center gap-2.5 no-underline text-white' aria-label={nombre}>
           <img
             src={logoUrl}
-            alt={nombre}
+            alt=''
             class='block w-11 h-11 object-contain rounded-[var(--radius)] bg-white p-1.5'
             width='72'
             height='72'
@@ -184,7 +184,7 @@ const grupos = [
               <li>
                 <a href={l.href}
                    {...(l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                   class={`footer-link link-anim inline-block text-white no-underline text-[0.9rem] ${l.mono ? 'tabular-nums' : ''}`}>
+                   class={`footer-link link-anim inline-block py-1 text-white no-underline text-[0.9rem] ${l.mono ? 'tabular-nums' : ''}`}>
                   {l.label}
                 </a>
               </li>

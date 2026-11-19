@@ -31,7 +31,8 @@ const items = featuresSanity.length > 0 ? featuresSanity : featuresFallback;
 if (items.length === 0) return null;
 ---
 
-<section class='features' aria-label={t('features.aria', lang)}>
+<section class='features' aria-labelledby='features-titulo'>
+  <h2 id='features-titulo' class='sr-only'>{t('features.aria', lang)}</h2>
   <div class='container-app pb-[clamp(3rem,6vw,5rem)]'>
     <ul class='list-none p-0 m-0 grid grid-cols-1 min-[560px]:grid-cols-2 min-[1000px]:grid-cols-4 gap-[clamp(0.75rem,1.4vw,1rem)]'>
       {items.map((f, i) => (
@@ -48,7 +49,8 @@ if (items.length === 0) return null;
 </section>
 
 <style>
-  .feature-item { padding: 1.25rem 1.3rem; border-radius: var(--radius-lg); transition: border-color var(--dur) var(--ease-out), transform var(--dur) var(--ease-magnetic); }
+  /* Informativas, no clicables: sin efecto hover para no parecer botones */
+  .feature-item { padding: 1.25rem 1.3rem; border-radius: var(--radius-lg); background: var(--canvas-alt); border-color: transparent; }
   .feature-icon {
     display: inline-flex;
     align-items: center;
@@ -59,11 +61,5 @@ if (items.length === 0) return null;
     border-radius: var(--radius);
     background: var(--primary-soft);
     color: var(--primary);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .feature-item:hover { border-color: var(--primary); transform: translateY(-2px); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .feature-item:hover { transform: none; }
   }
 </style>

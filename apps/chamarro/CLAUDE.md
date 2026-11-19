@@ -67,6 +67,15 @@ El `BaseLayout.astro` enlaza: `favicon.svg`, `favicon-32.png`,
 
 ## Reglas que ya se rompieron una vez
 
+- **Falsa señal de clic**: nada que NO sea enlace/botón puede tener hover de
+  tarjeta (levantar, borde de color) ni forma de píldora/botón. Pasó con las
+  ventajas, las cajitas del hero y los puntos de About (19-11-2026).
+- **Accesibilidad verificada con axe** (wcag2a/aa + best-practice): 0
+  incidencias en `/`, `/ca/`, `/en/` y páginas legales. Mantener: texto tenue
+  sobre verde ≥ `--on-green-muted` (0.88), `--whatsapp #15803D` (el oficial
+  #1FAF38 con texto blanco no llega a 4,5:1), anillo de foco lima sobre fondos
+  verdes/oscuros, logos con `alt=''` (el nombre va al lado), zonas táctiles ≥24px.
+
 - **CSS fuera de `@layer`**: una regla sin capa pisa a las utilidades de
   Tailwind. `.link-anim` tenía `color: inherit` fuera de capa y los enlaces del
   footer salían oscuros sobre fondo oscuro (contraste 1,1:1). Las clases de

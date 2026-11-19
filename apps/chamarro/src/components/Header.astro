@@ -55,7 +55,7 @@ const enlaces = [
     <a href={home} class='inline-flex items-center gap-[0.6rem] no-underline text-[color:var(--foreground)] min-w-0' aria-label={nombre}>
       <img
         src={logoUrl}
-        alt={nombre}
+        alt=''
         class='block w-9 h-9 object-contain shrink-0'
         width='72'
         height='72'
@@ -66,7 +66,7 @@ const enlaces = [
 
     <nav class='hidden min-[960px]:inline-flex justify-self-center gap-7' aria-label={t('header.nav.aria', lang)}>
       {enlaces.map((e) => (
-        <a href={e.href} class='header-link text-[0.88rem] font-medium text-[color:var(--muted-foreground)] no-underline whitespace-nowrap transition-colors duration-200'>{e.label}</a>
+        <a href={e.href} class='header-link py-2.5 text-[0.88rem] font-medium text-[color:var(--muted-foreground)] no-underline whitespace-nowrap transition-colors duration-200'>{e.label}</a>
       ))}
     </nav>
 

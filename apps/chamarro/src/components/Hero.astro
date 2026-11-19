@@ -191,15 +191,14 @@ const textosEstado = JSON.stringify({
   @media (min-width: 960px) {
     .hero-trust-sub { display: none; }
   }
+  /* Informativas: sin caja ni borde, para que no parezcan botones */
   .hero-trust-item {
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
     min-width: 0;
-    padding: 0.9rem 1rem;
-    border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--green-line);
+    padding-top: 1rem;
+    border-top: 1px solid var(--green-line);
   }
   .hero-trust-icon {
     display: inline-flex;
@@ -232,6 +231,7 @@ const textosEstado = JSON.stringify({
     backdrop-filter: blur(8px);
   }
   .hero-dot {
+    position: relative;
     width: 7px;
     height: 7px;
     padding: 0;
@@ -242,6 +242,8 @@ const textosEstado = JSON.stringify({
     transition: width var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
   }
   .hero-dot.is-active { width: 20px; background: #fff; }
+  /* zona táctil de 24px de alto sin cambiar el tamaño visible */
+  .hero-dot::after { content: ''; position: absolute; inset: -9px -4px; }
 
   .hero-estado {
     display: flex;
