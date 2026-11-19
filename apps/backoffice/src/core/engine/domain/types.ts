@@ -16,6 +16,11 @@ export interface DeliveryNoteLine {
   unitPrice: number;
   discount?: number;
   /**
+   * % de la 2ª columna de descuento ("Dto. Factura", caso NAOS). reconcile lo
+   * combina con `discount` (compuesto si vienen los dos).
+   */
+  invoiceDiscount?: number;
+  /**
    * Importe absoluto del descuento en € (línea B "10,00% -7,60" → 7.60,
    * siempre positivo). Sirve como señal redundante para reconstruir el
    * `discount` porcentual si Gemini se lo come. Post-proceso lo consume

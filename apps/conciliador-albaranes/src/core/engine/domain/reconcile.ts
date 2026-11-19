@@ -1,5 +1,5 @@
 import { descriptionMatches } from './descriptionMatch';
-import { cleanAlt, cleanNationalCode, cnCandidates, parseNumber, rescueNationalCode } from './numbers';
+import { cleanAlt, cleanNationalCode, cnCandidates, combineDiscounts, parseNumber, rescueNationalCode } from './numbers';
 import type {
   DeliveryNoteData,
   DiscrepancyKind,
@@ -128,11 +128,16 @@ function visibleCode(p: Item | null, a: Item | null): string {
 
 const rescueCn = rescueNationalCode;
 
+// Margen para el error de coma flotante: 17,47 − 17,46 da 0,0100000000000016
+// y sin él una diferencia de justo 1 céntimo (dentro de la tolerancia) salía
+// como discrepancia de precio.
+const FLOAT_EPS = 1e-9;
+
 function compareFields(p: Item, a: Item): DiscrepancyKind[] {
   const d: DiscrepancyKind[] = [];
-  if (Math.abs(p.units - a.units) > TOL_QUANTITY) d.push('units');
-  if (Math.abs(p.price - a.price) > TOL_PRICE) d.push('price');
-  if (Math.abs(p.discount - a.discount) > TOL_DISCOUNT) d.push('discount');
+  if (Math.abs(p.units - a.units) > TOL_QUANTITY + FLOAT_EPS) d.push('units');
+  if (Math.abs(p.price - a.price) > TOL_PRICE + FLOAT_EPS) d.push('price');
+  if (Math.abs(p.discount - a.discount) > TOL_DISCOUNT + FLOAT_EPS) d.push('discount');
   return d;
 }
 
@@ -169,7 +174,7 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
         description: l.description ?? '',
         units: l.quantity,
         price: l.unitPrice,
-        discount: l.discount ?? 0,
+        discount: combineDiscounts(l.discount, l.invoiceDiscount),
         freeUnitsRaw: l.freeUnits,
       };
     }),

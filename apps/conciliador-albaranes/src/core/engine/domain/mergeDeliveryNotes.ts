@@ -146,6 +146,7 @@ function mergeLines(group: Source[]): DeliveryNoteLine[] {
       quantity: o.line.quantity ?? 0,
       unitPrice: o.line.unitPrice ?? 0,
       discount: o.line.discount,
+      invoiceDiscount: o.line.invoiceDiscount,
       freeUnits: o.line.freeUnits ?? 0,
     }));
   }
@@ -171,6 +172,7 @@ function mergeLines(group: Source[]): DeliveryNoteLine[] {
       discount:
         pickNum(anyOrder, (l) => l.discount) ??
         pickNumIncl0(invoiceOrder, (l) => l.discount),
+      invoiceDiscount: pickNum(anyOrder, (l) => l.invoiceDiscount),
       freeUnits: pickNum(deliveryNoteOrder, (l) => l.freeUnits),
     },
   ];

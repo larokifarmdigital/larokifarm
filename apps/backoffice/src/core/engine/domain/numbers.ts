@@ -66,6 +66,17 @@ export function cnCandidates(raws: ReadonlyArray<unknown>): string[] {
     .filter((cn) => (seen.has(cn) ? false : (seen.add(cn), true)));
 }
 
+// NOTE: combina el % de la línea con el de la columna "Dto. Factura" (NAOS).
+// Si solo viene uno, es ese; si vienen los dos, descuento compuesto
+// (30 % + 28 % → 49,6 %), que es como se aplican en cascada.
+export function combineDiscounts(line: number | undefined, invoice: number | undefined): number {
+  const a = line && line > 0 ? line : 0;
+  const b = invoice && invoice > 0 ? invoice : 0;
+  if (!b) return a;
+  if (!a) return b;
+  return Math.round((1 - (1 - a / 100) * (1 - b / 100)) * 10000) / 100;
+}
+
 // NOTE: uppercase + alfanumérico, sin truncar; devuelve '' si length<4 para evitar joins espurios.
 export function cleanAlt(value: unknown): string {
   if (value === null || value === undefined) return '';

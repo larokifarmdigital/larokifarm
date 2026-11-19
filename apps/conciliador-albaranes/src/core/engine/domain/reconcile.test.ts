@@ -412,4 +412,28 @@ describe('reconcile', () => {
     );
     expect(r.lines.map((l) => l.status).sort()).toEqual(['EXTRA_IN_DELIVERY_NOTE', 'MISSING_IN_DELIVERY_NOTE']);
   });
+
+  // NAOS/Bioderma: dos columnas de descuento ("% Dto." y "Dto. Factura").
+  it('NAOS: usa el % de "Dto. Factura" cuando la línea no trae "% Dto."', () => {
+    const r = reconcile(
+      deliveryNote([
+        { nationalCode: '210525', description: 'SEBIUM SERUM', quantity: 3, unitPrice: 23.07, discount: 0, invoiceDiscount: 28 },
+        { nationalCode: '182918', description: 'SENSIBIO GEL', quantity: 12, unitPrice: 8.96, discount: 30 },
+      ]),
+      order([
+        { productCode: '210525', description: 'SEBIUM SERUM', units: 3, price: 23.06, discount: 28 },
+        { productCode: '182918', description: 'SENSIBIO GEL', units: 12, price: 8.96, discount: 30 },
+      ]),
+    );
+    expect(r.lines.every((l) => l.status === 'OK')).toBe(true);
+    expect(r.lines.find((l) => l.nationalCode === '210525')?.discountDelivered).toBe(28);
+  });
+
+  it('una diferencia de precio de justo 1 céntimo está dentro de la tolerancia', () => {
+    const r = reconcile(
+      deliveryNote([{ nationalCode: '151797', description: 'P', quantity: 12, unitPrice: 17.47, discount: 28 }]),
+      order([{ productCode: '151797', description: 'P', units: 12, price: 17.46, discount: 28 }]),
+    );
+    expect(r.lines[0].status).toBe('OK');
+  });
 });

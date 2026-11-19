@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanNationalCode, cnCandidates, cnCheckDigitOk, parseNumber, rescueNationalCode } from './numbers';
+import { cleanNationalCode, cnCandidates, combineDiscounts, cnCheckDigitOk, parseNumber, rescueNationalCode } from './numbers';
 
 describe('cleanNationalCode', () => {
   it('quita no numéricos y deja 6 dígitos', () => {
@@ -112,5 +112,14 @@ describe('cnCandidates', () => {
   });
   it('ignora códigos con letras', () => {
     expect(cnCandidates(['UN14080'])).toEqual([]);
+  });
+});
+
+describe('combineDiscounts', () => {
+  it('usa el que venga y compone si vienen los dos', () => {
+    expect(combineDiscounts(30, undefined)).toBe(30);
+    expect(combineDiscounts(0, 28)).toBe(28);
+    expect(combineDiscounts(undefined, undefined)).toBe(0);
+    expect(combineDiscounts(30, 28)).toBe(49.6);
   });
 });

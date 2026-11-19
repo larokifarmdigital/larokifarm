@@ -17,6 +17,11 @@ Vienen en muchos formatos; adáptate. Extrae cabecera y TODAS las líneas
 
 - "quantity" = valor de la columna UDS TAL CUAL aparece (unidades servidas totales; no
   restes la bonificación, eso lo hace el sistema).
+  OJO: si el proveedor separa las unidades en DOS columnas, "Unidades Con Cargo"
+  (facturadas) y "Unidades Bonificadas" (regalo) — caso NAOS/Bioderma —, entonces
+  quantity = con cargo + bonificadas (el TOTAL servido) y freeUnits = bonificadas.
+  Ejemplos: con cargo 12 + bonificadas 1 → quantity=13, freeUnits=1.
+  Muestra con cargo vacío + bonificadas 10 → quantity=10, freeUnits=10.
 - "unitPrice" = precio base por unidad de la columna PVL/PRECIO/Tarifa General (NO el
   precio neto ni el importe). Léelo de la línea facturada; nunca pongas 0 si la columna
   PVL/Tarifa tiene valor. Si el PDF SOLO trae precio neto (sin tarifa base), usa el neto
@@ -34,6 +39,14 @@ Vienen en muchos formatos; adáptate. Extrae cabecera y TODAS las líneas
   Si NO ves una línea aclaratoria con denominador, asume N=1 y deja el precio como está.
 - "discount" = porcentaje de descuento de ESA línea (solo el número, ej. 21 ó 21,5).
   El descuento NO es la bonificación: son cosas distintas.
+- "invoiceDiscount" = porcentaje de la columna "Dto. Factura" / "Dto. pie" / "Dto.
+  comercial" cuando el proveedor tiene DOS columnas de descuento por línea (caso
+  NAOS/Bioderma: "% Dto." y "Dto. Factura"). "% Dto." va a "discount" e
+  "Dto. Factura" va a "invoiceDiscount"; cada línea suele traer valor en UNA de
+  las dos (ej. "30%" en % Dto. y vacío en Dto. Factura, u otra línea con "% Dto."
+  vacío y "28" en Dto. Factura → discount=0, invoiceDiscount=28). No los sumes tú:
+  devuélvelos por separado, el sistema los combina. Si el proveedor solo tiene una
+  columna de descuento, deja invoiceDiscount vacío o 0.
 - "discountAmount" = importe absoluto en € del descuento de ESA línea, siempre
   positivo (aunque en el PDF venga con signo -). Es el número que aparece a la
   derecha del porcentaje en la línea B ("10,00% -7,60" → discountAmount = 7,60).
@@ -288,6 +301,7 @@ const RESPONSE_SCHEMA = {
           quantity: { type: 'number' },
           unitPrice: { type: 'number' },
           discount: { type: 'number' },
+          invoiceDiscount: { type: 'number' },
           discountAmount: { type: 'number' },
           netUnitPrice: { type: 'number' },
           freeUnits: { type: 'number' },
@@ -308,6 +322,7 @@ const lineSchema = z.object({
   quantity: z.number(),
   unitPrice: z.number(),
   discount: z.number().optional(),
+  invoiceDiscount: z.number().optional(),
   discountAmount: z.number().optional(),
   netUnitPrice: z.number().optional(),
   freeUnits: z.number().optional(),
@@ -430,6 +445,9 @@ export function reconstructMissingDiscounts(data: DeliveryNoteData): DeliveryNot
     ...data,
     lines: data.lines.map((line) => {
       if ((line.discount ?? 0) > 0) return line;
+      // El descuento ya viene en la 2ª columna ("Dto. Factura"): reconstruirlo
+      // aquí lo contaría dos veces al combinarlo en reconcile.
+      if ((line.invoiceDiscount ?? 0) > 0) return line;
 
       const bruto = line.unitPrice;
       const neto = line.netUnitPrice ?? 0;
