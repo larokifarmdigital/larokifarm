@@ -141,6 +141,7 @@ function mergeLines(group: Source[]): DeliveryNoteLine[] {
       code: o.line.code ?? pickStr(group, (l) => l.code),
       nationalCode: o.line.nationalCode ?? commonNationalCode,
       ean: o.line.ean ?? commonEan,
+      codes: allCodes(group),
       description: o.line.description ?? commonDescription,
       quantity: o.line.quantity ?? 0,
       unitPrice: o.line.unitPrice ?? 0,
@@ -158,6 +159,7 @@ function mergeLines(group: Source[]): DeliveryNoteLine[] {
       code: pickStr(anyOrder, (l) => l.code),
       nationalCode: pickStr(invoiceOrder, (l) => l.nationalCode),
       ean: pickStr(deliveryNoteOrder, (l) => l.ean),
+      codes: allCodes(group),
       description: pickStr(deliveryNoteOrder, (l) => l.description) ?? '',
       quantity: pickNum(deliveryNoteOrder, (l) => l.quantity) ?? 0,
       unitPrice: pickNum(invoiceOrder, (l) => l.unitPrice) ?? 0,
@@ -209,4 +211,11 @@ function firstStr(
     if (v && v.trim() !== '') return v;
   }
   return undefined;
+}
+
+// Une los `codes` de todas las fuentes del grupo (sin duplicados): reconcile
+// prueba cada uno como candidato a C.N., así que conviene no perder ninguno.
+function allCodes(group: Source[]): string[] | undefined {
+  const out = [...new Set(group.flatMap((o) => o.line.codes ?? []))];
+  return out.length > 0 ? out : undefined;
 }

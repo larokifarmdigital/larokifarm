@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanNationalCode, parseNumber, rescueNationalCode } from './numbers';
+import { cleanNationalCode, cnCandidates, cnCheckDigitOk, parseNumber, rescueNationalCode } from './numbers';
 
 describe('cleanNationalCode', () => {
   it('quita no numéricos y deja 6 dígitos', () => {
@@ -90,5 +90,27 @@ describe('parseNumber', () => {
     expect(parseNumber(null)).toBe(0);
     expect(parseNumber(undefined)).toBe(0);
     expect(parseNumber('abc')).toBe(0);
+  });
+});
+
+describe('cnCheckDigitOk', () => {
+  it('valida el dígito de control del C.N. (EAN 847000 + CN)', () => {
+    expect(cnCheckDigitOk('1542670')).toBe(true);
+    expect(cnCheckDigitOk('9077419')).toBe(true);
+    expect(cnCheckDigitOk('4480949')).toBe(false); // interno Bayer de 7 dígitos
+    expect(cnCheckDigitOk('154267')).toBe(false);
+  });
+});
+
+describe('cnCandidates', () => {
+  it('descarta internos de 8+ dígitos y prioriza el C.N. con control válido', () => {
+    expect(cnCandidates(['87430014', '1593245'])).toEqual(['159324']);
+    expect(cnCandidates(['4480949', '9549749'])).toEqual(['954974', '448094']);
+  });
+  it('acepta 6 dígitos, "XXXXXX.X" y EAN 847000…, sin duplicados', () => {
+    expect(cnCandidates(['192332.P', '8470001542670', '154267', '', undefined])).toEqual(['154267', '192332']);
+  });
+  it('ignora códigos con letras', () => {
+    expect(cnCandidates(['UN14080'])).toEqual([]);
   });
 });

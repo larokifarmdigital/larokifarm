@@ -88,6 +88,12 @@ Vienen en muchos formatos; adáptate. Extrae cabecera y TODAS las líneas
   incluyas puntos ni letras en este campo.
 - "ean" = código de barras / EAN / GTIN del artículo si aparece (solo el código,
   normalmente 8-13 dígitos); si no, "".
+- "codes" = lista con TODOS los códigos que aparecen en la celda/columna del código
+  del artículo de esa línea, COPIADOS LITERALMENTE (sin quitar dígitos, puntos ni
+  sufijos) y en orden de arriba abajo. Si la celda trae 2 códigos apilados, devuelve
+  los 2 (ej. ["87430014", "1593245"]). Si trae uno, una lista de 1. No metas aquí
+  lotes, caducidades, "Código del SA", cantidades ni importes. Este campo es
+  independiente de "nationalCode"/"code": rellénalo SIEMPRE además de ellos.
 - "code" = código interno del proveedor (ej. "UN14080", "12578223", "5000036689").
   Es el identificador que el proveedor usa internamente y suele aparecer en TODOS los
   documentos del mismo envío (albarán + factura). NO lo confundas con C.N. ni EAN.
@@ -215,6 +221,11 @@ LAYOUT BAYER (2 códigos APILADOS en la columna "Código de producto") — CRÍT
 - Aplica la misma jerarquía de campos incluso si el proveedor no es Bayer: siempre
   que veas 2 códigos apilados en la celda del código, el que encaje con formato
   C.N. español (6-7 dígitos) va a nationalCode; el otro a code.
+- En este layout "codes" lleva SIEMPRE los 2 códigos literales de la celda, el de
+  arriba primero (ej. codes=["87430014", "1593245"]). Si una fila solo trae el
+  código de arriba (no hay C.N. debajo), codes=["91851207"] y nationalCode="".
+  OJO: el código de arriba a veces también tiene 7 dígitos (ej. "4480949" arriba,
+  "9549749" abajo): el C.N. sigue siendo el de ABAJO.
 
 LAYOUT HARTMANN (etiqueta "Dto. por articulo -XX,00%") — IMPORTANTE:
 - Otros proveedores (Hartmann/Peha-soft) usan un formato donde cada ítem trae
@@ -272,6 +283,7 @@ const RESPONSE_SCHEMA = {
           code: { type: 'string' },
           nationalCode: { type: 'string' },
           ean: { type: 'string' },
+          codes: { type: 'array', items: { type: 'string' } },
           description: { type: 'string' },
           quantity: { type: 'number' },
           unitPrice: { type: 'number' },
@@ -291,6 +303,7 @@ const lineSchema = z.object({
   code: z.string().optional(),
   nationalCode: z.string().optional(),
   ean: z.string().optional(),
+  codes: z.array(z.string()).optional(),
   description: z.string(),
   quantity: z.number(),
   unitPrice: z.number(),

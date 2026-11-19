@@ -22,6 +22,50 @@ export function rescueNationalCode(
   return m ? m[1] : '';
 }
 
+// NOTE: el dígito de control del C.N. español es el del EAN-13 "847000" + CN
+// (ej. CN 154267 → EAN 8470001542670 → control 0 → impreso "1542670").
+export function cnCheckDigitOk(cn7: string): boolean {
+  if (!/^\d{7}$/.test(cn7)) return false;
+  const ean12 = `847000${cn7.slice(0, 6)}`;
+  let sum = 0;
+  for (let i = 0; i < 12; i++) sum += Number(ean12[i]) * (i % 2 === 0 ? 1 : 3);
+  return (10 - (sum % 10)) % 10 === Number(cn7[6]);
+}
+
+// NOTE: candidatos a C.N. (6 dígitos) sacados de TODOS los códigos crudos de
+// una línea (nationalCode, code, ean y la lista `codes` que imprime la celda).
+// Caso Bayer: la celda trae el interno del proveedor y el C.N. apilados, y a
+// veces el interno también tiene 7 dígitos ("4480949"), así que no se puede
+// decidir por longitud: se prueban todos contra el pedido y gana el que cruce.
+// Orden de preferencia (solo desempata, el pedido es quien decide):
+//   1) 7 dígitos con dígito de control válido, o EAN-13 "847000…"
+//   2) 6 dígitos exactos o "XXXXXX.X"
+//   3) 7 dígitos con dígito de control NO válido (puede ser un interno)
+// Ignora 8+ dígitos (internos tipo "87430014") y códigos con letras.
+export function cnCandidates(raws: ReadonlyArray<unknown>): string[] {
+  const ranked: Array<{ cn: string; rank: number }> = [];
+  for (const raw of raws) {
+    if (raw === null || raw === undefined) continue;
+    const s = String(raw).trim().replace(/\s+/g, '');
+    if (s === '') continue;
+    const ean = /^847000(\d{6})\d$/.exec(s);
+    if (ean) {
+      ranked.push({ cn: ean[1], rank: 1 });
+      continue;
+    }
+    const m = CN_LIKE.exec(s);
+    if (!m) continue;
+    const rank = /^\d{7}$/.test(s) ? (cnCheckDigitOk(s) ? 1 : 3) : 2;
+    ranked.push({ cn: m[1], rank });
+  }
+  const seen = new Set<string>();
+  return ranked
+    .map((r, i) => ({ ...r, i }))
+    .sort((a, b) => a.rank - b.rank || a.i - b.i)
+    .map((r) => r.cn)
+    .filter((cn) => (seen.has(cn) ? false : (seen.add(cn), true)));
+}
+
 // NOTE: uppercase + alfanumérico, sin truncar; devuelve '' si length<4 para evitar joins espurios.
 export function cleanAlt(value: unknown): string {
   if (value === null || value === undefined) return '';

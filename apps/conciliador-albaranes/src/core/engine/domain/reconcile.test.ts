@@ -85,7 +85,7 @@ describe('reconcile', () => {
   // "87430014") y el C.N. español (7 dígitos, ej. "1593245" → CN 159324).
   // Si Gemini se equivoca de columna y mete el interno como nationalCode, el
   // matching primario por C.N. fallaba. Ahora, cuando llegan AMBOS y `code`
-  // encaja con formato C.N., se prueba como cnAlt tras el cn principal.
+  // encaja con formato C.N., se prueba como candidato (cnAlts) tras el cn principal.
   it('layout Bayer: 2 códigos apilados — matchea con el segundo si el primero es interno', () => {
     const r = reconcile(
       deliveryNote([{
@@ -346,5 +346,70 @@ describe('reconcile', () => {
     expect(r.lines[0].unitsDelivered).toBe(75);
     expect(r.lines[0].freeUnitsDelivered).toBe(0);
     expect(r.lines[0].status).toBe('OK');
+  });
+
+  // Caso real Bayer 25-09: Gemini dejó nationalCode vacío y metió el interno
+  // en code; el C.N. solo llegó en la lista literal `codes` de la celda.
+  it('layout Bayer: cruza con el C.N. de `codes` aunque nationalCode venga vacío', () => {
+    const r = reconcile(
+      deliveryNote([{
+        nationalCode: '',
+        code: '91851150',
+        codes: ['91851150', '9077419'],
+        description: 'RENNIE 48 COMP MASTICABLES CON SACARINA',
+        quantity: 12,
+        unitPrice: 10.21,
+        discount: 9,
+      }]),
+      order([{ productCode: '907741', description: 'RENNIE @ 48 COMPR', units: 12, price: 10.21, discount: 9 }]),
+    );
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].status).toBe('OK');
+    expect(r.lines[0].nationalCode).toBe('907741');
+  });
+
+  it('layout Bayer: interno de 7 dígitos arriba no impide cruzar con el C.N. de abajo', () => {
+    const r = reconcile(
+      deliveryNote([{
+        nationalCode: '448094', // Gemini eligió el de arriba ("4480949", interno)
+        code: '9549749',
+        codes: ['4480949', '9549749'],
+        description: 'ALKA SELTZER 20 COMP EFERVESCENTES',
+        quantity: 10,
+        unitPrice: 7.97,
+        discount: 6,
+      }]),
+      order([{ productCode: '954974', description: 'ALKA SELTZER @ 2.1G 20 COMP EFERV', units: 10, price: 7.97, discount: 6 }]),
+    );
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].status).toBe('OK');
+  });
+
+  it('línea solo con interno del proveedor: cruza por descripción si unidades y precio coinciden', () => {
+    const r = reconcile(
+      deliveryNote([{
+        code: '91851207',
+        codes: ['91851207'],
+        description: 'SUPRADYN ENERGY 30 COMPRIMIDOS EFERVESCENTE',
+        quantity: 10,
+        unitPrice: 14.8,
+        discount: 24,
+      }]),
+      order([
+        { productCode: '206482', description: 'SUPRADYN @ ACTIVO 15 COMP.EFERV.', units: 10, price: 8.73, discount: 24 },
+        { productCode: '206656', description: 'SUPRADYN @ ENERGY 30 COMP. EFERV.', units: 10, price: 14.8, discount: 24 },
+      ]),
+    );
+    const ok = r.lines.find((l) => l.status === 'OK');
+    expect(ok?.nationalCode).toBe('206656');
+    expect(r.lines.filter((l) => l.status === 'EXTRA_IN_DELIVERY_NOTE')).toHaveLength(0);
+  });
+
+  it('línea solo con interno del proveedor: NO cruza por descripción si el precio no coincide', () => {
+    const r = reconcile(
+      deliveryNote([{ code: '91851207', description: 'SUPRADYN ENERGY 30 COMPRIMIDOS EFERVESCENTE', quantity: 10, unitPrice: 14.8 }]),
+      order([{ productCode: '206656', description: 'SUPRADYN @ ENERGY 30 COMP. EFERV.', units: 10, price: 13.5, discount: 0 }]),
+    );
+    expect(r.lines.map((l) => l.status).sort()).toEqual(['EXTRA_IN_DELIVERY_NOTE', 'MISSING_IN_DELIVERY_NOTE']);
   });
 });

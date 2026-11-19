@@ -4,6 +4,12 @@ export interface DeliveryNoteLine {
   nationalCode?: string;
   /** Barcode / EAN / alternative product code, if present. */
   ean?: string;
+  /**
+   * TODOS los códigos impresos en la celda del código del artículo, tal cual y
+   * de arriba abajo (Bayer apila interno + C.N.). reconcile prueba cada uno
+   * contra el pedido, así no depende de que Gemini elija bien el C.N.
+   */
+  codes?: string[];
   description: string;
   /** Invoiced units (UDS), excluding free/bonus units. */
   quantity: number;

@@ -1,5 +1,5 @@
 import { descriptionMatches } from './descriptionMatch';
-import { cleanAlt, cleanNationalCode, parseNumber, rescueNationalCode } from './numbers';
+import { cleanAlt, cleanNationalCode, cnCandidates, parseNumber, rescueNationalCode } from './numbers';
 import type {
   DeliveryNoteData,
   DiscrepancyKind,
@@ -14,7 +14,7 @@ export const TOL_DISCOUNT = 0.01;
 
 interface Item {
   cn: string; // Normalized National Code (6 digits) or ''
-  cnAlt: string; // Second C.N.-like candidate (layouts like Bayer with 2 codes stacked in the same cell) or ''
+  cnAlts: string[]; // Otros candidatos a C.N. de la línea (Bayer: 2 códigos apilados en la celda), por preferencia
   alt: string; // Normalized alternative code / EAN, or ''
   cod: string; // Supplier's internal code (e.g. PEROX "UN14080", Nestlé "12578223") or ''
   description: string;
@@ -26,7 +26,7 @@ interface Item {
 
 interface RawRow {
   cnRaw: unknown;
-  cnAltRaw?: unknown;
+  cnAltsRaw?: unknown[];
   altRaw: unknown;
   codRaw?: unknown;
   description: string;
@@ -59,28 +59,25 @@ function mostUnits(ls: NormLine[]): NormLine {
 function group(rows: RawRow[], detectFreebies: boolean): Item[] {
   const groups = new Map<
     string,
-    { cn: string; cnAlt: string; alt: string; cod: string; description: string; lines: NormLine[] }
+    { cn: string; cnAlts: string[]; alt: string; cod: string; description: string; lines: NormLine[] }
   >();
 
   rows.forEach((f, idx) => {
     const cn = cleanNationalCode(f.cnRaw);
-    // cnAltRaw ya viene pre-filtrado por CN_LIKE desde el llamador (sólo se rellena si
-    // el "otro" código de la línea encaja con formato CN español). cleanNationalCode
-    // aquí es idempotente sobre esos 6 dígitos.
-    const cnAltCandidate = cleanNationalCode(f.cnAltRaw);
-    const cnAlt = cnAltCandidate && cnAltCandidate !== cn ? cnAltCandidate : '';
+    // cnAltsRaw ya viene normalizado por cnCandidates() desde el llamador.
+    const cnAlts = (f.cnAltsRaw ?? []).map((c) => cleanNationalCode(c)).filter((c) => c && c !== cn);
     const alt = cleanAlt(f.altRaw);
     const cod = cleanAlt(f.codRaw);
     // Sin identificadores: sintético único por fila. Sigue existiendo como
     // Item propio (para poder cruzarse por descripción en findMatch). Antes
     // se descartaba aquí y las líneas de pedidos-PDF sin código se perdían.
-    const key = cn || cnAlt || alt || cod || `noid:${idx}`;
+    const key = cn || cnAlts[0] || alt || cod || `noid:${idx}`;
     let g = groups.get(key);
     if (!g) {
-      g = { cn, cnAlt, alt, cod, description: f.description ?? '', lines: [] };
+      g = { cn, cnAlts: [...cnAlts], alt, cod, description: f.description ?? '', lines: [] };
       groups.set(key, g);
     }
-    if (!g.cnAlt && cnAlt) g.cnAlt = cnAlt;
+    for (const c of cnAlts) if (c !== g.cn && !g.cnAlts.includes(c)) g.cnAlts.push(c);
     if (!g.alt && alt) g.alt = alt;
     if (!g.cod && cod) g.cod = cod;
     if (!g.description) g.description = f.description ?? '';
@@ -112,7 +109,7 @@ function group(rows: RawRow[], detectFreebies: boolean): Item[] {
     const main = mostUnits(invoiced);
     items.push({
       cn: g.cn,
-      cnAlt: g.cnAlt,
+      cnAlts: g.cnAlts,
       alt: g.alt,
       cod: g.cod,
       description: g.description,
@@ -126,7 +123,7 @@ function group(rows: RawRow[], detectFreebies: boolean): Item[] {
 }
 
 function visibleCode(p: Item | null, a: Item | null): string {
-  return p?.cn || a?.cn || a?.cnAlt || p?.alt || a?.alt || p?.cod || a?.cod || '';
+  return p?.cn || a?.cn || p?.alt || a?.cnAlts[0] || a?.alt || p?.cod || a?.cod || '';
 }
 
 const rescueCn = rescueNationalCode;
@@ -158,16 +155,15 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
   const deliveryItems = group(
     deliveryNote.lines.map((l) => {
       // Caso Bayer y similares: la celda "Código de producto" trae 2 códigos
-      // apilados por línea (uno interno del proveedor + el C.N. español). Si
-      // Gemini se equivoca de columna y pone el interno en nationalCode y el
-      // C.N. real en code, el matching primario por C.N. falla. Como red de
-      // seguridad, cuando llegan AMBOS y `code` también encaja con formato
-      // C.N. (rescueCn devuelve algo), lo guardamos como cnAlt: findMatch lo
-      // probará después del cn principal antes de caer a alt/EAN/desc.
-      const cnAlt = l.nationalCode && l.code ? rescueCn('', l.code) : '';
+      // apilados por línea (interno del proveedor + C.N. español) y Gemini no
+      // siempre elige bien cuál es el C.N. (25-09: dejó el C.N. vacío en todas
+      // las líneas). Todos los códigos de la línea (code, ean y la lista
+      // `codes` de la celda) pasan a cnAlts como candidatos: findMatch los
+      // prueba contra el pedido tras el cn principal y gana el que cruce.
+      const cnAlts = cnCandidates([l.nationalCode, ...(l.codes ?? []), l.code, l.ean]);
       return {
         cnRaw: rescueCn(l.nationalCode, l.code),
-        cnAltRaw: cnAlt,
+        cnAltsRaw: cnAlts,
         altRaw: l.ean || '',
         codRaw: l.code || '',
         description: l.description ?? '',
@@ -183,19 +179,17 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
   const orderUsed = new Array<boolean>(orderItems.length).fill(false);
 
   const itemHasIdentifier = (it: Item): boolean =>
-    Boolean(it.cn || it.cnAlt || it.alt || it.cod);
+    Boolean(it.cn || it.cnAlts.length > 0 || it.alt || it.cod);
 
   const findMatch = (a: Item): number => {
     if (a.cn) {
       const i = orderItems.findIndex((p, idx) => !orderUsed[idx] && p.cn !== '' && p.cn === a.cn);
       if (i >= 0) return i;
     }
-    // Segundo C.N.-candidato (layouts Bayer con 2 códigos apilados en la celda:
-    // si Gemini se equivocó y puso el interno en nationalCode, el bueno está en cnAlt).
-    if (a.cnAlt) {
-      const i = orderItems.findIndex(
-        (p, idx) => !orderUsed[idx] && p.cn !== '' && p.cn === a.cnAlt,
-      );
+    // Resto de candidatos a C.N. (layouts Bayer con 2 códigos apilados en la
+    // celda: si Gemini eligió mal, el bueno está entre los cnAlts).
+    for (const cand of a.cnAlts) {
+      const i = orderItems.findIndex((p, idx) => !orderUsed[idx] && p.cn !== '' && p.cn === cand);
       if (i >= 0) return i;
     }
     if (a.alt) {
@@ -220,12 +214,37 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
     return -1;
   };
 
+  const matchOf = deliveryItems.map((a) => {
+    const idx = findMatch(a);
+    if (idx >= 0) orderUsed[idx] = true;
+    return idx;
+  });
+
+  // 2ª pasada: líneas del albarán sin ningún candidato a C.N. que no han
+  // cruzado (caso Bayer "SUPRADYN ENERGY EFERVESCENTE": la factura solo trae el
+  // interno del proveedor, que el pedido no conoce). Se cruzan por descripción
+  // aunque el pedido tenga C.N., pero solo si además coinciden unidades y
+  // precio, y solo contra líneas del pedido que nadie ha reclamado.
+  deliveryItems.forEach((a, k) => {
+    if (matchOf[k] >= 0 || a.cn || a.cnAlts.length > 0) return;
+    const i = orderItems.findIndex(
+      (p, idx) =>
+        !orderUsed[idx] &&
+        Math.abs(p.units - a.units) <= TOL_QUANTITY &&
+        Math.abs(p.price - a.price) <= TOL_PRICE &&
+        descriptionMatches(a.description, p.description),
+    );
+    if (i >= 0) {
+      orderUsed[i] = true;
+      matchOf[k] = i;
+    }
+  });
+
   const lines: ReconciledLine[] = [];
 
-  for (const a of deliveryItems) {
-    const idx = findMatch(a);
+  deliveryItems.forEach((a, k) => {
+    const idx = matchOf[k];
     if (idx >= 0) {
-      orderUsed[idx] = true;
       const p = orderItems[idx];
       const discrepancies = compareFields(p, a);
       lines.push({
@@ -256,7 +275,7 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
         discrepancies: [],
       });
     }
-  }
+  });
 
   orderItems.forEach((p, idx) => {
     if (orderUsed[idx]) return;
