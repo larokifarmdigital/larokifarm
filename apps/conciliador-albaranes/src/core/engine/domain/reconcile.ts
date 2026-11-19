@@ -276,7 +276,10 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
         priceDelivered: a.price,
         discountOrdered: null,
         discountDelivered: a.discount,
-        status: 'EXTRA_IN_DELIVERY_NOTE',
+        // Muestras/regalos que no estaban en el pedido (caso NAOS: 16 "MUESTRA"
+        // con 10 uds bonificadas a 0 €): se muestran como REGALO y no cuentan
+        // como discrepancia, porque no hay nada que reclamar.
+        status: isGift(a) ? 'GIFT' : 'EXTRA_IN_DELIVERY_NOTE',
         discrepancies: [],
       });
     }
@@ -300,13 +303,13 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
   });
 
   lines.sort((x, y) => {
-    const px = x.status === 'OK' ? 1 : 0;
-    const py = y.status === 'OK' ? 1 : 0;
+    const px = isClean(x) ? 1 : 0;
+    const py = isClean(y) ? 1 : 0;
     if (px !== py) return px - py;
     return x.nationalCode.localeCompare(y.nationalCode);
   });
 
-  const totalDiscrepancies = lines.filter((l) => l.status !== 'OK').length;
+  const totalDiscrepancies = lines.filter((l) => !isClean(l)).length;
 
   return {
     deliveryNoteNumber: deliveryNote.deliveryNoteNumber,
@@ -327,5 +330,18 @@ export function statusText(line: ReconciledLine): string {
       return 'FALTA EN ALBARÁN';
     case 'EXTRA_IN_DELIVERY_NOTE':
       return 'SOBRA EN ALBARÁN (no pedido)';
+    case 'GIFT':
+      return 'REGALO (no pedido)';
   }
+}
+
+/** Línea sin nada que revisar: OK o regalo no pedido. */
+export function isClean(line: ReconciledLine): boolean {
+  return line.status === 'OK' || line.status === 'GIFT';
+}
+
+// Regalo = no se cobra nada: 0 uds facturadas con unidades bonificadas, o
+// precio 0 (muestras que el proveedor manda sin columna de bonificación).
+function isGift(a: Item): boolean {
+  return (a.units === 0 && a.bonus > 0) || (a.price === 0 && a.units + a.bonus > 0);
 }

@@ -1,5 +1,5 @@
 import XLSX from 'xlsx-js-style';
-import { statusText } from './reconcile';
+import { isClean, statusText } from './reconcile';
 import type { ReconciledLine, Reconciliation } from './types';
 
 const HEADERS = [
@@ -89,7 +89,7 @@ export function generateReport(c: Reconciliation): Uint8Array {
 
   c.lines.forEach((l, i) => {
     const r = HEADER_ROW + 1 + i;
-    const badRow = l.status !== 'OK';
+    const badRow = !isClean(l);
     for (let col = 0; col < HEADERS.length; col++) {
       const style: Record<string, unknown> = {
         border,

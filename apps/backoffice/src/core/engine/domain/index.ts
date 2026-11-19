@@ -1,4 +1,4 @@
-export { reconcile, statusText, TOL_PRICE, TOL_QUANTITY, TOL_DISCOUNT } from './reconcile';
+export { reconcile, statusText, isClean, TOL_PRICE, TOL_QUANTITY, TOL_DISCOUNT } from './reconcile';
 export { extractDeliveryNote } from './extractDeliveryNote';
 export type { ExtractionResult, UsageMetadata } from './extractDeliveryNote';
 export { mergeDeliveryNotes } from './mergeDeliveryNotes';

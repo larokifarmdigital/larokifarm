@@ -1,4 +1,4 @@
-import { statusText, type ReconciledLine } from '@/core/engine';
+import { isClean, statusText, type ReconciledLine } from '@/core/engine';
 
 const TH_BASE = 'px-3 py-2.5 font-semibold whitespace-nowrap';
 
@@ -37,7 +37,7 @@ export function ReconciliationTable({ lines }: { lines: ReconciledLine[] }) {
         </thead>
         <tbody className="divide-y divide-slate-100">
           {lines.map((l, i) => {
-            const badRow = l.status !== 'OK';
+            const badRow = !isClean(l);
             return (
               <tr
                 key={`${l.nationalCode}-${i}`}
@@ -73,9 +73,11 @@ export function ReconciliationTable({ lines }: { lines: ReconciledLine[] }) {
                     className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                       l.status === 'OK'
                         ? 'bg-green-100 text-green-700'
-                        : l.status === 'DISCREPANCY'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-red-100 text-red-700'
+                        : l.status === 'GIFT'
+                          ? 'bg-sky-100 text-sky-700'
+                          : l.status === 'DISCREPANCY'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-red-100 text-red-700'
                     }`}
                   >
                     {statusText(l)}

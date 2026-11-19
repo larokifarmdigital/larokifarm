@@ -71,7 +71,8 @@ export type ReconciliationStatus =
   | 'OK'
   | 'DISCREPANCY'
   | 'MISSING_IN_DELIVERY_NOTE' // ordered but not shipped
-  | 'EXTRA_IN_DELIVERY_NOTE'; // shipped but not ordered
+  | 'EXTRA_IN_DELIVERY_NOTE' // shipped but not ordered
+  | 'GIFT'; // regalo/muestra no pedido: 0 uds facturadas o precio 0 (no es discrepancia)
 
 export interface ReconciledLine {
   nationalCode: string;

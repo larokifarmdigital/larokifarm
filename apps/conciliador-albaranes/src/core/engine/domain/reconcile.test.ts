@@ -436,4 +436,27 @@ describe('reconcile', () => {
     );
     expect(r.lines[0].status).toBe('OK');
   });
+
+  it('muestra/regalo no pedido → REGALO, no cuenta como discrepancia', () => {
+    const r = reconcile(
+      deliveryNote([
+        { code: 'MUESTRA', description: 'Muestra Sensibio H2O D5ml', quantity: 10, freeUnits: 10, unitPrice: 0 },
+        { nationalCode: '182918', description: 'SENSIBIO GEL', quantity: 12, unitPrice: 8.96, discount: 30 },
+      ]),
+      order([{ productCode: '182918', description: 'SENSIBIO GEL', units: 12, price: 8.96, discount: 30 }]),
+    );
+    expect(r.lines.find((l) => l.description.startsWith('Muestra'))?.status).toBe('GIFT');
+    expect(statusText(r.lines.find((l) => l.status === 'GIFT')!)).toBe('REGALO (no pedido)');
+    expect(r.totalDiscrepancies).toBe(0);
+    expect(r.allMatch).toBe(true);
+  });
+
+  it('producto cobrado que no estaba en el pedido sigue siendo SOBRA, no regalo', () => {
+    const r = reconcile(
+      deliveryNote([{ code: 'PK0112', description: 'Pack Sensibio', quantity: 6, unitPrice: 23.07, discount: 28 }]),
+      order([]),
+    );
+    expect(r.lines[0].status).toBe('EXTRA_IN_DELIVERY_NOTE');
+    expect(r.totalDiscrepancies).toBe(1);
+  });
 });
