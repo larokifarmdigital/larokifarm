@@ -17,6 +17,7 @@ interface ResolvedContext {
   business: { id: string; slug: string };
   userId: string;
   apiKey: string;
+  esAdmin: boolean;
 }
 
 async function resolveContext(): Promise<
@@ -83,6 +84,7 @@ async function resolveContext(): Promise<
       business: { id: business.id, slug: business.slug },
       userId: session.user.id,
       apiKey,
+      esAdmin: session.user.role === 'SUPER_ADMIN',
     },
   };
 }
@@ -177,5 +179,10 @@ export async function POST(req: Request) {
   });
 
   const summary = await Promise.all(tasks);
-  return NextResponse.json({ summary });
+  // La lectura en bruto de la IA (rawLines) es una herramienta de depuración:
+  // solo viaja al navegador del SUPER_ADMIN (antes llegaba a todos los roles).
+  const respuesta = ctx.esAdmin
+    ? summary
+    : summary.map((r) => (r.detail ? { ...r, detail: { ...r.detail, rawLines: undefined } } : r));
+  return NextResponse.json({ summary: respuesta });
 }

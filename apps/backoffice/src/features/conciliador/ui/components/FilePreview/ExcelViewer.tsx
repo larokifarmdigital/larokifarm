@@ -125,7 +125,7 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
         </div>
       )}
 
-      <div className="flex-1 overflow-auto">
+      <div tabIndex={0} role="region" aria-label="Vista del Excel" className="flex-1 overflow-auto">
         <table className="w-full min-w-max border-separate border-spacing-0 text-xs">
           <thead className="sticky top-0 z-10 bg-slate-100">
             <tr>

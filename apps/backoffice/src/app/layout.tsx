@@ -41,7 +41,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Tooltip.Provider>
         <Toaster
           position="bottom-right"
+          // Por encima de las barras de acción fijas (conciliador, editor)
+          offset={{ bottom: 96 }}
+          mobileOffset={{ bottom: 96 }}
           toastOptions={{
+            classNames: { actionButton: '!min-h-11 !px-4 !text-[14px]' },
             style: {
               background: 'var(--color-surface)',
               color: 'var(--color-ink)',

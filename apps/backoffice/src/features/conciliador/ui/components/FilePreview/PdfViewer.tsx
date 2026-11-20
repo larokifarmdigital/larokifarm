@@ -72,6 +72,7 @@ export default function PdfViewer({ file }: PdfViewerProps) {
               min={1}
               max={numPages || 1}
               value={pageNumber}
+              aria-label="Ir a la página"
               onChange={(e) => jumpTo(Number(e.target.value))}
               className="w-14 rounded-md border border-slate-300 px-2 py-1 text-center text-xs"
             />
@@ -116,6 +117,9 @@ export default function PdfViewer({ file }: PdfViewerProps) {
 
       <div
         ref={containerRef}
+        tabIndex={0}
+        role="region"
+        aria-label="Vista del PDF"
         className="flex-1 overflow-auto"
       >
         {error ? (
@@ -174,7 +178,7 @@ function ToolbarButton({
       disabled={disabled}
       title={title}
       aria-label={title}
-      className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+      className="flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
     >
       {children}
     </button>

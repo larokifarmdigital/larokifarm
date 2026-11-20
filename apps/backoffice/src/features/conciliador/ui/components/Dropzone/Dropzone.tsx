@@ -1,25 +1,72 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
+import { NavIcon } from '@/shared/components/atoms/NavIcon';
+import { cn } from '@/shared/lib/cn';
+
+export const ACCEPT_CONCILIADOR = '.pdf,.xlsx,.xls,.xlsm';
 
 interface DropzoneProps {
   onArchivos: (files: File[]) => void;
+  /** Ya hay archivos cargados: se reduce a una línea "Añadir más archivos". */
+  compacto?: boolean;
+  disabled?: boolean;
 }
 
-export function Dropzone({ onArchivos }: DropzoneProps) {
+/**
+ * Zona de subida: se puede arrastrar (escritorio) o pulsar el botón. El
+ * disparador es un <button> de verdad (antes era un div role=button sin
+ * nombre accesible y la barra espaciadora hacía scroll).
+ */
+export function Dropzone({ onArchivos, compacto = false, disabled = false }: DropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const ayudaId = useId();
   const [arrastrando, setArrastrando] = useState(false);
 
   function manejar(files: FileList | null) {
-    if (!files || files.length === 0) return;
+    if (disabled || !files || files.length === 0) return;
     onArchivos(Array.from(files));
+  }
+
+  const input = (
+    <input
+      ref={inputRef}
+      type="file"
+      multiple
+      accept={ACCEPT_CONCILIADOR}
+      className="sr-only"
+      tabIndex={-1}
+      aria-hidden
+      onChange={(e) => {
+        manejar(e.target.files);
+        e.target.value = '';
+      }}
+    />
+  );
+
+  if (compacto) {
+    return (
+      <div>
+        <button
+          type="button"
+          data-foco="anadir"
+          disabled={disabled}
+          onClick={() => inputRef.current?.click()}
+          className="inline-flex items-center gap-2 min-h-11 px-4 rounded-[8px] border border-dashed border-[var(--color-hairline-strong)] text-[14.5px] font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <NavIcon name="Plus" size={16} />
+          Añadir más archivos
+        </button>
+        {input}
+      </div>
+    );
   }
 
   return (
     <div
       onDragOver={(e) => {
         e.preventDefault();
-        setArrastrando(true);
+        if (!disabled) setArrastrando(true);
       }}
       onDragLeave={() => setArrastrando(false)}
       onDrop={(e) => {
@@ -27,82 +74,38 @@ export function Dropzone({ onArchivos }: DropzoneProps) {
         setArrastrando(false);
         manejar(e.dataTransfer.files);
       }}
-      onClick={() => inputRef.current?.click()}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click();
-      }}
-      className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
-        arrastrando ? '' : 'border-slate-300 bg-white hover:bg-slate-50'
-      }`}
-      style={
+      className={cn(
+        'flex flex-col items-center justify-center gap-4 rounded-[14px] border-2 border-dashed px-5 py-8 sm:py-12 text-center transition-colors',
         arrastrando
-          ? {
-              borderColor: 'var(--brand-primary)',
-              background: 'var(--brand-primary-soft)',
-            }
-          : undefined
-      }
-      onMouseEnter={(e) => {
-        if (arrastrando) return;
-        (e.currentTarget as HTMLDivElement).style.borderColor =
-          'var(--brand-primary-ring)';
-      }}
-      onMouseLeave={(e) => {
-        if (arrastrando) return;
-        (e.currentTarget as HTMLDivElement).style.borderColor = '';
-      }}
+          ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
+          : 'border-[var(--color-hairline-strong)] bg-[var(--color-surface)]',
+      )}
     >
       <span
-        className="flex h-14 w-14 items-center justify-center rounded-full"
-        style={{
-          background: 'var(--brand-primary-soft)',
-          color: 'var(--brand-primary)',
-        }}
         aria-hidden
+        className="hidden sm:flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent)]"
       >
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <path d="M17 8l-5-5-5 5" />
-          <path d="M12 3v12" />
-        </svg>
+        <NavIcon name="UploadSimple" size={26} />
       </span>
-      <p className="text-base font-semibold text-slate-800">
-        Arrastra aquí los PDFs y Excels, o haz clic para elegirlos
+      <p className="hidden sm:block m-0 text-[17px] font-bold tracking-[-0.01em] text-[var(--color-ink)]">
+        Arrastra aquí los archivos
       </p>
-      <p className="max-w-2xl text-sm text-slate-500">
-        Se emparejan solos por nombre (ej.{' '}
-        <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">
-          DENTAID_albaran.pdf
-        </code>{' '}
-        ↔{' '}
-        <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">
-          DENTAID_pedido.xlsx
-        </code>
-        ). Si un proveedor envía varios PDFs del mismo pedido (albarán + factura),
-        ponles la misma clave para que se fusionen.
+      <button
+        type="button"
+        data-foco="elegir"
+        disabled={disabled}
+        aria-describedby={ayudaId}
+        onClick={() => inputRef.current?.click()}
+        className="inline-flex w-full sm:w-auto items-center justify-center gap-2 min-h-11 px-6 rounded-[8px] bg-[var(--color-accent)] text-white text-[15px] font-semibold hover:bg-[var(--color-accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <NavIcon name="Plus" size={17} />
+        Elegir archivos
+      </button>
+      <p id={ayudaId} className="m-0 max-w-md text-[14px] leading-[1.5] text-[var(--color-muted)]">
+        El albarán o factura del proveedor (PDF) y tu pedido (Excel). Puedes subir
+        varios envíos a la vez.
       </p>
-      <input
-        ref={inputRef}
-        type="file"
-        multiple
-        accept=".pdf,.xlsx,.xls,.xlsm"
-        className="hidden"
-        onChange={(e) => {
-          manejar(e.target.files);
-          e.target.value = '';
-        }}
-      />
+      {input}
     </div>
   );
 }
