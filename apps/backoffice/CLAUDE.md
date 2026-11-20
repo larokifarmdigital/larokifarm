@@ -28,8 +28,11 @@ Todo en `src/app/globals.css` como CSS vars (`@theme`):
 - **Capas CSS**: los estilos de componente (`.field`, `.card`, `.label`,
   `.chip`…) van DENTRO de `@layer components`, para que las utilidades de
   Tailwind que se les pasan manden. Fuera de capa pisaban `pl-9`/`pr-11` (la
-  lupa tapaba el texto del buscador). El cursor de mano global está en
-  `@layer base` (Tailwind v4 lo quitó de los `<button>`).
+  lupa tapaba el texto del buscador). El cursor de mano global y el anillo
+  `:focus-visible` global están en `@layer base` (Tailwind v4 quitó el cursor
+  de los `<button>`; fuera de capa, el anillo pisaba `focus-visible:*`).
+- **Borde de controles** `--color-control-border #8294AB` (3,1:1, WCAG 1.4.11)
+  para `.field` y chips; `--color-hairline*` solo para separadores decorativos.
 - **Logo**: único sitio en `shared/components/atoms/BrandMark` (provisional).
 - **Soporte**: `NEXT_PUBLIC_SUPPORT_EMAIL` (`shared/lib/support.ts`). Si no
   está definido, los enlaces de ayuda no se muestran.
@@ -210,6 +213,24 @@ Diferencias schema vs UI documentadas:
     farmacia · Solo consulta.
 14. **Accesibilidad medida**: tras cambios de UI, agente `ux-a11y-auditor`
     hasta 0 incidencias (WCAG AA, cursor, zonas táctiles ≥24px/44px en móvil).
+15. **Historial de conciliaciones** (fase 3, 20-11-2026): lista agrupada por
+    día en hora de Madrid (`ui/lib/historial.ts`: Hoy / Ayer / "Martes 17
+    nov"), cada fila un único enlace. Filtros = chips que fusionan su propio
+    parámetro de URL (`q`, `periodo=hoy|7d|30d|fechas`+`from`/`to`, `status`,
+    `reportes=abiertos` y `business` solo admin) + buscador con debounce 300 ms
+    (proveedor O etiqueta); sin botón "Aplicar". El detalle
+    (`HistoryResultCard`) calca la tarjeta de resultado de "Nueva
+    conciliación". **Coste, tokens, email y duración solo SUPER_ADMIN**, y se
+    filtran en el servidor (la vista construye filas/props sin esos campos);
+    el admin los ve en "Datos técnicos" (`<details>`, con la lectura cruda de
+    la IA). "Comparación" → "conciliación" en toda la UI.
+16. **Reportes de error**: botón "Reportar un error" junto a las acciones de
+    cada tarjeta (nueva conciliación e historial) → Radix Dialog
+    (`ReportarError`); la lista (`ReportsList`) no se pinta si no hay
+    reportes. Resolver (solo SUPER_ADMIN) también en diálogo.
+17. **Componentes compartidos del conciliador**: `FilePreviewModal` (visor
+    PDF/Excel para `File` o URL `/api/files/…`), `ui/lib/botones.ts`
+    (`BTN_ACCENT`, `BTN_SECUNDARIO`), `ReconciliationTable` sin `max-h`.
 
 ## Fases del roadmap
 
@@ -312,6 +333,9 @@ Diferencias schema vs UI documentadas:
   pestañas «Nueva conciliación · Historial» (`albaranes/layout.tsx` +
   `ConciliadorTabs`). Envs: `GEMINI_API_KEY` y `ENCRYPTION_KEY` (claves Gemini
   por negocio). Usuarios/negocios/uso: pendiente, irán a Ajustes ✅
+- **Rediseño 20-11-2026**: fase 1 login + Inicio + navegación; fase 2 nueva
+  conciliación por envíos; fase 3 historial (ver decisión 15-17). Falta la
+  fase 4 (gestión de contenidos de las landings) ✅
 - **Pendientes**:
   - Borrador vs publicado: hoy el autoguardado escribe el contenido que lee
     la API; un deploy incluye ediciones a medias aunque no se pulse

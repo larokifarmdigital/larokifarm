@@ -1,136 +1,177 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/core/auth';
 import { scopeFromSession } from '@/core/shared';
-import {
-  getComparisonRepository,
-  type ComparisonStatus,
-} from '@/core/comparisons';
-import {
-  ListBusinessesUseCase,
-  getBusinessRepository,
-} from '@/core/businesses';
+import { getComparisonRepository, type ComparisonStatus } from '@/core/comparisons';
+import { ListBusinessesUseCase, getBusinessRepository } from '@/core/businesses';
 import { getReportRepository } from '@/core/reports';
-import { HistoryFilters } from '../components/HistoryFilters';
-import { HistoryTable } from '../components/HistoryTable';
-import { HistoryQuickFilters } from '../components/HistoryQuickFilters';
+import { NavIcon } from '@/shared/components/atoms/NavIcon';
+import { formatUsd } from '@/shared/lib/format';
+import { HistoryFilters, QuitarFiltros } from '../components/HistoryFilters';
+import { HistoryList, type GrupoHistorial } from '../components/HistoryList';
 import { Pagination } from '../components/Pagination';
+import { BTN_ACCENT, BTN_SECUNDARIO } from '../lib/botones';
+import {
+  CLAVES_FILTRO,
+  agruparPorDia,
+  etiquetaDia,
+  horaMadrid,
+  rangoPeriodo,
+  type Periodo,
+} from '../lib/historial';
 
 export interface HistoryListParams {
+  q?: string;
+  /** URL antigua: ahora es `q`. */
+  supplier?: string;
+  periodo?: string;
   from?: string;
   to?: string;
   status?: string;
-  supplier?: string;
+  reportes?: string;
   business?: string;
   page?: string;
 }
+
+const BASE = '/albaranes/historial';
 
 function parseStatus(raw?: string): ComparisonStatus | undefined {
   if (raw === 'OK' || raw === 'DISCREPANCIES' || raw === 'ERROR') return raw;
   return undefined;
 }
 
-function parseDate(raw?: string): Date | undefined {
-  if (!raw) return undefined;
-  const d = new Date(raw);
-  return Number.isNaN(d.getTime()) ? undefined : d;
+function parsePeriodo(sp: HistoryListParams): Periodo | undefined {
+  if (sp.periodo === 'hoy' || sp.periodo === '7d' || sp.periodo === '30d' || sp.periodo === 'fechas') return sp.periodo;
+  return sp.from || sp.to ? 'fechas' : undefined;
 }
 
-function endOfDay(d: Date): Date {
-  const end = new Date(d);
-  end.setHours(23, 59, 59, 999);
-  return end;
-}
-
-function buildHrefBuilder(sp: HistoryListParams) {
-  return function buildHref(targetPage: number): string {
+function hrefPagina(sp: HistoryListParams) {
+  return (page: number) => {
     const params = new URLSearchParams();
-    if (sp.from) params.set('from', sp.from);
-    if (sp.to) params.set('to', sp.to);
-    if (sp.status) params.set('status', sp.status);
-    if (sp.supplier) params.set('supplier', sp.supplier);
-    if (sp.business) params.set('business', sp.business);
-    params.set('page', String(targetPage));
-    return `/albaranes/historial?${params.toString()}`;
+    for (const k of CLAVES_FILTRO) {
+      const v = sp[k];
+      if (v) params.set(k, v);
+    }
+    if (page > 1) params.set('page', String(page));
+    const qs = params.toString();
+    return qs ? `${BASE}?${qs}` : BASE;
   };
 }
 
-export async function HistoryListView({
-  params,
-}: {
-  params: HistoryListParams;
-}) {
+export async function HistoryListView({ params }: { params: HistoryListParams }) {
   const session = await auth();
   if (!session?.user) redirect('/login');
 
-  const isSuperAdmin = session.user.role === 'SUPER_ADMIN';
-  const repo = getComparisonRepository();
-  const toRaw = parseDate(params.to);
+  const esAdmin = session.user.role === 'SUPER_ADMIN';
+  const hayFiltros = CLAVES_FILTRO.some((k) => params[k]);
+  const busqueda = (params.q ?? params.supplier)?.trim() || undefined;
 
-  const [result, businesses] = await Promise.all([
-    repo.list(
+  const [result, negocios] = await Promise.all([
+    getComparisonRepository().list(
       scopeFromSession(session),
       {
-        from: parseDate(params.from),
-        to: toRaw ? endOfDay(toRaw) : undefined,
+        ...rangoPeriodo(parsePeriodo(params), params.from, params.to),
         status: parseStatus(params.status),
-        supplier: params.supplier?.trim() || undefined,
-        businessSlug: params.business?.trim() || undefined,
+        search: busqueda,
+        withOpenReports: esAdmin && params.reportes === 'abiertos',
+        businessSlug: esAdmin ? params.business?.trim() || undefined : undefined,
       },
       { page: Math.max(1, Number(params.page) || 1) },
     ),
-    isSuperAdmin
-      ? new ListBusinessesUseCase(getBusinessRepository()).execute(session)
-      : Promise.resolve([]),
+    esAdmin ? new ListBusinessesUseCase(getBusinessRepository()).execute(session) : Promise.resolve([]),
   ]);
 
-  const reportsCount = await getReportRepository().countByComparisonIds(
-    result.items.map((r) => r.id),
-  );
+  const reportes = await getReportRepository().countByComparisonIds(result.items.map((r) => r.id));
+
+  // Solo lo que se pinta. Coste y farmacia, únicamente para SUPER_ADMIN.
+  const grupos: GrupoHistorial[] = agruparPorDia(result.items).map((g) => ({
+    ymd: g.ymd,
+    etiqueta: etiquetaDia(g.ymd),
+    filas: g.items.map((c) => {
+      const titulo = c.label || c.supplier || 'Proveedor sin identificar';
+      const rep = reportes[c.id];
+      return {
+        id: c.id,
+        titulo,
+        proveedor: c.supplier && c.supplier !== titulo ? c.supplier : null,
+        hora: horaMadrid(c.createdAt),
+        usuario: c.user.name,
+        estado: c.status,
+        numDiscrepancias: c.numDiscrepancies,
+        reporte: rep?.open ? 'abierto' : rep?.resolved ? 'resuelto' : null,
+        ...(esAdmin ? { negocio: c.business.name, coste: formatUsd(c.geminiCostUsd) } : {}),
+      };
+    }),
+  }));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-6 pb-8 sm:px-6 sm:pb-10">
-      <header className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+    <div className="mx-auto max-w-5xl px-4 pt-6 pb-10 sm:px-6">
+      <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            Historial de comparaciones
+          <h1 className="m-0 text-[24px] sm:text-[28px] font-bold tracking-[-0.02em] text-[var(--color-ink)]">
+            Historial de conciliaciones
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Consulta las conciliaciones anteriores y descarga sus archivos.
+          <p className="m-0 mt-1 text-[15px] text-[var(--color-muted)]">
+            Vuelve a consultar cualquier conciliación y descarga su informe.
           </p>
         </div>
-        {result.total > 0 && (
-          <span
-            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset"
-            style={{
-              background: 'var(--brand-primary-soft)',
-              color: 'var(--brand-accent)',
-              ['--tw-ring-color' as string]: 'var(--brand-primary-ring)',
-            }}
-          >
-            {result.total} {result.total === 1 ? 'resultado' : 'resultados'}
-          </span>
-        )}
+        <Link href="/albaranes" className={BTN_ACCENT}>
+          <NavIcon name="Plus" size={17} />
+          Nueva conciliación
+        </Link>
       </header>
 
-      <div className="mb-4 space-y-3">
-        <HistoryQuickFilters />
-        <HistoryFilters
-          showBusinessFilter={isSuperAdmin}
-          businesses={businesses.map((b) => ({ slug: b.slug, name: b.name }))}
-        />
-      </div>
+      {(hayFiltros || result.total > 0) && (
+        <div className="mb-5">
+          <HistoryFilters esAdmin={esAdmin} negocios={negocios.map((b) => ({ slug: b.slug, name: b.name }))} />
+        </div>
+      )}
 
-      <HistoryTable
-        rows={result.items}
-        role={session.user.role}
-        reportsCount={reportsCount}
-      />
-      <Pagination
-        page={result.page}
-        totalPages={result.totalPages}
-        total={result.total}
-        buildHref={buildHrefBuilder(params)}
-      />
+      <p role="status" className="m-0 mb-3 px-1 text-[14px] text-[var(--color-muted)]">
+        {result.total > 0
+          ? `${result.total} ${result.total === 1 ? 'conciliación' : 'conciliaciones'}${hayFiltros ? ' con estos filtros' : ''}`
+          : hayFiltros
+            ? 'No hay conciliaciones con estos filtros'
+            : ''}
+      </p>
+
+      {result.total === 0 ? (
+        <EstadoVacio conFiltros={hayFiltros} />
+      ) : (
+        <>
+          <HistoryList grupos={grupos} />
+          <Pagination page={result.page} totalPages={result.totalPages} buildHref={hrefPagina(params)} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function EstadoVacio({ conFiltros }: { conFiltros: boolean }) {
+  return (
+    <div className="card flex flex-col items-center gap-3 px-5 py-12 text-center">
+      <span
+        aria-hidden
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent)]"
+      >
+        <NavIcon name={conFiltros ? 'MagnifyingGlass' : 'ClockCounterClockwise'} size={22} />
+      </span>
+      <h2 className="m-0 text-[17px] font-bold text-[var(--color-ink)]">
+        {conFiltros ? 'No hay conciliaciones con estos filtros' : 'Aún no hay conciliaciones'}
+      </h2>
+      <p className="m-0 max-w-md text-[14.5px] leading-[1.5] text-[var(--color-muted)]">
+        {conFiltros
+          ? 'Prueba con otras fechas u otra búsqueda, o quita los filtros para verlas todas.'
+          : 'Cuando compruebes un albarán, aparecerá aquí para que puedas volver a consultarlo.'}
+      </p>
+      {conFiltros ? (
+        <QuitarFiltros href={BASE} className={BTN_SECUNDARIO} />
+      ) : (
+        <Link href="/albaranes" className={BTN_ACCENT}>
+          <NavIcon name="Plus" size={17} />
+          Nueva conciliación
+        </Link>
+      )}
     </div>
   );
 }

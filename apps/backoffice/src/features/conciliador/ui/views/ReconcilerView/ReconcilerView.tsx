@@ -1,18 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import * as Dialog from '@radix-ui/react-dialog';
 import type { BudgetStatus } from '@/core/comparisons';
 import type { Role } from '@/core/shared';
 import type { PairResult, UploadKind } from '@/core/engine';
 import { ReconciliationTable } from '@/features/conciliador/ui/components/ReconciliationTable';
 // NOTE: import directo al componente para no arrastrar HistoryListView/ComparisonDetailView
 // (server components que usan Prisma y romperían el bundle client con `node:crypto`).
-import { ReportsSection } from '@/features/conciliador/ui/components/ReportsSection';
+import { ReportarError, ReportsList, type ReportView } from '@/features/conciliador/ui/components/ReportsSection';
+import { FilePreviewModal } from '@/features/conciliador/ui/components/FilePreviewModal';
+import { BTN_ACCENT, BTN_SECUNDARIO } from '../../lib/botones';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
 import {
@@ -37,34 +37,10 @@ import { CLASE_TONO, chipsResumen, resumirLineas } from '../../lib/lineas';
 import { Dropzone } from '../../components/Dropzone';
 import { descargarXlsx, descargarZip } from '../../lib/downloads';
 
-// NOTE: dynamic + ssr:false — xlsx (~300KB) y react-pdf (~1.5MB) fuera del bundle inicial y ambos dependen del DOM.
-const PdfViewer = dynamic(() => import('../../components/FilePreview/PdfViewer'), {
-  ssr: false,
-  loading: () => <CargandoVisor />,
-});
-const ExcelViewer = dynamic(() => import('../../components/FilePreview/ExcelViewer'), {
-  ssr: false,
-  loading: () => <CargandoVisor />,
-});
-
-function CargandoVisor() {
-  return (
-    <div className="flex h-full items-center justify-center gap-2 text-sm text-[var(--color-muted)]">
-      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" aria-hidden />
-      Cargando visor…
-    </div>
-  );
-}
-
 /** Lo que tarda de media cada envío (la IA lee el PDF y se compara). */
 const SEGUNDOS_POR_ENVIO = 60;
 
 type Fase = 'editando' | 'procesando' | 'resultado';
-
-const BTN_ACCENT =
-  'inline-flex items-center justify-center gap-2 min-h-11 px-5 rounded-[8px] bg-[var(--color-accent)] text-white text-[15px] font-semibold hover:bg-[var(--color-accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
-const BTN_SECUNDARIO =
-  'inline-flex items-center justify-center gap-2 min-h-11 px-4 rounded-[8px] border border-[var(--color-hairline-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-[14.5px] font-medium hover:bg-[var(--color-surface-2)] disabled:opacity-50 transition-colors';
 
 interface ReconcilerViewProps {
   /** null = sin límite configurado o usuario sin negocio (SUPER_ADMIN pool). */
@@ -643,6 +619,7 @@ function ResultCard({
   verDepuracion: boolean;
 }) {
   const [verArchivos, setVerArchivos] = useState(false);
+  const [reportes, setReportes] = useState<ReportView[]>([]);
   const verArchivosRef = useRef<HTMLButtonElement>(null);
   const lineas = r.detail?.lines ?? [];
   const resumen = resumirLineas(lineas);
@@ -652,8 +629,8 @@ function ResultCard({
 
   const archivos = envio
     ? [
-        ...envio.pdfs.map((p) => ({ name: p.name, file: p.file, kind: 'pdf' as const })),
-        ...envio.excels.map((e) => ({ name: e.name, file: e.file, kind: 'excel' as const })),
+        ...envio.pdfs.map((p) => ({ name: p.name, src: p.file, kind: 'pdf' as const })),
+        ...envio.excels.map((e) => ({ name: e.name, src: e.file, kind: 'excel' as const })),
       ]
     : [];
 
@@ -705,6 +682,10 @@ function ResultCard({
                 Ver archivos ({archivos.length})
               </button>
             )}
+            {/* Lo verá y resolverá el administrador; la respuesta sale en el historial */}
+            {r.comparisonId && currentUser && (
+              <ReportarError comparisonId={r.comparisonId} onCreado={(nuevo) => setReportes((prev) => [nuevo, ...prev])} />
+            )}
           </div>
         </div>
 
@@ -722,12 +703,11 @@ function ResultCard({
       )}
       {verDepuracion && r.detail?.rawLines && r.detail.rawLines.length > 0 && <ExtractionDebug lines={r.detail.rawLines} />}
 
-      {/* Reportar un error de esta conciliación (lo verá y resolverá el administrador) */}
-      {r.comparisonId && currentUser && (
-        <div className="border-t border-[var(--color-hairline)] bg-[var(--color-surface-2)]/50 px-4 py-4 sm:px-5">
-          <ReportsSection comparisonId={r.comparisonId} initialReports={[]} currentUser={currentUser} />
-        </div>
-      )}
+      <ReportsList
+        reports={reportes}
+        isSuperAdmin={currentUser?.role === 'SUPER_ADMIN'}
+        onResuelto={(res) => setReportes((prev) => prev.map((x) => (x.id === res.id ? res : x)))}
+      />
 
       {verArchivos && archivos.length > 0 && (
         <FilePreviewModal files={archivos} onClose={() => setVerArchivos(false)} devolverFocoA={verArchivosRef} />
@@ -888,124 +868,5 @@ function ExtractionDebug({ lines }: { lines: NonNullable<PairResult['detail']>['
         </table>
       </div>
     </details>
-  );
-}
-
-
-interface PreviewFile {
-  name: string;
-  file: File;
-  kind: UploadKind;
-}
-
-const FICHA_TIPO = (kind: UploadKind) =>
-  cn('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold', kind === 'pdf' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-800');
-
-/**
- * Visor de los archivos subidos. Radix Dialog: atrapa el foco y deja el fondo
- * inerte; al cerrar devolvemos el foco a mano al botón "Ver archivos".
- */
-function FilePreviewModal({
-  files,
-  onClose,
-  devolverFocoA,
-}: {
-  files: PreviewFile[];
-  onClose: () => void;
-  /** No hay Dialog.Trigger: hay que decirle a Radix dónde devolver el foco. */
-  devolverFocoA: React.RefObject<HTMLButtonElement | null>;
-}) {
-  const [selectedIdx, setSelectedIdx] = useState(0);
-  const selected = files[selectedIdx];
-
-  function descargarActual() {
-    if (!selected) return;
-    const url = URL.createObjectURL(selected.file);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = selected.name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function abrirEnPestana() {
-    if (!selected) return;
-    const url = URL.createObjectURL(selected.file);
-    window.open(url, '_blank', 'noopener,noreferrer');
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-  }
-
-  const BTN = 'inline-flex items-center justify-center gap-1.5 min-h-11 px-3 rounded-[8px] border border-[var(--color-hairline-strong)] bg-[var(--color-surface)] text-[14px] font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface-2)]';
-
-  return (
-    <Dialog.Root open onOpenChange={(o) => !o && onClose()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm" />
-        <Dialog.Content
-          aria-describedby={undefined}
-          onCloseAutoFocus={(e) => {
-            e.preventDefault();
-            devolverFocoA.current?.focus();
-          }}
-          className="fixed inset-2 sm:inset-6 z-50 mx-auto flex max-w-5xl flex-col overflow-hidden rounded-[14px] bg-[var(--color-surface)] shadow-2xl outline-none"
-        >
-          <div className="flex flex-wrap items-center gap-2 border-b border-[var(--color-hairline)] px-3 sm:px-4 py-2">
-            <Dialog.Title className="m-0 flex-1 min-w-0 truncate text-[15px] font-semibold text-[var(--color-ink)]">
-              {selected?.name}
-            </Dialog.Title>
-            {selected?.kind === 'pdf' && (
-              <button type="button" onClick={abrirEnPestana} className={BTN}>
-                Abrir en pestaña
-              </button>
-            )}
-            <button type="button" onClick={descargarActual} className={BTN}>
-              <NavIcon name="DownloadSimple" size={16} />
-              Descargar
-            </button>
-            <Dialog.Close
-              aria-label="Cerrar"
-              className="flex h-11 w-11 items-center justify-center rounded-[8px] text-[var(--color-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink)]"
-            >
-              <NavIcon name="X" size={18} />
-            </Dialog.Close>
-          </div>
-
-          {files.length > 1 && (
-            <nav aria-label="Archivos del envío" className="shrink-0 border-b border-[var(--color-hairline)] bg-[var(--color-surface-2)] px-2 py-2">
-              <ul className="flex gap-1.5 overflow-x-auto">
-                {files.map((f, i) => (
-                  <li key={i} className="shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedIdx(i)}
-                      aria-current={i === selectedIdx ? 'true' : undefined}
-                      className={cn(
-                        'inline-flex items-center gap-1.5 min-h-11 px-3 rounded-[8px] text-[13.5px]',
-                        i === selectedIdx
-                          ? 'bg-[var(--color-surface)] text-[var(--color-ink)] shadow-sm font-medium'
-                          : 'text-[var(--color-ink-2)] hover:bg-[var(--color-surface)]',
-                      )}
-                    >
-                      <span className={FICHA_TIPO(f.kind)}>{f.kind === 'pdf' ? 'PDF' : 'XLS'}</span>
-                      <span className="max-w-[180px] truncate">{f.name}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )}
-
-          <div className="flex-1 overflow-hidden bg-slate-100">
-            {selected?.kind === 'pdf' ? (
-              <PdfViewer key={selected.name} file={selected.file} />
-            ) : selected?.kind === 'excel' ? (
-              <ExcelViewer key={selected.name} file={selected.file} />
-            ) : null}
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
   );
 }

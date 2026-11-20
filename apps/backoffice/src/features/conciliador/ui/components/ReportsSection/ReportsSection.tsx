@@ -1,158 +1,110 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import type { Role } from '@/core/shared';
+import { useId, useState, useTransition } from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
+import { toast } from 'sonner';
+import { NavIcon } from '@/shared/components/atoms/NavIcon';
+import { cn } from '@/shared/lib/cn';
 import { formatDate } from '@/shared/lib/format';
+import { BTN_ACCENT, BTN_SECUNDARIO } from '../../lib/botones';
 
 export interface ReportView {
   id: string;
   note: string;
   status: 'OPEN' | 'RESOLVED';
   createdAt: string;
-  author: { id: string; name: string; email: string };
+  author: { id: string; name: string };
   resolvedNote: string | null;
   resolvedAt: string | null;
-  resolvedBy: { id: string; name: string; email: string } | null;
+  resolvedBy: { id: string; name: string } | null;
 }
 
 const MAX_NOTE_LEN = 2000;
 
-export function ReportsSection({
+/* ------------------------------------------------------------------ */
+/* Botón + diálogo "Reportar un error"                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Lo pone cada tarjeta de resultado (nueva conciliación e historial) junto a
+ * sus acciones. El formulario va en un diálogo: Radix devuelve el foco al
+ * botón al cerrar (hay Dialog.Trigger).
+ */
+export function ReportarError({
   comparisonId,
-  initialReports,
-  currentUser,
+  onCreado,
+  className,
 }: {
   comparisonId: string;
-  initialReports: ReportView[];
-  currentUser: { id: string; role: Role };
+  onCreado: (r: ReportView) => void;
+  className?: string;
 }) {
-  const [reports, setReports] = useState<ReportView[]>(initialReports);
-  const [showForm, setShowForm] = useState(false);
-  const [note, setNote] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-
-  const isSuperAdmin = currentUser.role === 'SUPER_ADMIN';
-
-  const submitReport = () => {
-    setError(null);
-    const trimmed = note.trim();
-    if (!trimmed) {
-      setError('Describe el error para enviar el reporte.');
-      return;
-    }
-    startTransition(async () => {
-      const res = await fetch(`/api/comparisons/${comparisonId}/reports`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ note: trimmed }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data?.error ?? 'No se pudo enviar el reporte.');
-        return;
-      }
-      setReports((prev) => [data.report, ...prev]);
-      setNote('');
-      setShowForm(false);
-    });
-  };
+  const [abierto, setAbierto] = useState(false);
 
   return (
-    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Reportes
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            ¿Detectaste un error o una discrepancia falsa? Repórtalo para que el
-            equipo lo revise.
-          </p>
-        </div>
-        {!showForm && (
-          <button
-            type="button"
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm transition-colors hover:bg-slate-50"
-          >
-            <FlagIcon />
-            Reportar error
-          </button>
-        )}
-      </header>
-
-      {showForm && (
-        <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <label
-            htmlFor="report-note"
-            className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600"
-          >
-            Descripción del error
-          </label>
-          <textarea
-            id="report-note"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            maxLength={MAX_NOTE_LEN}
-            rows={4}
-            placeholder="Ej: la fila 4 no es una discrepancia real, el PDF viene partido en 2 páginas y la app lo cuenta como duplicado."
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
-            disabled={pending}
-          />
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs text-slate-500 tabular-nums">
-              {note.length} / {MAX_NOTE_LEN}
-            </span>
-            {error && (
-              <span className="text-xs font-medium text-red-600">{error}</span>
-            )}
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={submitReport}
-              disabled={pending || !note.trim()}
-              className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {pending ? 'Enviando…' : 'Enviar reporte'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowForm(false);
-                setNote('');
-                setError(null);
-              }}
-              disabled={pending}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
+    <Dialog.Root open={abierto} onOpenChange={setAbierto}>
+      <Dialog.Trigger asChild>
+        <button type="button" className={cn(BTN_SECUNDARIO, className)}>
+          <NavIcon name="Flag" size={16} />
+          Reportar un error
+        </button>
+      </Dialog.Trigger>
+      {abierto && (
+        <FormularioNota
+          titulo="Reportar un error"
+          descripcion="Cuéntanos qué está mal en esta conciliación. Lo revisará el equipo y la respuesta aparecerá aquí."
+          etiqueta="¿Qué está mal?"
+          placeholder="Por ejemplo: el Sensibio H2O sí ha llegado, pero sale como que falta."
+          textoEnviar="Enviar reporte"
+          enviar={async (nota) => {
+            const res = await fetch(`/api/comparisons/${comparisonId}/reports`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ note: nota }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return data?.error ?? 'No se pudo enviar el reporte. Inténtalo de nuevo.';
+            onCreado(data.report as ReportView);
+            setAbierto(false);
+            toast.success('Reporte enviado. Te responderemos en esta conciliación.');
+            return null;
+          }}
+        />
       )}
+    </Dialog.Root>
+  );
+}
 
-      {reports.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-          Todavía no hay reportes para esta comparación.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {reports.map((r) => (
-            <ReportItem
-              key={r.id}
-              report={r}
-              isSuperAdmin={isSuperAdmin}
-              onResolve={(resolved) =>
-                setReports((prev) =>
-                  prev.map((x) => (x.id === resolved.id ? resolved : x)),
-                )
-              }
-            />
-          ))}
-        </ul>
-      )}
+/* ------------------------------------------------------------------ */
+/* Lista de reportes (no se pinta si no hay ninguno)                   */
+/* ------------------------------------------------------------------ */
+
+export function ReportsList({
+  reports,
+  isSuperAdmin,
+  onResuelto,
+  nivel = 3,
+}: {
+  reports: ReportView[];
+  isSuperAdmin: boolean;
+  onResuelto: (r: ReportView) => void;
+  /** 2 en el detalle del historial (bajo el h1); 3 en la tarjeta de la fase 2 (bajo un h2). */
+  nivel?: 2 | 3;
+}) {
+  const tituloId = useId();
+  const Titulo = nivel === 2 ? 'h2' : 'h3';
+  if (reports.length === 0) return null;
+
+  return (
+    <section aria-labelledby={tituloId} className="border-t border-[var(--color-hairline)] px-4 py-4 sm:px-5">
+      <Titulo id={tituloId} className="m-0 mb-3 text-[15px] font-semibold text-[var(--color-ink)]">
+        {reports.length === 1 ? 'Reporte de error' : `Reportes de error (${reports.length})`}
+      </Titulo>
+      <ul className="flex flex-col gap-3">
+        {reports.map((r) => (
+          <ReportItem key={r.id} report={r} isSuperAdmin={isSuperAdmin} onResuelto={onResuelto} />
+        ))}
+      </ul>
     </section>
   );
 }
@@ -160,190 +112,171 @@ export function ReportsSection({
 function ReportItem({
   report,
   isSuperAdmin,
-  onResolve,
+  onResuelto,
 }: {
   report: ReportView;
   isSuperAdmin: boolean;
-  onResolve: (r: ReportView) => void;
+  onResuelto: (r: ReportView) => void;
 }) {
-  const [showResolveForm, setShowResolveForm] = useState(false);
-  const [resolveNote, setResolveNote] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-
-  const isOpen = report.status === 'OPEN';
-
-  const submitResolve = () => {
-    setError(null);
-    const trimmed = resolveNote.trim();
-    if (!trimmed) {
-      setError('Describe cómo se solucionó.');
-      return;
-    }
-    startTransition(async () => {
-      const res = await fetch(`/api/reports/${report.id}/resolve`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resolvedNote: trimmed }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data?.error ?? 'No se pudo marcar como solucionado.');
-        return;
-      }
-      onResolve(data.report);
-      setShowResolveForm(false);
-      setResolveNote('');
-    });
-  };
+  const [abierto, setAbierto] = useState(false);
+  const pendiente = report.status === 'OPEN';
 
   return (
-    <li
-      className={`rounded-xl border p-4 ${
-        isOpen
-          ? 'border-amber-200 bg-amber-50/50'
-          : 'border-emerald-200 bg-emerald-50/40'
-      }`}
-    >
-      <header className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          {isOpen ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-              Abierto
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-              <CheckIcon />
-              Solucionado
-            </span>
-          )}
-          <span className="text-xs text-slate-500">
-            {report.author.name} · {formatDate(report.createdAt)}
-          </span>
-        </div>
-      </header>
-
-      <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-800">
+    <li className="rounded-[10px] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-3.5 sm:p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className={cn('chip', pendiente ? 'chip-yellow' : 'chip-green')}>
+          {pendiente ? 'Pendiente de revisar' : 'Solucionado'}
+        </span>
+        <span className="text-[13px] text-[var(--color-muted)]">
+          {report.author.name} · {formatDate(report.createdAt)}
+        </span>
+      </div>
+      <p className="m-0 mt-2 whitespace-pre-wrap break-words text-[14.5px] leading-relaxed text-[var(--color-ink)]">
         {report.note}
       </p>
 
-      {report.status === 'RESOLVED' && report.resolvedBy && (
-        <div className="mt-3 rounded-lg border border-emerald-200 bg-white p-3">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-emerald-700">
-            Resolución · {report.resolvedBy.name}
-            {report.resolvedAt && ` · ${formatDate(report.resolvedAt)}`}
+      {!pendiente && report.resolvedNote && (
+        <div className="mt-3 rounded-[8px] bg-[var(--color-green-soft)] px-3 py-2.5">
+          <p className="m-0 text-[13px] font-semibold text-[var(--color-green-ink)]">
+            Respuesta{report.resolvedBy ? ` de ${report.resolvedBy.name}` : ''}
+            {report.resolvedAt ? ` · ${formatDate(report.resolvedAt)}` : ''}
           </p>
-          {report.resolvedNote && (
-            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700">
-              {report.resolvedNote}
-            </p>
-          )}
+          <p className="m-0 mt-1 whitespace-pre-wrap break-words text-[14px] leading-relaxed text-[var(--color-ink)]">
+            {report.resolvedNote}
+          </p>
         </div>
       )}
 
-      {isOpen && isSuperAdmin && (
-        <div className="mt-3">
-          {!showResolveForm ? (
-            <button
-              type="button"
-              onClick={() => setShowResolveForm(true)}
-              className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50"
-            >
-              <CheckIcon />
+      {pendiente && isSuperAdmin && (
+        <Dialog.Root open={abierto} onOpenChange={setAbierto}>
+          <Dialog.Trigger asChild>
+            <button type="button" className={cn(BTN_SECUNDARIO, 'mt-3')}>
+              <NavIcon name="Check" size={16} />
               Marcar como solucionado
             </button>
-          ) : (
-            <div className="rounded-lg border border-emerald-200 bg-white p-3">
-              <label
-                htmlFor={`resolve-${report.id}`}
-                className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600"
-              >
-                Nota de resolución
-              </label>
-              <textarea
-                id={`resolve-${report.id}`}
-                value={resolveNote}
-                onChange={(e) => setResolveNote(e.target.value)}
-                maxLength={MAX_NOTE_LEN}
-                rows={3}
-                placeholder="Ej: se ajustó el parser para el caso PDF partido en 2 páginas. Vuelve a subir la comparación."
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-400"
-                disabled={pending}
-              />
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs text-slate-500 tabular-nums">
-                  {resolveNote.length} / {MAX_NOTE_LEN}
-                </span>
-                {error && (
-                  <span className="text-xs font-medium text-red-600">
-                    {error}
-                  </span>
-                )}
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={submitResolve}
-                  disabled={pending || !resolveNote.trim()}
-                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {pending ? 'Guardando…' : 'Confirmar solución'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowResolveForm(false);
-                    setResolveNote('');
-                    setError(null);
-                  }}
-                  disabled={pending}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
+          </Dialog.Trigger>
+          {abierto && (
+            <FormularioNota
+              titulo="Marcar como solucionado"
+              descripcion="Explica qué se ha hecho. Quien lo reportó verá esta respuesta en la conciliación."
+              etiqueta="¿Cómo se ha solucionado?"
+              placeholder="Por ejemplo: corregido el código del producto. Vuelve a subir el albarán para comprobarlo."
+              textoEnviar="Marcar como solucionado"
+              enviar={async (nota) => {
+                const res = await fetch(`/api/reports/${report.id}/resolve`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ resolvedNote: nota }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) return data?.error ?? 'No se pudo guardar. Inténtalo de nuevo.';
+                onResuelto(data.report as ReportView);
+                setAbierto(false);
+                toast.success('Reporte marcado como solucionado.');
+                return null;
+              }}
+            />
           )}
-        </div>
+        </Dialog.Root>
       )}
     </li>
   );
 }
 
-function FlagIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-      <line x1="4" x2="4" y1="22" y2="15" />
-    </svg>
-  );
-}
+/* ------------------------------------------------------------------ */
+/* Diálogo con una nota de texto                                       */
+/* ------------------------------------------------------------------ */
 
-function CheckIcon() {
+function FormularioNota({
+  titulo,
+  descripcion,
+  etiqueta,
+  placeholder,
+  textoEnviar,
+  enviar,
+}: {
+  titulo: string;
+  descripcion: string;
+  etiqueta: string;
+  placeholder: string;
+  textoEnviar: string;
+  /** Devuelve el mensaje de error, o null si ha ido bien. */
+  enviar: (nota: string) => Promise<string | null>;
+}) {
+  const [nota, setNota] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const campoId = useId();
+  const contadorId = useId();
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const limpia = nota.trim();
+    if (!limpia) {
+      setError('Escribe algo antes de enviar.');
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const fallo = await enviar(limpia);
+      if (fallo) setError(fallo);
+    });
+  }
+
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
+    <Dialog.Portal>
+      <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-900/50" />
+      <Dialog.Content
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          document.getElementById(campoId)?.focus();
+        }}
+        className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-24px)] max-w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-[14px] bg-[var(--color-surface)] p-5 sm:p-6 shadow-2xl outline-none">
+        <div className="flex items-start justify-between gap-3">
+          <Dialog.Title className="m-0 text-[18px] font-bold tracking-[-0.01em] text-[var(--color-ink)]">{titulo}</Dialog.Title>
+          <Dialog.Close
+            aria-label="Cerrar"
+            className="-mr-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-[8px] text-[var(--color-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink)]"
+          >
+            <NavIcon name="X" size={18} />
+          </Dialog.Close>
+        </div>
+        <Dialog.Description className="m-0 mt-1 text-[14px] leading-[1.5] text-[var(--color-muted)]">{descripcion}</Dialog.Description>
+
+        <form onSubmit={onSubmit} className="mt-4">
+          <label htmlFor={campoId} className="mb-1.5 block text-[14px] font-medium text-[var(--color-ink)]">
+            {etiqueta}
+          </label>
+          <textarea
+            id={campoId}
+            value={nota}
+            onChange={(e) => setNota(e.target.value)}
+            maxLength={MAX_NOTE_LEN}
+            rows={5}
+            placeholder={placeholder}
+            aria-describedby={contadorId}
+            aria-invalid={error ? true : undefined}
+            disabled={pending}
+            className="field resize-y text-[15px] leading-[1.5]"
+          />
+          <p id={contadorId} className="m-0 mt-1 text-right text-[12.5px] tabular-nums text-[var(--color-muted)]">
+            {nota.length} / {MAX_NOTE_LEN}
+          </p>
+          <p role="alert" className="m-0 min-h-0 text-[14px] text-[var(--color-red-ink)] empty:hidden">
+            {error ?? ''}
+          </p>
+          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Dialog.Close asChild>
+              <button type="button" disabled={pending} className={BTN_SECUNDARIO}>
+                Cancelar
+              </button>
+            </Dialog.Close>
+            <button type="submit" disabled={pending} className={BTN_ACCENT}>
+              {pending ? 'Enviando…' : textoEnviar}
+            </button>
+          </div>
+        </form>
+      </Dialog.Content>
+    </Dialog.Portal>
   );
 }

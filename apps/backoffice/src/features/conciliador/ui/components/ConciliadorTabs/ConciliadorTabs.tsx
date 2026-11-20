@@ -26,7 +26,7 @@ export function ConciliadorTabs() {
                 href={t.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  '-mb-px flex items-center gap-2 border-b-2 px-3 sm:px-4 py-2.5 text-[13.5px] whitespace-nowrap transition-colors',
+                  '-mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 sm:px-4 py-2.5 text-[13.5px] whitespace-nowrap transition-colors',
                   active
                     ? 'border-[var(--color-accent)] text-[var(--color-ink)] font-medium'
                     : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-ink-2)]',

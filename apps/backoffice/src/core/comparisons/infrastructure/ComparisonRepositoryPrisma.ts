@@ -51,6 +51,15 @@ function whereFromFilters(
   if (filters.supplier) {
     where.supplier = { contains: filters.supplier, mode: 'insensitive' };
   }
+  if (filters.search) {
+    where.OR = [
+      { supplier: { contains: filters.search, mode: 'insensitive' } },
+      { label: { contains: filters.search, mode: 'insensitive' } },
+    ];
+  }
+  if (filters.withOpenReports) {
+    where.reports = { some: { status: 'OPEN' } };
+  }
   if (filters.businessSlug && scope.kind === 'all') {
     where.business = { slug: filters.businessSlug };
   }

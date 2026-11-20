@@ -24,6 +24,7 @@
   --color-muted-2: #5F6E85;          /* ≥4,5:1 sobre bg y surface-2 (antes #8A98AE, 2,6:1) */
   --color-hairline: #DAE3EE;         /* bordes 1px (más azulado, menos gris plano) */
   --color-hairline-strong: #BFCDDD;  /* bordes énfasis, hover */
+  --color-control-border: #8294AB;   /* borde de campos y chips: 3,1:1 sobre blanco (WCAG 1.4.11) */
 
   /* Accent — azul Torrents (--primary del sitio del cliente) */
   --color-accent: #1265b5;
@@ -131,10 +132,14 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.018em;
 }
 
-:where(a, button, input, textarea, select, [role='button'], [tabindex]):focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-  border-radius: var(--radius-xs);
+/* En @layer base: si va fuera de capa pisa las utilidades focus-visible:* de Tailwind
+   (p. ej. el anillo hacia dentro de las filas del historial, que la tarjeta recortaba). */
+@layer base {
+  :where(a, button, input, textarea, select, [role='button'], [tabindex]):focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
 }
 
 [data-tabular] { font-variant-numeric: tabular-nums; }
@@ -354,7 +359,7 @@ kbd {
   letter-spacing: -0.005em;
   color: var(--color-ink);
   background: var(--color-surface);
-  border: 1px solid var(--color-hairline);
+  border: 1px solid var(--color-control-border);
   border-radius: var(--radius-sm);
   transition: border-color var(--dur-fast) var(--ease-spring),
     box-shadow var(--dur-fast) var(--ease-spring);

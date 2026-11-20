@@ -38,6 +38,10 @@ export interface ListFilters {
   to?: Date;
   status?: ComparisonStatus;
   supplier?: string;
+  /** Busca en proveedor O etiqueta (sin distinguir mayúsculas). */
+  search?: string;
+  /** Solo las que tienen algún reporte de error abierto. */
+  withOpenReports?: boolean;
   /** Only applicable to SUPER_ADMIN. */
   businessSlug?: string;
 }

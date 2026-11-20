@@ -1,1 +1,1 @@
-export { ReportsSection, type ReportView } from './ReportsSection';
+export { ReportarError, ReportsList, type ReportView } from './ReportsSection';

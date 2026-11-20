@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import type { ReconciledLine } from '@/core/engine';
 import { auth } from '@/core/auth';
 import { scopeFromSession } from '@/core/shared';
 import {
@@ -12,18 +13,18 @@ import {
   ListReportsByComparisonUseCase,
   getReportRepository,
 } from '@/core/reports';
-import type { ReconciledLine } from '@/core/engine';
-import { StatusBadge } from '../components/StatusBadge';
-import { ComparisonFiles } from '../components/ComparisonFiles';
-import { ReportsSection, type ReportView } from '../components/ReportsSection';
+import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import {
-  formatDate,
   formatDuration,
   formatNumber,
   formatUsd,
 } from '@/shared/lib/format';
+import { HistoryResultCard } from '../components/HistoryResultCard';
+import { fechaHoraMadrid } from '../lib/historial';
+import type { ReportView } from '../components/ReportsSection';
+import type { PreviewFile } from '../components/FilePreviewModal';
 
-// NOTE: comparaciones antiguas no traen líneas en summary → undefined → la vista cae al preview XLSX.
+// NOTE: conciliaciones antiguas no traen líneas en summary → undefined → se remite al informe.
 function extractLines(summary: unknown): ReconciledLine[] | undefined {
   if (!summary || typeof summary !== 'object') return undefined;
   const lines = (summary as { lines?: unknown }).lines;
@@ -31,9 +32,8 @@ function extractLines(summary: unknown): ReconciledLine[] | undefined {
   return lines as ReconciledLine[];
 }
 
-// DEBUG local — extraccion cruda de Gemini por PDF, disponible solo en
-// comparaciones creadas tras persistir el campo. Para comparaciones antiguas
-// devuelve undefined y el panel no se renderiza.
+// Extracción cruda de Gemini por PDF (solo SUPER_ADMIN, dentro de "Datos
+// técnicos"). Las conciliaciones antiguas no la guardaron → undefined.
 interface RawExtractionEntry {
   filename: string;
   data: {
@@ -62,266 +62,201 @@ function extractRawExtractions(summary: unknown): RawExtractionEntry[] | undefin
   return raw as RawExtractionEntry[];
 }
 
-const KIND_LABEL: Record<FileKind, string> = {
-  PDF_INPUT: 'PDF (entrada)',
-  XLSX_INPUT: 'Excel del pedido',
-  REPORT_OUTPUT: 'Informe generado',
-};
-
-function fileKindFor(
-  kind: FileKind,
-  filename: string,
-): 'pdf' | 'excel' | 'other' {
-  if (kind === 'PDF_INPUT') return 'pdf';
-  if (kind === 'XLSX_INPUT' || kind === 'REPORT_OUTPUT') return 'excel';
-  if (/\.pdf$/i.test(filename)) return 'pdf';
-  if (/\.(xlsx?|xlsm)$/i.test(filename)) return 'excel';
-  return 'other';
+function extractError(summary: unknown): string | undefined {
+  if (!summary || typeof summary !== 'object') return undefined;
+  const e = (summary as { error?: unknown }).error;
+  return typeof e === 'string' ? e : undefined;
 }
+
+function previewKind(kind: FileKind, filename: string): PreviewFile['kind'] | null {
+  if (kind === 'PDF_INPUT' || /\.pdf$/i.test(filename)) return 'pdf';
+  if (kind === 'XLSX_INPUT' || kind === 'REPORT_OUTPUT' || /\.(xlsx?|xlsm)$/i.test(filename)) return 'excel';
+  return null;
+}
+
+// Orden en "Ver archivos": lo que subió el usuario primero, el informe al final.
+const ORDEN_ARCHIVO: Record<FileKind, number> = { PDF_INPUT: 0, XLSX_INPUT: 1, REPORT_OUTPUT: 2 };
 
 export async function ComparisonDetailView({ id }: { id: string }) {
   const session = await auth();
   if (!session?.user) redirect('/login');
 
   const scope = scopeFromSession(session);
-  const useCase = new GetComparisonDetailUseCase(
+  const esSuperAdmin = session.user.role === 'SUPER_ADMIN';
+  const comparison = await new GetComparisonDetailUseCase(
     getComparisonRepository(),
     getStorage(),
-  );
-  const comparison = await useCase.execute(scope, id);
+  ).execute(scope, id);
   if (!comparison) notFound();
-
-  const totalTokens =
-    comparison.geminiInputTokens + comparison.geminiOutputTokens;
-  const reconciliationLines = extractLines(comparison.summary);
-  const rawExtractions =
-    process.env.NODE_ENV !== 'production'
-      ? extractRawExtractions(comparison.summary)
-      : undefined;
 
   const reports = await new ListReportsByComparisonUseCase(
     getReportRepository(),
     getComparisonRepository(),
   ).execute({ scope, comparisonId: id });
 
+  // Al cliente solo viaja lo que se pinta: sin emails, coste ni tokens.
   const reportsForClient: ReportView[] = reports.map((r) => ({
     id: r.id,
     note: r.note,
     status: r.status,
     createdAt: r.createdAt.toISOString(),
-    author: r.author,
+    author: { id: r.author.id, name: r.author.name },
     resolvedNote: r.resolvedNote,
     resolvedAt: r.resolvedAt ? r.resolvedAt.toISOString() : null,
-    resolvedBy: r.resolvedBy,
+    resolvedBy: r.resolvedBy ? { id: r.resolvedBy.id, name: r.resolvedBy.name } : null,
   }));
 
+  const lineas = extractLines(comparison.summary) ?? null;
+  const errorTecnico = extractError(comparison.summary);
+  const informe = comparison.files.find((f) => f.kind === 'REPORT_OUTPUT');
+  const archivos: PreviewFile[] = [...comparison.files]
+    .sort((a, b) => ORDEN_ARCHIVO[a.kind] - ORDEN_ARCHIVO[b.kind])
+    .flatMap((f) => {
+      const kind = previewKind(f.kind, f.filename);
+      return kind ? [{ name: f.filename, src: f.downloadUrl, kind }] : [];
+    });
+
+  const titulo = comparison.label || comparison.supplier || 'Conciliación sin proveedor';
+  const meta = [
+    comparison.supplier && comparison.supplier !== titulo ? comparison.supplier : null,
+    fechaHoraMadrid(comparison.createdAt),
+    comparison.user.name,
+    esSuperAdmin ? comparison.business.name : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  const rawExtractions = esSuperAdmin ? extractRawExtractions(comparison.summary) : undefined;
+
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-6 pb-8 sm:px-6 sm:pb-10">
-      <div className="mb-4">
-        <Link
-          href="/albaranes/historial"
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900"
-        >
-          <ArrowLeftIcon />
-          Volver al historial
-        </Link>
-      </div>
+    <div className="mx-auto max-w-6xl px-4 pt-4 pb-10 sm:px-6 sm:pt-6">
+      <Link
+        href="/albaranes/historial"
+        className="mb-3 inline-flex min-h-11 items-center gap-1.5 rounded-[8px] px-2 -ml-2 text-[14.5px] font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]"
+      >
+        <NavIcon name="ArrowLeft" size={16} />
+        Historial
+      </Link>
 
-      <header className="mb-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="truncate text-2xl font-semibold tracking-tight text-slate-900">
-            {comparison.supplier ?? 'Comparación sin proveedor'}
-          </h1>
-          <StatusBadge status={comparison.status} />
-        </div>
-        {comparison.label && (
-          <p className="mt-1 text-sm text-slate-500">
-            Etiqueta:{' '}
-            <span className="font-medium text-slate-700">
-              {comparison.label}
-            </span>
-          </p>
-        )}
-      </header>
-
-      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Kpi
-          label="Fecha"
-          value={formatDate(comparison.createdAt)}
-          icon={<CalendarIcon />}
-        />
-        <Kpi
-          label="Duración"
-          value={formatDuration(comparison.durationMs)}
-          icon={<ClockIcon />}
-        />
-        <Kpi
-          label="PDFs"
-          value={String(comparison.numPdfs)}
-          icon={<DocumentIcon />}
-        />
-        <Kpi
-          label="Discrepancias"
-          value={String(comparison.numDiscrepancies)}
-          icon={<AlertIcon />}
-          highlight={comparison.numDiscrepancies > 0}
-        />
-      </section>
-
-      <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm">
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Contexto y consumo
-        </h2>
-        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-          <DescItem label="Negocio" value={comparison.business.name} />
-          <DescItem label="Usuario" value={comparison.user.name} />
-          <DescItem label="Email" value={comparison.user.email} mono />
-          <DescItem
-            label="Tokens (input)"
-            value={formatNumber(comparison.geminiInputTokens)}
-            mono
-          />
-          <DescItem
-            label="Tokens (output)"
-            value={formatNumber(comparison.geminiOutputTokens)}
-            mono
-          />
-          <DescItem
-            label="Coste estimado"
-            value={formatUsd(comparison.geminiCostUsd)}
-            mono
-          />
-        </dl>
-        <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
-          Total de tokens Gemini:{' '}
-          <span className="font-medium text-slate-700">
-            {formatNumber(totalTokens)}
-          </span>
-        </p>
-      </section>
-
-      <ComparisonFiles
-        files={comparison.files.map((f) => ({
-          id: f.id,
-          filename: f.filename,
-          kindLabel: KIND_LABEL[f.kind],
-          kind: fileKindFor(f.kind, f.filename),
-          sizeBytes: f.sizeBytes,
-          downloadUrl: f.downloadUrl,
-          isReport: f.kind === 'REPORT_OUTPUT',
-        }))}
-        reconciliationLines={reconciliationLines}
-      />
-
-      <ReportsSection
+      <HistoryResultCard
         comparisonId={id}
+        titulo={titulo}
+        meta={meta}
+        estado={comparison.status}
+        numDiscrepancias={comparison.numDiscrepancies}
+        lineas={lineas}
+        mensajeError={
+          comparison.status === 'ERROR'
+            ? 'No se pudo leer el albarán. Prueba a subirlo de nuevo y, si vuelve a pasar, repórtalo.'
+            : null
+        }
+        informeUrl={informe?.downloadUrl ?? null}
+        archivos={archivos}
         initialReports={reportsForClient}
         currentUser={{ id: session.user.id, role: session.user.role }}
       />
 
-      {rawExtractions && rawExtractions.length > 0 && (
-        <DebugRawExtractionsPanel entries={rawExtractions} />
+      {esSuperAdmin && (
+        <details className="card mt-6 p-0 overflow-hidden">
+          <summary className="flex min-h-12 cursor-pointer select-none items-center px-4 sm:px-6 text-[15px] font-semibold text-[var(--color-ink)] hover:bg-[var(--color-surface-2)] focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] focus-visible:-outline-offset-2">
+            Datos técnicos
+            <span className="ml-2 text-[13px] font-normal text-[var(--color-muted)]">solo administradores</span>
+          </summary>
+          <div className="border-t border-[var(--color-hairline)] px-4 py-4 sm:px-6">
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-[14px] sm:grid-cols-2 lg:grid-cols-3">
+              <Dato label="Farmacia" value={comparison.business.name} />
+              <Dato label="Usuario" value={`${comparison.user.name} · ${comparison.user.email}`} />
+              <Dato label="Duración" value={formatDuration(comparison.durationMs)} />
+              <Dato label="PDFs" value={String(comparison.numPdfs)} />
+              <Dato
+                label="Tokens Gemini (entrada / salida)"
+                value={`${formatNumber(comparison.geminiInputTokens)} / ${formatNumber(comparison.geminiOutputTokens)}`}
+              />
+              <Dato label="Coste estimado" value={formatUsd(comparison.geminiCostUsd)} />
+            </dl>
+            {errorTecnico && (
+              <p className="m-0 mt-4 break-words rounded-[8px] bg-[var(--color-surface-2)] px-3 py-2.5 font-mono text-[13px] text-[var(--color-ink)]">
+                {errorTecnico}
+              </p>
+            )}
+            {rawExtractions && rawExtractions.length > 0 && (
+              <DebugRawExtractionsPanel entries={rawExtractions} />
+            )}
+          </div>
+        </details>
       )}
+    </div>
+  );
+}
+
+function Dato({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-[13px] text-[var(--color-muted)]">{label}</dt>
+      <dd className="m-0 mt-0.5 break-words font-mono-tabular text-[var(--color-ink)]">{value}</dd>
     </div>
   );
 }
 
 function DebugRawExtractionsPanel({ entries }: { entries: RawExtractionEntry[] }) {
   return (
-    <section className="mt-10 rounded-2xl border-2 border-dashed border-amber-400 bg-amber-50/50 p-5">
-      <header className="mb-4 flex items-center gap-2">
-        <span className="rounded-md bg-amber-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-900">
-          DEBUG · dev only
-        </span>
-        <h2 className="text-sm font-semibold text-slate-900">
-          Extracción cruda de Gemini (por PDF, antes de merge/reconcile)
-        </h2>
-      </header>
-      <p className="mb-4 text-xs text-slate-600">
-        Estos son los datos que Gemini devolvió para cada PDF, tal cual, antes
-        de fusionar múltiples PDFs o de aplicar la reconciliación. Sirve para
-        diagnosticar problemas de extracción (descuentos perdidos, CNs mal
-        clasificados, líneas duplicadas o faltantes). Solo visible en modo dev
-        (NODE_ENV !== production) y solo aparece en comparaciones creadas tras
-        activar la persistencia de rawExtractions.
+    <section className="mt-5" aria-labelledby="debug-ia">
+      <h2 id="debug-ia" className="m-0 text-[15px] font-semibold text-[var(--color-ink)]">
+        Lo que leyó la IA en cada PDF
+      </h2>
+      <p className="m-0 mt-1 mb-3 text-[13.5px] text-[var(--color-muted)]">
+        Tal cual, antes de unir PDFs y conciliar. Sirve para diagnosticar descuentos perdidos, códigos mal leídos o líneas duplicadas.
       </p>
       {entries.map((entry, i) => (
-        <details
-          key={i}
-          className="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-white"
-          open={i === 0}
-        >
-          <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-slate-800 hover:bg-slate-50">
-            <span className="font-mono text-xs text-slate-500">#{i + 1}</span>{' '}
-            {entry.filename}
-            {entry.data.documentKind && (
-              <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-slate-600">
-                {entry.data.documentKind}
-              </span>
-            )}
-            <span className="ml-2 text-xs text-slate-400">
-              · {entry.data.lines?.length ?? 0} líneas
-            </span>
+        <details key={i} className="mb-2 overflow-hidden rounded-[10px] border border-[var(--color-hairline)]" open={i === 0}>
+          <summary className="flex min-h-11 cursor-pointer select-none flex-wrap items-center gap-x-2 px-3 py-2 text-[14px] font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface-2)] focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] focus-visible:-outline-offset-2">
+            <span className="font-mono-tabular text-[var(--color-muted)]">#{i + 1}</span>
+            <span className="break-all">{entry.filename}</span>
+            {entry.data.documentKind && <span className="chip chip-neutral">{entry.data.documentKind}</span>}
+            <span className="text-[13px] text-[var(--color-muted)]">· {entry.data.lines?.length ?? 0} líneas</span>
           </summary>
 
-          <div className="border-t border-slate-100 px-4 py-3 text-xs">
-            <dl className="mb-3 grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-4">
-              {entry.data.deliveryNoteNumber && (
-                <DebugField label="Nº albarán/factura" value={entry.data.deliveryNoteNumber} />
-              )}
-              {entry.data.supplier && (
-                <DebugField label="Proveedor" value={entry.data.supplier} />
-              )}
-              {entry.data.date && (
-                <DebugField label="Fecha" value={entry.data.date} />
-              )}
-              {entry.data.orderNumber && (
-                <DebugField label="Nº pedido" value={entry.data.orderNumber} />
-              )}
+          <div className="border-t border-[var(--color-hairline)] px-3 py-3 text-[13px]">
+            <dl className="mb-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
+              {entry.data.deliveryNoteNumber && <Dato label="Nº albarán/factura" value={entry.data.deliveryNoteNumber} />}
+              {entry.data.supplier && <Dato label="Proveedor" value={entry.data.supplier} />}
+              {entry.data.date && <Dato label="Fecha" value={entry.data.date} />}
+              {entry.data.orderNumber && <Dato label="Nº pedido" value={entry.data.orderNumber} />}
               {entry.usage && (
-                <DebugField
-                  label="Tokens (in / out)"
+                <Dato
+                  label="Tokens (entrada / salida)"
                   value={`${entry.usage.promptTokens ?? '?'} / ${entry.usage.candidatesTokens ?? '?'}`}
                 />
               )}
             </dl>
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] border-collapse text-left font-mono text-[11px]">
+            <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={`Líneas leídas de ${entry.filename}`}>
+              <table className="w-full min-w-[720px] border-collapse text-left font-mono-tabular text-[12px]">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
-                    <th className="px-2 py-1 text-right">#</th>
-                    <th className="px-2 py-1">code</th>
-                    <th className="px-2 py-1">CN</th>
-                    <th className="px-2 py-1">ean</th>
-                    <th className="px-2 py-1">description</th>
-                    <th className="px-2 py-1 text-right">qty</th>
-                    <th className="px-2 py-1 text-right">unitPrice</th>
-                    <th className="px-2 py-1 text-right">dto%</th>
-                    <th className="px-2 py-1 text-right">free</th>
+                  <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-surface-2)] text-[var(--color-ink-2)]">
+                    <th scope="col" className="px-2 py-1 text-right">#</th>
+                    <th scope="col" className="px-2 py-1">Código</th>
+                    <th scope="col" className="px-2 py-1">CN</th>
+                    <th scope="col" className="px-2 py-1">EAN</th>
+                    <th scope="col" className="px-2 py-1">Descripción</th>
+                    <th scope="col" className="px-2 py-1 text-right">Uds.</th>
+                    <th scope="col" className="px-2 py-1 text-right">Precio</th>
+                    <th scope="col" className="px-2 py-1 text-right">Dto. %</th>
+                    <th scope="col" className="px-2 py-1 text-right">Regalo</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(entry.data.lines ?? []).map((l, idx) => (
-                    <tr
-                      key={idx}
-                      className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
-                    >
-                      <td className="px-2 py-1 text-right text-slate-400">{idx + 1}</td>
+                    <tr key={idx} className="border-b border-[var(--color-hairline)] last:border-0 text-[var(--color-ink)]">
+                      <td className="px-2 py-1 text-right text-[var(--color-muted)]">{idx + 1}</td>
                       <td className="px-2 py-1">{l.code ?? '—'}</td>
                       <td className="px-2 py-1">{l.nationalCode ?? '—'}</td>
                       <td className="px-2 py-1">{l.ean ?? '—'}</td>
-                      <td className="px-2 py-1 max-w-[280px] truncate" title={l.description}>
-                        {l.description ?? '—'}
-                      </td>
-                      <td className="px-2 py-1 text-right tabular-nums">{l.quantity ?? 0}</td>
-                      <td className="px-2 py-1 text-right tabular-nums">
-                        {l.unitPrice != null ? l.unitPrice.toFixed(4) : '—'}
-                      </td>
-                      <td className="px-2 py-1 text-right tabular-nums">
-                        {l.discount != null ? l.discount : '—'}
-                      </td>
-                      <td className="px-2 py-1 text-right tabular-nums">{l.freeUnits ?? 0}</td>
+                      <td className="px-2 py-1 max-w-[280px] truncate" title={l.description}>{l.description ?? '—'}</td>
+                      <td className="px-2 py-1 text-right">{l.quantity ?? 0}</td>
+                      <td className="px-2 py-1 text-right">{l.unitPrice != null ? l.unitPrice.toFixed(4) : '—'}</td>
+                      <td className="px-2 py-1 text-right">{l.discount != null ? l.discount : '—'}</td>
+                      <td className="px-2 py-1 text-right">{l.freeUnits ?? 0}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -331,176 +266,5 @@ function DebugRawExtractionsPanel({ entries }: { entries: RawExtractionEntry[] }
         </details>
       ))}
     </section>
-  );
-}
-
-function DebugField({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
-        {label}
-      </dt>
-      <dd className="font-mono text-[11px] text-slate-800">{value}</dd>
-    </div>
-  );
-}
-
-function Kpi({
-  label,
-  value,
-  icon,
-  highlight = false,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-500">
-        <span
-          className="flex h-6 w-6 items-center justify-center rounded-md"
-          style={{
-            background: highlight
-              ? '#fef3c7'
-              : 'var(--brand-primary-soft)',
-            color: highlight ? '#b45309' : 'var(--brand-primary)',
-          }}
-          aria-hidden
-        >
-          {icon}
-        </span>
-        {label}
-      </div>
-      <p
-        className={`mt-2 text-xl font-semibold tabular-nums ${
-          highlight ? 'text-amber-700' : 'text-slate-900'
-        }`}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function DescItem({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
-  return (
-    <div>
-      <dt className="text-xs font-medium uppercase tracking-wider text-slate-500">
-        {label}
-      </dt>
-      <dd
-        className={`mt-0.5 text-sm text-slate-900 ${
-          mono ? 'font-mono tabular-nums' : ''
-        }`}
-      >
-        {value}
-      </dd>
-    </div>
-  );
-}
-
-function ArrowLeftIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="m12 19-7-7 7-7" />
-      <path d="M19 12H5" />
-    </svg>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect width="18" height="18" x="3" y="4" rx="2" />
-      <path d="M16 2v4M8 2v4M3 10h18" />
-    </svg>
-  );
-}
-
-function ClockIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 6v6l4 2" />
-    </svg>
-  );
-}
-
-function DocumentIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
-      <polyline points="14 2 14 8 20 8" />
-    </svg>
-  );
-}
-
-function AlertIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="m10.29 3.86-8.4 14.5A2 2 0 0 0 3.62 21h16.76a2 2 0 0 0 1.73-2.64l-8.4-14.5a2 2 0 0 0-3.46 0Z" />
-      <line x1="12" x2="12" y1="9" y2="13" />
-      <line x1="12" x2="12.01" y1="17" y2="17" />
-    </svg>
   );
 }
