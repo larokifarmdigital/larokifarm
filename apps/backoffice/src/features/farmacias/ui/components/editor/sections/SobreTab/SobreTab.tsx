@@ -15,8 +15,7 @@ import { ModalLocaleScope } from '@/features/farmacias/ui/components/editor/fiel
 import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
-import { cn } from '@/shared/lib/cn';
-import type { Locale, MultilangText } from '@/core/shared';
+import type { MultilangText } from '@/core/shared';
 import type { SobreNosotros } from '@/core/farmacias/domain';
 import {
   DndContext,
@@ -31,120 +30,17 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { toast } from 'sonner';
+import { LOCALE_NOMBRE } from '@/core/shared';
+import { AvisoTraduccion, CabeceraColapsable, FilaLista } from '@/features/farmacias/ui/components/editor/fields/FilaLista';
 import { useFieldErrors } from '@/features/farmacias/ui/hooks/useFieldError';
 import { FieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 
 const MAX_PUNTOS = 8;
 const RECOMENDADO_PUNTOS = 4;
 const MAX_IMAGENES = 6;
-
-/**
- * Fila compacta read-only. Mostrar + gestionar (editar/eliminar/reordenar).
- * Punto = una sola frase i18n, sin icono ni descripción.
- */
-function PuntoRow({
-  id,
-  punto,
-  currentLocale,
-  activeLocales,
-  onEdit,
-  onRemove,
-}: {
-  id: string;
-  punto: MultilangText;
-  currentLocale: Locale;
-  activeLocales: Locale[];
-  onEdit: () => void;
-  onRemove: () => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 10 : undefined,
-  };
-
-  const texto =
-    punto[currentLocale] || punto.es || punto.ca || punto.en || '';
-  const hasText = !!texto.trim();
-
-  const missingLocales = activeLocales.filter((l) => !punto[l]?.trim());
-
-  return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        'group flex items-center gap-2 px-2 py-2 rounded-[var(--radius-sm)] border border-transparent bg-[var(--color-surface)]',
-        'hover:border-[var(--color-hairline)] transition-all',
-        isDragging && 'border-[var(--color-hairline-strong)] shadow-[var(--shadow-elevated)]',
-      )}
-    >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label="Reordenar punto"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted-2)] hover:text-[var(--color-ink-2)] cursor-grab active:cursor-grabbing"
-      >
-        <NavIcon name="DotsSixVertical" size={14} weight="bold" />
-      </button>
-
-      <button
-        type="button"
-        onClick={onEdit}
-        className="flex-1 min-w-0 flex items-center gap-3 text-left"
-      >
-        <span className="shrink-0 h-9 w-9 rounded-[var(--radius-sm)] bg-[var(--color-accent-soft)] flex items-center justify-center text-[var(--color-accent-ink)]">
-          <NavIcon name="Check" size={14} weight="bold" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span
-            className={cn(
-              'block text-[13.5px] font-medium truncate leading-tight',
-              hasText
-                ? 'text-[var(--color-ink)]'
-                : 'text-[var(--color-muted-2)] italic',
-            )}
-          >
-            {hasText ? texto : 'Punto sin texto'}
-          </span>
-          {missingLocales.length > 0 && (
-            <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-[var(--color-yellow-ink)]">
-              <span
-                aria-hidden
-                className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-yellow-ink)]"
-              />
-              Falta {missingLocales.map((l) => l.toUpperCase()).join(', ')}
-            </span>
-          )}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        onClick={onEdit}
-        aria-label="Editar punto"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]"
-      >
-        <NavIcon name="PencilSimple" size={13} />
-      </button>
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label="Eliminar punto"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)]"
-      >
-        <NavIcon name="Trash" size={13} />
-      </button>
-    </li>
-  );
-}
 
 function PuntoModal({
   open,
@@ -258,6 +154,7 @@ export function SobreTab() {
   const handleSave = (p: MultilangText) => {
     if (modalMode === 'create') {
       setPuntos([...puntos, p]);
+      toast.success('Punto añadido al final de la lista');
     } else if (editingIndex !== null) {
       setPuntos(puntos.map((x, idx) => (idx === editingIndex ? p : x)));
     }
@@ -278,12 +175,15 @@ export function SobreTab() {
   };
 
   const count = puntos.length;
-  const puntosCountHint =
-    count === 0
-      ? `Recomendado ${RECOMENDADO_PUNTOS}-6 puntos.`
-      : count < RECOMENDADO_PUNTOS
-        ? `${count}/${RECOMENDADO_PUNTOS} recomendados.`
-        : `${count}/${MAX_PUNTOS} · máx ${MAX_PUNTOS}.`;
+  const lleno = count >= MAX_PUNTOS;
+  const mover = (indice: number, delta: -1 | 1) => {
+    const destino = indice + delta;
+    if (destino < 0 || destino >= puntos.length) return;
+    setPuntos(arrayMove(puntos, indice, destino));
+  };
+  const puntosCountHint = `Lo ideal son entre ${RECOMENDADO_PUNTOS} y 6; como máximo ${MAX_PUNTOS}.`;
+  const { issues } = useFarmaciaEditor();
+  const cabeceraConError = issues.some((i) => i.field.startsWith('sobreNosotros'));
 
   const deletePreview =
     deleteIndex !== null
@@ -295,127 +195,12 @@ export function SobreTab() {
 
   return (
     <div className="space-y-10 max-w-3xl">
-      {/* ============= TEXTOS ============= */}
-      <section aria-labelledby="sec-sobre-textos">
-        <SectionHeader
-          id="sec-sobre-textos"
-          title="Textos de la sección"
-          hint="Chip, título y años de experiencia que se muestran en la cabecera de la sección «Sobre nosotros»."
-        />
-
-        <div className="space-y-4">
-          <MultilangInput
-            label="Chip (etiqueta superior)"
-            required
-            field="sobreNosotros.chip.es"
-            value={sobre.chip ?? {}}
-            onChange={(v) => setSobre({ chip: v })}
-            placeholder="Sobre nosotros"
-            help="Texto pequeño sobre el título."
-          />
-          <MultilangInput
-            label="Título"
-            required
-            field="sobreNosotros.titulo.es"
-            value={sobre.titulo ?? {}}
-            onChange={(v) => setSobre({ titulo: v })}
-            placeholder="Una farmacia para familias"
-            help="Las dos últimas palabras se resaltan automáticamente en la landing."
-          />
-          <div>
-            <Label htmlFor="anyos-experiencia" hint={<span className="text-[11px] text-[var(--color-muted-2)]">badge «+X años»</span>}>
-              Años de experiencia
-            </Label>
-            <Input
-              id="anyos-experiencia"
-              {...anyosError.inputProps}
-              type="number"
-              min={0}
-              max={200}
-              value={sobre.anyosExperiencia ?? ''}
-              onChange={(e) => {
-                const raw = e.target.value;
-                setSobre({ anyosExperiencia: raw === '' ? undefined : Number(raw) });
-              }}
-              placeholder="45"
-              className="font-mono-tabular max-w-[180px]"
-            />
-            <FieldError {...anyosError} />
-            <p className="help">Si lo dejas vacío, no aparece badge en la landing.</p>
-          </div>
-        </div>
-      </section>
-
-      <div className="hairline" />
-
-      {/* ============= PUNTOS ============= */}
-      <section aria-labelledby="sec-sobre-puntos">
-        <SectionHeader
-          id="sec-sobre-puntos"
-          title={count === 0 ? 'Puntos destacados' : `${count} ${count === 1 ? 'punto' : 'puntos'}`}
-          hint={`Lista de frases cortas que resumen los valores de la farmacia. ${puntosCountHint}`}
-          actions={
-            count > 0 ? (
-              <Button
-                variant="accent"
-                size="sm"
-                onClick={openCreate}
-                disabled={count >= MAX_PUNTOS}
-              >
-                <NavIcon name="Plus" size={13} />
-                <span className="hidden sm:inline">Añadir punto</span>
-                <span className="sm:hidden">Añadir</span>
-              </Button>
-            ) : null
-          }
-        />
-
-        {count === 0 ? (
-          <button
-            type="button"
-            onClick={openCreate}
-            className="w-full card p-8 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
-          >
-            <div className="mx-auto w-10 h-10 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
-              <NavIcon name="Plus" size={18} />
-            </div>
-            <p className="text-[13.5px] text-[var(--color-ink-2)] m-0">Añade tu primer punto destacado</p>
-            <p className="mt-1 text-[12px] text-[var(--color-muted)] m-0">
-              «Atención personalizada», «Servicio a domicilio», «Dermofarmacia especializada»…
-            </p>
-          </button>
-        ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-            <SortableContext
-              items={puntos.map((_, i) => `p-${i}`)}
-              strategy={verticalListSortingStrategy}
-            >
-              <ul className="card p-1.5 space-y-0.5 list-none m-0">
-                {puntos.map((p, i) => (
-                  <PuntoRow
-                    key={`p-${i}`}
-                    id={`p-${i}`}
-                    punto={p}
-                    currentLocale={currentLocale}
-                    activeLocales={farmacia.idiomasActivos}
-                    onEdit={() => openEdit(i)}
-                    onRemove={() => setDeleteIndex(i)}
-                  />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
-        )}
-      </section>
-
-      <div className="hairline" />
-
       {/* ============= DESCRIPCIÓN LARGA ============= */}
       <section aria-labelledby="sec-sobre-descripcion">
         <SectionHeader
           id="sec-sobre-descripcion"
-          title="Descripción larga"
-          hint="Cuerpo principal de la sección «Sobre nosotros» de la landing. Historia, especialidad y valores."
+          title="Vuestra historia"
+          hint="El texto principal de «Quiénes somos»: historia, especialidad y valores."
         />
         <Label
           hint={
@@ -427,10 +212,11 @@ export function SobreTab() {
           className="mb-3"
           required
         >
-          Cuerpo
+          Texto
         </Label>
         <TiptapField
           field="descripcionLarga.es"
+          label="Vuestra historia"
           value={farmacia.descripcionLarga[currentLocale] ?? ''}
           onChange={(html) =>
             patch({
@@ -452,8 +238,8 @@ export function SobreTab() {
         <SectionHeader
           id="sec-sobre-imagenes"
           required
-          title="Imágenes"
-          hint={`Aparecen junto a la descripción en la landing. Entre 1 y ${MAX_IMAGENES} imágenes.`}
+          title="Fotos"
+          hint={`Salen junto a vuestra historia. Entre 1 y ${MAX_IMAGENES} fotos.`}
         />
 
         <ImageGalleryField
@@ -465,6 +251,128 @@ export function SobreTab() {
           idiomasActivos={farmacia.idiomasActivos}
           max={MAX_IMAGENES}
         />
+      </section>
+
+      <div className="hairline" />
+
+      {/* ============= PUNTOS ============= */}
+      <section aria-labelledby="sec-sobre-puntos">
+        <SectionHeader
+          id="sec-sobre-puntos"
+          title={count === 0 ? 'Puntos destacados' : `${count} ${count === 1 ? 'punto destacado' : 'puntos destacados'}`}
+          hint={`Frases cortas con lo que os hace especiales. ${puntosCountHint}`}
+          actions={
+            count > 0 && !lleno ? (
+              <Button variant="accent" size="sm" onClick={openCreate}>
+                <NavIcon name="Plus" size={14} />
+                Añadir punto
+              </Button>
+            ) : null
+          }
+        />
+        {lleno && (
+          <p className="m-0 mb-3 text-[13.5px] text-[var(--color-muted)]">
+            Has llegado al máximo de {MAX_PUNTOS} puntos. Elimina uno para añadir otro.
+          </p>
+        )}
+
+        {count === 0 ? (
+          <button
+            type="button"
+            onClick={openCreate}
+            className="w-full card p-8 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
+          >
+            <div className="mx-auto w-10 h-10 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
+              <NavIcon name="Plus" size={18} />
+            </div>
+            <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade tu primer punto destacado</p>
+            <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
+              «Atención personalizada», «Servicio a domicilio», «Dermofarmacia especializada»…
+            </p>
+          </button>
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext
+              items={puntos.map((_, i) => `p-${i}`)}
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="card p-1.5 space-y-0.5 list-none m-0">
+                {puntos.map((p, i) => (
+                  <FilaLista
+                    key={`p-${i}`}
+                    id={`p-${i}`}
+                    indice={i}
+                    total={count}
+                    tipo="punto"
+                    titulo={p[currentLocale] || p.es || p.ca || p.en || ''}
+                    aviso={
+                      <AvisoTraduccion
+                        idiomas={farmacia.idiomasActivos.filter((l) => !p[l]?.trim()).map((l) => LOCALE_NOMBRE[l])}
+                      />
+                    }
+                    onEdit={() => openEdit(i)}
+                    onRemove={() => setDeleteIndex(i)}
+                    onMove={(d) => mover(i, d)}
+                  />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
+        )}
+      </section>
+
+      <div className="hairline" />
+
+      <div className="hairline" />
+
+      {/* ============= CABECERA (se toca poco: plegada) ============= */}
+      <section aria-label="Textos de la cabecera de Quiénes somos">
+        <CabeceraColapsable
+          abierta={cabeceraConError}
+          resumen={[sobre.chip?.es, sobre.titulo?.es, sobre.anyosExperiencia ? `+${sobre.anyosExperiencia} años` : ''].filter(Boolean).join(' · ')}
+        >
+        <div className="space-y-4">
+          <MultilangInput
+            label="Etiqueta pequeña sobre el título"
+            required
+            field="sobreNosotros.chip.es"
+            value={sobre.chip ?? {}}
+            onChange={(v) => setSobre({ chip: v })}
+            placeholder="Sobre nosotros"
+            help="Por ejemplo: Sobre nosotros."
+          />
+          <MultilangInput
+            label="Título"
+            required
+            field="sobreNosotros.titulo.es"
+            value={sobre.titulo ?? {}}
+            onChange={(v) => setSobre({ titulo: v })}
+            placeholder="Una farmacia para familias"
+            help="Las dos últimas palabras salen resaltadas en tu web."
+          />
+          <div>
+            <Label htmlFor="anyos-experiencia">
+              Años de experiencia
+            </Label>
+            <Input
+              id="anyos-experiencia"
+              {...anyosError.inputProps}
+              type="number"
+              min={0}
+              max={200}
+              value={sobre.anyosExperiencia ?? ''}
+              onChange={(e) => {
+                const raw = e.target.value;
+                setSobre({ anyosExperiencia: raw === '' ? undefined : Number(raw) });
+              }}
+              placeholder="45"
+              className="font-mono-tabular max-w-[180px]"
+            />
+            <FieldError {...anyosError} />
+            <p className="help">Sale como «+45 años». Si lo dejas vacío, no se muestra.</p>
+          </div>
+        </div>
+        </CabeceraColapsable>
       </section>
 
       <PuntoModal

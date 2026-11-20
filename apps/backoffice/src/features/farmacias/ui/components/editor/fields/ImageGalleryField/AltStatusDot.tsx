@@ -11,23 +11,28 @@ export function getAltStatus(img: ImagenAsset, activeLocales: Locale[]): AltStat
   return 'partial';
 }
 
-const ALT_STATUS_COPY: Record<AltStatus, { label: string; title: string }> = {
-  complete: { label: 'Texto alternativo completo', title: 'Alt rellenado en todos los idiomas' },
-  partial: { label: 'Texto alternativo incompleto', title: 'Alt incompleto — faltan idiomas' },
-  empty: { label: 'Sin texto alternativo', title: 'Sin texto alternativo' },
+const ALT_STATUS_COPY: Record<AltStatus, string> = {
+  complete: 'Descripción completa',
+  partial: 'Falta descripción en algún idioma',
+  empty: 'Falta descripción',
 };
 
+/**
+ * Estado de la descripción (texto alternativo) de una foto, en texto: antes
+ * era un punto de color con aria-label en un <span> sin rol (axe lo marcaba).
+ * Solo se muestra si falta algo.
+ */
 export function AltStatusDot({ status }: { status: AltStatus }) {
+  if (status === 'complete') return <span className="sr-only">{ALT_STATUS_COPY.complete}</span>;
   return (
     <span
-      aria-label={ALT_STATUS_COPY[status].label}
-      title={ALT_STATUS_COPY[status].title}
       className={cn(
-        'absolute top-1.5 left-1.5 h-2.5 w-2.5 rounded-full ring-2 ring-white/90 shadow-sm',
-        status === 'complete' && 'bg-[var(--color-green-ink)]',
-        status === 'partial' && 'bg-[var(--color-accent)]',
-        status === 'empty' && 'bg-white/70',
+        'absolute top-1.5 left-1.5 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[11.5px] font-medium shadow-sm',
+        'text-[var(--color-yellow-ink)]',
       )}
-    />
+    >
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--color-yellow-ink)]" />
+      {ALT_STATUS_COPY[status]}
+    </span>
   );
 }

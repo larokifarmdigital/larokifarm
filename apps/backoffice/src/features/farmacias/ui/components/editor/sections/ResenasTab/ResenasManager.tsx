@@ -157,6 +157,7 @@ export function ResenasManager() {
               />
               <Switch
                 id="regla-min"
+                aria-label="Filtrar por estrellas mínimas"
                 checked={reglas.minRating != null}
                 onCheckedChange={(v) => setReglas({ minRating: v ? 4 : null })}
               />
@@ -173,6 +174,7 @@ export function ResenasManager() {
             </div>
             <Switch
               id="regla-comentario"
+              aria-label="Solo reseñas con comentario"
               checked={reglas.soloConComentario}
               onCheckedChange={(v) => setReglas({ soloConComentario: v })}
             />
@@ -270,20 +272,22 @@ export function ResenasManager() {
                   const motivo = motivoFuera(r, reglas);
                   const manualVisible = !r.oculta && !r.eliminadaEnGoogle;
                   return (
-                    <li key={r.id} className={cn('card p-4 flex items-start gap-3', motivo && 'opacity-70')}>
+                    <li key={r.id} className={cn('card p-4 flex items-start gap-3', motivo && 'bg-[var(--color-surface-2)]')}>
                       <Avatar autor={r.autor} url={r.avatarUrl} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[13.5px] font-medium text-[var(--color-ink)]">{r.autor || 'Anónimo'}</span>
-                          <span aria-label={`${r.puntuacion} de 5 estrellas`} className="text-[12px] text-[#f7b500]">
+                          <span role="img" aria-label={`${r.puntuacion} de 5 estrellas`} className="text-[13px] text-[#b07d00]">
                             {'★'.repeat(r.puntuacion)}
-                            <span className="text-[var(--color-hairline-strong)]">{'★'.repeat(5 - r.puntuacion)}</span>
+                            <span className="text-[var(--color-control-border)]">{'★'.repeat(5 - r.puntuacion)}</span>
                           </span>
-                          <span className="text-[11px] font-mono-tabular text-[var(--color-muted-2)]">{r.fecha.slice(0, 10)}</span>
+                          <span className="text-[12.5px] text-[var(--color-muted)]">
+                            {new Date(r.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
                           <span
                             className={cn(
-                              'inline-flex h-5 items-center rounded-full px-2 text-[10.5px] font-mono-tabular uppercase tracking-wider',
-                              motivo ? 'bg-[var(--color-surface-sunken)] text-[var(--color-muted)]' : 'bg-[var(--color-green-soft)] text-[var(--color-green-ink)]',
+                              'inline-flex min-h-5 items-center rounded-full px-2 text-[12px] font-medium',
+                              motivo ? 'bg-[var(--color-surface-sunken)] text-[var(--color-ink-2)]' : 'bg-[var(--color-green-soft)] text-[var(--color-green-ink)]',
                             )}
                           >
                             {motivo ?? 'En la web'}
@@ -312,7 +316,7 @@ export function ResenasManager() {
                 <button
                   type="button"
                   onClick={() => setVisibles((n) => n + PAGE)}
-                  className="h-8 rounded-[6px] px-3 text-[12.5px] text-[var(--color-ink-2)] border border-[var(--color-hairline)] hover:bg-[var(--color-surface-2)]"
+                  className="min-h-11 sm:min-h-9 rounded-[6px] px-4 text-[13.5px] text-[var(--color-ink-2)] border border-[var(--color-control-border)] hover:bg-[var(--color-surface-2)]"
                 >
                   Ver {Math.min(PAGE, filtradas.length - visibles)} más
                 </button>

@@ -324,6 +324,7 @@ export function mapBusinessToFarmacia(b: BusinessWithContent): Farmacia {
 
     createdAt: b.createdAt.toISOString(),
     updatedAt: b.updatedAt.toISOString(),
+    ultimaPublicacion: b.lastPublishedAt?.toISOString(),
     lastEditedBy: b.lastEditedByUserId ?? undefined,
   };
 }

@@ -1,5 +1,5 @@
 import type { SaveResult } from '@/core/shared';
-import type { Farmacia, FarmaciaStatus, FarmaciaSummary } from '../models/Farmacia';
+import type { Farmacia, FarmaciaStatus, FarmaciaSummary, ResponsableDisponible } from '../models/Farmacia';
 
 // PORT: contrato de persistencia de farmacias. Adapters en infrastructure/
 // (Prisma → Neon y mock en memoria).
@@ -21,9 +21,12 @@ export type FarmaciaRepository = {
     patch: Partial<Farmacia>,
     opts?: { expectedUpdatedAt?: string },
   ): Promise<SaveResult<Farmacia>>;
+  /** `responsableId`: usuario sin farmacia (no SUPER_ADMIN) que pasa a gestionar la nueva. */
   createFarmacia(
-    input: Pick<Farmacia, 'nombre' | 'slug' | 'ciudad' | 'idiomasActivos'>,
+    input: Pick<Farmacia, 'nombre' | 'slug' | 'ciudad' | 'idiomasActivos'> & { responsableId?: string },
   ): Promise<SaveResult<Farmacia>>;
+  /** Usuarios activos sin farmacia asignada (solo SUPER_ADMIN). */
+  listResponsablesDisponibles(): Promise<ResponsableDisponible[]>;
   publishFarmacia(id: string, status: FarmaciaStatus): Promise<SaveResult<Farmacia>>;
   duplicateFarmacia(id: string): Promise<SaveResult<Farmacia>>;
   /**

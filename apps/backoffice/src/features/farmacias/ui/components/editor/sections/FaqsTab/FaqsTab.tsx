@@ -12,9 +12,7 @@ import { ModalLocaleScope } from '@/features/farmacias/ui/components/editor/fiel
 import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
-import { cn } from '@/shared/lib/cn';
 import type { Faq } from '@/core/farmacias/domain';
-import type { Locale } from '@/core/shared';
 import {
   DndContext,
   closestCenter,
@@ -28,10 +26,11 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { toast } from 'sonner';
+import { LOCALE_NOMBRE } from '@/core/shared';
+import { AvisoTraduccion, CabeceraColapsable, FilaLista } from '@/features/farmacias/ui/components/editor/fields/FilaLista';
 
 function crearFaqVacia(orden: number): Faq {
   return {
@@ -40,106 +39,6 @@ function crearFaqVacia(orden: number): Faq {
     respuesta: {},
     orden,
   };
-}
-
-/**
- * Fila compacta read-only. Mostrar + gestionar (editar/eliminar/reordenar).
- * El contenido NO se edita in-place: click en editar abre el modal.
- */
-function FaqRow({
-  faq,
-  activeLocales,
-  onEdit,
-  onRemove,
-}: {
-  faq: Faq;
-  activeLocales: Locale[];
-  onEdit: () => void;
-  onRemove: () => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: faq.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 10 : undefined,
-  };
-
-  const pregunta = faq.pregunta.es || faq.pregunta.ca || faq.pregunta.en || '';
-  const preview = pregunta.trim() || 'Pregunta sin título';
-  const missingLocales = activeLocales.filter(
-    (l) => !(faq.pregunta[l]?.trim() && faq.respuesta[l]?.trim()),
-  );
-
-  return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        'group flex items-center gap-2 px-2 py-2 rounded-[var(--radius-sm)] border border-transparent bg-[var(--color-surface)]',
-        'hover:border-[var(--color-hairline)] transition-all',
-        isDragging && 'border-[var(--color-hairline-strong)] shadow-[var(--shadow-elevated)]',
-      )}
-    >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label="Reordenar pregunta"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted-2)] hover:text-[var(--color-ink-2)] cursor-grab active:cursor-grabbing"
-      >
-        <NavIcon name="DotsSixVertical" size={14} weight="bold" />
-      </button>
-
-      <button
-        type="button"
-        onClick={onEdit}
-        className="flex-1 min-w-0 flex items-center gap-3 text-left"
-      >
-        <span className="shrink-0 h-9 w-9 rounded-[var(--radius-sm)] bg-[var(--color-accent-soft)] flex items-center justify-center text-[var(--color-accent-ink)]">
-          <NavIcon name="Question" size={16} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span
-            className={cn(
-              'block text-[13.5px] font-medium truncate leading-tight',
-              pregunta.trim()
-                ? 'text-[var(--color-ink)]'
-                : 'text-[var(--color-muted-2)] italic',
-            )}
-          >
-            {preview}
-          </span>
-          {missingLocales.length > 0 && (
-            <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-[var(--color-yellow-ink)]">
-              <span
-                aria-hidden
-                className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-yellow-ink)]"
-              />
-              Falta {missingLocales.map((l) => l.toUpperCase()).join(', ')}
-            </span>
-          )}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        onClick={onEdit}
-        aria-label="Editar pregunta"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]"
-      >
-        <NavIcon name="PencilSimple" size={13} />
-      </button>
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label="Eliminar pregunta"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)]"
-      >
-        <NavIcon name="Trash" size={13} />
-      </button>
-    </li>
-  );
 }
 
 function FaqModal({
@@ -166,7 +65,7 @@ function FaqModal({
       open={open}
       onOpenChange={(o) => !o && onClose()}
       title={mode === 'create' ? 'Nueva pregunta frecuente' : 'Editar pregunta'}
-      description="Aparecen como bloque FAQ en la landing y se publican como FAQ schema en Google."
+      description="Sale en la sección de preguntas frecuentes de tu web."
       footer={
         <>
           <Button variant="ghost" size="md" onClick={onClose}>
@@ -211,7 +110,8 @@ function FaqModal({
 }
 
 export function FaqsTab() {
-  const { farmacia, patch } = useFarmaciaEditor();
+  const { farmacia, patch, currentLocale, issues } = useFarmaciaEditor();
+  const [recienAnadida, setRecienAnadida] = useState<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -247,6 +147,11 @@ export function FaqsTab() {
   const handleSave = (f: Faq) => {
     if (modalMode === 'create') {
       setFaqs([...farmacia.faqs, f]);
+      setRecienAnadida(f.id);
+      window.setTimeout(() => setRecienAnadida(null), 2500);
+      toast.success('Pregunta añadida al final de la lista', {
+        description: 'Puedes moverla de sitio desde la lista.',
+      });
     } else {
       setFaqs(farmacia.faqs.map((x) => (x.id === f.id ? f : x)));
     }
@@ -265,7 +170,15 @@ export function FaqsTab() {
     setFaqs(arrayMove(farmacia.faqs, oldIdx, newIdx));
   };
 
+  const moverFaq = (indice: number, delta: -1 | 1) => {
+    const destino = indice + delta;
+    if (destino < 0 || destino >= farmacia.faqs.length) return;
+    setFaqs(arrayMove(farmacia.faqs, indice, destino));
+  };
+
   const activeLocales = farmacia.idiomasActivos;
+  const t = farmacia.textosFaqs ?? {};
+  const cabeceraConError = issues.some((i) => i.field.startsWith('textosFaqs'));
   const count = farmacia.faqs.length;
 
   const deletePreview =
@@ -276,39 +189,17 @@ export function FaqsTab() {
 
   return (
     <div className="section-gap max-w-3xl">
-      {/* ============= TEXTOS DE CABECERA ============= */}
-      <section aria-labelledby="sec-faqs-textos">
-        <SectionHeader
-          id="sec-faqs-textos"
-          title="Textos de la sección"
-          hint="Cabecera de la sección «Preguntas frecuentes» en la landing. Obligatorios en castellano para publicar."
-        />
-        <TextosCabeceraFields
-          required
-          fieldPrefix="textosFaqs"
-          value={farmacia.textosFaqs ?? {}}
-          onChange={(v) => patch({ textosFaqs: v })}
-          defaults={{
-            chip: 'Preguntas frecuentes',
-            titulo: 'Resolvemos tus dudas',
-            subtitulo: 'Las preguntas más habituales que nos hacen…',
-          }}
-        />
-      </section>
-
-      {/* ============= LISTA DE PREGUNTAS ============= */}
       <section aria-labelledby="sec-faqs-lista">
         <SectionHeader
           id="sec-faqs-lista"
           required
-          title={count === 0 ? 'Lista de preguntas' : `${count} ${count === 1 ? 'pregunta' : 'preguntas'}`}
-          hint="Aparecen como bloque de FAQ en la landing y se publican como FAQ schema en Google. Recomendado 4-8."
+          title={count === 0 ? 'Preguntas' : `${count} ${count === 1 ? 'pregunta' : 'preguntas'}`}
+          hint="Salen en tu web en este orden. Lo ideal son entre 4 y 8."
           actions={
             count > 0 ? (
               <Button onClick={openCreate} variant="accent" size="sm">
-                <NavIcon name="Plus" size={13} />
-                <span className="hidden sm:inline">Añadir pregunta</span>
-                <span className="sm:hidden">Añadir</span>
+                <NavIcon name="Plus" size={14} />
+                Añadir pregunta
               </Button>
             ) : null
           }
@@ -323,32 +214,57 @@ export function FaqsTab() {
             <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-4 text-[var(--color-accent)]">
               <NavIcon name="Plus" size={20} />
             </div>
-            <p className="text-[14px] text-[var(--color-ink-2)] m-0">Añade tu primera pregunta</p>
-            <p className="mt-1 text-[12.5px] text-[var(--color-muted)] m-0">
-              Guardia nocturna, recetas electrónicas, delivery…
+            <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade tu primera pregunta</p>
+            <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
+              Guardias, receta electrónica, entrega a domicilio…
             </p>
           </button>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-            <SortableContext
-              items={farmacia.faqs.map((f) => f.id)}
-              strategy={verticalListSortingStrategy}
-            >
+            <SortableContext items={farmacia.faqs.map((f) => f.id)} strategy={verticalListSortingStrategy}>
               <ul className="card p-1.5 space-y-0.5 list-none m-0">
-                {farmacia.faqs.map((f) => (
-                  <FaqRow
-                    key={f.id}
-                    faq={f}
-                    activeLocales={activeLocales}
-                    onEdit={() => openEdit(f)}
-                    onRemove={() => setDeleteTarget(f)}
-                  />
-                ))}
+                {farmacia.faqs.map((f, i) => {
+                  const pregunta = f.pregunta[currentLocale] || f.pregunta.es || f.pregunta.ca || f.pregunta.en || '';
+                  const faltan = activeLocales
+                    .filter((l) => !(f.pregunta[l]?.trim() && f.respuesta[l]?.trim()))
+                    .map((l) => LOCALE_NOMBRE[l]);
+                  return (
+                    <FilaLista
+                      key={f.id}
+                      id={f.id}
+                      indice={i}
+                      total={count}
+                      tipo="pregunta"
+                      titulo={pregunta}
+                      destacar={recienAnadida === f.id}
+                      aviso={<AvisoTraduccion idiomas={faltan} />}
+                      onEdit={() => openEdit(f)}
+                      onRemove={() => setDeleteTarget(f)}
+                      onMove={(d) => moverFaq(i, d)}
+                    />
+                  );
+                })}
               </ul>
             </SortableContext>
           </DndContext>
         )}
         <ListFieldError field="faqs" />
+      </section>
+
+      <section aria-label="Textos de la cabecera de Preguntas frecuentes">
+        <CabeceraColapsable abierta={cabeceraConError} resumen={[t.chip?.es, t.titulo?.es].filter(Boolean).join(' · ')}>
+          <TextosCabeceraFields
+            required
+            fieldPrefix="textosFaqs"
+            value={t}
+            onChange={(v) => patch({ textosFaqs: v })}
+            defaults={{
+              chip: 'Preguntas frecuentes',
+              titulo: 'Resolvemos tus dudas',
+              subtitulo: 'Las preguntas más habituales que nos hacen…',
+            }}
+          />
+        </CabeceraColapsable>
       </section>
 
       <FaqModal

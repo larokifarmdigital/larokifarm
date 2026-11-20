@@ -1,5 +1,6 @@
 import type { Farmacia } from '@/core/farmacias/domain';
 import type { Locale, MultilangText } from '@/core/shared';
+import { SECTION_BY_KEY } from './sectionsConfig';
 
 export type SectionKey =
   | 'hero'
@@ -11,15 +12,16 @@ export type SectionKey =
   | 'legal'
   | 'seo';
 
+/** Mismos nombres que el menú de secciones (sectionsConfig). */
 export const SECTION_LABELS: Record<SectionKey, string> = {
-  hero: 'Hero',
-  features: 'Features',
-  sobre: 'Sobre',
-  servicios: 'Servicios',
-  faqs: 'FAQs',
-  resenas: 'Reseñas',
-  legal: 'Legal',
-  seo: 'SEO',
+  hero: SECTION_BY_KEY.hero.label,
+  features: SECTION_BY_KEY.features.label,
+  sobre: SECTION_BY_KEY.sobre.label,
+  servicios: SECTION_BY_KEY.servicios.label,
+  faqs: SECTION_BY_KEY.faqs.label,
+  resenas: SECTION_BY_KEY.resenas.label,
+  legal: SECTION_BY_KEY.legal.label,
+  seo: SECTION_BY_KEY.seo.label,
 };
 
 /**

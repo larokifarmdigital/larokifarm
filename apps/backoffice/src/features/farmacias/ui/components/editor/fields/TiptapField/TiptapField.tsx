@@ -10,6 +10,7 @@ import { cn } from '@/shared/lib/cn';
 
 import { useFieldBinding } from '@/features/farmacias/ui/hooks/useFieldError';
 import { FieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
+import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 
 type Props = {
   value: string;
@@ -18,6 +19,8 @@ type Props = {
   minHeight?: number;
   /** Clave de validación (p. ej. `descripcionLarga.es`): id estable + error. */
   field?: string;
+  /** Nombre accesible del editor (la etiqueta visible del campo). */
+  label: string;
 };
 
 function ToolbarButton({
@@ -25,7 +28,9 @@ function ToolbarButton({
   onClick,
   label,
   children,
+  first = false,
 }: {
+  first?: boolean;
   active?: boolean;
   onClick: () => void;
   label: string;
@@ -37,8 +42,9 @@ function ToolbarButton({
       onClick={onClick}
       aria-label={label}
       aria-pressed={active}
+      tabIndex={first ? 0 : -1}
       className={cn(
-        'h-7 min-w-[28px] px-2 rounded-[4px] flex items-center justify-center text-[12px] font-medium transition-colors',
+        'h-11 min-w-11 sm:h-7 sm:min-w-[28px] px-2 rounded-[4px] flex items-center justify-center text-[13px] sm:text-[12px] font-medium transition-colors',
         active
           ? 'bg-[var(--color-ink)] text-white'
           : 'text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]',
@@ -49,17 +55,33 @@ function ToolbarButton({
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+/** Barra con "roving tabindex": una sola parada de Tab y flechas para moverse. */
+function onToolbarKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+  if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+  const botones = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('button'));
+  const actual = botones.indexOf(document.activeElement as HTMLButtonElement);
+  if (actual === -1) return;
+  e.preventDefault();
+  const n = botones.length;
+  const sig =
+    e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : e.key === 'ArrowRight' ? (actual + 1) % n : (actual - 1 + n) % n;
+  botones.forEach((b, i) => (b.tabIndex = i === sig ? 0 : -1));
+  botones[sig].focus();
+}
+
+function Toolbar({ editor, label }: { editor: Editor; label: string }) {
   return (
     <div
       role="toolbar"
-      aria-label="Formato de texto"
+      aria-label={`Formato de texto: ${label}`}
+      onKeyDown={onToolbarKeyDown}
       className="flex items-center gap-0.5 flex-wrap px-2 py-1.5 border-b border-[var(--color-hairline)] bg-[var(--color-surface-2)] sticky top-0 z-10"
     >
       <ToolbarButton
         active={editor.isActive('heading', { level: 2 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         label="Encabezado H2"
+        first
       >
         H2
       </ToolbarButton>
@@ -127,8 +149,16 @@ function Toolbar({ editor }: { editor: Editor }) {
   );
 }
 
-export function TiptapField({ value, onChange, placeholder, minHeight = 200, field }: Props) {
+const ATRIBUTOS_BASE = {
+  class: 'prose-editor focus:outline-2 focus:outline-[var(--color-accent)] focus:-outline-offset-2',
+  role: 'textbox',
+  'aria-multiline': 'true',
+};
+
+export function TiptapField({ value, onChange, placeholder, minHeight = 200, field, label }: Props) {
   const { id, error } = useFieldBinding(field, '');
+  // Solo consulta: el fieldset no desactiva un contenteditable, así que lo hacemos aquí.
+  const { readOnly } = useFarmaciaEditor();
   const onChangeRef = useRef(onChange);
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -142,15 +172,32 @@ export function TiptapField({ value, onChange, placeholder, minHeight = 200, fie
     ],
     content: value,
     editorProps: {
-      attributes: {
-        class: 'prose-editor focus:outline-none',
-      },
+      attributes: { ...ATRIBUTOS_BASE, 'aria-label': label, ...(readOnly ? { 'aria-readonly': 'true' } : {}) },
     },
     onUpdate: ({ editor }) => {
       onChangeRef.current(editor.getHTML());
     },
     immediatelyRender: false,
+    editable: !readOnly,
   });
+
+  // El contenteditable es el campo real: nombre, error y descripción van en él.
+  const describedBy = error?.inputProps['aria-describedby'];
+  useEffect(() => {
+    if (!editor) return;
+    editor.setOptions({
+      editable: !readOnly,
+      editorProps: {
+        ...editor.options.editorProps,
+        attributes: {
+          ...ATRIBUTOS_BASE,
+          'aria-label': label,
+          ...(readOnly ? { 'aria-readonly': 'true' } : {}),
+          ...(describedBy ? { 'aria-describedby': describedBy, 'aria-invalid': 'true' } : {}),
+        },
+      },
+    });
+  }, [editor, label, describedBy, readOnly]);
 
   useEffect(() => {
     if (!editor) return;
@@ -177,7 +224,7 @@ export function TiptapField({ value, onChange, placeholder, minHeight = 200, fie
         error?.message ? 'border-[var(--color-red-ink)]' : 'border-[var(--color-hairline)]',
       )}
     >
-      <Toolbar editor={editor} />
+      {!readOnly && <Toolbar editor={editor} label={label} />}
       <div
         className="px-4 py-3"
         style={{ minHeight }}

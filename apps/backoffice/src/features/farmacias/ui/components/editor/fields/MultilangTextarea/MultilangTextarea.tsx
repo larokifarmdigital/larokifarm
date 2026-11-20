@@ -18,6 +18,7 @@ export function MultilangTextarea({
   placeholder,
   rows = 3,
   maxLength,
+  limiteRecomendado,
   help,
   required,
   field,
@@ -28,6 +29,11 @@ export function MultilangTextarea({
   placeholder?: string;
   rows?: number;
   maxLength?: number;
+  /**
+   * Límite orientativo: muestra el contador y avisa al pasarse, pero NO corta
+   * el texto (con maxLength nativo, pegar un texto largo lo recortaba sin avisar).
+   */
+  limiteRecomendado?: number;
   help?: string;
   required?: boolean;
   /** Clave de validación (core/farmacias/domain/validation), p. ej. `descripcionCorta.es`. */
@@ -39,7 +45,13 @@ export function MultilangTextarea({
   const showError = error?.message ? error : undefined;
   const current = value[currentLocale] ?? '';
   const status = computeLocaleStatus(value, currentLocale, farmacia.idiomasActivos);
-  const nearingLimit = maxLength && current.length >= maxLength * 0.9;
+  const limite = maxLength ?? limiteRecomendado;
+  const pasado = limiteRecomendado !== undefined && current.length > limiteRecomendado;
+  const nearingLimit = limite && current.length >= limite * 0.9;
+  const contadorId = `${id}-contador`;
+  // Solo se anuncia al cruzar un umbral, no a cada tecla.
+  const aviso = !limite ? '' : pasado ? 'Has pasado el límite: Google cortará el final.' : nearingLimit ? 'Cerca del límite de caracteres.' : '';
+  const describedBy = [showError?.errorId, limite ? contadorId : undefined].filter(Boolean).join(' ') || undefined;
 
   return (
     <div>
@@ -55,23 +67,28 @@ export function MultilangTextarea({
         maxLength={maxLength}
         onBlur={error?.inputProps.onBlur}
         aria-invalid={showError ? true : undefined}
-        aria-describedby={showError ? showError.errorId : undefined}
+        aria-describedby={describedBy}
         className={cn('field resize-y min-h-[80px]', showError && '!border-[var(--color-red-ink)]')}
       />
       {showError && <FieldError {...showError} />}
       <div className="flex justify-between mt-1.5">
         <p className="help">{help ?? ' '}</p>
-        {maxLength && (
+        {limite && (
           <p
+            id={contadorId}
             className={cn(
-              'text-[11px]',
-              nearingLimit ? 'text-[var(--color-yellow-ink)]' : 'text-[var(--color-muted-2)]',
+              'shrink-0 text-[12px]',
+              pasado ? 'text-[var(--color-red-ink)]' : nearingLimit ? 'text-[var(--color-yellow-ink)]' : 'text-[var(--color-muted)]',
             )}
           >
-            {current.length}/{maxLength}
+            {current.length}/{limite}
+            {pasado && <span> · Google cortará el final</span>}
           </p>
         )}
       </div>
+      <p role="status" className="sr-only">
+        {aviso}
+      </p>
     </div>
   );
 }

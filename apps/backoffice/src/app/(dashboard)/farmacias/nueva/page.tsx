@@ -7,6 +7,6 @@ export const metadata = { title: 'Nueva farmacia · Backoffice' };
 export default async function NuevaFarmaciaPage() {
   // Solo SUPER_ADMIN crea farmacias (createFarmacia también lo valida).
   const user = await getCurrentUser();
-  if (user?.rol !== 'admin') redirect('/farmacias');
+  if (user?.rol !== 'admin') redirect('/inicio');
   return <NuevaFarmaciaView />;
 }

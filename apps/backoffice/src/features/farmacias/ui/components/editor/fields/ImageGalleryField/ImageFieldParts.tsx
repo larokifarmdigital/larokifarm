@@ -7,9 +7,12 @@ export function FieldHeading({ label, hint, required }: { label?: string; hint?:
       <div className="text-[13px] font-semibold text-[var(--color-ink)]">
         {label}
         {required && (
-          <span className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none" aria-label="obligatorio" title="Campo obligatorio">
-            *
-          </span>
+          <>
+            <span aria-hidden className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none" title="Campo obligatorio">
+              *
+            </span>
+            <span className="sr-only">, obligatorio</span>
+          </>
         )}
       </div>
       {hint && <div className="text-[12px] text-[var(--color-muted)] mt-0.5">{hint}</div>}
@@ -34,15 +37,15 @@ export function ImageActionsOverlay({ children }: { children: React.ReactNode })
 }
 
 export const OVERLAY_PILL_BUTTON =
-  'flex h-8 items-center gap-1 rounded-full bg-white px-2.5 text-[12px] font-medium text-[var(--color-ink)] shadow-sm hover:bg-[var(--color-surface-sunken)]';
+  'flex h-11 sm:h-8 items-center gap-1 rounded-full bg-white px-3 sm:px-2.5 text-[13px] sm:text-[12px] font-medium text-[var(--color-ink)] shadow-sm hover:bg-[var(--color-surface-sunken)]';
 export const OVERLAY_DELETE_BUTTON =
-  'flex h-8 w-8 items-center justify-center rounded-full bg-white text-[var(--color-red-ink)] shadow-sm hover:bg-[var(--color-red-soft)]';
+  'flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white text-[var(--color-red-ink)] shadow-sm hover:bg-[var(--color-red-soft)]';
 
 export function dropZoneClass(dragging: boolean, isPending: boolean) {
   return cn(
     dragging
       ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
-      : 'border-[var(--color-hairline-strong)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-ink)]',
+      : 'border-[var(--color-control-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-ink)]',
     isPending && 'pointer-events-none opacity-60',
   );
 }
@@ -50,6 +53,6 @@ export function dropZoneClass(dragging: boolean, isPending: boolean) {
 export const DELETE_CONFIRM_COPY = {
   title: '¿Eliminar esta imagen?',
   description:
-    'Se borrará del almacenamiento y dejará de aparecer en la landing. No se puede deshacer.',
+    'Dejará de salir en tu web. No se puede deshacer.',
   confirmLabel: 'Eliminar imagen',
 } as const;

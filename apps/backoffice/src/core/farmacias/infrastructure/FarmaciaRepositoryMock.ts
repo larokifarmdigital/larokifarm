@@ -116,6 +116,10 @@ export const farmaciaRepositoryMock: FarmaciaRepository = {
     return { ok: true, data: structuredClone(farmacia) };
   },
 
+  async listResponsablesDisponibles() {
+    return [];
+  },
+
   async publishFarmacia(id, status) {
     return this.saveFarmacia(id, { status });
   },

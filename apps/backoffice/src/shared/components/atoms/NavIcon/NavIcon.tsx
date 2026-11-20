@@ -57,6 +57,11 @@ import {
   CaretLeftIcon,
   FlagIcon,
   CalendarBlankIcon,
+  TranslateIcon,
+  DotsThreeIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  CaretUpIcon,
 } from '@phosphor-icons/react/dist/ssr';
 
 const ICONS = {
@@ -118,6 +123,11 @@ const ICONS = {
   CaretLeft: CaretLeftIcon,
   Flag: FlagIcon,
   CalendarBlank: CalendarBlankIcon,
+  Translate: TranslateIcon,
+  DotsThree: DotsThreeIcon,
+  ArrowUp: ArrowUpIcon,
+  ArrowDown: ArrowDownIcon,
+  CaretUp: CaretUpIcon,
 } as const;
 
 export type IconName = keyof typeof ICONS;

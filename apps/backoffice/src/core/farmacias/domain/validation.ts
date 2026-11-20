@@ -188,8 +188,8 @@ export function validateFarmacia(f: Farmacia): FieldIssue[] {
   fmt('whatsapp', 'general', 'WhatsApp', f.whatsapp, rules.phone, 'whatsapp');
   req('email', 'general', 'Correo electrónico', trimmed(f.email).length > 0, 'email');
   fmt('email', 'general', 'Correo electrónico', f.email, rules.email, 'email');
-  req('web', 'general', 'Web propia', trimmed(f.web).length > 0, 'web');
-  fmt('web', 'general', 'Web propia', f.web, rules.url, 'web');
+  req('web', 'general', 'Dirección de tu web', trimmed(f.web).length > 0, 'web');
+  fmt('web', 'general', 'Dirección de tu web', f.web, rules.url, 'web');
 
   // ── General · redes (opcionales)
   for (const network of Object.keys(SOCIAL) as (keyof Redes)[]) {
@@ -203,20 +203,20 @@ export function validateFarmacia(f: Farmacia): FieldIssue[] {
   req('direccion.ciudad', 'general', 'Ciudad (dirección)', trimmed(d.ciudad ?? f.ciudad).length > 0, 'ciudad-dir');
   req('direccion.provincia', 'general', 'Provincia', trimmed(d.provincia).length > 0, 'provincia');
   req('direccion.pais', 'general', 'País', trimmed(d.pais).length > 0, 'pais');
-  req('mapa', 'general', 'Mapa', trimmed(f.googleMapsUrl).length > 0 || trimmed(f.mapaUrl).length > 0, 'gmaps',
-    'Pon el enlace de Google Maps o el mapa embebido: lo usan el mapa y el botón «Cómo llegar».');
+  req('mapa', 'general', 'Enlace de Google Maps', trimmed(f.googleMapsUrl).length > 0 || trimmed(f.mapaUrl).length > 0, 'gmaps',
+    'Pega el enlace de tu farmacia en Google Maps: lo usan el mapa y el botón «Cómo llegar».');
   fmt('googleMapsUrl', 'general', 'Enlace de Google Maps', f.googleMapsUrl, rules.googleMapsLink, 'gmaps');
-  fmt('mapaUrl', 'general', 'URL del mapa embebido', f.mapaUrl, rules.mapaEmbed, 'mapa-embed');
+  fmt('mapaUrl', 'general', 'Mapa insertado', f.mapaUrl, rules.mapaEmbed, 'mapa-embed');
 
   // ── General · horario
   const abiertos = f.horarios.filter((h) => !h.cerrado && h.tramos.length > 0);
-  req('horarios', 'general', 'Horario', abiertos.length > 0, 'sec-horarios', 'Abre al menos un día para poder publicar.');
+  req('horarios', 'horario', 'Horario', abiertos.length > 0, 'sec-horarios', 'Abre al menos un día para poder publicar.');
   for (const h of f.horarios) {
     if (h.cerrado) continue;
     h.tramos.forEach((t, i) => {
       const message = tramoError(t, h.tramos[i - 1]);
       if (message) {
-        out.push({ field: `horarios.${h.dia}.${i}`, sectionKey: 'general', label: `Horario del ${DIA_LABEL[h.dia]}`, inputId: 'sec-horarios', kind: 'format', message });
+        out.push({ field: `horarios.${h.dia}.${i}`, sectionKey: 'horario', label: `Horario del ${DIA_LABEL[h.dia]}`, inputId: 'sec-horarios', kind: 'format', message });
       }
     });
   }

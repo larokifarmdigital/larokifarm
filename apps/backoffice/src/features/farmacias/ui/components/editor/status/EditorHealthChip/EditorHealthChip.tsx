@@ -6,40 +6,7 @@ import { LOCALE_LABELS, type Locale, LOCALE_FLAGS } from '@/core/shared';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { useI18nHealth } from '@/features/farmacias/ui/hooks/useI18nHealth';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
-import { formatRelativeDate } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
-
-type HealthLevel = 'saving' | 'dirty' | 'missing' | 'ok';
-
-function getLevel(saveStatus: string, dirty: boolean, totalMissing: number): HealthLevel {
-  if (saveStatus === 'saving') return 'saving';
-  if (dirty) return 'dirty';
-  if (totalMissing > 0) return 'missing';
-  return 'ok';
-}
-
-const LEVEL_STYLE: Record<HealthLevel, { ring: string; dot: string; label: string }> = {
-  saving: {
-    ring: 'ring-[var(--color-hairline-strong)]',
-    dot: 'bg-[var(--color-accent)]',
-    label: 'Guardando…',
-  },
-  dirty: {
-    ring: 'ring-[var(--color-yellow-soft)]',
-    dot: 'bg-[var(--color-yellow-ink)]',
-    label: 'Sin guardar',
-  },
-  missing: {
-    ring: 'ring-[var(--color-red-soft)]',
-    dot: 'bg-[var(--color-red-ink)]',
-    label: 'Incompleto',
-  },
-  ok: {
-    ring: 'ring-[var(--color-green-soft)]',
-    dot: 'bg-[var(--color-green-ink)]',
-    label: 'Al día',
-  },
-};
 
 function ProgressBar({
   filled,
@@ -70,13 +37,19 @@ function ProgressBar({
   );
 }
 
+/**
+ * Estado de las traducciones (solo si la web tiene más de un idioma). Ya no
+ * mezcla "guardado" con "traducido": el guardado lo dice AutosaveIndicator.
+ */
 export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'center' | 'end' }) {
-  const { currentLocale, setLocale, goToSection, saveStatus, dirty, lastSavedAt } = useFarmaciaEditor();
+  const { farmacia, currentLocale, setLocale, goToSection } = useFarmaciaEditor();
   const [open, setOpen] = useState(false);
 
   const { perLocale, totalMissing, sectionsWithMissing } = useI18nHealth();
-  const level = getLevel(saveStatus, dirty, totalMissing);
-  const style = LEVEL_STYLE[level];
+  if (farmacia.idiomasActivos.length < 2) return null;
+  const texto = totalMissing > 0
+    ? `Faltan ${totalMissing} ${totalMissing === 1 ? 'traducción' : 'traducciones'}`
+    : 'Traducciones al día';
 
   const jumpToLocale = (l: Locale) => {
     if (l !== currentLocale) setLocale(l);
@@ -88,51 +61,27 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
       <Popover.Trigger asChild>
         <button
           type="button"
-          aria-label={`Estado: ${style.label}${totalMissing > 0 ? ` — ${totalMissing} por traducir` : ''}`}
-          title={style.label}
           className={cn(
-            'relative inline-flex items-center justify-center h-6 w-6 rounded-full bg-[var(--color-surface)] border border-[var(--color-hairline)] hover:border-[var(--color-hairline-strong)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
+            'inline-flex items-center gap-1.5 min-h-11 sm:min-h-7 rounded-full px-1 sm:px-2 text-[13px] font-medium hover:bg-[var(--color-surface-sunken)] transition-colors',
+            totalMissing > 0 ? 'text-[var(--color-red-ink)]' : 'text-[var(--color-muted)]',
           )}
         >
-          {level === 'saving' ? (
-            <span
-              aria-hidden
-              className="inline-block h-2.5 w-2.5 rounded-full border-[2px] border-[var(--color-hairline-strong)] border-t-[var(--color-accent)] animate-spin"
-            />
-          ) : (
-            <span
-              aria-hidden
-              className={cn('inline-block h-2 w-2 rounded-full ring-2 ring-inset', style.dot, style.ring)}
-            />
-          )}
+          <NavIcon name="Translate" size={15} />
+          {texto}
         </button>
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
+          aria-label="Estado de las traducciones"
           side="bottom"
           align={align}
           sideOffset={8}
           className="z-40 w-[300px] max-w-[calc(100vw-24px)] rounded-[10px] bg-[var(--color-surface)] border border-[var(--color-hairline)] shadow-[var(--shadow-elevated)] p-3.5 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
         >
-          {/* Estado guardado */}
-          <div className="flex items-center gap-2 pb-3 border-b border-[var(--color-hairline)]">
-            <span className={cn('inline-block h-1.5 w-1.5 rounded-full', style.dot)} aria-hidden />
-            <span className="text-[12.5px] text-[var(--color-ink)] font-medium">{style.label}</span>
-            <span className="ml-auto text-[11px] text-[var(--color-muted)] font-mono-tabular">
-              {saveStatus === 'saving'
-                ? '…'
-                : dirty
-                  ? 'pendiente'
-                  : lastSavedAt
-                    ? formatRelativeDate(lastSavedAt)
-                    : ''}
-            </span>
-          </div>
-
           {/* Idiomas */}
-          <div className="pt-3">
-            <p className="font-mono-tabular text-[10px] uppercase tracking-[0.08em] text-[var(--color-muted-2)] m-0 mb-2">
-              Idiomas
+          <div>
+            <p className="text-[12.5px] font-semibold text-[var(--color-muted)] m-0 mb-2">
+              Textos traducidos por idioma
             </p>
             <ul className="space-y-2 m-0 p-0 list-none">
               {perLocale.map((l) => {
@@ -143,7 +92,7 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
                     <button
                       type="button"
                       onClick={() => jumpToLocale(l.locale)}
-                      className="w-full text-left flex items-center gap-2 group"
+                      className="w-full min-h-11 sm:min-h-9 text-left flex items-center gap-2 group"
                     >
                       <span aria-hidden className="text-[13px] leading-none w-4 text-center shrink-0">
                         {LOCALE_FLAGS[l.locale]}
@@ -176,8 +125,8 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
           {/* Por sección */}
           {sectionsWithMissing.length > 0 && (
             <div className="pt-3 mt-3 border-t border-[var(--color-hairline)]">
-              <p className="font-mono-tabular text-[10px] uppercase tracking-[0.08em] text-[var(--color-muted-2)] m-0 mb-2">
-                Por sección
+              <p className="text-[12.5px] font-semibold text-[var(--color-muted)] m-0 mb-2">
+                Qué falta traducir
               </p>
               <ul className="space-y-1.5 m-0 p-0 list-none">
                 {sectionsWithMissing.map((sec) => (
@@ -192,8 +141,8 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
                             goToSection(sec.key, m.locale);
                             setOpen(false);
                           }}
-                          className="inline-flex items-center gap-1 h-5 px-1.5 rounded bg-[var(--color-red-soft)] text-[var(--color-red-ink)] text-[10.5px] font-mono-tabular hover:brightness-95"
-                          title={`Faltan ${m.missing} en ${LOCALE_LABELS[m.locale]}`}
+                          className="inline-flex items-center gap-1 min-h-11 sm:min-h-8 px-2.5 sm:px-2 rounded bg-[var(--color-red-soft)] text-[var(--color-red-ink)] text-[12px] hover:brightness-95"
+                          aria-label={`${sec.label}: faltan ${m.missing} en ${LOCALE_LABELS[m.locale]}`}
                         >
                           <span aria-hidden>{LOCALE_FLAGS[m.locale]}</span>
                           {m.missing}
@@ -206,11 +155,11 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
             </div>
           )}
 
-          {sectionsWithMissing.length === 0 && level === 'ok' && (
+          {sectionsWithMissing.length === 0 && (
             <div className="pt-3 mt-3 border-t border-[var(--color-hairline)]">
               <p className="text-[12px] text-[var(--color-muted)] m-0 flex items-center gap-1.5">
                 <NavIcon name="Check" size={12} className="text-[var(--color-green-ink)]" />
-                Todos los campos multi-idioma completos.
+                Todos los textos están traducidos.
               </p>
             </div>
           )}

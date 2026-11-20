@@ -56,19 +56,17 @@ export function IconPicker({
             style={{ color: 'var(--color-accent)' }}
           />
           <div className="flex-1 min-w-0">
-            <div className="text-[12px] font-medium text-[var(--color-accent-ink)]">
-              Seleccionado
-            </div>
-            <div className="text-[11.5px] font-mono-tabular text-[var(--color-accent-ink)]/80 truncate">
-              {value}
+            <div className="text-[12.5px] text-[var(--color-accent-ink)]">Icono elegido</div>
+            <div className="text-[14px] font-medium text-[var(--color-accent-ink)] truncate">
+              {ICONOS_CATALOGO.find((i) => i.value === value)?.label ?? value}
             </div>
           </div>
           <button
             type="button"
             onClick={() => onChange(undefined)}
-            className="text-[11px] text-[var(--color-accent-ink)] hover:underline font-medium"
+            className="min-h-11 sm:min-h-8 px-2 text-[13px] text-[var(--color-accent-ink)] hover:underline font-medium"
           >
-            Quitar
+            Quitar icono
           </button>
         </div>
       )}
@@ -79,7 +77,7 @@ export function IconPicker({
           if (items.length === 0) return null;
           return (
             <section key={cat}>
-              <div className="eyebrow text-[10px] mb-2 px-1">
+              <div className="text-[12.5px] font-semibold text-[var(--color-muted)] mb-2 px-1">
                 {CATEGORIAS_LABEL[cat]}
               </div>
               <div className="grid grid-cols-6 gap-1.5">

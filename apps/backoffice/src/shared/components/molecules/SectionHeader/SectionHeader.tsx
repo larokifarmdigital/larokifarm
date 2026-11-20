@@ -26,9 +26,12 @@ export function SectionHeader({
         >
           {title}
           {required && (
-            <span className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none" aria-label="obligatorio" title="Obligatorio para publicar">
-              *
-            </span>
+            <>
+              <span aria-hidden className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none" title="Obligatorio para publicar">
+                *
+              </span>
+              <span className="sr-only">, obligatorio</span>
+            </>
           )}
         </h3>
         {hint && (

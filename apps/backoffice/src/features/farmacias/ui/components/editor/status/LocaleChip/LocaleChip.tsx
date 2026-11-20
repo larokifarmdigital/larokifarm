@@ -41,7 +41,7 @@ export function LocaleChip({
         : `Vacío en todos los idiomas activos.`;
   return (
     <span
-      className={`inline-flex items-center gap-1 h-5 px-1.5 rounded text-[10px] font-medium uppercase tracking-wider font-mono-tabular ${STATUS_CLASS[s]}`}
+      className={`inline-flex items-center gap-1 h-5 px-1.5 rounded text-[11.5px] font-medium ${STATUS_CLASS[s]}`}
       title={title}
       aria-hidden
     >

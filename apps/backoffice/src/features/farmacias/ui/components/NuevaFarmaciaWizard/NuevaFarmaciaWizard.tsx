@@ -3,69 +3,56 @@
 import { useActionState, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { LOCALES, LOCALE_LABELS, type Locale } from '@/core/shared';
+import { LOCALES, type Locale } from '@/core/shared';
+import type { ResponsableDisponible } from '@/core/farmacias/domain';
 import { Button } from '@/shared/components/atoms/Button';
 import { Input } from '@/shared/components/atoms/Input';
 import { Label } from '@/shared/components/atoms/Label';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
-import { LabelHelpIcon } from '@/shared/components/molecules/LabelHelpIcon';
 import { slugify } from '@/shared/lib/slugify';
 import {
   createFarmaciaAction,
   type CreateFarmaciaState,
 } from '@/features/farmacias/actions/farmaciaActions';
-import { cn } from '@/shared/lib/cn';
 import { LanguagePicker } from './LanguagePicker';
 
-type Paso = 1 | 2 | 3;
-
-const PASOS: { n: Paso; titulo: string; descripcion: string }[] = [
-  { n: 1, titulo: 'Identidad', descripcion: 'Lo mínimo para que exista en el sistema.' },
-  { n: 2, titulo: 'Idiomas', descripcion: 'En qué idiomas se verá la web. Puedes cambiarlo luego.' },
-  { n: 3, titulo: 'Publicación', descripcion: 'Se crea como borrador para que la completes.' },
-];
-
-/** Paso donde vive cada campo, para volver a él si el server lo rechaza. */
-const FIELD_STEP: Record<string, Paso> = { nombre: 1, slug: 1, idiomas: 2 };
+/** Orden en que se enfoca el primer campo con error devuelto por el servidor. */
+const CAMPOS = ['nombre', 'slug', 'idiomas', 'responsable'] as const;
 
 /**
- * NOTE: los 3 pasos están SIEMPRE montados (los inactivos con `hidden`) para
- * que todos los campos viajen en el FormData del submit del paso 3.
+ * Alta de una farmacia en UN paso (antes eran 3 pasos para 4 campos):
+ * nombre, ciudad, idiomas, identificador (generado; se puede cambiar) y
+ * responsable opcional. Se crea como borrador.
  */
-export function NuevaFarmaciaWizard() {
-  const [paso, setPaso] = useState<Paso>(1);
+export function NuevaFarmaciaWizard({ responsables }: { responsables: ResponsableDisponible[] }) {
   const [nombre, setNombre] = useState('');
-  const [slug, setSlug] = useState('');
   const [ciudad, setCiudad] = useState('');
-  const [slugTouched, setSlugTouched] = useState(false);
+  const [slug, setSlug] = useState('');
+  const [editandoSlug, setEditandoSlug] = useState(false);
   const [idiomas, setIdiomas] = useState<Locale[]>(['es']);
-  const [state, formAction, pending] = useActionState<CreateFarmaciaState, FormData>(
-    createFarmaciaAction,
-    { status: 'idle' },
-  );
+  const [state, formAction, pending] = useActionState<CreateFarmaciaState, FormData>(createFarmaciaAction, {
+    status: 'idle',
+  });
 
-  // Si el server devuelve errores de campo, volver al paso del primer error
-  // (ajuste durante el render, no en un effect).
-  const [handledState, setHandledState] = useState(state);
-  const firstErrorField =
-    state.status === 'error' ? Object.keys(state.fieldErrors ?? {}).find((k) => k in FIELD_STEP) : undefined;
-  if (state !== handledState) {
-    setHandledState(state);
-    if (firstErrorField) setPaso(FIELD_STEP[firstErrorField]);
+  const slugFinal = (editandoSlug ? slug : slugify(nombre)).slice(0, 60).replace(/^-+|-+$/g, '');
+  const fieldError = (k: string) => (state.status === 'error' ? state.fieldErrors?.[k] : undefined);
+  const nombreOk = nombre.trim().length >= 2;
+
+  // Si el servidor rechaza el identificador, se abre su campo (ajuste en render, no en effect).
+  const [estadoVisto, setEstadoVisto] = useState(state);
+  if (state !== estadoVisto) {
+    setEstadoVisto(state);
+    if (state.status === 'error' && state.fieldErrors?.slug) setEditandoSlug(true);
   }
 
-  // Efectos de DOM tras el cambio de paso: aviso + foco en el campo con error.
+  // Error del servidor: aviso + foco en el primer campo que falla.
   useEffect(() => {
     if (state.status !== 'error') return;
-    const field = Object.keys(state.fieldErrors ?? {}).find((k) => k in FIELD_STEP);
-    if (field) {
-      toast.error(state.fieldErrors?.[field] ?? state.message);
-      document.getElementById(field)?.focus();
-    }
+    const campo = CAMPOS.find((k) => state.fieldErrors?.[k]);
+    toast.error(campo ? state.fieldErrors?.[campo] ?? state.message : state.message);
+    if (campo) window.setTimeout(() => document.getElementById(campo === 'idiomas' ? 'idiomas-ca' : campo)?.focus(), 0);
   }, [state]);
 
-  const fieldError = (k: string) => (state.status === 'error' ? state.fieldErrors?.[k] : undefined);
-  const paso1Ok = nombre.trim().length >= 2 && (slug || nombre).trim().length > 0;
   const toggleIdioma = (l: Locale) =>
     setIdiomas((prev) =>
       prev.includes(l) ? prev.filter((x) => x !== l) : LOCALES.filter((x) => x === l || prev.includes(x)),
@@ -73,211 +60,155 @@ export function NuevaFarmaciaWizard() {
 
   return (
     <div>
-      <header className="mb-8">
+      <header className="mb-6 sm:mb-8">
         <Link
           href="/farmacias"
-          className="inline-flex items-center gap-1 text-[12.5px] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] transition-colors mb-4"
+          className="inline-flex min-h-11 sm:min-h-6 items-center gap-1 text-[13.5px] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] transition-colors mb-3"
         >
           <NavIcon name="CaretRight" size={11} className="rotate-180" />
           Volver a farmacias
         </Link>
-        <p className="eyebrow mb-2">Nueva</p>
         <h1 className="h-display m-0">Añadir una farmacia</h1>
-        <p className="mt-2 text-[14px] text-[var(--color-muted)] max-w-lg text-pretty">
-          Rellena solo lo esencial. Podrás completar el contenido, servicios,
-          imágenes y horarios en la siguiente pantalla.
+        <p className="mt-2 text-[14.5px] text-[var(--color-muted)] max-w-lg text-pretty">
+          Solo lo esencial. Se crea como borrador y después completas horario, servicios y fotos.
         </p>
       </header>
 
-      <ol className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6 sm:mb-8">
-        {PASOS.map((p) => {
-          const done = paso > p.n;
-          const active = paso === p.n;
-          return (
-            <li key={p.n}>
-              <div
-                className={cn(
-                  'card p-4 border transition-colors',
-                  active
-                    ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
-                    : done
-                      ? 'border-[var(--color-hairline-strong)]'
-                      : 'opacity-60',
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      'h-6 w-6 rounded-full flex items-center justify-center text-[12px] font-medium',
-                      done
-                        ? 'bg-[var(--color-accent)] text-white'
-                        : active
-                          ? 'bg-[var(--color-ink)] text-white'
-                          : 'bg-[var(--color-surface-sunken)] text-[var(--color-muted)]',
-                    )}
-                  >
-                    {done ? <NavIcon name="Check" size={12} /> : p.n}
-                  </span>
-                  <span className="text-[13px] font-medium text-[var(--color-ink)]">{p.titulo}</span>
-                </div>
-                <p className="mt-1.5 text-[11.5px] text-[var(--color-muted)] leading-[1.5]">
-                  {p.descripcion}
-                </p>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+      <form action={formAction} className="card p-5 sm:p-8 space-y-6" noValidate>
+        <div>
+          <Label htmlFor="nombre" required>
+            Nombre de la farmacia
+          </Label>
+          <Input
+            id="nombre"
+            name="nombre"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            autoFocus
+            autoComplete="off"
+            invalid={Boolean(fieldError('nombre'))}
+            aria-describedby={fieldError('nombre') ? 'nombre-error' : undefined}
+          />
+          {fieldError('nombre') && (
+            <p id="nombre-error" className="help help-error" role="alert">
+              {fieldError('nombre')}
+            </p>
+          )}
+        </div>
 
-      <form action={formAction} className="card p-5 sm:p-8">
-        {/* ── Paso 1: Identidad ─────────────────────────────────────── */}
-        <div hidden={paso !== 1} className="space-y-5">
-          <div>
-            <Label htmlFor="nombre" required>
-              Nombre comercial
-            </Label>
-            <Input
-              id="nombre"
-              name="nombre"
-              value={nombre}
-              onChange={(e) => {
-                setNombre(e.target.value);
-                if (!slugTouched) setSlug(slugify(e.target.value));
-              }}
-              placeholder="Farmacia Torrents"
-              autoFocus
-              invalid={Boolean(fieldError('nombre'))}
-            />
-            {fieldError('nombre') && (
-              <p className="help help-error" role="alert">
-                {fieldError('nombre')}
-              </p>
-            )}
-          </div>
+        <div>
+          <Label htmlFor="ciudad">Ciudad</Label>
+          <Input id="ciudad" name="ciudad" value={ciudad} onChange={(e) => setCiudad(e.target.value)} autoComplete="address-level2" />
+        </div>
 
-          <div>
-            <Label
-              htmlFor="slug"
-              required
-              hint={
-                <LabelHelpIcon>
-                  Código interno con el que la web de la farmacia lee su contenido. Se autocompleta desde el
-                  nombre. Solo minúsculas, números y guiones.
-                </LabelHelpIcon>
-              }
-            >
-              Identificador
-            </Label>
+        <LanguagePicker value={idiomas} onToggle={toggleIdioma} error={fieldError('idiomas')} />
+
+        {/* Identificador: se genera del nombre; cambiarlo es raro */}
+        <div>
+          <p className="label m-0" id="slug-label">Identificador interno</p>
+          <input type="hidden" name="slug" value={slugFinal} />
+          {editandoSlug ? (
             <Input
               id="slug"
-              name="slug"
+              aria-labelledby="slug-label"
+              aria-describedby={fieldError('slug') ? 'slug-ayuda slug-error' : 'slug-ayuda'}
               value={slug}
-              onChange={(e) => {
-                setSlug(slugify(e.target.value));
-                setSlugTouched(true);
-              }}
-              placeholder="mi-farmacia"
-              className="font-mono-tabular"
+              onChange={(e) => setSlug(slugify(e.target.value))}
+              className="font-mono-tabular mt-1"
               invalid={Boolean(fieldError('slug'))}
             />
-            {fieldError('slug') && (
-              <p className="help help-error" role="alert">
-                {fieldError('slug')}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="ciudad">Ciudad</Label>
-            <Input
-              id="ciudad"
-              name="ciudad"
-              value={ciudad}
-              onChange={(e) => setCiudad(e.target.value)}
-              placeholder="Barcelona, Huacho…"
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4 border-t border-[var(--color-hairline)]">
-            <Button type="button" variant="ghost" asChild>
-              <Link href="/farmacias">Cancelar</Link>
-            </Button>
-            <Button type="button" variant="secondary" disabled={!paso1Ok} onClick={() => setPaso(2)}>
-              Continuar
-              <NavIcon name="CaretRight" size={12} />
-            </Button>
-          </div>
-        </div>
-
-        {/* ── Paso 2: Idiomas ───────────────────────────────────────── */}
-        <div hidden={paso !== 2} className="space-y-5">
-          <LanguagePicker value={idiomas} onToggle={toggleIdioma} error={fieldError('idiomas')} />
-
-          <div className="flex justify-between pt-4 border-t border-[var(--color-hairline)]">
-            <Button type="button" variant="ghost" onClick={() => setPaso(1)}>
-              <NavIcon name="CaretRight" size={12} className="rotate-180" />
-              Atrás
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setPaso(3)}>
-              Continuar
-              <NavIcon name="CaretRight" size={12} />
-            </Button>
-          </div>
-        </div>
-
-        {/* ── Paso 3: Publicación ───────────────────────────────────── */}
-        <div hidden={paso !== 3} className="space-y-6">
-          <div>
-            <h2 className="h-section m-0 text-[20px]">Todo listo</h2>
-            <p className="mt-2 text-[13.5px] text-[var(--color-muted)]">
-              Vamos a crear la farmacia como <strong>borrador</strong>. Podrás
-              completar el contenido y publicarla cuando quieras.
-            </p>
-          </div>
-
-          <div className="card p-5 bg-[var(--color-surface-2)]">
-            <dl className="grid grid-cols-[120px_1fr] gap-y-3 gap-x-4 text-[13px]">
-              <dt className="text-[var(--color-muted)]">Nombre</dt>
-              <dd className="text-[var(--color-ink)]">{nombre}</dd>
-              <dt className="text-[var(--color-muted)]">Identificador</dt>
-              <dd className="text-[var(--color-ink)] font-mono-tabular">{slug}</dd>
-              {ciudad && (
-                <>
-                  <dt className="text-[var(--color-muted)]">Ciudad</dt>
-                  <dd className="text-[var(--color-ink)]">{ciudad}</dd>
-                </>
-              )}
-              <dt className="text-[var(--color-muted)]">Idiomas</dt>
-              <dd className="text-[var(--color-ink)]">
-                {idiomas.map((l) => LOCALE_LABELS[l]).join(' · ')}
-              </dd>
-              <dt className="text-[var(--color-muted)]">Estado inicial</dt>
-              <dd>
-                <span className="chip chip-yellow">Borrador</span>
-              </dd>
-            </dl>
-          </div>
-
-          {state.status === 'error' && !firstErrorField && (
-            <div
-              role="alert"
-              className="px-3 py-2.5 rounded-[6px] bg-[var(--color-red-soft)] text-[var(--color-red-ink)] text-[13px]"
-            >
-              {state.message}
+          ) : (
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              <code className="rounded-[6px] bg-[var(--color-surface-sunken)] px-2.5 py-1.5 text-[14px] text-[var(--color-ink)]">
+                {slugFinal || 'se genera con el nombre'}
+              </code>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSlug(slugFinal);
+                  setEditandoSlug(true);
+                  window.setTimeout(() => document.getElementById('slug')?.focus(), 0);
+                }}
+              >
+                Cambiar
+              </Button>
             </div>
           )}
-
-          <div className="flex justify-between pt-4 border-t border-[var(--color-hairline)]">
-            <Button type="button" variant="ghost" onClick={() => setPaso(2)}>
-              <NavIcon name="CaretRight" size={12} className="rotate-180" />
-              Atrás
-            </Button>
-            <Button type="submit" variant="accent" disabled={pending}>
-              <NavIcon name="Check" size={13} />
-              {pending ? 'Creando…' : 'Crear farmacia'}
-            </Button>
-          </div>
+          <p id="slug-ayuda" className="mt-1.5 mb-0 text-[13px] text-[var(--color-muted)]">
+            Código con el que la web lee su contenido. Solo minúsculas, números y guiones.
+          </p>
+          {fieldError('slug') && (
+            <p id="slug-error" className="help help-error" role="alert">
+              {fieldError('slug')}
+            </p>
+          )}
         </div>
+
+        <div>
+          <Label htmlFor="responsable">Quién la gestiona (opcional)</Label>
+          <select
+            id="responsable"
+            name="responsable"
+            defaultValue=""
+            className="field"
+            aria-describedby={fieldError('responsable') ? 'responsable-ayuda responsable-error' : 'responsable-ayuda'}
+            aria-invalid={Boolean(fieldError('responsable')) || undefined}
+          >
+            <option value="">Nadie por ahora</option>
+            {responsables.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.nombre} · {u.email}
+              </option>
+            ))}
+          </select>
+          <p id="responsable-ayuda" className="mt-1.5 mb-0 text-[13px] text-[var(--color-muted)]">
+            {responsables.length > 0
+              ? 'Solo salen usuarios que todavía no tienen farmacia. Podrá editar su web.'
+              : 'No hay usuarios sin farmacia asignada. Podrás asignarlo más adelante.'}
+          </p>
+          {fieldError('responsable') && (
+            <p id="responsable-error" className="help help-error" role="alert">
+              {fieldError('responsable')}
+            </p>
+          )}
+        </div>
+
+        {state.status === 'error' && !CAMPOS.some((k) => state.fieldErrors?.[k]) && (
+          <div role="alert" className="px-3 py-2.5 rounded-[6px] bg-[var(--color-red-soft)] text-[var(--color-red-ink)] text-[14px]">
+            {state.message}
+          </div>
+        )}
+
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-5 border-t border-[var(--color-hairline)]">
+          <Button type="button" variant="ghost" asChild>
+            <Link href="/farmacias">Cancelar</Link>
+          </Button>
+          {/* aria-disabled (no disabled): sigue alcanzable con Tab y anuncia por qué no se puede crear */}
+          <Button
+            type="submit"
+            variant="accent"
+            disabled={pending}
+            aria-disabled={!nombreOk || undefined}
+            aria-describedby={!nombreOk ? 'crear-ayuda' : undefined}
+            className={!nombreOk ? 'opacity-55 cursor-not-allowed' : undefined}
+            onClick={(e) => {
+              if (!nombreOk) {
+                e.preventDefault();
+                document.getElementById('nombre')?.focus();
+              }
+            }}
+          >
+            <NavIcon name="Check" size={14} />
+            {pending ? 'Creando…' : 'Crear borrador'}
+          </Button>
+        </div>
+        {!nombreOk && (
+          <p id="crear-ayuda" className="m-0 -mt-3 text-right text-[13px] text-[var(--color-muted)]">
+            Escribe el nombre para poder crearla.
+          </p>
+        )}
       </form>
     </div>
   );

@@ -1,1 +1,1 @@
-export * from './ResenasTab';
+export { ResenasTab, ResenasVisibilidad } from './ResenasTab';

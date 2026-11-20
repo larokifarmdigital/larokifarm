@@ -1,14 +1,9 @@
 'use client';
 
 /**
- * Sidebar izquierdo (desktop ≥ 900px) con las 9 secciones agrupadas.
- * Reemplaza el doble patrón EditorFloatingNav (4 grupos) + EditorGroupSegmented
- * (sub-secciones): ahora las 9 están siempre visibles en una sola columna.
+ * Columna izquierda (escritorio) con todas las secciones agrupadas.
  *
- * Estado por sección (dot a la derecha):
- *   - 'edit' (naranja acento): sección activa
- *   - 'warn' (amarillo): hay traducciones faltantes en algún idioma
- *   - 'ok'   (verde): completa
+ * Punto rojo a la derecha solo si a la sección le falta traducir algo.
  */
 
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
@@ -41,45 +36,34 @@ export function EditorSectionSidebar({
     >
       {GROUPS.map((group) => (
         <div key={group.key} className="px-[4px] pb-[4px]">
-          <div className="px-[10px] pt-[10px] pb-[6px] text-[10.5px] font-bold uppercase tracking-[0.08em] text-[var(--color-muted)]">
+          <div className="px-[10px] pt-[10px] pb-[6px] text-[12px] font-semibold text-[var(--color-muted)]">
             {group.label}
           </div>
           {group.sectionKeys.map((key) => {
             const s = SECTION_BY_KEY[key];
             const isActive = key === activeKey;
-            const status = isActive
-              ? 'edit'
-              : s.multilang && missingByKey[key as SectionKey]
-                ? 'warn'
-                : 'ok';
-            const dotCls =
-              status === 'edit'
-                ? 'bg-[var(--color-accent)]'
-                : status === 'warn'
-                  ? 'bg-[var(--color-yellow-ink)]'
-                  : 'bg-[var(--color-green-ink)]';
-
+            const pendiente = s.multilang && missingByKey[key as SectionKey];
             return (
               <button
                 key={key}
                 type="button"
                 onClick={() => onSelect(key)}
-                aria-current={isActive ? 'true' : 'false'}
+                aria-current={isActive ? 'true' : undefined}
                 className={cn(
-                  'relative w-full text-left flex items-center gap-[9px] px-[10px] py-[9px] rounded-[8px] text-[13px] font-medium transition-colors',
+                  'relative w-full text-left flex items-center gap-[9px] px-[10px] py-[9px] rounded-[8px] text-[13.5px] font-medium transition-colors',
                   isActive
                     ? 'bg-[var(--color-accent-soft)] text-[var(--color-ink)] font-semibold before:content-[""] before:absolute before:left-[-5px] before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[16px] before:rounded-[2px] before:bg-[var(--color-accent)]'
                     : 'text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] hover:text-[var(--color-ink)]',
                 )}
               >
                 <span className="flex-1 min-w-0 truncate">{s.label}</span>
-                <span
-                  aria-hidden
-                  className={cn(
-                    'w-[7px] h-[7px] rounded-full shrink-0 ml-auto',
-                    dotCls,
-                  )}
-                />
+                {/* Punto solo si falta traducir algo: "todo verde" no informaba */}
+                {pendiente && (
+                  <>
+                    <span aria-hidden title="Falta traducir" className="w-[7px] h-[7px] rounded-full shrink-0 ml-auto bg-[var(--color-red-ink)]" />
+                    <span className="sr-only">(falta traducir)</span>
+                  </>
+                )}
               </button>
             );
           })}

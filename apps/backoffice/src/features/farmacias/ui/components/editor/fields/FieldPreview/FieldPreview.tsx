@@ -31,8 +31,8 @@ const STAGE_BASE =
 export function FieldPreview(props: Props) {
   return (
     <div className={CONTAINER_BASE}>
-      <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--color-muted-2)]">
-        <NavIcon name="MagnifyingGlassPlus" size={10} />
+      <div className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold text-[var(--color-ink-2)]">
+        <NavIcon name="MagnifyingGlassPlus" size={12} />
         Vista previa en la web
       </div>
       <div className={STAGE_BASE}>{renderPreview(props)}</div>

@@ -238,8 +238,22 @@ export type Farmacia = {
 
   createdAt: string;
   updatedAt: string;
+  /** ISO de la última publicación (solo lectura). Con `updatedAt` posterior = cambios sin publicar. */
+  ultimaPublicacion?: string;
   lastEditedBy?: string;
 };
+
+/** Usuario sin farmacia asignada que se puede poner de responsable al crear una. */
+export type ResponsableDisponible = { id: string; nombre: string; email: string };
+
+/**
+ * Hay cambios guardados que aún no están en la web: nunca publicada, o
+ * editada después de publicar (margen de 60 s: publicar también toca `updatedAt`).
+ */
+export function tieneCambiosSinPublicar(f: Pick<Farmacia, 'status' | 'updatedAt' | 'ultimaPublicacion'>): boolean {
+  if (f.status !== 'published' || !f.ultimaPublicacion) return true;
+  return new Date(f.updatedAt).getTime() - new Date(f.ultimaPublicacion).getTime() > 60_000;
+}
 
 export type FarmaciaSummary = Pick<
   Farmacia,

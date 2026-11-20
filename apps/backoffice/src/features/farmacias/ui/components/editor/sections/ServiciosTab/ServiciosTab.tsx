@@ -13,12 +13,11 @@ import { ModalLocaleScope } from '@/features/farmacias/ui/components/editor/fiel
 import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';
 import { TextosCabeceraFields } from '@/features/farmacias/ui/components/editor/fields/TextosCabeceraFields';
-import { IconPicker } from '@/shared/components/molecules/IconPicker';
+import { IconoField } from '@/features/farmacias/ui/components/editor/fields/IconoField';
 import { IconoSVG } from '@/shared/components/atoms/IconoSVG';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
 import type { Servicio } from '@/core/farmacias/domain';
-import type { Locale } from '@/core/shared';
 import {
   DndContext,
   closestCenter,
@@ -32,10 +31,11 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { toast } from 'sonner';
+import { LOCALE_NOMBRE } from '@/core/shared';
+import { AvisoTraduccion, CabeceraColapsable, FilaLista } from '@/features/farmacias/ui/components/editor/fields/FilaLista';
 import { isSafeHref } from '@/shared/lib/safeHref';
 
 function crearServicioVacio(orden: number): Servicio {
@@ -47,136 +47,6 @@ function crearServicioVacio(orden: number): Servicio {
     enlace: undefined,
     orden,
   };
-}
-
-/**
- * Fila compacta read-only. Mostrar + gestionar (editar/eliminar/reordenar).
- * El contenido NO se edita in-place: click en editar abre el modal.
- */
-function ServicioRow({
-  servicio,
-  currentLocale,
-  activeLocales,
-  onEdit,
-  onRemove,
-}: {
-  servicio: Servicio;
-  currentLocale: Locale;
-  activeLocales: Locale[];
-  onEdit: () => void;
-  onRemove: () => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: servicio.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 10 : undefined,
-  };
-
-  const nombre =
-    servicio.nombre[currentLocale] ||
-    servicio.nombre.es ||
-    servicio.nombre.ca ||
-    servicio.nombre.en ||
-    '';
-  const desc =
-    servicio.descripcion?.[currentLocale] ||
-    servicio.descripcion?.es ||
-    servicio.descripcion?.ca ||
-    servicio.descripcion?.en ||
-    '';
-  const hasName = !!nombre.trim();
-
-  const missingLocales = activeLocales.filter(
-    (l) => !servicio.nombre[l]?.trim(),
-  );
-
-  return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        'group flex items-center gap-2 px-2 py-2 rounded-[var(--radius-sm)] border border-transparent bg-[var(--color-surface)]',
-        'hover:border-[var(--color-hairline)] transition-all',
-        isDragging && 'border-[var(--color-hairline-strong)] shadow-[var(--shadow-elevated)]',
-      )}
-    >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label="Reordenar servicio"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted-2)] hover:text-[var(--color-ink-2)] cursor-grab active:cursor-grabbing"
-      >
-        <NavIcon name="DotsSixVertical" size={14} weight="bold" />
-      </button>
-
-      <button
-        type="button"
-        onClick={onEdit}
-        className="flex-1 min-w-0 flex items-center gap-3 text-left"
-      >
-        <span
-          className={cn(
-            'shrink-0 h-9 w-9 rounded-[var(--radius-sm)] flex items-center justify-center',
-            servicio.icono
-              ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
-              : 'bg-[var(--color-surface-sunken)] text-[var(--color-muted-2)]',
-          )}
-        >
-          {servicio.icono ? (
-            <IconoSVG nombre={servicio.icono} size={18} />
-          ) : (
-            <NavIcon name="Image" size={14} />
-          )}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span
-            className={cn(
-              'block text-[13.5px] font-medium truncate leading-tight',
-              hasName
-                ? 'text-[var(--color-ink)]'
-                : 'text-[var(--color-muted-2)] italic',
-            )}
-          >
-            {hasName ? nombre : 'Servicio sin título'}
-          </span>
-          {desc && (
-            <span className="block text-[12.5px] text-[var(--color-muted)] truncate leading-tight mt-0.5">
-              {desc}
-            </span>
-          )}
-          {missingLocales.length > 0 && (
-            <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-[var(--color-yellow-ink)]">
-              <span
-                aria-hidden
-                className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-yellow-ink)]"
-              />
-              Falta {missingLocales.map((l) => l.toUpperCase()).join(', ')}
-            </span>
-          )}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        onClick={onEdit}
-        aria-label="Editar servicio"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]"
-      >
-        <NavIcon name="PencilSimple" size={13} />
-      </button>
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label="Eliminar servicio"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)]"
-      >
-        <NavIcon name="Trash" size={13} />
-      </button>
-    </li>
-  );
 }
 
 function ServicioModal({
@@ -203,7 +73,7 @@ function ServicioModal({
       open={open}
       onOpenChange={(o) => !o && onClose()}
       title={mode === 'create' ? 'Nuevo servicio' : 'Editar servicio'}
-      description="Los servicios aparecen en la sección «Nuestros servicios» de la landing."
+      description="Sale como una tarjeta en la sección de servicios de tu web."
       footer={
         <>
           <Button variant="ghost" size="md" onClick={onClose}>
@@ -225,25 +95,12 @@ function ServicioModal({
       }
     >
       <div className="space-y-5">
-        <div>
-          <Label>Icono</Label>
-          <p className="text-[11.5px] text-[var(--color-muted)] mb-3 mt-0.5">
-            Elige un icono del catálogo. El que muestres aquí es el que verá el visitante.
-          </p>
-          <IconPicker
-            value={draft.icono}
-            onChange={(icono) => setDraft({ ...draft, icono })}
-          />
-        </div>
-
-        <div className="hairline" />
-
         <ModalLocaleScope values={[draft.nombre, draft.descripcion]}>
           <MultilangInput
             label="Nombre del servicio"
             value={draft.nombre}
             onChange={(v) => setDraft({ ...draft, nombre: v })}
-            placeholder="Consulta dermofarmacéutica"
+            placeholder="Ej.: Consulta dermofarmacéutica"
             required
           />
 
@@ -252,50 +109,57 @@ function ServicioModal({
             required
             value={draft.descripcion ?? {}}
             onChange={(v) => setDraft({ ...draft, descripcion: v })}
-            placeholder="Breve descripción del servicio…"
+            placeholder="Explica en una o dos frases en qué consiste."
             rows={3}
           />
         </ModalLocaleScope>
 
-        <div className="hairline" />
+        <IconoField value={draft.icono} onChange={(icono) => setDraft({ ...draft, icono })} />
 
-        <div>
-          <Label hint="Opcional">Enlace al hacer clic</Label>
-          <p className="text-[11.5px] text-[var(--color-muted)] mb-2 mt-0.5">
-            Si rellenas la URL, toda la tarjeta será clicable. Acepta URL externa, ancla (#seccion) o ruta interna (/aviso-legal).
-          </p>
-          <Input
-            type="url"
-            value={draft.enlace?.url ?? ''}
-            onChange={(e) =>
-              setDraft({
-                ...draft,
-                enlace: { ...draft.enlace, url: e.target.value || undefined },
-              })
-            }
-            placeholder="https://…"
-            aria-invalid={!isSafeHref(draft.enlace?.url ?? '')}
-          />
-          {!isSafeHref(draft.enlace?.url ?? '') && (
-            <p role="alert" className="mt-1.5 mb-0 text-[12px] text-[var(--color-red-ink)]">
-              Enlace no permitido. Usa https://, mailto:, tel:, #seccion o /ruta.
+        <details className="group" open={Boolean(draft.enlace?.url) || undefined}>
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-[14px] font-medium text-[var(--color-accent)] [&::-webkit-details-marker]:hidden">
+            <NavIcon name="CaretRight" size={12} className="transition-transform group-open:rotate-90" />
+            Opciones avanzadas: enlace
+          </summary>
+          <div className="mt-2">
+            <Label htmlFor="servicio-enlace" hint="Opcional">Enlace al pulsar el servicio</Label>
+            <p className="text-[12.5px] text-[var(--color-muted)] mb-2 mt-0.5">
+              Si lo rellenas, toda la tarjeta lleva a ese enlace. Por ejemplo, https://… o /aviso-legal.
             </p>
-          )}
-          <label className="mt-2.5 flex items-center gap-2 text-[12.5px] text-[var(--color-ink-2)] cursor-pointer">
-            <input
-              type="checkbox"
-              checked={draft.enlace?.nuevaPestana ?? false}
+            <Input
+              id="servicio-enlace"
+              type="url"
+              value={draft.enlace?.url ?? ''}
               onChange={(e) =>
                 setDraft({
                   ...draft,
-                  enlace: { ...draft.enlace, nuevaPestana: e.target.checked },
+                  enlace: { ...draft.enlace, url: e.target.value || undefined },
                 })
               }
-              className="w-4 h-4 accent-[var(--color-accent)]"
+              placeholder="https://…"
+              aria-invalid={!isSafeHref(draft.enlace?.url ?? '')}
             />
-            Abrir en nueva pestaña (recomendado para URLs externas)
-          </label>
-        </div>
+            {!isSafeHref(draft.enlace?.url ?? '') && (
+              <p role="alert" className="mt-1.5 mb-0 text-[12.5px] text-[var(--color-red-ink)]">
+                Ese enlace no se puede usar. Empieza por https://, mailto:, tel:, # o /.
+              </p>
+            )}
+            <label className="mt-2.5 flex min-h-11 sm:min-h-0 items-center gap-2 text-[13.5px] text-[var(--color-ink-2)] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={draft.enlace?.nuevaPestana ?? false}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    enlace: { ...draft.enlace, nuevaPestana: e.target.checked },
+                  })
+                }
+                className="w-4 h-4 accent-[var(--color-accent)]"
+              />
+              Abrir en otra pestaña (recomendado si es otra web)
+            </label>
+          </div>
+        </details>
       </div>
     </Modal>
   );
@@ -308,6 +172,8 @@ export function ServiciosTab() {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingDraft, setEditingDraft] = useState<Servicio | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Servicio | null>(null);
+  const [recienAnadido, setRecienAnadido] = useState<string | null>(null);
+  const { issues } = useFarmaciaEditor();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -338,6 +204,11 @@ export function ServiciosTab() {
   const handleSave = (s: Servicio) => {
     if (modalMode === 'create') {
       setServicios([...farmacia.servicios, s]);
+      setRecienAnadido(s.id);
+      window.setTimeout(() => setRecienAnadido(null), 2500);
+      toast.success('Servicio añadido al final de la lista', {
+        description: 'Puedes moverlo de sitio desde la lista.',
+      });
     } else {
       setServicios(farmacia.servicios.map((x) => (x.id === s.id ? s : x)));
     }
@@ -356,7 +227,15 @@ export function ServiciosTab() {
     setServicios(arrayMove(farmacia.servicios, oldIdx, newIdx));
   };
 
+  const moverServicio = (indice: number, delta: -1 | 1) => {
+    const destino = indice + delta;
+    if (destino < 0 || destino >= farmacia.servicios.length) return;
+    setServicios(arrayMove(farmacia.servicios, indice, destino));
+  };
+
   const activeLocales = farmacia.idiomasActivos;
+  const t = farmacia.textosServicios ?? {};
+  const cabeceraConError = issues.some((i) => i.field.startsWith('textosServicios'));
   const count = farmacia.servicios.length;
 
   const deletePreview =
@@ -367,39 +246,18 @@ export function ServiciosTab() {
 
   return (
     <div className="section-gap max-w-3xl">
-      {/* ============= TEXTOS DE CABECERA ============= */}
-      <section aria-labelledby="sec-servicios-textos">
-        <SectionHeader
-          id="sec-servicios-textos"
-          title="Textos de la sección"
-          hint="Cabecera de la sección «Nuestros servicios» en la landing. Obligatorios en castellano para publicar."
-        />
-        <TextosCabeceraFields
-          required
-          fieldPrefix="textosServicios"
-          value={farmacia.textosServicios ?? {}}
-          onChange={(v) => patch({ textosServicios: v })}
-          defaults={{
-            chip: 'Nuestros servicios',
-            titulo: 'Nuestros servicios',
-            subtitulo: 'Ofrecemos una amplia gama de servicios farmacéuticos…',
-          }}
-        />
-      </section>
-
-      {/* ============= LISTA DE SERVICIOS ============= */}
+      {/* ============= LISTA (lo que más se toca, primero) ============= */}
       <section aria-labelledby="sec-servicios-lista">
         <SectionHeader
           id="sec-servicios-lista"
           required
-          title={count === 0 ? 'Lista de servicios' : `${count} ${count === 1 ? 'servicio' : 'servicios'}`}
-          hint="Cada servicio aparece como card en la landing. Arrastra las filas para reordenar."
+          title={count === 0 ? 'Servicios' : `${count} ${count === 1 ? 'servicio' : 'servicios'}`}
+          hint="Cada servicio sale como una tarjeta en tu web, en este orden."
           actions={
             count > 0 ? (
               <Button variant="accent" size="sm" onClick={openCreate}>
-                <NavIcon name="Plus" size={13} />
-                <span className="hidden sm:inline">Añadir servicio</span>
-                <span className="sm:hidden">Añadir</span>
+                <NavIcon name="Plus" size={14} />
+                Añadir servicio
               </Button>
             ) : null
           }
@@ -414,35 +272,73 @@ export function ServiciosTab() {
             <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-4 text-[var(--color-accent)]">
               <NavIcon name="Plus" size={20} />
             </div>
-            <p className="text-[14px] text-[var(--color-ink-2)] m-0">
-              Añade tu primer servicio
-            </p>
-            <p className="mt-1 text-[12.5px] text-[var(--color-muted)] m-0">
-              Consulta dermofarmacéutica, delivery, asesoría nutricional…
+            <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade tu primer servicio</p>
+            <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
+              Consulta dermofarmacéutica, entrega a domicilio, asesoría nutricional…
             </p>
           </button>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-            <SortableContext
-              items={farmacia.servicios.map((s) => s.id)}
-              strategy={verticalListSortingStrategy}
-            >
+            <SortableContext items={farmacia.servicios.map((s) => s.id)} strategy={verticalListSortingStrategy}>
               <ul className="card p-1.5 space-y-0.5 list-none m-0">
-                {farmacia.servicios.map((s) => (
-                  <ServicioRow
-                    key={s.id}
-                    servicio={s}
-                    currentLocale={currentLocale}
-                    activeLocales={activeLocales}
-                    onEdit={() => openEdit(s)}
-                    onRemove={() => setDeleteTarget(s)}
-                  />
-                ))}
+                {farmacia.servicios.map((s, i) => {
+                  const nombre = s.nombre[currentLocale] || s.nombre.es || s.nombre.ca || s.nombre.en || '';
+                  const desc = s.descripcion?.[currentLocale] || s.descripcion?.es || '';
+                  const faltan = activeLocales.filter((l) => !s.nombre[l]?.trim()).map((l) => LOCALE_NOMBRE[l]);
+                  return (
+                    <FilaLista
+                      key={s.id}
+                      id={s.id}
+                      indice={i}
+                      total={count}
+                      tipo="servicio"
+                      titulo={nombre}
+                      detalle={desc}
+                      destacar={recienAnadido === s.id}
+                      icono={
+                        <span
+                          className={cn(
+                            'h-9 w-9 rounded-[var(--radius-sm)] flex items-center justify-center',
+                            s.icono
+                              ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                              : 'bg-[var(--color-surface-sunken)] text-[var(--color-muted)]',
+                          )}
+                        >
+                          {s.icono ? <IconoSVG nombre={s.icono} size={18} /> : <NavIcon name="Image" size={14} />}
+                        </span>
+                      }
+                      aviso={<AvisoTraduccion idiomas={faltan} />}
+                      onEdit={() => openEdit(s)}
+                      onRemove={() => setDeleteTarget(s)}
+                      onMove={(d) => moverServicio(i, d)}
+                    />
+                  );
+                })}
               </ul>
             </SortableContext>
           </DndContext>
         )}
         <ListFieldError field="servicios" />
+      </section>
+
+      {/* ============= TEXTOS DE CABECERA (se tocan poco: plegados) ============= */}
+      <section aria-label="Textos de la cabecera de Servicios">
+        <CabeceraColapsable
+          abierta={cabeceraConError}
+          resumen={[t.chip?.es, t.titulo?.es].filter(Boolean).join(' · ')}
+        >
+          <TextosCabeceraFields
+            required
+            fieldPrefix="textosServicios"
+            value={t}
+            onChange={(v) => patch({ textosServicios: v })}
+            defaults={{
+              chip: 'Nuestros servicios',
+              titulo: 'Nuestros servicios',
+              subtitulo: 'Ofrecemos una amplia gama de servicios farmacéuticos…',
+            }}
+          />
+        </CabeceraColapsable>
       </section>
 
       <ServicioModal

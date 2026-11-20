@@ -37,7 +37,7 @@ export function ModalLocaleScope({
   return (
     <ScopedLocaleContext.Provider value={locale}>
       {activos.length > 1 && (
-        <div role="tablist" aria-label="Idioma" className="flex gap-1 p-1 rounded-[10px] bg-[var(--color-surface-sunken)]">
+        <div role="group" aria-label="Idioma en el que escribes" className="flex gap-1 p-1 rounded-[10px] bg-[var(--color-surface-sunken)]">
           {activos.map((l) => {
             const active = l === locale;
             const completo = values.every((v) => !activos.some((o) => filled(v, o)) || filled(v, l));
@@ -46,11 +46,10 @@ export function ModalLocaleScope({
               <button
                 key={l}
                 type="button"
-                role="tab"
-                aria-selected={active}
+                aria-pressed={active}
                 onClick={() => setLocale(l)}
                 className={cn(
-                  'relative flex-1 flex items-center justify-center gap-1.5 h-8 rounded-[7px] text-[13px] transition-colors',
+                  'relative flex-1 flex items-center justify-center gap-1.5 h-11 sm:h-8 rounded-[7px] text-[13px] transition-colors',
                   active
                     ? 'bg-[var(--color-surface)] text-[var(--color-ink)] font-medium shadow-[0_1px_2px_rgba(26,15,10,0.08)]'
                     : 'text-[var(--color-muted)] hover:text-[var(--color-ink-2)]',
@@ -59,11 +58,10 @@ export function ModalLocaleScope({
                 <span aria-hidden className="text-[15px] leading-none">{LOCALE_FLAGS[l]}</span>
                 {LOCALE_LABELS[l]}
                 {falta && (
-                  <span
-                    aria-label="Falta por traducir"
-                    title="Falta por traducir"
-                    className="h-1.5 w-1.5 rounded-full bg-[var(--color-red-ink)]"
-                  />
+                  <>
+                    <span aria-hidden title="Falta por traducir" className="h-1.5 w-1.5 rounded-full bg-[var(--color-red-ink)]" />
+                    <span className="sr-only">, falta por traducir</span>
+                  </>
                 )}
               </button>
             );

@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import * as Tooltip from '@radix-ui/react-tooltip';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { Button } from '@/shared/components/atoms/Button';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
@@ -17,16 +16,15 @@ import { PublishBlockedDialog } from './PublishBlockedDialog';
 import type { FieldIssue } from '@/core/farmacias/domain';
 
 /**
- * Trío de acciones del editor (Ver preview · Ver landing · Publicar cambios).
- * Se usa tanto en el TopBar (desktop) como en la barra móvil bottom.
- *
- * `compact` activa el modo bottom-bar: los 3 botones ocupan flex-1 por igual.
+ * Acciones del editor: "Ver mi web" y "Publicar" (este solo si hay cambios
+ * sin publicar). `compact` = barra inferior del móvil: un solo botón grande
+ * (Publicar si hay cambios; si no, Ver mi web).
  *
  * Si hay traducciones pendientes, "Publicar" abre antes PublishMissingDialog
  * (confirmar, no bloquear).
  */
 export function EditorActionButtons({ compact = false }: { compact?: boolean }) {
-  const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly, issues, revealErrors } = useFarmaciaEditor();
+  const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly, issues, revealErrors, pendientePublicar } = useFarmaciaEditor();
   const [blockedOpen, setBlockedOpen] = useState(false);
   const health = useI18nHealth();
   const [pending, startTx] = useTransition();
@@ -86,71 +84,43 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
 
   const publishLabel = farmacia.status === 'published' ? 'Publicar cambios' : 'Publicar';
   const webUrl = landingUrl(farmacia.web);
+  // "Publicar" solo cuando hay algo que llevar a la web; si no, la acción útil es verla.
+  const puedePublicar = !readOnly && pendientePublicar;
+
+  const verWeb = (
+    <Button
+      variant="secondary"
+      size={compact ? 'lg' : 'sm'}
+      disabled={!webUrl}
+      title={webUrl ? undefined : 'Añade la dirección de tu web en Contacto y dirección'}
+      onClick={() => webUrl && window.open(webUrl, '_blank', 'noopener,noreferrer')}
+      className={cn(compact && 'flex-1 justify-center text-[15px]')}
+    >
+      Ver mi web
+      <NavIcon name="ArrowSquareOut" size={13} />
+      <span className="sr-only">(se abre en otra pestaña)</span>
+    </Button>
+  );
 
   return (
-    <div
-      className={cn(
-        'flex items-center gap-1.5 sm:gap-2 shrink-0',
-        compact && 'w-full',
+    <div className={cn('flex items-center gap-2 shrink-0', compact && 'w-full')}>
+      {compact ? (
+        puedePublicar ? null : verWeb
+      ) : (
+        verWeb
       )}
-    >
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-          <span className={cn('inline-block', compact && 'flex-1')}>
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled
-              aria-label="Ver preview (se activará en Fase 5)"
-              className={cn(compact && 'w-full justify-center')}
-            >
-              <NavIcon name="ArrowSquareOut" size={13} />
-              <span className={cn(compact ? 'inline' : 'hidden md:inline')}>Preview</span>
-            </Button>
-          </span>
-        </Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Content
-            side="top"
-            sideOffset={6}
-            className="max-w-[240px] bg-[var(--color-ink)] text-[var(--color-surface)] text-[12px] leading-[1.45] px-2.5 py-1.5 rounded-[6px] shadow-[var(--shadow-elevated)]"
-          >
-            Vista previa en vivo — se conecta en Fase 5.
-            <Tooltip.Arrow className="fill-[var(--color-ink)]" />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
 
-      <Button
-        variant="secondary"
-        size="sm"
-        disabled={!webUrl}
-        title={webUrl ? undefined : 'Añade la web de la farmacia en Datos → General'}
-        onClick={() => webUrl && window.open(webUrl, '_blank', 'noopener,noreferrer')}
-        aria-label="Abrir la landing publicada en nueva pestaña"
-        className={cn(compact && 'flex-1 justify-center')}
-      >
-        <span className={cn(compact ? 'inline' : 'hidden sm:inline')}>Landing</span>
-        <NavIcon name="ArrowSquareOut" size={12} />
-      </Button>
-
-      {!readOnly && (
-      <Button
-        variant="accent"
-        size="sm"
-        onClick={publish}
-        disabled={pending}
-        aria-label={publishLabel}
-        className={cn(compact && 'flex-[1.4] justify-center')}
-      >
-        <NavIcon name="Check" size={13} />
-        <span className={cn(compact ? 'inline' : 'hidden sm:inline')}>
+      {puedePublicar && (
+        <Button
+          variant="accent"
+          size={compact ? 'lg' : 'sm'}
+          onClick={publish}
+          disabled={pending}
+          className={cn(compact && 'flex-1 justify-center text-[15px]')}
+        >
+          <NavIcon name="Check" size={14} />
           {pending ? 'Publicando…' : publishLabel}
-        </span>
-        {!compact && (
-          <span className="sm:hidden">{pending ? '…' : 'Publicar'}</span>
-        )}
-      </Button>
+        </Button>
       )}
 
       <PublishBlockedDialog

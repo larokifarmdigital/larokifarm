@@ -8,6 +8,8 @@ export type CreateFarmaciaInput = {
   slug?: string;
   /** Códigos de idioma marcados; se ignoran los desconocidos. */
   idiomas: string[];
+  /** Usuario que gestionará la farmacia (opcional). */
+  responsableId?: string;
 };
 
 /** Valida nombre/slug (el slug se deriva del nombre si viene vacío) e
@@ -23,6 +25,7 @@ export class CreateFarmaciaUseCase {
     const fieldErrors: Record<string, string> = {};
     if (nombre.length < 2) fieldErrors.nombre = 'Nombre muy corto';
     if (nombre.length > 120) fieldErrors.nombre = 'Nombre demasiado largo (máx 120)';
+    if (ciudad.length > 120) fieldErrors.ciudad = 'Ciudad demasiado larga (máx 120)';
     // Sin guiones al principio/final y máx 60: es la URL pública.
     const slug = (rawSlug ? slugify(rawSlug) : slugify(nombre)).slice(0, 60).replace(/^-+|-+$/g, '');
     if (!slug) fieldErrors.slug = 'Slug requerido';
@@ -33,6 +36,7 @@ export class CreateFarmaciaUseCase {
       return { ok: false, error: 'Revisa los campos', fieldErrors };
     }
 
-    return this.repo.createFarmacia({ nombre, slug, ciudad, idiomasActivos });
+    const responsableId = input.responsableId?.trim() || undefined;
+    return this.repo.createFarmacia({ nombre, slug, ciudad, idiomasActivos, responsableId });
   }
 }

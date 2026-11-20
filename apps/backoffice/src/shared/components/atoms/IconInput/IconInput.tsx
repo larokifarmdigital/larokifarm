@@ -23,7 +23,7 @@ export const IconInput = forwardRef<HTMLInputElement, IconInputProps>(
             // `!` (important) en focus-within para que gane a hover cuando el input recibe foco:
             // Tailwind puede ordenar hover:*  después de focus-within:* en el CSS compilado,
             // haciendo que el border amarillo del hover mate al border naranja del foco.
-            !bare && 'bg-[var(--color-surface)] border border-[var(--color-hairline)] hover:border-[var(--color-hairline-strong)] focus-within:!border-[var(--color-accent)] focus-within:[box-shadow:var(--shadow-focus)]',
+            !bare && 'bg-[var(--color-surface)] border border-[var(--color-control-border)] hover:border-[var(--color-ink-2)] focus-within:!border-[var(--color-accent)] focus-within:[box-shadow:var(--shadow-focus)]',
             bare && 'bg-transparent focus-within:bg-[var(--color-surface-2)]',
             invalid && !bare && 'border-[var(--color-red-ink)] focus-within:!border-[var(--color-red-ink)]',
           )}
@@ -45,13 +45,11 @@ export const IconInput = forwardRef<HTMLInputElement, IconInputProps>(
             ref={ref}
             aria-label={label}
             aria-invalid={invalid || undefined}
-            // Inline style neutraliza el outline global de :focus-visible (globals.css
-            // aplica `outline: 2px solid var(--color-accent)` a todos los inputs). Aquí
-            // el foco lo indica el wrapper, así el naranja envuelve icono + input como
-            // un único bloque en vez de dibujarse solo alrededor del input.
-            style={{ outline: 'none' }}
+            // Anillo de foco en el propio input (hacia dentro): antes se anulaba con
+            // outline:none y solo cambiaba el borde del contenedor (no se veía al tabular).
             className={cn(
-              'flex-1 min-w-0 bg-transparent border-0 text-[13.5px] py-2 pl-0 pr-3 text-[var(--color-ink)] placeholder:text-[var(--color-muted-2)]',
+              'focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] focus-visible:-outline-offset-2 rounded-r-[var(--radius-sm)]',
+              'flex-1 min-w-0 min-h-11 sm:min-h-0 bg-transparent border-0 text-[16px] sm:text-[13.5px] py-2 pl-0 pr-3 text-[var(--color-ink)] placeholder:text-[var(--color-muted-2)]',
               className,
             )}
             {...props}

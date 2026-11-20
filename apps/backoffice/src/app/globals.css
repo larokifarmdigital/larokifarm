@@ -96,6 +96,14 @@ html {
   color-scheme: light;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Que el foco no quede bajo la cabecera fija (WCAG 2.4.11) */
+  scroll-padding-top: 4.5rem;
+  scroll-padding-bottom: 1rem;
+}
+
+/* Móvil: la barra inferior fija del editor tapa ~80 px */
+@media (max-width: 639px) {
+  html { scroll-padding-bottom: 6rem; }
 }
 
 body {
@@ -365,12 +373,20 @@ kbd {
     box-shadow var(--dur-fast) var(--ease-spring);
 }
 
+/* Móvil: zona táctil de 44px y 16px de letra (iOS no hace zoom al enfocar). */
+@media (max-width: 639px) {
+  .field {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
+
 .field::placeholder {
   color: var(--color-muted-2);
 }
 
 .field:hover {
-  border-color: var(--color-hairline-strong);
+  border-color: var(--color-muted);
 }
 
 .field:focus {
@@ -504,6 +520,8 @@ kbd {
   color: var(--color-accent);
   text-decoration: underline;
   text-underline-offset: 3px;
+  /* Enlaces dentro del editor: se seleccionan para editarlos (mano = interactivo). */
+  cursor: pointer;
 }
 
 .prose-editor ul,

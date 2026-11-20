@@ -9,7 +9,7 @@
 import { useEffect, useRef } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { countBySection, type SectionKey } from '@/features/farmacias/ui/lib/i18nStatus';
-import { GROUPS, SECTION_BY_KEY, SECTION_INDEX } from '@/features/farmacias/ui/lib/sectionsConfig';
+import { GROUPS, SECTION_BY_KEY } from '@/features/farmacias/ui/lib/sectionsConfig';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
 
@@ -61,14 +61,14 @@ export function EditorSectionSheet({
       }}
     >
       <div className="flex items-center justify-between gap-[10px] px-[18px] py-[12px] border-b border-[var(--color-hairline)]">
-        <span className="text-[11px] font-bold uppercase tracking-[0.09em] text-[var(--color-muted)]">
-          Secciones
+        <span className="text-[15px] font-semibold text-[var(--color-ink)]">
+          Secciones de tu web
         </span>
         <button
           type="button"
           aria-label="Cerrar"
           onClick={() => ref.current?.close()}
-          className="w-[28px] h-[28px] grid place-items-center rounded-[6px] text-[var(--color-muted)] hover:bg-[var(--color-surface-sunken)] hover:text-[var(--color-ink)] transition-colors"
+          className="w-11 h-11 grid place-items-center rounded-[6px] text-[var(--color-muted)] hover:bg-[var(--color-surface-sunken)] hover:text-[var(--color-ink)] transition-colors"
         >
           <NavIcon name="X" size={14} />
         </button>
@@ -76,56 +76,40 @@ export function EditorSectionSheet({
       <div className="py-[6px] px-[8px] overflow-y-auto" style={{ maxHeight: 'calc(min(70vh, 540px) - 48px)' }}>
         {GROUPS.map((group) => (
           <div key={group.key}>
-            <div className="px-[12px] pt-[10px] pb-[4px] text-[10px] font-bold uppercase tracking-[0.09em] text-[var(--color-muted)]">
+            <div className="px-[12px] pt-[12px] pb-[4px] text-[12.5px] font-semibold text-[var(--color-muted)]">
               {group.label}
             </div>
             {group.sectionKeys.map((key) => {
               const s = SECTION_BY_KEY[key];
               const isActive = key === activeKey;
-              const status = isActive
-                ? 'edit'
-                : s.multilang && missingByKey[key as SectionKey]
-                  ? 'warn'
-                  : 'ok';
-              const idx = SECTION_INDEX[key] + 1;
-              const dotCls =
-                status === 'edit'
-                  ? 'bg-[var(--color-accent)]'
-                  : status === 'warn'
-                    ? 'bg-[var(--color-yellow-ink)]'
-                    : 'bg-[var(--color-green-ink)]';
+              // Punto solo si hay algo pendiente (traducción): "todo verde" era ruido.
+              const pendiente = s.multilang && missingByKey[key as SectionKey];
               return (
                 <button
                   key={key}
                   type="button"
                   onClick={() => onSelect(key)}
-                  aria-current={isActive ? 'true' : 'false'}
+                  aria-current={isActive ? 'true' : undefined}
                   className={cn(
-                    'w-full flex items-center gap-[10px] px-[12px] py-[10px] rounded-[8px] text-left transition-colors',
-                    isActive
-                      ? 'bg-[var(--color-accent-soft)]'
-                      : 'hover:bg-[var(--color-surface-sunken)]',
+                    'w-full min-h-12 flex items-center gap-3 px-3 py-2 rounded-[8px] text-left transition-colors',
+                    isActive ? 'bg-[var(--color-accent-soft)]' : 'hover:bg-[var(--color-surface-sunken)]',
                   )}
                 >
+                  <NavIcon name={s.icon} size={17} className={isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-muted)]'} />
                   <span
                     className={cn(
-                      'font-mono-tabular text-[10.5px] font-semibold min-w-[16px]',
-                      isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-muted)]',
-                    )}
-                  >
-                    {String(idx).padStart(2, '0')}
-                  </span>
-                  <span
-                    className={cn(
-                      'flex-1 text-[13.5px]',
-                      isActive
-                        ? 'font-bold text-[var(--color-accent)]'
-                        : 'font-medium text-[var(--color-ink)]',
+                      'flex-1 text-[15px]',
+                      isActive ? 'font-semibold text-[var(--color-accent-ink)]' : 'font-medium text-[var(--color-ink)]',
                     )}
                   >
                     {s.label}
                   </span>
-                  <span aria-hidden className={cn('w-[7px] h-[7px] rounded-full shrink-0', dotCls)} />
+                  {pendiente && (
+                    <span className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--color-red-ink)]">
+                      <span aria-hidden className="w-[7px] h-[7px] rounded-full bg-[var(--color-red-ink)]" />
+                      Falta traducir
+                    </span>
+                  )}
                 </button>
               );
             })}

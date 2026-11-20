@@ -63,10 +63,11 @@ function EstadoBadge({ estado }: { estado: EstadoWeb }) {
 /* ------------------------------------------------------------------ */
 
 function resultado(c: ComparisonRow): { texto: string; clase: string } {
-  if (c.status === 'ERROR') return { texto: 'No se pudo procesar', clase: 'chip-red' };
-  if (c.numDiscrepancies === 0) return { texto: 'Todo cuadra', clase: 'chip-green' };
+  // Mismas palabras que el historial y el resultado de la conciliación.
+  if (c.status === 'ERROR') return { texto: 'No se pudo comprobar', clase: 'chip-red' };
+  if (c.numDiscrepancies === 0) return { texto: 'Todo coincide', clase: 'chip-green' };
   return {
-    texto: `${c.numDiscrepancies} ${c.numDiscrepancies === 1 ? 'diferencia' : 'diferencias'}`,
+    texto: `${c.numDiscrepancies} por revisar`,
     clase: 'chip-yellow',
   };
 }
@@ -140,10 +141,12 @@ const BTN_SECUNDARIO =
 const ENLACE = 'inline-flex items-center gap-1 py-2 text-[14px] font-medium text-[var(--color-accent)] hover:underline underline-offset-2';
 
 const ATAJOS: { hash: string; label: string; icon: IconName }[] = [
-  { hash: '', label: 'Horario y contacto', icon: 'Clock' },
+  { hash: '#horario', label: 'Horario', icon: 'Clock' },
+  { hash: '#general', label: 'Contacto y dirección', icon: 'Storefront' },
   { hash: '#hero', label: 'Portada y fotos', icon: 'Image' },
   { hash: '#servicios', label: 'Servicios', icon: 'Check' },
   { hash: '#faqs', label: 'Preguntas frecuentes', icon: 'QuestionMark' },
+  { hash: '#sobre', label: 'Quiénes somos', icon: 'UsersThree' },
 ];
 
 /* ------------------------------------------------------------------ */

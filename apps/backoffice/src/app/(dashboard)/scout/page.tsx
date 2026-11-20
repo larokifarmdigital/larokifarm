@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { requireUser } from '@/core/auth';
 import { ScoutDashboardView, getScoutDashboard } from '@/features/scout';
 
@@ -12,6 +13,8 @@ const DEFAULT_STANDALONE_URL =
 
 export default async function ScoutPage() {
   const user = await requireUser();
+  // Módulo sin terminar (oculto del menú): solo el administrador, también por URL.
+  if (user.rol !== 'admin') redirect('/inicio');
   const businessId = user.farmaciaId ?? null;
 
   const data = await getScoutDashboard(businessId);

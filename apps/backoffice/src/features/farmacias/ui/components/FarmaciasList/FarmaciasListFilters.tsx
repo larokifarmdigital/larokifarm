@@ -1,8 +1,7 @@
 import { Input } from '@/shared/components/atoms/Input';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
-import type { FarmaciaStatus } from '@/core/farmacias/domain';
-import { STATUS_FILTERS, STATUS_META, type StatusCounts, type StatusFilter } from './statusMeta';
+import { STATUS_FILTERS, type StatusCounts, type StatusFilter } from './statusMeta';
 
 export function FarmaciasListFilters({
   query,
@@ -29,30 +28,28 @@ export function FarmaciasListFilters({
         type="search"
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
-        placeholder="Buscar por nombre, slug o ciudad…"
-        aria-label="Buscar farmacia"
+        placeholder="Buscar por nombre o ciudad"
+        aria-label="Buscar farmacia por nombre o ciudad"
         className="pl-9"
       />
     </div>
     <div className="-mx-3 sm:mx-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <div className="inline-flex items-center gap-1 bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[6px] p-0.5 mx-3 sm:mx-0">
-        {STATUS_FILTERS.map((k) => (
+      <div className="inline-flex items-center gap-1 bg-[var(--color-surface)] border border-[var(--color-control-border)] rounded-[8px] p-0.5 mx-3 sm:mx-0">
+        {STATUS_FILTERS.filter(({ key }) => key === 'activas' || key === status || counts[key] > 0).map(({ key, label }) => (
           <button
-            key={k}
+            key={key}
             type="button"
-            onClick={() => onStatusChange(k)}
-            aria-pressed={status === k}
+            onClick={() => onStatusChange(key)}
+            aria-pressed={status === key}
             className={cn(
-              'shrink-0 px-3 h-8 text-[12.5px] rounded-[4px] transition-colors whitespace-nowrap',
-              status === k
-                ? 'bg-[var(--color-surface-sunken)] text-[var(--color-ink)] font-medium'
-                : 'text-[var(--color-muted)] hover:text-[var(--color-ink-2)]',
+              'shrink-0 px-3 h-11 sm:h-9 text-[13.5px] rounded-[6px] transition-colors whitespace-nowrap',
+              status === key
+                ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent-ink)] font-semibold'
+                : 'text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]',
             )}
           >
-            {k === 'todos' ? 'Todas' : STATUS_META[k as FarmaciaStatus].label}
-            <span className="ml-1.5 text-[var(--color-muted-2)]">
-              {counts[k]}
-            </span>
+            {label}
+            <span className="ml-1.5 text-[var(--color-muted)]">{counts[key]}</span>
           </button>
         ))}
       </div>

@@ -58,7 +58,7 @@ export function TimePicker({
           disabled={disabled}
           aria-label={ariaLabel ?? `Hora ${value || '--:--'}`}
           className={cn(
-            'inline-flex items-center justify-center gap-1 h-9 w-[92px] rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-surface)] font-mono-tabular text-[13.5px] tabular-nums text-[var(--color-ink)] transition-[border-color,box-shadow] duration-[var(--dur-fast)]',
+            'inline-flex items-center justify-center gap-1 h-11 sm:h-9 w-[92px] rounded-[var(--radius-sm)] border border-[var(--color-control-border)] bg-[var(--color-surface)] font-mono-tabular text-[13.5px] tabular-nums text-[var(--color-ink)] transition-[border-color,box-shadow] duration-[var(--dur-fast)]',
             'hover:border-[var(--color-hairline-strong)]',
             'focus:outline-none focus-visible:border-[var(--color-accent)] focus-visible:[box-shadow:var(--shadow-focus)]',
             'data-[state=open]:!border-[var(--color-accent)] data-[state=open]:[box-shadow:var(--shadow-focus)]',
@@ -71,6 +71,13 @@ export function TimePicker({
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
+          aria-label={`Elegir hora${ariaLabel ? `: ${ariaLabel}` : ''}`}
+          onOpenAutoFocus={(e) => {
+            // Foco inicial en la hora seleccionada (no en "00")
+            e.preventDefault();
+            const actual = (e.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>('[role="option"][aria-selected="true"]');
+            actual?.focus({ preventScroll: true });
+          }}
           side="bottom"
           align="start"
           sideOffset={6}
@@ -116,6 +123,20 @@ function ScrollColumn({
 }) {
   const activeRef = useRef<HTMLButtonElement>(null);
 
+  // Teclado de listbox: flechas / Inicio / Fin mueven el foco; Enter o Espacio eligen.
+  function onListKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+    const opciones = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="option"]'));
+    const actual = opciones.indexOf(document.activeElement as HTMLButtonElement);
+    e.preventDefault();
+    const n = opciones.length;
+    const sig =
+      e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : e.key === 'ArrowDown' ? Math.min(n - 1, actual + 1) : Math.max(0, actual - 1);
+    opciones.forEach((o, i) => (o.tabIndex = i === sig ? 0 : -1));
+    opciones[sig].focus();
+    opciones[sig].scrollIntoView({ block: 'nearest' });
+  }
+
   useEffect(() => {
     // Al abrir el popover o cambiar el valor activo, centrar la selección.
     if (openTick) {
@@ -133,8 +154,9 @@ function ScrollColumn({
       </p>
       <div
         role="listbox"
-        aria-label={label}
-        className="scrollbar-thin h-[168px] w-full overflow-y-auto scroll-py-[70px]"
+        aria-label={label === 'Min' ? 'Minutos' : 'Horas'}
+        onKeyDown={onListKeyDown}
+        className="scrollbar-thin h-[200px] sm:h-[168px] w-full overflow-y-auto scroll-py-[70px]"
       >
         {items.map((n) => {
           const active = n === activeValue;
@@ -145,9 +167,10 @@ function ScrollColumn({
               type="button"
               role="option"
               aria-selected={active}
+              tabIndex={active ? 0 : -1}
               onClick={() => onSelect(n)}
               className={cn(
-                'w-full h-8 flex items-center justify-center rounded-[6px] text-[13px] font-mono-tabular tabular-nums transition-colors',
+                'w-full h-11 sm:h-8 flex items-center justify-center rounded-[6px] text-[13px] font-mono-tabular tabular-nums transition-colors',
                 active
                   ? 'bg-[var(--color-accent)] text-white font-medium'
                   : 'text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]',

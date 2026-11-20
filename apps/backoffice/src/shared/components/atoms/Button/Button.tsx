@@ -26,11 +26,12 @@ const button = cva(
           'bg-[var(--color-red-soft)] text-[var(--color-red-ink)] hover:bg-[color-mix(in_srgb,var(--color-red-soft)_92%,var(--color-red-ink))]',
         link: 'text-[var(--color-accent)] underline underline-offset-[3px] decoration-transparent hover:decoration-[var(--color-accent)] p-0 h-auto',
       },
+      // En móvil todo botón mide 44px de alto (zona táctil); desde sm, el tamaño compacto.
       size: {
-        sm: 'text-[13px] h-8 px-3',
-        md: 'text-[14px] h-9 px-4',
+        sm: 'text-[13.5px] sm:text-[13px] h-11 sm:h-8 px-3',
+        md: 'text-[14px] h-11 sm:h-9 px-4',
         lg: 'text-[15px] h-11 px-6',
-        icon: 'h-9 w-9 p-0',
+        icon: 'h-11 w-11 sm:h-9 sm:w-9 p-0',
       },
     },
     defaultVariants: { variant: 'primary', size: 'md' },

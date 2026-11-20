@@ -29,7 +29,7 @@ export async function FarmaciasListView() {
             servicios y horario, y publícala cuando esté lista.
           </p>
           {lastUpdate && (
-            <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[var(--color-muted-2)] font-mono-tabular">
+            <p className="mt-2 flex items-center gap-1.5 text-[13px] text-[var(--color-muted)]">
               <span
                 aria-hidden
                 className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-green-ink)]"

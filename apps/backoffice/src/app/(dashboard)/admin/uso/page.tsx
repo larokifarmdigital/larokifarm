@@ -10,7 +10,7 @@ export default async function UsoPage() {
   // Doble guard: el sidebar oculta el link, pero si el user teclea la URL
   // manualmente le redirigimos. SUPER_ADMIN mapea a 'admin' en el adapter
   // de session.ts.
-  if (user.rol !== 'admin') redirect('/farmacias');
+  if (user.rol !== 'admin') redirect('/inicio');
 
   const data = await getUsoData();
   return <UsoView data={data} />;

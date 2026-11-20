@@ -10,9 +10,9 @@ import {
   useRef,
   useState,
 } from 'react';
-import { validateFarmacia, type Farmacia, type FieldIssue } from '@/core/farmacias/domain';
-import type { Locale } from '@/core/shared';
-import { saveFarmaciaPatchAction } from '@/features/farmacias/actions/saveFarmaciaAction';
+import { tieneCambiosSinPublicar, validateFarmacia, type Farmacia, type FieldIssue } from '@/core/farmacias/domain';
+import { LOCALE_NOMBRE, type Locale } from '@/core/shared';
+import { activarIdiomaAction, saveFarmaciaPatchAction } from '@/features/farmacias/actions/saveFarmaciaAction';
 import { toast } from 'sonner';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
@@ -57,7 +57,27 @@ const NOT_PATCHABLE = new Set<keyof Farmacia>([
   'heroImages',
   'imagenesSobre',
   'resenas',
+  // Idiomas: solo con activarIdioma (acción explícita). Publicación: solo lectura.
+  'idiomasActivos',
+  'ultimaPublicacion',
 ]);
+
+/**
+ * El servidor reescribe servicios/puntos fuertes/preguntas con ids nuevos al
+ * guardar. Si adoptáramos esos ids, React volvería a montar todas las filas y
+ * el foco del teclado se perdería tras cada guardado. Los ids solo se usan en
+ * el navegador, así que conservamos los locales cuando la lista es la misma.
+ */
+function conservarIds(server: Farmacia, local: Farmacia): Farmacia {
+  const mismo = <T extends { id: string }>(s: T[] | undefined, l: T[] | undefined): T[] | undefined =>
+    s && l && s.length === l.length ? s.map((x, i) => ({ ...x, id: l[i].id })) : s;
+  return {
+    ...server,
+    servicios: mismo(server.servicios, local.servicios) ?? server.servicios,
+    faqs: mismo(server.faqs, local.faqs) ?? server.faqs,
+    featuresLista: mismo(server.featuresLista, local.featuresLista),
+  };
+}
 
 function diffPatch(current: Farmacia, baseline: Farmacia): Partial<Farmacia> {
   const out: Record<string, unknown> = {};
@@ -89,7 +109,7 @@ function reducer(state: State, action: Action): State {
     case 'SAVING':
       return { ...state, saveStatus: 'saving' };
     case 'SAVED': {
-      const server = action.farmacia;
+      const server = conservarIds(action.farmacia, state.farmacia);
       const base = {
         ...state,
         baseline: server,
@@ -117,21 +137,35 @@ function reducer(state: State, action: Action): State {
       return { ...state, saveStatus: 'error', errorKind: action.kind, failedRev: state.rev };
     case 'CONFLICT':
       return { ...state, saveStatus: 'conflict' };
-    case 'SYNC':
-      // Tras publicar/archivar desde el editor: el servidor cambió status y updatedAt.
+    case 'SYNC': {
+      // Tras publicar o activar un idioma: el servidor cambió estos campos.
+      const f = action.farmacia;
+      const sync = {
+        status: f.status,
+        updatedAt: f.updatedAt,
+        ultimaPublicacion: f.ultimaPublicacion,
+        idiomasActivos: f.idiomasActivos,
+      };
       return {
         ...state,
-        farmacia: { ...state.farmacia, status: action.farmacia.status, updatedAt: action.farmacia.updatedAt },
-        baseline: { ...state.baseline, status: action.farmacia.status, updatedAt: action.farmacia.updatedAt },
-        originalUpdatedAt: action.farmacia.updatedAt,
-        lastSavedAt: action.farmacia.updatedAt,
+        farmacia: { ...state.farmacia, ...sync },
+        baseline: { ...state.baseline, ...sync },
+        originalUpdatedAt: f.updatedAt,
+        lastSavedAt: f.updatedAt,
       };
+    }
   }
 }
 
 type EditorContextValue = State & {
   /** Usuario sin permiso de escritura (rol USER): se ve todo, no se guarda nada. */
   readOnly: boolean;
+  /** SUPER_ADMIN: ve los campos técnicos (identificador, mapa embebido, Google). */
+  esAdmin: boolean;
+  /** Hay cambios (guardados o no) que todavía no están en la web. */
+  pendientePublicar: boolean;
+  /** Activa un idioma en la web (acción explícita; pulsar la pestaña no escribe). */
+  activarIdioma: (l: Locale) => Promise<boolean>;
   patch: (p: Partial<Farmacia>) => void;
   setLocale: (l: Locale) => void;
   /** Cambia de sección (y opcionalmente de idioma) en un solo paso. */
@@ -156,10 +190,12 @@ const RETRY_DELAY_MS = 5000;
 export function FarmaciaEditorProvider({
   initial,
   readOnly = false,
+  esAdmin = false,
   children,
 }: {
   initial: Farmacia;
   readOnly?: boolean;
+  esAdmin?: boolean;
   children: React.ReactNode;
 }) {
   const [state, dispatch] = useReducer(reducer, {
@@ -171,7 +207,7 @@ export function FarmaciaEditorProvider({
     saveStatus: 'idle',
     lastSavedAt: initial.updatedAt,
     currentLocale: (initial.idiomasActivos[0] ?? 'es') as Locale,
-    activeSectionKey: 'general',
+    activeSectionKey: 'horario',
   });
 
   const stateRef = useRef(state);
@@ -206,6 +242,25 @@ export function FarmaciaEditorProvider({
 
   const syncFromServer = useCallback((f: Farmacia) => {
     dispatch({ type: 'SYNC', farmacia: f });
+  }, []);
+
+  const activarIdioma = useCallback(async (l: Locale) => {
+    if (readOnlyRef.current) return false;
+    try {
+      const res = await activarIdiomaAction(stateRef.current.farmacia.id, l);
+      if (!res.ok) {
+        toast.error(res.error);
+        return false;
+      }
+      dispatch({ type: 'SYNC', farmacia: res.data });
+      toast.success(`Has activado el ${LOCALE_NOMBRE[l]}`, {
+        description: 'Ya puedes escribir los textos. Saldrán en la web cuando publiques.',
+      });
+      return true;
+    } catch {
+      toast.error('No se pudo activar el idioma. Revisa la conexión.');
+      return false;
+    }
   }, []);
 
   const saveNow = useCallback(async () => {
@@ -286,10 +341,15 @@ export function FarmaciaEditorProvider({
     return () => window.removeEventListener('beforeunload', beforeUnload);
   }, [state.dirty, readOnly]);
 
+  const pendientePublicar = state.dirty || tieneCambiosSinPublicar(state.farmacia);
+
   const value = useMemo<EditorContextValue>(
     () => ({
       ...state,
       readOnly,
+      esAdmin,
+      pendientePublicar,
+      activarIdioma,
       patch,
       setLocale,
       goToSection,
@@ -300,7 +360,7 @@ export function FarmaciaEditorProvider({
       touch,
       revealErrors,
     }),
-    [state, readOnly, patch, setLocale, goToSection, saveNow, syncFromServer, issues, isErrorVisible, touch, revealErrors],
+    [state, readOnly, esAdmin, pendientePublicar, activarIdioma, patch, setLocale, goToSection, saveNow, syncFromServer, issues, isErrorVisible, touch, revealErrors],
   );
 
   return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;

@@ -1,0 +1,1 @@
+export { HorarioTab } from './HorarioTab';

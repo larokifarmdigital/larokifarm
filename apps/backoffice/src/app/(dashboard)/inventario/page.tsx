@@ -1,8 +1,13 @@
+import { redirect } from 'next/navigation';
+import { requireUser } from '@/core/auth';
 import { PlaceholderScreen } from '@/shared/components/templates/PlaceholderScreen';
 
 export const metadata = { title: 'Inventario · Backoffice' };
 
-export default function InventarioPage() {
+export default async function InventarioPage() {
+  // Módulo sin terminar (oculto del menú): solo el administrador, también por URL.
+  const user = await requireUser();
+  if (user.rol !== 'admin') redirect('/inicio');
   return (
     <PlaceholderScreen
       icon="Package"

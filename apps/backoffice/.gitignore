@@ -8,3 +8,6 @@ build
 .DS_Store
 *.log
 .vercel
+
+# Cuentas y contraseñas (solo local, nunca subir)
+CUENTAS.md

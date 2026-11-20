@@ -2,21 +2,13 @@
 
 /**
  * Layout del editor de farmacia.
- *
- * ARQUITECTURA (nuevo patrón UX acordado 2026-11-10):
- *   - Desktop (≥ 900px): sidebar izquierdo con las 9 secciones agrupadas visualmente
- *     (Datos / Portada / Contenido / Config). Un solo click para saltar a cualquier
- *     sección, sin sub-segmentado.
- *   - Móvil (< 900px): picker sticky con sección actual + bottom sheet compacto al
- *     tocarlo. Reemplaza el EditorFloatingNav + EditorGroupSegmented.
- *   - LangTabs único, global al inicio del content (no por sección, no sticky
- *     en múltiples capas).
- *   - MultilangInput / LocaleChip / TiptapField siguen funcionando igual — leen
- *     currentLocale del contexto.
- *
- * SECCIONES fuente de verdad: `ui/lib/sectionsConfig.ts` (metadata sin components).
- * Los `Components` siguen mapeados aquí para que el sidebar/picker/sheet no
- * arrastren el bundle de Tiptap.
+ *   - Escritorio (≥ lg): columna izquierda con las secciones agrupadas
+ *     (Tu farmacia · Portada · Contenido · Avanzado).
+ *   - Móvil: selector de sección + hoja con todas las secciones; barra de
+ *     acciones fija abajo (estado de la web + Publicar / Ver mi web).
+ *   - Pestañas de idioma por sección (solo en las secciones con textos).
+ * Secciones: `ui/lib/sectionsConfig.ts` (metadata sin componentes, para que la
+ * navegación no arrastre el bundle de Tiptap).
  */
 
 import { useEffect, useState } from 'react';
@@ -33,18 +25,21 @@ import { EditorSectionSheet } from '@/features/farmacias/ui/components/editor/na
 import { EditorSectionTitle } from '@/features/farmacias/ui/components/editor/navigation/EditorSectionTitle';
 import { EditorSectionSwitcher } from '@/features/farmacias/ui/components/editor/navigation/EditorSectionSwitcher';
 import { EditorMobileActionBar } from '@/features/farmacias/ui/components/editor/navigation/EditorMobileActionBar';
-import { SECTION_BY_KEY } from '@/features/farmacias/ui/lib/sectionsConfig';
+import { EstadoAnunciado } from '@/features/farmacias/ui/components/editor/status/EstadoAnunciado';
+import { DEFAULT_SECTION_KEY, SECTION_BY_KEY } from '@/features/farmacias/ui/lib/sectionsConfig';
+import { HorarioTab } from '@/features/farmacias/ui/components/editor/sections/HorarioTab';
 import { GeneralTab } from '@/features/farmacias/ui/components/editor/sections/GeneralTab';
 import { HeroTab } from '@/features/farmacias/ui/components/editor/sections/HeroTab';
 import { FeaturesTab } from '@/features/farmacias/ui/components/editor/sections/FeaturesTab';
 import { SobreTab } from '@/features/farmacias/ui/components/editor/sections/SobreTab';
 import { ServiciosTab } from '@/features/farmacias/ui/components/editor/sections/ServiciosTab';
 import { FaqsTab } from '@/features/farmacias/ui/components/editor/sections/FaqsTab';
-import { ResenasTab } from '@/features/farmacias/ui/components/editor/sections/ResenasTab';
+import { ResenasTab, ResenasVisibilidad } from '@/features/farmacias/ui/components/editor/sections/ResenasTab';
 import { LegalTab } from '@/features/farmacias/ui/components/editor/sections/LegalTab';
 import { SeoTab } from '@/features/farmacias/ui/components/editor/sections/SeoTab';
 
 const COMPONENTS: Record<string, React.ComponentType> = {
+  horario: HorarioTab,
   general: GeneralTab,
   hero: HeroTab,
   features: FeaturesTab,
@@ -59,15 +54,17 @@ const COMPONENTS: Record<string, React.ComponentType> = {
 export function FarmaciaEditor({
   initial,
   readOnly = false,
+  esAdmin = false,
   volverA = '/farmacias',
 }: {
   initial: Farmacia;
   readOnly?: boolean;
+  esAdmin?: boolean;
   /** Destino de la flecha de volver: el listado (admin) o el Inicio (personal). */
   volverA?: string;
 }) {
   return (
-    <FarmaciaEditorProvider initial={initial} readOnly={readOnly}>
+    <FarmaciaEditorProvider initial={initial} readOnly={readOnly} esAdmin={esAdmin}>
       <FarmaciaEditorLayout volverA={volverA} />
     </FarmaciaEditorProvider>
   );
@@ -79,13 +76,13 @@ function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
   const { activeSectionKey, goToSection, readOnly } = useFarmaciaEditor();
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const activeSection = SECTION_BY_KEY[activeSectionKey] ?? SECTION_BY_KEY.general;
-  const ActiveComponent = COMPONENTS[activeSection.key] ?? GeneralTab;
+  const activeSection = SECTION_BY_KEY[activeSectionKey] ?? SECTION_BY_KEY[DEFAULT_SECTION_KEY];
+  const ActiveComponent = COMPONENTS[activeSection.key] ?? HorarioTab;
 
   // La sección vive en el hash (#hero, #seo…): al recargar se vuelve a ella.
   useEffect(() => {
     const syncFromHash = () => {
-      const fromHash = window.location.hash.slice(1) || 'general';
+      const fromHash = window.location.hash.slice(1) || DEFAULT_SECTION_KEY;
       if (SECTION_BY_KEY[fromHash]) goToSection(fromHash);
     };
     syncFromHash();
@@ -95,7 +92,7 @@ function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-    const hash = activeSectionKey === 'general' ? '' : `#${activeSectionKey}`;
+    const hash = activeSectionKey === DEFAULT_SECTION_KEY ? '' : `#${activeSectionKey}`;
     if (window.location.hash !== hash) {
       window.history.replaceState(null, '', window.location.pathname + window.location.search + hash);
     }
@@ -128,12 +125,14 @@ function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
             </div>
 
             <EditorSectionSwitcher keyId={activeSection.key}>
-              <EditorSectionTitle
-                step={activeSection.step}
-                title={activeSection.label}
-                hint={activeSection.hint}
-              />
-              {activeSection.multilang && <LangTabs />}
+              <EditorSectionTitle title={activeSection.label} hint={activeSection.hint} />
+              {/* Ajustes que no dependen del idioma van encima de las pestañas */}
+              {activeSection.key === 'resenas' && (
+                <fieldset disabled={readOnly} className="m-0 min-w-0 border-0 p-0">
+                  <ResenasVisibilidad />
+                </fieldset>
+              )}
+              {activeSection.multilang && <LangTabs sectionKey={activeSection.key} />}
               {readOnly && (
                 <p role="status" className="mb-4 rounded-[8px] border border-[var(--color-hairline)] bg-[var(--color-surface-sunken)] px-3 py-2 text-[13px] text-[var(--color-ink-2)]">
                   Modo solo lectura: tu usuario puede ver el contenido pero no modificarlo.
@@ -157,6 +156,7 @@ function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
       />
 
       <EditorMobileActionBar />
+      <EstadoAnunciado />
     </>
   );
 }

@@ -99,6 +99,8 @@ export function SingleImageField({
       <input
         ref={inputRef}
         type="file"
+        aria-label={label ? `Subir ${label.toLowerCase()}` : 'Subir imagen'}
+        tabIndex={-1}
         accept={ACCEPTED_IMAGE_TYPES}
         onChange={onInputChange}
         disabled={isPending}
@@ -142,13 +144,13 @@ export function SingleImageField({
           </ImageActionsOverlay>
         </figure>
       ) : (
-        <label
+        <button
+          type="button"
           {...dropHandlers}
-          onClick={(e) => {
-            e.preventDefault();
-            openPicker();
-          }}
+          onClick={openPicker}
+          disabled={isPending}
           className={cn(
+            'w-full',
             'relative flex flex-col items-center justify-center gap-2 py-8 px-4 rounded-[10px] border-2 border-dashed cursor-pointer text-[13px] transition-colors',
             aspect === 'og' && 'aspect-[1200/630]',
             dropZoneClass(dragging, isPending),
@@ -159,13 +161,13 @@ export function SingleImageField({
           ) : (
             <>
               <NavIcon name="Image" size={20} />
-              <span className="font-medium">Arrastra una imagen o haz click</span>
-              <span className="text-[11px] text-[var(--color-muted-2)]">
-                PNG, JPG, WebP o SVG · se optimizan al subir
+              <span className="font-medium">Elegir imagen</span>
+              <span className="text-[12px] text-[var(--color-muted)]">
+                O arrástrala aquí. JPG, PNG, WebP o SVG
               </span>
             </>
           )}
-        </label>
+        </button>
       )}
 
       <ConfirmDialog

@@ -28,7 +28,7 @@ export function TextosCabeceraFields({
   return (
     <div className="space-y-4">
       <MultilangInput
-        label="Chip (etiqueta superior)"
+        label="Etiqueta pequeña sobre el título"
         required={required}
         field={f('chip')}
         value={value.chip ?? {}}
@@ -43,7 +43,7 @@ export function TextosCabeceraFields({
         value={value.titulo ?? {}}
         onChange={(v) => onChange({ ...value, titulo: v })}
         placeholder={defaults.titulo}
-        help="Las dos últimas palabras se resaltan automáticamente en la landing."
+        help="Las dos últimas palabras salen resaltadas en tu web."
       />
       <MultilangTextarea
         label="Subtítulo"

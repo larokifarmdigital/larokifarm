@@ -1,5 +1,6 @@
 'use client';
 
+import * as Dialog from '@radix-ui/react-dialog';
 import { Modal } from '@/shared/components/molecules/Modal';
 import { Button } from '@/shared/components/atoms/Button';
 import type { ReactNode } from 'react';
@@ -55,9 +56,9 @@ export function ConfirmDialog({
       }
     >
       {description && (
-        <p className="text-[13.5px] leading-[1.55] text-[var(--color-ink-2)] m-0">
-          {description}
-        </p>
+        <Dialog.Description asChild>
+          <p className="text-[13.5px] leading-[1.55] text-[var(--color-ink-2)] m-0">{description}</p>
+        </Dialog.Description>
       )}
     </Modal>
   );

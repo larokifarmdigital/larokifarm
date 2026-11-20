@@ -16,6 +16,7 @@ export async function FarmaciaEditorView({ id }: { id: string }) {
     <FarmaciaEditor
       initial={farmacia}
       readOnly={!user || !canEditContent(user)}
+      esAdmin={user?.rol === 'admin'}
       volverA={user?.rol === 'admin' ? '/farmacias' : '/inicio'}
     />
   );

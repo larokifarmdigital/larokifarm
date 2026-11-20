@@ -14,6 +14,7 @@ import type {
   Farmacia,
   FarmaciaRepository,
   FarmaciaSummary,
+  ResponsableDisponible,
 } from '@/core/farmacias/domain';
 import type { SaveResult } from '@/core/shared';
 import {
@@ -68,6 +69,18 @@ const CONTENT_INCLUDE = {
 // ───────────────────────────────────────────────────────────────────
 // Repo
 // ───────────────────────────────────────────────────────────────────
+
+/** Único error de la transacción de alta cuyo texto se puede enseñar al usuario. */
+class ResponsableNoDisponibleError extends Error {}
+
+/** Los errores de Prisma (tablas, query, host…) no se devuelven a la UI. */
+function errorGenerico(accion: string, e: unknown): { ok: false; error: string; fieldErrors?: Record<string, string> } {
+  if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+    return { ok: false, error: 'Identificador en uso', fieldErrors: { slug: 'Ese identificador ya está en uso' } };
+  }
+  console.error(`[farmacias] error al ${accion}`, e);
+  return { ok: false, error: `No se pudo ${accion}. Vuelve a intentarlo.` };
+}
 
 export const farmaciaRepositoryPrisma: FarmaciaRepository = {
   async listFarmacias(): Promise<FarmaciaSummary[]> {
@@ -272,21 +285,62 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
       };
     }
 
+    // Responsable: solo un usuario activo, sin farmacia y que no sea SUPER_ADMIN
+    // (nunca se "roba" el usuario de otra farmacia).
+    if (input.responsableId) {
+      const u = await prisma.user.findUnique({
+        where: { id: input.responsableId },
+        select: { businessId: true, role: true, active: true },
+      });
+      if (!u || !u.active || u.businessId || u.role === 'SUPER_ADMIN') {
+        return {
+          ok: false,
+          error: 'Ese usuario no se puede asignar',
+          fieldErrors: { responsable: 'Elige un usuario sin farmacia asignada' },
+        };
+      }
+    }
+
     try {
-      const row = await prisma.business.create({
-        data: {
-          slug: input.slug,
-          name: input.nombre,
-          ciudad: input.ciudad ?? null,
-          publishedStatus: 'draft',
-          idiomasActivos: input.idiomasActivos as Prisma.InputJsonValue,
-        },
-        include: CONTENT_INCLUDE,
+      const row = await prisma.$transaction(async (tx) => {
+        const created = await tx.business.create({
+          data: {
+            slug: input.slug,
+            name: input.nombre,
+            ciudad: input.ciudad ?? null,
+            publishedStatus: 'draft',
+            idiomasActivos: input.idiomasActivos as Prisma.InputJsonValue,
+          },
+          include: CONTENT_INCLUDE,
+        });
+        if (input.responsableId) {
+          // updateMany con la condición: si entretanto se asignó a otra, no se toca.
+          const res = await tx.user.updateMany({
+            where: { id: input.responsableId, businessId: null, active: true, role: { not: 'SUPER_ADMIN' } },
+            data: { businessId: created.id },
+          });
+          if (res.count !== 1) throw new ResponsableNoDisponibleError('El usuario elegido ya no está disponible');
+        }
+        return created;
       });
       return { ok: true, data: mapBusinessToFarmacia(row as BusinessWithContent) };
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : 'Error desconocido al crear' };
+      if (e instanceof ResponsableNoDisponibleError) {
+        return { ok: false, error: e.message, fieldErrors: { responsable: e.message } };
+      }
+      return errorGenerico('crear la farmacia', e);
     }
+  },
+
+  async listResponsablesDisponibles(): Promise<ResponsableDisponible[]> {
+    const user = await getCurrentUser();
+    if (user?.rol !== 'admin') return [];
+    const rows = await prisma.user.findMany({
+      where: { businessId: null, active: true, role: { not: 'SUPER_ADMIN' } },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: 'asc' },
+    });
+    return rows.map((r) => ({ id: r.id, nombre: r.name, email: r.email }));
   },
 
   async publishFarmacia(id, status) {
@@ -432,7 +486,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
       if (!row) return { ok: false, error: 'Error duplicando' };
       return { ok: true, data: mapBusinessToFarmacia(row as BusinessWithContent) };
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : 'Error desconocido al duplicar' };
+      return errorGenerico('duplicar la farmacia', e);
     }
   },
 };

@@ -15,6 +15,8 @@ export function ImageDetailModal({
   onClose,
   onAltChange,
   onRequestDelete,
+  total,
+  onMove,
 }: {
   open: boolean;
   image: ImagenAsset | null;
@@ -23,6 +25,9 @@ export function ImageDetailModal({
   onClose: () => void;
   onAltChange: (id: string, locale: Locale, alt: string) => void;
   onRequestDelete: (id: string) => void;
+  /** Para mover la foto (orden en la web). */
+  total?: number;
+  onMove?: (delta: -1 | 1) => void;
 }) {
   if (!image) return null;
 
@@ -30,8 +35,8 @@ export function ImageDetailModal({
     <Modal
       open={open}
       onOpenChange={(o) => !o && onClose()}
-      title={`Imagen ${imageIndex + 1}`}
-      description="Edita el texto alternativo que leerán buscadores y lectores de pantalla."
+      title={total ? `Foto ${imageIndex + 1} de ${total}` : `Foto ${imageIndex + 1}`}
+      description="Describe la foto y elige su posición en tu web."
       maxWidth="md"
       footer={
         <div className="flex w-full items-center justify-between gap-2">
@@ -60,22 +65,33 @@ export function ImageDetailModal({
           />
         </div>
 
+        {onMove && total !== undefined && total > 1 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[13.5px] text-[var(--color-ink-2)] mr-1">Posición:</span>
+            <Button type="button" variant="secondary" size="sm" disabled={imageIndex <= 0} onClick={() => onMove(-1)}>
+              <NavIcon name="CaretLeft" size={13} />
+              Mover a la izquierda
+            </Button>
+            <Button type="button" variant="secondary" size="sm" disabled={imageIndex >= total - 1} onClick={() => onMove(1)}>
+              Mover a la derecha
+              <NavIcon name="CaretRight" size={13} />
+            </Button>
+          </div>
+        )}
+
         <div className="space-y-3">
-          <Label className="mb-0">Texto alternativo por idioma</Label>
-          <p className="text-[11.5px] text-[var(--color-muted)] m-0 -mt-1.5">
-            Describe lo que se ve. Mejora el SEO y la accesibilidad.
+          <p className="label m-0">Descripción de la foto</p>
+          <p className="text-[12.5px] text-[var(--color-muted)] m-0 -mt-1.5">
+            Qué se ve en la foto. La leen Google y las personas que usan lector de pantalla.
           </p>
           {idiomasActivos.map((loc) => (
-            <div key={loc} className="flex items-center gap-2">
-              <span
-                className="shrink-0 inline-flex items-center gap-1.5 h-9 px-2.5 rounded-[var(--radius-sm)] bg-[var(--color-surface-sunken)] text-[11.5px] font-medium text-[var(--color-muted)]"
-                aria-label={LOCALE_LABELS[loc]}
-                title={LOCALE_LABELS[loc]}
-              >
-                <span aria-hidden>{LOCALE_FLAGS[loc]}</span>
-                <span className="uppercase tracking-[0.04em]">{loc}</span>
-              </span>
+            <div key={loc}>
+              <Label htmlFor={`alt-${image.id}-${loc}`} className="mb-1">
+                <span aria-hidden className="mr-1.5">{LOCALE_FLAGS[loc]}</span>
+                {LOCALE_LABELS[loc]}
+              </Label>
               <Input
+                id={`alt-${image.id}-${loc}`}
                 value={image.alt?.[loc] ?? ''}
                 onChange={(e) => onAltChange(image.id, loc, e.target.value)}
                 placeholder={

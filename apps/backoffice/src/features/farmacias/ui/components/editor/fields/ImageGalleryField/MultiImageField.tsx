@@ -9,6 +9,7 @@ import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { cn } from '@/shared/lib/cn';
 import {
   deleteContentImage,
+  reorderContentImages,
   updateContentImageAlt,
   uploadContentImage,
 } from '@/features/farmacias/actions/contentImageActions';
@@ -90,6 +91,27 @@ export function MultiImageField({
     });
   }
 
+  /** Mover una foto a izquierda/derecha (orden en la web). Se guarda al momento. */
+  function moveImage(id: string, delta: -1 | 1) {
+    const from = value.findIndex((x) => x.id === id);
+    const to = from + delta;
+    if (from < 0 || to < 0 || to >= value.length) return;
+    const next = [...value];
+    [next[from], next[to]] = [next[to], next[from]];
+    const previous = value;
+    onChange(next);
+    startTransition(async () => {
+      const res = await reorderContentImages(businessId, role, next.map((x) => x.id)).catch(() => ({
+        ok: false as const,
+        error: 'No se pudo cambiar el orden. Revisa la conexión.',
+      }));
+      if (!res.ok) {
+        onChange(previous);
+        toast.error(res.error);
+      }
+    });
+  }
+
   function updateAlt(id: string, locale: Locale, alt: string) {
     onChange(value.map((x) => (x.id === id ? { ...x, alt: { ...x.alt, [locale]: alt } } : x)));
   }
@@ -117,7 +139,7 @@ export function MultiImageField({
                     setAltSnapshot(JSON.stringify(img.alt ?? {}));
                     setEditingId(img.id);
                   }}
-                  aria-label={`Editar imagen ${i + 1}`}
+                  aria-label={`Editar foto ${i + 1}`}
                   className={OVERLAY_PILL_BUTTON}
                 >
                   <NavIcon name="PencilSimple" size={12} />
@@ -126,7 +148,7 @@ export function MultiImageField({
                 <button
                   type="button"
                   onClick={() => setConfirmDeleteId(img.id)}
-                  aria-label={`Eliminar imagen ${i + 1}`}
+                  aria-label={`Eliminar foto ${i + 1}`}
                   className={OVERLAY_DELETE_BUTTON}
                 >
                   <NavIcon name="Trash" size={13} />
@@ -139,7 +161,8 @@ export function MultiImageField({
             <label
               {...dropHandlers}
               className={cn(
-                'relative aspect-square flex flex-col items-center justify-center gap-1.5 rounded-[10px] border-2 border-dashed cursor-pointer text-[12.5px] transition-colors',
+                'relative aspect-square flex flex-col items-center justify-center gap-1.5 rounded-[10px] border-2 border-dashed cursor-pointer text-[13px] transition-colors',
+                'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--color-accent)] has-[:focus-visible]:outline-offset-2',
                 dropZoneClass(dragging, isPending),
               )}
             >
@@ -149,16 +172,17 @@ export function MultiImageField({
                 <>
                   <NavIcon name="Plus" size={18} />
                   <span className="font-medium">
-                    {value.length === 0 ? 'Añadir imagen' : 'Añadir otra'}
+                    {value.length === 0 ? 'Añadir foto' : 'Añadir otra'}
                   </span>
-                  <span className="text-[10.5px] text-[var(--color-muted-2)] text-center px-2 leading-tight">
-                    PNG, JPG, WebP · se optimizan al subir
+                  <span className="text-[12px] text-[var(--color-muted)] text-center px-2 leading-tight">
+                    JPG, PNG o WebP
                   </span>
                 </>
               )}
               <input
                 ref={inputRef}
                 type="file"
+                aria-label={label ? `Subir ${label.toLowerCase()}` : 'Subir foto'}
                 accept={ACCEPTED_IMAGE_TYPES}
                 onChange={onInputChange}
                 disabled={isPending}
@@ -170,8 +194,8 @@ export function MultiImageField({
       )}
 
       {value.length > 0 && (
-        <p className="text-[11.5px] text-[var(--color-muted-2)] m-0">
-          Click en una imagen para editar el texto alternativo o eliminarla.
+        <p className="text-[12.5px] text-[var(--color-muted)] m-0">
+          Pulsa «Editar» en una foto para describirla, cambiarla de sitio o eliminarla.
         </p>
       )}
 
@@ -195,6 +219,8 @@ export function MultiImageField({
           setEditingId(null);
         }}
         onAltChange={updateAlt}
+        total={value.length}
+        onMove={(d) => editing && moveImage(editing.id, d)}
         onRequestDelete={(id) => {
           setEditingId(null);
           setConfirmDeleteId(id);

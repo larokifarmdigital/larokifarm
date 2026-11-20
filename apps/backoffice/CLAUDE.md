@@ -77,90 +77,90 @@ Reglas:
 ## Arquitectura del editor de farmacia
 
 Todo en `src/features/farmacias/ui/components/editor/`, agrupado en
-`navigation/` (TopBar, Tabs, FloatingNav, GroupSegmented, Section*,
-MobileActionBar, ActionButtons), `status/` (AutosaveIndicator, HealthChip,
-LocaleChip), `fields/` (Multilang*, LangTabs, Tiptap, ImageGalleryField,
-HorarioSemanal, TextosCabeceraFields, FieldPreview), `sections/` (los *Tab) y
-`preview/`. Estado en `ui/context/EditorContext.tsx`; config de secciones e
-i18n en `ui/lib/{sectionsConfig,i18nStatus}.ts`. Componentes clave:
+`navigation/` (TopBar, SectionSidebar, SectionPicker, SectionSheet,
+SectionTitle, SectionSwitcher, MobileActionBar, ActionButtons), `status/`
+(AutosaveIndicator, PublicacionEstado, EditorHealthChip, LocaleChip),
+`fields/` (Multilang*, LangTabs, Tiptap, ImageGalleryField, HorarioSemanal,
+TextosCabeceraFields, FilaLista + CabeceraColapsable, IconoField, FieldPreview)
+y `sections/` (los *Tab). Estado en `ui/context/EditorContext.tsx`; secciones
+en `ui/lib/sectionsConfig.ts`; i18n en `ui/lib/i18nStatus.ts`.
 
-### Layout raíz
-- **`FarmaciaEditor.tsx`** — orquesta todo. Estado `activeSectionKey`, agrupa
-  9 secciones en 4 grupos (Datos / Portada / Contenido / Config). Lógica de
-  navegación por grupo + subsección.
-- **`EditorTopBar.tsx`** — solo título + chip health + botones acción (desktop).
-- **`EditorMobileActionBar.tsx`** — sticky bottom fija en móvil (chip health +
-  3 botones). `z-40 + will-change:transform + translateZ(0)` para evitar el
-  bug de `fixed` en Safari iOS.
-- **`EditorFloatingNav.tsx`** — pill flotante con los **4 grupos** (Datos ·
-  Portada · Contenido · Config). `motion.span layoutId` desliza el pill activo.
-- **`EditorGroupSegmented.tsx`** — pill secundario sticky con las
-  sub-secciones del grupo activo (solo aparece si el grupo tiene >1 sección).
-- **`EditorSectionTitle.tsx`** — h2 30px sin numeración (el prop `step` existe
-  pero no se renderiza — decisión del usuario 22-09-2026).
-- **`EditorSectionSwitcher.tsx`** — AnimatePresence mode="wait" con fade+slide+
-  blur para transiciones entre secciones.
+### Secciones (fase 4, 20-11-2026)
+| Grupo | Sección (clave = hash) | Contenido |
+|---|---|---|
+| Tu farmacia | Horario (`horario`, entrada por defecto) | `HorarioTab` → horario semanal |
+| Tu farmacia | Contacto y dirección (`general`) | nombre, ciudad, titular, colegiado, logo, contacto, redes, dirección, Google Maps · bloque **Solo administrador**: identificador (cambio en modal) y mapa insertado |
+| Portada | Portada (`hero`) | etiqueta, frase principal, frase de apoyo, fotos, tarjetas sobre la foto (máx. 3) |
+| Portada | Puntos fuertes (`features`) | tarjetas (máx. 6; reloj sin descripción = horario) |
+| Contenido | Quiénes somos (`sobre`) | historia (Tiptap), fotos, puntos destacados, cabecera plegada |
+| Contenido | Servicios (`servicios`) | lista primero, cabecera plegada |
+| Contenido | Preguntas frecuentes (`faqs`) | lista primero, cabecera plegada |
+| Contenido | Reseñas (`resenas`) | interruptor encima de los idiomas, reglas, mostrar/ocultar cada reseña, enlace Google (identificador GBP solo admin), cabecera plegada |
+| Avanzado | Textos legales (`legal`) | aviso legal + privacidad (Tiptap i18n) |
+| Avanzado | Google y redes sociales (`seo`) | título/descripción en Google + vista previa + imagen al compartir |
 
-### Estado i18n (validación al vuelo)
-- **`i18nStatus.ts`** — utilities puras:
-  - `computeLocaleStatus(value, locale, activeLocales)` → `'filled' | 'missing' | 'empty'`
-  - `countLocaleStatus(farmacia, locale)` — total/filled/missing/empty
-  - `countBySection(farmacia)` — mismo desglose agrupado por sección
-- **`EditorHealthChip.tsx`** — chip 24×24 (solo dot con ring de color,
-  **sin texto**) con Popover al click: cabecera con estado guardado + progreso
-  por idioma (barras) + lista de secciones con missings clickables
-- **`LangTabs.tsx`** — pestañas de idioma con badge `N/M` + dot rojo mini
-  superpuesto cuando hay missing (sin texto "N faltan")
-- **`LocaleChip.tsx`** — chip inline al lado de labels multilang, 3 estados
-  visuales (filled naranja / missing rojo con dot / empty gris)
+Las claves no cambiaron: los hash antiguos (`#hero`, `#seo`…) siguen valiendo.
 
-### Inputs multilang
-- **`MultilangInput.tsx`** / **`MultilangTextarea.tsx`** — computan status
-  automáticamente y pasan al LocaleChip. Casi todos los campos i18n del
-  editor pasan por aquí.
-- **`TiptapField.tsx`** — para descripcionLarga, avisoLegal, politicaPrivacidad.
-- **`TextosCabeceraFields.tsx`** — trío `chip / titulo / subtitulo` i18n
-  reutilizable para Servicios/FAQs/Reseñas.
+### Estado y publicación
+- Dos ejes en la cabecera: **¿guardado?** (`AutosaveIndicator`: Guardando… /
+  Guardado / No se ha podido guardar · Reintentar) y **¿en la web?**
+  (`PublicacionEstado`: Publicada y al día / Cambios sin publicar / Sin
+  publicar). `pendientePublicar` = `dirty || tieneCambiosSinPublicar(f)`
+  (`updatedAt > ultimaPublicacion + 60 s`; `ultimaPublicacion` = `lastPublishedAt`,
+  solo lectura).
+- "Publicar cambios" (accent) solo aparece si hay algo que publicar; si no,
+  "Ver mi web". Barra inferior móvil: estado + UNA acción de 44 px.
+- `EditorHealthChip` = solo traducciones ("Faltan N traducciones"), oculto si la
+  web tiene un idioma.
+
+### Idiomas
+- `LangTabs` por sección: pulsar una pestaña NUNCA escribe. Si el idioma no
+  está activado: aviso + "Activar" con confirmación → `activarIdiomaAction`
+  (única vía; el autoguardado rechaza `idiomasActivos`). Punto rojo = a ESTA
+  sección le falta traducir en ese idioma.
+
+### Listas (servicios, preguntas, puntos fuertes, tarjetas, puntos)
+- `FilaLista`: toda la fila abre Editar; escritorio = asa + Editar + Eliminar
+  (32 px); móvil = menú "⋯" de 44 px con Editar / Subir / Bajar / Eliminar.
+  Al añadir: va al final, se resalta y sale un aviso. Al máximo: texto
+  explicativo en vez de botón desactivado.
+- Modales: nombre/descripción primero; icono compacto (`IconoField`, nombres en
+  castellano); enlace del servicio en "Opciones avanzadas".
+
+### Permisos en el servidor (`saveFarmaciaPatchAction`)
+- `slug`, `mapaUrl`, `googleLocationName`: solo SUPER_ADMIN.
+- `idiomasActivos`: solo con `activarIdiomaAction`.
+- Publicar valida en el servidor (`PublishFarmaciaUseCase`); el menú de la lista
+  ya no publica: "Abrir para publicar" lleva al editor.
+- Rutas por rol (QA 20-11-2026): `/farmacias` solo admin (el personal va a SU
+  editor); `/farmacias/nueva`, `/admin/uso`, `/ajustes`, `/scout` e
+  `/inventario` redirigen a `/inicio` si no eres SUPER_ADMIN.
+- Solo consulta (USER): `fieldset disabled` + Tiptap no editable
+  (`aria-readonly`, sin barra) + sin "Empezar con un horario típico".
+
+### Foco y listas
+- `Modal`: el foco empieza en el primer campo del formulario y al cerrar vuelve
+  al disparador; si ya no existe, a la fila recién añadida
+  (`data-foco-tras-modal`) o al título de la sección (`data-titulo-seccion`).
+- `EditorContext` conserva los ids locales de servicios/preguntas/puntos
+  fuertes tras guardar (el servidor los reescribe): si no, las filas se
+  volvían a montar y el teclado perdía el foco en cada autoguardado.
 
 ### Componentes UI reutilizables (en `src/shared/components/{atoms,molecules}/`)
-- **`Button.tsx`** — variantes `primary` (ink), `secondary` (blanco+border),
-  `ghost`, **`accent`** (naranja — LA importante), `danger`, `link`.
-- **`IconInput.tsx`** — input con icono adornment a la izquierda. **Focus
-  arreglado** con `focus-within:!border-accent focus-within:[box-shadow:...]`
-  para que gane a hover, y `style={{ outline: 'none' }}` en el input hijo para
-  cancelar el `:focus-visible` global. NO tocar sin entender esto.
-- **`TimePicker.tsx`** — popover con 2 columnas Hora/Min scrollables (steps
-  de 15 min por defecto). Custom, sin librería. Usa `.scrollbar-thin` de
-  globals.css (3px webkit, thin firefox).
-- **`SectionHeader.tsx`** — h3 15px 600 + hint muted 12.5px, no eyebrow
-  numérico. Puede recibir `actions` a la derecha.
-- **`LabelHelpIcon.tsx`** — reemplaza los `<p class="help">…</p>` por icono ⓘ
-  con tooltip Radix. Se usa dentro del `hint` prop de `Label`.
-- **`Label.tsx`** — required se marca con `*` naranja pequeño (no chip mono).
-- **`Modal.tsx`** — 560px centrado (patrón lista+modal para Servicios, FAQs,
-  Hero tarjetas, Features).
-- **`IconPicker.tsx`** — grid de iconos por categorías para Servicios/Hero/Features.
-
-### Tabs del editor (todos en `editor/sections/`)
-| Grupo | Tab | Sanity fields cubiertos |
-|---|---|---|
-| Datos | `GeneralTab` | nombre, slug, logo, titular, colegiado, contacto, redes, direccion, googleMapsUrl, mapaUrl, horarios (via `HorarioSemanal`) |
-| Portada | `HeroTab` | heroChip, heroSubtitulo, descripcionCorta, heroImages, heroTarjetasFlotantes |
-| Portada | `FeaturesTab` | featuresLista (max 6, icono "reloj"→autohorario) |
-| Contenido | `SobreTab` | sobreNosotros (chip/titulo/anyosExperiencia/puntos), descripcionLarga, imagenesSobre |
-| Contenido | `ServiciosTab` | textosServicios + servicios[] con enlace {url, nuevaPestana} |
-| Contenido | `FaqsTab` | textosFaqs + faqs[] |
-| Contenido | `ResenasTab` | textosResenas + googleLocationName + googleMapsUrl + preview read-only. **NO CRUD** — las reseñas vienen de Google via Worker |
-| Config | `LegalTab` | avisoLegal + politicaPrivacidad (Tiptap i18n con FallbackNote) |
-| Config | `SeoTab` | seo.title, seo.description, seo.ogImage + preview Google |
+- **`Button`** — variantes `primary`, `secondary`, `ghost`, **`accent`** (azul,
+  la acción principal), `danger`, `link`. En móvil todos miden 44 px de alto.
+- **`IconInput`** — input con icono; el anillo de foco va en el propio input.
+- **`Switch`** — 44 px de zona táctil en móvil (carril visible 38×22).
+- **`TimePicker`**, **`SectionHeader`**, **`LabelHelpIcon`** (44 px en móvil),
+  **`Label`**, **`Modal`** (cerrar 44 px en móvil), **`IconPicker`**,
+  **`ConfirmDialog`**.
+- `.field` en móvil: `min-height: 44px` y 16 px de letra (iOS no hace zoom).
 
 ### Horario semanal
-- **`HorarioSemanal.tsx`** — fila compacta por día con expand inline. Cada
-  tramo es una card con label "TRAMO N", duración calculada (`4h 30min`),
-  Abre/Cierra + TimePicker, botón Eliminar textual. Botón "Añadir tramo"
-  dashed. Menú "Copiar de…" con dropdown de días con horarios.
-- Constante `HORARIO_TIPICO` en `GeneralTab.tsx` para el botón "Plantilla
-  típica" (rellena L-V 9-14/17-20:30, Sáb 9:30-14, Dom cerrado).
+- `HorarioSemanal`: cada día con interruptor Abierto/Cerrado visible sin
+  desplegar; "Primer/Segundo horario"; "Copiar de…". `HorarioTab`: "Empezar con
+  un horario típico" solo si está vacío; si no, "Copiar el lunes a
+  martes–viernes" (con confirmación). Festivos/cierres: fase aparte.
 
 ## Cobertura Sanity actual: 100%
 
@@ -177,20 +177,24 @@ Diferencias schema vs UI documentadas:
 
 ## Decisiones UI/UX acordadas (usar en cualquier iteración)
 
-1. **Naranja = commitment**. Nunca botones negros para publicar/entrar/crear.
+1. **Azul (`--color-accent`) = la acción principal** (publicar, crear,
+   añadir). Nunca botones negros para publicar/entrar/crear. Una sola acción
+   principal por zona.
 2. **Section title sin numeración** (`01 · General` fue quitado 22-09-2026).
-3. **Navegación del editor**: columna de grupos a la izquierda (escritorio) y
-   barra inferior (móvil). **Shell de la app** (fase 1, 20-11-2026): sidebar
+3. **Navegación del editor** (fase 4): grupos Tu farmacia · Portada ·
+   Contenido · Avanzado; columna izquierda en escritorio, selector + hoja en
+   móvil, sin numeración y con punto rojo solo si falta traducir. **Shell de la app** (fase 1, 20-11-2026): sidebar
    sin títulos de sección — Inicio · Farmacias (admin) / Mi web (personal, va
    directo al editor de SU farmacia) · Albaranes (Nueva conciliación,
    Historial). Config en `features/shell/ui/lib/navConfig.ts` (`buildNav`),
    lista compartida sidebar/drawer en `NavList`.
-4. **En móvil: 3 stickies apilables** — TopBar → segmented sub-nav (si aplica)
-   → LangTabs (si es multilang). Action bar bottom SIEMPRE fija (`z-40 +
-   will-change`).
-5. **Chip health = solo dot con anillo de color**. Popover con detalle.
+4. **En móvil: una barra fija arriba (cabecera del editor) y la barra de
+   acciones abajo** (`z-40 + will-change`). Las pestañas de idioma no se fijan.
+5. **Traducciones**: texto "Faltan N traducciones" con popover de detalle (ya
+   no un punto sin texto que mezclaba guardado y traducido).
 6. **LangTabs con dot rojo mini** cuando hay missing, sin texto "N faltan".
-7. **Required = asterisco `*` rojo** (`--color-red-ink`), no chip `OBLIGATORIO`.
+7. **Required = asterisco `*` rojo** (`--color-red-ink`) junto a la etiqueta
+   visible (`aria-hidden` + ", obligatorio" para lectores), no chip.
 8. **`<p class="help">` → `LabelHelpIcon` con tooltip** — la ayuda pesa cero
    cuando no la necesitas.
 9. **Screenshots evitados** por consumo de tokens. Verificar con
@@ -334,15 +338,21 @@ Diferencias schema vs UI documentadas:
   `ConciliadorTabs`). Envs: `GEMINI_API_KEY` y `ENCRYPTION_KEY` (claves Gemini
   por negocio). Usuarios/negocios/uso: pendiente, irán a Ajustes ✅
 - **Rediseño 20-11-2026**: fase 1 login + Inicio + navegación; fase 2 nueva
-  conciliación por envíos; fase 3 historial (ver decisión 15-17). Falta la
-  fase 4 (gestión de contenidos de las landings) ✅
+  conciliación por envíos; fase 3 historial (ver decisión 15-17); fase 4
+  gestión de contenidos: secciones por tareas en lenguaje llano, estado de
+  publicación, idiomas sin escrituras accidentales, listas con menú ⋯, 44 px
+  en móvil, alta de farmacia en un paso con responsable opcional, lista con
+  "Activas" y "Cambios sin publicar" ✅
 - **Pendientes**:
   - Borrador vs publicado: hoy el autoguardado escribe el contenido que lee
     la API; un deploy incluye ediciones a medias aunque no se pulse
     "Publicar cambios" (necesita snapshot publicado)
   - Reordenar imágenes (la action existe, falta UI) · enlaces de Tiptap sin
     `window.prompt` · rate-limit del login
-  - UI de reseñas en el editor (ocultar/destacar) — hoy solo se ven
+  - Festivos, vacaciones y cierres temporales del horario (modelo + API +
+    landings)
+  - Descripción SEO de Torrents (es) cortada a 160 caracteres: corregir el
+    texto a mano en «Google y redes sociales»
   - Quitar Sanity de las landings (y `CONTENT_SOURCE`) cuando estén todas
     en backoffice; retirar el webhook de Sanity de `workers/sanity-fanout`
   - Imágenes servidas en runtime desde el backoffice: valorar optimizarlas en

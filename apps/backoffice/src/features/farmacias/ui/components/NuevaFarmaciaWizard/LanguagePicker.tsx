@@ -34,7 +34,7 @@ export function LanguagePicker({
                 'relative flex items-center gap-3 rounded-[10px] border p-3.5 transition-colors',
                 checked
                   ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
-                  : 'border-[var(--color-hairline)] bg-[var(--color-surface)] hover:border-[var(--color-hairline-strong)]',
+                  : 'border-[var(--color-control-border)] bg-[var(--color-surface)] hover:border-[var(--color-ink-2)]',
                 primary ? 'cursor-default' : 'cursor-pointer',
                 'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--color-accent)]',
               )}
@@ -42,11 +42,12 @@ export function LanguagePicker({
               {!primary && (
                 <input
                   type="checkbox"
+                  id={`idiomas-${l}`}
                   name="idiomas"
                   value={l}
                   checked={checked}
                   onChange={() => onToggle(l)}
-                  className="sr-only"
+                  className="sr-only cursor-pointer"
                 />
               )}
               <span aria-hidden className="text-[20px] leading-none">
@@ -56,8 +57,8 @@ export function LanguagePicker({
                 <span className="block text-[13.5px] font-medium text-[var(--color-ink)]">
                   {LOCALE_LABELS[l]}
                 </span>
-                <span className="block text-[11.5px] text-[var(--color-muted)]">
-                  {primary ? 'Principal · siempre activo' : l.toUpperCase()}
+                <span className="block text-[12.5px] text-[var(--color-muted)]">
+                  {primary ? 'Principal · siempre activo' : 'Opcional'}
                 </span>
               </span>
               <span
@@ -67,7 +68,7 @@ export function LanguagePicker({
                   checked
                     ? 'bg-[var(--color-accent)] border-[var(--color-accent)] text-white'
                     : 'border-[var(--color-hairline-strong)] bg-[var(--color-surface)]',
-                  primary && 'opacity-60',
+
                 )}
               >
                 {checked && <NavIcon name="Check" size={11} weight="bold" />}

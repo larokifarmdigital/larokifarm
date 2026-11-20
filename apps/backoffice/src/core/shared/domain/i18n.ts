@@ -8,6 +8,13 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   ca: 'Català',
 };
 
+/** Nombre del idioma en castellano, en minúscula, para frases ("activar el inglés"). */
+export const LOCALE_NOMBRE: Record<Locale, string> = {
+  es: 'castellano',
+  en: 'inglés',
+  ca: 'catalán',
+};
+
 /** Bandera de cada idioma para la UI (catalán con la de Andorra). */
 export const LOCALE_FLAGS: Record<Locale, string> = {
   es: '🇪🇸',

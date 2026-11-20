@@ -8,7 +8,7 @@ import type { RowActionRunner } from './FarmaciaRowActions';
 import { FarmaciasEmptyState } from './FarmaciasEmptyState';
 import { FarmaciasListFilters } from './FarmaciasListFilters';
 import { FarmaciasTable } from './FarmaciasTable';
-import type { StatusCounts, StatusFilter } from './statusMeta';
+import { STATUS_FILTERS, cumpleFiltro, type StatusCounts, type StatusFilter } from './statusMeta';
 
 /** Sin acentos ni mayúsculas: "farmacia pediatrica" encuentra "Farmàcia Pediàtrica". */
 const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -23,26 +23,25 @@ export function FarmaciasList({
   canWrite?: boolean;
 }) {
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState<StatusFilter>('todos');
+  const [status, setStatus] = useState<StatusFilter>('activas');
   const [pendingTx, startTransition] = useTransition();
 
   const filtered = useMemo(() => {
     const q = normalize(query.trim());
     return farmacias.filter((f) => {
-      if (status !== 'todos' && f.status !== status) return false;
+      if (!cumpleFiltro(f, status)) return false;
       if (!q) return true;
       return (
         normalize(f.nombre).includes(q) ||
-        normalize(f.slug).includes(q) ||
         normalize(f.ciudad ?? '').includes(q)
       );
     });
   }, [farmacias, query, status]);
 
   const counts = useMemo(() => {
-    const c: StatusCounts = { todos: farmacias.length, published: 0, draft: 0, archived: 0 };
-    for (const f of farmacias) c[f.status]++;
-    return c;
+    return Object.fromEntries(
+      STATUS_FILTERS.map(({ key }) => [key, farmacias.filter((f) => cumpleFiltro(f, key)).length]),
+    ) as StatusCounts;
   }, [farmacias]);
 
   const runAction: RowActionRunner = (fn) =>
@@ -64,8 +63,15 @@ export function FarmaciasList({
         counts={counts}
       />
 
+      {/* Anuncia el resultado del filtro/búsqueda (siempre montado). */}
+      <p role="status" className="sr-only">
+        {filtered.length === 0
+          ? 'No hay farmacias que coincidan.'
+          : `${filtered.length} ${filtered.length === 1 ? 'farmacia' : 'farmacias'}`}
+      </p>
+
       {filtered.length === 0 ? (
-        <FarmaciasEmptyState hasQuery={Boolean(query) || status !== 'todos'} totalCount={farmacias.length} />
+        <FarmaciasEmptyState hasQuery={Boolean(query) || status !== 'activas'} totalCount={farmacias.length} />
       ) : (
         <>
           <FarmaciasCardList farmacias={filtered} pending={pendingTx} onAction={runAction} canDuplicate={canDuplicate} canWrite={canWrite} />

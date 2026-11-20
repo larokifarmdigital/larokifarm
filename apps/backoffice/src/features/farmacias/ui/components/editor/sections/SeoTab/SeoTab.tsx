@@ -22,56 +22,32 @@ export function SeoTab() {
       <section aria-labelledby="sec-seo-textos">
         <SectionHeader
           id="sec-seo-textos"
-          title="Título y descripción"
-          hint="Textos que aparecen en la pestaña del navegador y en los resultados de Google. Obligatorios en castellano para publicar."
+          title="Cómo sale tu web en Google"
+          hint="El título y la descripción que ve la gente al buscarte en Google. Obligatorios en castellano para publicar."
         />
 
         <div className="space-y-4">
           <MultilangInput
-            label="Título SEO (title tag)"
+            label="Título en Google"
             required
             field="seo.title.es"
             value={seo.title ?? {}}
             onChange={(v) => patch({ seo: { ...seo, title: v } })}
             placeholder="Farmàcia Torrents · Farmacia en el Eixample de Barcelona"
-            help="Recomendado: 50-60 caracteres."
+            help="Mejor entre 50 y 60 caracteres. También sale en la pestaña del navegador."
           />
           <MultilangTextarea
-            label="Descripción SEO (meta description)"
+            label="Descripción en Google"
             required
             field="seo.description.es"
             value={seo.description ?? {}}
             onChange={(v) => patch({ seo: { ...seo, description: v } })}
             placeholder="Farmacia familiar en el Eixample con dermofarmacia, servicio a domicilio…"
             rows={3}
-            maxLength={160}
-            help="Recomendado: 150-160 caracteres."
+            limiteRecomendado={160}
+            help="Mejor entre 150 y 160 caracteres: Google corta lo que pase de ahí."
           />
         </div>
-      </section>
-
-      <div className="hairline" />
-
-      {/* ============= IMAGEN OG ============= */}
-      <section aria-labelledby="sec-seo-og">
-        <SectionHeader
-          id="sec-seo-og"
-          required
-          title="Imagen Open Graph"
-          hint="Se muestra al compartir la landing en WhatsApp, Facebook, LinkedIn, etc. Formato 1200×630 px (relación 1.91:1), JPG o PNG, menos de 1 MB. Compartida entre idiomas."
-        />
-
-        <ImageGalleryField
-          mode="single"
-          businessId={farmacia.id}
-          role="og"
-          field="seo.ogImage"
-          aspect="og"
-          value={seo.ogImage}
-          onChange={(ogImage) =>
-            patch({ seo: { ...seo, ogImage: ogImage ?? undefined } })
-          }
-        />
       </section>
 
       <div className="hairline" />
@@ -87,7 +63,7 @@ export function SeoTab() {
           <div className="text-[12px] text-[#5f6368]">
             {dominio ?? 'tu-dominio.com'}
           </div>
-          <div className="text-[18px] leading-tight text-[#1a0dab] hover:underline cursor-pointer mt-0.5">
+          <div className="text-[18px] leading-tight text-[#1a0dab] mt-0.5">
             {titleValue || farmacia.nombre}
           </div>
           <div className="text-[13px] text-[#4d5156] leading-[1.5] mt-1">
@@ -96,6 +72,29 @@ export function SeoTab() {
               'Escribe una descripción corta para verla aquí.'}
           </div>
         </div>
+      </section>
+      <div className="hairline" />
+
+      {/* ============= IMAGEN OG ============= */}
+      <section aria-labelledby="sec-seo-og">
+        <SectionHeader
+          id="sec-seo-og"
+          required
+          title="Imagen al compartir"
+          hint="La que sale al compartir tu web por WhatsApp, Facebook o LinkedIn. Horizontal, de 1200×630, en JPG o PNG. Es la misma en todos los idiomas."
+        />
+
+        <ImageGalleryField
+          mode="single"
+          businessId={farmacia.id}
+          role="og"
+          field="seo.ogImage"
+          aspect="og"
+          value={seo.ogImage}
+          onChange={(ogImage) =>
+            patch({ seo: { ...seo, ogImage: ogImage ?? undefined } })
+          }
+        />
       </section>
     </div>
   );

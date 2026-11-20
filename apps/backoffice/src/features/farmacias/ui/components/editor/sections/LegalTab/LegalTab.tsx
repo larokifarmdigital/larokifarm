@@ -60,6 +60,7 @@ export function LegalTab() {
         </Label>
         <TiptapField
           field="avisoLegal.es"
+          label="Cuerpo del aviso legal"
           value={farmacia.avisoLegal?.[currentLocale] ?? ''}
           onChange={setAviso}
           placeholder="Datos identificativos, política de cookies, propietario del sitio, licencia…"
@@ -86,6 +87,7 @@ export function LegalTab() {
         </Label>
         <TiptapField
           field="politicaPrivacidad.es"
+          label="Cuerpo de la política de privacidad"
           value={farmacia.politicaPrivacidad?.[currentLocale] ?? ''}
           onChange={setPolitica}
           placeholder="Datos que se recogen, finalidad, derechos ARCO, responsable del tratamiento…"

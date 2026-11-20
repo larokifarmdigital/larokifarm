@@ -5,7 +5,7 @@ import { cn } from '@/shared/lib/cn';
 import { formatRelativeDate } from '@/shared/lib/format';
 import { FarmaciaAvatar } from './FarmaciaAvatar';
 import { FarmaciaRowActions, type RowActionRunner } from './FarmaciaRowActions';
-import { STATUS_META } from './statusMeta';
+import { estadoFila } from './statusMeta';
 
 /** Listado móvil: cards apiladas. */
 export function FarmaciasCardList({
@@ -24,7 +24,7 @@ export function FarmaciasCardList({
   return (
     <ul className="md:hidden space-y-2">
       {farmacias.map((f) => {
-        const st = STATUS_META[f.status];
+        const st = estadoFila(f);
         const dimmed = f.status === 'archived';
         return (
           <li

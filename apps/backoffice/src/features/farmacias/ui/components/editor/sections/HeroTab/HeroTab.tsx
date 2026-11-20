@@ -8,11 +8,9 @@ import { MultilangTextarea } from '@/features/farmacias/ui/components/editor/fie
 import { FieldPreview } from '@/features/farmacias/ui/components/editor/fields/FieldPreview';
 import { ImageGalleryField } from '@/features/farmacias/ui/components/editor/fields/ImageGalleryField';
 import { Button } from '@/shared/components/atoms/Button';
-import { Label } from '@/shared/components/atoms/Label';
 import { Modal } from '@/shared/components/molecules/Modal';
 import { ModalLocaleScope } from '@/features/farmacias/ui/components/editor/fields/ModalLocaleScope';
 import { SectionHeader } from '@/shared/components/molecules/SectionHeader';
-import { IconPicker } from '@/shared/components/molecules/IconPicker';
 import { IconoSVG } from '@/shared/components/atoms/IconoSVG';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
@@ -30,10 +28,12 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
+import { FilaLista } from '@/features/farmacias/ui/components/editor/fields/FilaLista';
+import { IconoField } from '@/features/farmacias/ui/components/editor/fields/IconoField';
 
 function crearTarjetaVacia(orden: number): HeroTarjetaFlotante {
   return {
@@ -43,88 +43,6 @@ function crearTarjetaVacia(orden: number): HeroTarjetaFlotante {
     subtitulo: {},
     orden,
   };
-}
-
-function TarjetaRow({
-  tarjeta,
-  currentLocale,
-  onEdit,
-  onRemove,
-}: {
-  tarjeta: HeroTarjetaFlotante;
-  currentLocale: 'es' | 'en' | 'ca';
-  onEdit: () => void;
-  onRemove: () => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: tarjeta.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 10 : undefined,
-  };
-
-  const titulo = tarjeta.titulo[currentLocale];
-  const sub = tarjeta.subtitulo[currentLocale];
-
-  return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        'group flex items-center gap-2 px-2 py-2 rounded-[var(--radius-sm)] border border-transparent bg-[var(--color-surface)]',
-        'hover:border-[var(--color-hairline)] transition-all',
-        isDragging && 'border-[var(--color-hairline-strong)] shadow-[var(--shadow-elevated)]',
-      )}
-    >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label="Reordenar tarjeta"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted-2)] hover:text-[var(--color-ink-2)] cursor-grab active:cursor-grabbing"
-      >
-        <NavIcon name="DotsSixVertical" size={14} weight="bold" />
-      </button>
-      <button
-        type="button"
-        onClick={onEdit}
-        className="flex-1 min-w-0 flex items-center gap-3 text-left"
-      >
-        <span className="shrink-0 h-9 w-9 rounded-[var(--radius-sm)] bg-[var(--color-accent-soft)] flex items-center justify-center text-[var(--color-accent-ink)]">
-          {tarjeta.icono ? (
-            <IconoSVG nombre={tarjeta.icono} size={18} />
-          ) : (
-            <NavIcon name="Image" size={14} />
-          )}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[13.5px] font-medium text-[var(--color-ink)] truncate">
-            {titulo || <span className="text-[var(--color-muted-2)] italic">Sin título</span>}
-          </span>
-          {sub && (
-            <span className="block text-[12px] text-[var(--color-muted)] truncate">{sub}</span>
-          )}
-        </span>
-      </button>
-      <button
-        type="button"
-        onClick={onEdit}
-        aria-label="Editar tarjeta"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]"
-      >
-        <NavIcon name="PencilSimple" size={13} />
-      </button>
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label="Eliminar tarjeta"
-        className="shrink-0 h-8 w-8 flex items-center justify-center rounded-[4px] text-[var(--color-muted)] hover:text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)]"
-      >
-        <NavIcon name="Trash" size={13} />
-      </button>
-    </li>
-  );
 }
 
 function TarjetaModal({
@@ -152,8 +70,8 @@ function TarjetaModal({
     <Modal
       open={open}
       onOpenChange={(o) => !o && onClose()}
-      title={isNew ? 'Nueva tarjeta flotante' : 'Editar tarjeta'}
-      description="Aparecen flotando sobre la imagen principal del hero. La posición se asigna automáticamente."
+      title={isNew ? 'Nueva tarjeta sobre la foto' : 'Editar tarjeta'}
+      description="Sale encima de la foto principal de la portada. Su posición se elige sola."
       footer={
         <>
           <Button variant="ghost" size="md" onClick={onClose}>Cancelar</Button>
@@ -166,14 +84,6 @@ function TarjetaModal({
       }
     >
       <div className="space-y-5">
-        <div>
-          <Label>Icono</Label>
-          <IconPicker
-            value={draft.icono}
-            onChange={(icono) => setDraft({ ...draft, icono })}
-          />
-        </div>
-        <div className="hairline" />
         <ModalLocaleScope values={[draft.titulo, draft.subtitulo]}>
           <MultilangInput
             label="Título"
@@ -190,6 +100,7 @@ function TarjetaModal({
             required
           />
         </ModalLocaleScope>
+        <IconoField value={draft.icono} onChange={(icono) => setDraft({ ...draft, icono })} />
       </div>
     </Modal>
   );
@@ -202,6 +113,8 @@ export function HeroTab() {
   // añadiera vacía, el autoguardado la descartaría (sin título) y cerraría el modal.
   const [editingDraft, setEditingDraft] = useState<HeroTarjetaFlotante | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [borrar, setBorrar] = useState<HeroTarjetaFlotante | null>(null);
+  const [recienAnadida, setRecienAnadida] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -228,8 +141,12 @@ export function HeroTab() {
   };
 
   const saveTarjeta = (t: HeroTarjetaFlotante) => {
-    if (modalMode === 'create') setTarjetas([...tarjetas, t]);
-    else setTarjetas(tarjetas.map((x) => (x.id === t.id ? t : x)));
+    if (modalMode === 'create') {
+      setTarjetas([...tarjetas, t]);
+      setRecienAnadida(t.id);
+      window.setTimeout(() => setRecienAnadida(null), 2500);
+      toast.success('Tarjeta añadida al final');
+    } else setTarjetas(tarjetas.map((x) => (x.id === t.id ? t : x)));
   };
 
   const closeModal = () => {
@@ -239,6 +156,12 @@ export function HeroTab() {
 
   const removeTarjeta = (id: string) =>
     setTarjetas(tarjetas.filter((x) => x.id !== id));
+
+  const mover = (indice: number, delta: -1 | 1) => {
+    const destino = indice + delta;
+    if (destino < 0 || destino >= tarjetas.length) return;
+    setTarjetas(arrayMove(tarjetas, indice, destino));
+  };
 
   const onDragEnd = (e: DragEndEvent) => {
     if (!e.over || e.active.id === e.over.id) return;
@@ -253,20 +176,20 @@ export function HeroTab() {
       <section aria-labelledby="sec-hero-textos">
         <SectionHeader
           id="sec-hero-textos"
-          title="Textos del hero"
-          hint="Chip, subtítulo y claim que aparecen sobre la primera pantalla de la landing. Los tres son obligatorios en castellano para publicar."
+          title="Textos de la portada"
+          hint="Lo primero que se lee al entrar en tu web. Los tres son obligatorios en castellano para publicar."
         />
 
         <div className="space-y-5">
           <div className="grid gap-3 md:grid-cols-[1fr_200px] md:items-start">
             <MultilangInput
-              label="Chip (etiqueta superior)"
+              label="Etiqueta pequeña sobre el título"
               required
               field="heroChip.es"
               value={farmacia.heroChip ?? {}}
               onChange={(v) => patch({ heroChip: v })}
               placeholder="Farmacia en Barcelona"
-              help="Texto pequeño sobre el título principal."
+              help="Por ejemplo: Farmacia en Barcelona."
             />
             <FieldPreview
               kind="heroChip"
@@ -275,13 +198,13 @@ export function HeroTab() {
           </div>
           <div className="grid gap-3 md:grid-cols-[1fr_200px] md:items-start">
             <MultilangInput
-              label="Subtítulo"
+              label="Frase principal"
               required
               field="heroSubtitulo.es"
               value={farmacia.heroSubtitulo ?? {}}
               onChange={(v) => patch({ heroSubtitulo: v })}
               placeholder="Tu farmacia familiar en el Eixample"
-              help="Línea destacada bajo el nombre de la farmacia."
+              help="La frase grande bajo el nombre de la farmacia."
             />
             <FieldPreview
               kind="heroTitulo"
@@ -289,15 +212,15 @@ export function HeroTab() {
             />
           </div>
           <MultilangTextarea
-            label="Claim / descripción corta"
+            label="Frase de apoyo"
             required
             field="descripcionCorta.es"
             value={farmacia.descripcionCorta}
             onChange={(v) => patch({ descripcionCorta: v })}
-            placeholder="Frase de apoyo bajo el subtítulo. Aparece también como meta description en Google."
+            placeholder="Una o dos frases que expliquen qué ofrece tu farmacia."
             rows={2}
             maxLength={180}
-            help="Obligatorio en castellano. Máximo 180 caracteres por idioma."
+            help="Sale bajo la frase principal y Google también puede usarla. Máximo 180 caracteres."
           />
         </div>
       </section>
@@ -309,8 +232,8 @@ export function HeroTab() {
         <SectionHeader
           id="sec-hero-imagenes"
           required
-          title="Imágenes del hero"
-          hint="Se rotan en la cabecera de la landing. Recomendado 1-6 imágenes horizontales, mínimo 1920×800."
+          title="Fotos de la portada"
+          hint="Van pasando en la parte de arriba de tu web. De 1 a 6 fotos horizontales, de 1920×800 como mínimo."
         />
 
         <ImageGalleryField
@@ -331,21 +254,22 @@ export function HeroTab() {
         <SectionHeader
           id="sec-hero-tarjetas"
           required
-          title="Tarjetas flotantes"
-          hint="De 1 a 3 tarjetas que flotan sobre la imagen principal del hero. La posición visual se asigna automáticamente."
+          title="Tarjetas sobre la foto"
+          hint="De 1 a 3 tarjetas pequeñas encima de la foto principal. Su posición se elige sola."
           actions={
-            <Button
-              variant="accent"
-              size="sm"
-              onClick={addTarjeta}
-              disabled={tarjetas.length >= 3}
-            >
-              <NavIcon name="Plus" size={13} />
-              <span className="hidden sm:inline">Añadir tarjeta</span>
-              <span className="sm:hidden">Añadir</span>
-            </Button>
+            tarjetas.length > 0 && tarjetas.length < 3 ? (
+              <Button variant="accent" size="sm" onClick={addTarjeta}>
+                <NavIcon name="Plus" size={14} />
+                Añadir tarjeta
+              </Button>
+            ) : null
           }
         />
+        {tarjetas.length >= 3 && (
+          <p className="m-0 mb-3 text-[13.5px] text-[var(--color-muted)]">
+            Has llegado al máximo de 3 tarjetas. Elimina una para añadir otra.
+          </p>
+        )}
 
         {tarjetas.length === 0 ? (
           <button
@@ -356,8 +280,8 @@ export function HeroTab() {
             <div className="mx-auto w-10 h-10 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
               <NavIcon name="Plus" size={18} />
             </div>
-            <p className="text-[13.5px] text-[var(--color-ink-2)] m-0">Añade una tarjeta flotante</p>
-            <p className="mt-1 text-[12px] text-[var(--color-muted)] m-0">
+            <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade una tarjeta</p>
+            <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
               Consulta gratuita, entrega a domicilio, guardia 24h…
             </p>
           </button>
@@ -365,13 +289,31 @@ export function HeroTab() {
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <SortableContext items={tarjetas.map((t) => t.id)} strategy={verticalListSortingStrategy}>
               <ul className="card p-1.5 space-y-0.5 list-none m-0">
-                {tarjetas.map((t) => (
-                  <TarjetaRow
+                {tarjetas.map((t, i) => (
+                  <FilaLista
                     key={t.id}
-                    tarjeta={t}
-                    currentLocale={currentLocale}
+                    id={t.id}
+                    indice={i}
+                    total={tarjetas.length}
+                    tipo="tarjeta"
+                    titulo={t.titulo[currentLocale] || t.titulo.es || ''}
+                    detalle={t.subtitulo?.[currentLocale] || t.subtitulo?.es || ''}
+                    destacar={recienAnadida === t.id}
+                    icono={
+                      <span
+                        className={cn(
+                          'h-9 w-9 rounded-[var(--radius-sm)] flex items-center justify-center',
+                          t.icono
+                            ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                            : 'bg-[var(--color-surface-sunken)] text-[var(--color-muted)]',
+                        )}
+                      >
+                        {t.icono ? <IconoSVG nombre={t.icono} size={18} /> : <NavIcon name="Image" size={14} />}
+                      </span>
+                    }
                     onEdit={() => editTarjeta(t.id)}
-                    onRemove={() => removeTarjeta(t.id)}
+                    onRemove={() => setBorrar(t)}
+                    onMove={(d) => mover(i, d)}
                   />
                 ))}
               </ul>
@@ -387,6 +329,16 @@ export function HeroTab() {
           onClose={closeModal}
         />
         <ListFieldError field="heroTarjetasFlotantes" />
+        <ConfirmDialog
+          open={borrar !== null}
+          onOpenChange={(o) => !o && setBorrar(null)}
+          title="Eliminar tarjeta"
+          description={`Vas a eliminar «${borrar?.titulo.es || 'esta tarjeta'}». No se puede deshacer.`}
+          onConfirm={() => {
+            if (borrar) removeTarjeta(borrar.id);
+            setBorrar(null);
+          }}
+        />
       </section>
     </div>
   );

@@ -25,9 +25,10 @@ export function LabelHelpIcon({
         <button
           type="button"
           aria-label={ariaLabel}
-          className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[var(--color-muted-2)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
+          // Zona táctil de 44px en móvil y 24px en escritorio; márgenes negativos para no mover la etiqueta.
+          className="inline-flex h-11 w-11 -my-3.5 -mx-3 sm:h-6 sm:w-6 sm:-my-1 sm:-mx-1 items-center justify-center rounded-full text-[var(--color-muted)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
         >
-          <NavIcon name="Info" size={11} />
+          <NavIcon name="Info" size={13} />
         </button>
       </Tooltip.Trigger>
       <Tooltip.Portal>
@@ -35,7 +36,7 @@ export function LabelHelpIcon({
           side={side}
           sideOffset={6}
           collisionPadding={8}
-          className="z-50 max-w-[280px] bg-[var(--color-ink)] text-[var(--color-surface)] text-[11.5px] leading-[1.5] px-2.5 py-1.5 rounded-[6px] shadow-[var(--shadow-elevated)] data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0"
+          className="z-50 max-w-[280px] bg-[var(--color-ink)] text-[var(--color-surface)] text-[12.5px] leading-[1.5] px-2.5 py-1.5 rounded-[6px] shadow-[var(--shadow-elevated)] data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0"
         >
           {children}
           <Tooltip.Arrow className="fill-[var(--color-ink)]" />

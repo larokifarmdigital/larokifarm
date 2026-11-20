@@ -27,13 +27,22 @@ export function Switch({
       disabled={disabled}
       aria-label={ariaLabel}
       aria-describedby={ariaDescribedby}
+      // El botón mide 44px en móvil (zona táctil); el carril visible sigue siendo 38×22.
       className={cn(
-        'relative inline-flex h-[22px] w-[38px] shrink-0 cursor-pointer items-center rounded-full transition-colors duration-[var(--dur-fast)]',
-        'focus-visible:outline-none focus-visible:[box-shadow:var(--shadow-focus)] disabled:cursor-not-allowed disabled:opacity-50',
-        checked ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-hairline-strong)]',
+        'group relative inline-flex h-11 w-12 sm:h-6 sm:w-10 shrink-0 cursor-pointer items-center justify-center rounded-full',
+        'disabled:cursor-not-allowed disabled:opacity-50',
       )}
     >
-      <SwitchPrimitive.Thumb className="block h-[18px] w-[18px] translate-x-[2px] rounded-full bg-white shadow-sm transition-transform duration-[var(--dur-fast)] data-[state=checked]:translate-x-[18px]" />
+      <span
+        aria-hidden
+        className={cn(
+          'relative inline-flex h-[22px] w-[38px] items-center rounded-full transition-colors duration-[var(--dur-fast)]',
+          // Apagado: borde con contraste 3:1 (WCAG 1.4.11)
+          checked ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-control-border)]',
+        )}
+      >
+        <SwitchPrimitive.Thumb className="block h-[18px] w-[18px] translate-x-[2px] rounded-full bg-white shadow-sm transition-transform duration-[var(--dur-fast)] data-[state=checked]:translate-x-[18px]" />
+      </span>
     </SwitchPrimitive.Root>
   );
 }
