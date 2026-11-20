@@ -31,7 +31,8 @@ export function FarmaciasCardList({
             key={f.id}
             className={cn(
               'card p-3 flex items-center gap-3',
-              dimmed && 'opacity-70',
+              // Archivadas: fondo apagado en vez de opacidad (contraste del texto)
+              dimmed && 'bg-[var(--color-surface-2)]',
             )}
           >
             <Link
@@ -47,9 +48,7 @@ export function FarmaciasCardList({
                   <Chip tone={st.tone}>{st.label}</Chip>
                 </span>
                 <span className="flex items-center gap-2 text-[12px] text-[var(--color-muted)] mt-0.5 flex-wrap">
-                  <span className="font-mono-tabular truncate">/{f.slug}</span>
-                  {f.ciudad && <><span aria-hidden>·</span><span>{f.ciudad}</span></>}
-                  <span aria-hidden>·</span>
+                  {f.ciudad && <><span>{f.ciudad}</span><span aria-hidden>·</span></>}
                   <span>{formatRelativeDate(f.updatedAt)}</span>
                 </span>
               </span>

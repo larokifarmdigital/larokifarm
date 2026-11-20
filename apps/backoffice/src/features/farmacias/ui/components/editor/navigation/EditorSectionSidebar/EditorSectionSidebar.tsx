@@ -37,7 +37,7 @@ export function EditorSectionSidebar({
   return (
     <aside
       aria-label="Secciones de la farmacia"
-      className="sticky top-[calc(3.5rem+56px)] self-start bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[12px] p-[10px_8px] max-h-[calc(100vh-10rem)] overflow-y-auto"
+      className="sticky top-[56px] lg:top-[calc(3.5rem+56px)] self-start bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[12px] p-[10px_8px] max-h-[calc(100vh-10rem)] overflow-y-auto"
     >
       {GROUPS.map((group) => (
         <div key={group.key} className="px-[4px] pb-[4px]">

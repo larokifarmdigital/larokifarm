@@ -33,7 +33,7 @@ export function EditorSectionPicker({
       aria-expanded={isOpen}
       aria-label="Cambiar de sección"
       onClick={onToggle}
-      className="sticky top-[calc(3.5rem+56px)] z-[4] flex w-full items-center gap-[10px] px-[14px] py-[11px] bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[8px] shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition-colors mb-[16px] hover:border-[var(--color-hairline-strong)] active:border-[var(--color-accent)]"
+      className="sticky top-[56px] lg:top-[calc(3.5rem+56px)] z-[4] flex w-full items-center gap-[10px] px-[14px] py-[11px] bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[8px] shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition-colors mb-[16px] hover:border-[var(--color-hairline-strong)] active:border-[var(--color-accent)]"
     >
       <span
         aria-hidden

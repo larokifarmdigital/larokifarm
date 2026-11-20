@@ -1,6 +1,7 @@
 import { prisma } from '@/shared/lib/prisma';
 import type {
   CreateReportInput,
+  OpenReportItem,
   Report,
   ReportCounts,
   ReportRepository,
@@ -107,5 +108,28 @@ export class ReportRepositoryPrisma implements ReportRepository {
       map[g.comparisonId] = bucket;
     }
     return map;
+  }
+
+  async listOpen(limit: number): Promise<OpenReportItem[]> {
+    const rows = await prisma.comparisonReport.findMany({
+      where: { status: 'OPEN' },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        comparisonId: true,
+        note: true,
+        createdAt: true,
+        comparison: { select: { supplier: true, business: { select: { name: true } } } },
+      },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      comparisonId: r.comparisonId,
+      note: r.note,
+      createdAt: r.createdAt,
+      supplier: r.comparison.supplier,
+      businessName: r.comparison.business.name,
+    }));
   }
 }

@@ -12,5 +12,11 @@ export async function FarmaciaEditorView({ id }: { id: string }) {
   const [farmacia, user] = await Promise.all([getFarmaciaRepository().getFarmacia(id), getCurrentUser()]);
   if (!farmacia) notFound();
 
-  return <FarmaciaEditor initial={farmacia} readOnly={!user || !canEditContent(user)} />;
+  return (
+    <FarmaciaEditor
+      initial={farmacia}
+      readOnly={!user || !canEditContent(user)}
+      volverA={user?.rol === 'admin' ? '/farmacias' : '/inicio'}
+    />
+  );
 }

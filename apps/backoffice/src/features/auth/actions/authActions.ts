@@ -60,14 +60,14 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
  * `/farmacias/x?y`. Nada de `//evil.com` ni otros dominios (open redirect).
  */
 function safeReturnTo(raw: FormDataEntryValue | null): string {
-  if (typeof raw !== 'string' || !raw) return '/farmacias';
+  if (typeof raw !== 'string' || !raw) return '/inicio';
   try {
     const u = new URL(raw, 'http://local.invalid');
     const path = u.pathname + u.search;
-    if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/login')) return '/farmacias';
+    if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/login')) return '/inicio';
     return path;
   } catch {
-    return '/farmacias';
+    return '/inicio';
   }
 }
 

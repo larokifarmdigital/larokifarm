@@ -4,20 +4,12 @@ import { getFarmaciaRepository } from '@/core/farmacias';
 import { Button } from '@/shared/components/atoms/Button';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { formatRelativeDate } from '@/shared/lib/format';
-import { FarmaciaStats } from '@/features/farmacias/ui/components/FarmaciaStats';
 import { FarmaciasList } from '@/features/farmacias/ui/components/FarmaciasList';
 
 export async function FarmaciasListView() {
   const [farmacias, user] = await Promise.all([getFarmaciaRepository().listFarmacias(), getCurrentUser()]);
   // Crear/duplicar farmacias es de SUPER_ADMIN (el servidor también lo exige).
   const isAdmin = user?.rol === 'admin';
-
-  const counts = {
-    total: farmacias.length,
-    published: farmacias.filter((f) => f.status === 'published').length,
-    draft: farmacias.filter((f) => f.status === 'draft').length,
-    archived: farmacias.filter((f) => f.status === 'archived').length,
-  };
 
   // Última actualización global entre todas las farmacias — da contexto en el header
   // sin tener que entrar al listado.
@@ -31,11 +23,10 @@ export async function FarmaciasListView() {
     <div className="max-w-[1200px] mx-auto px-3 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-16 sm:pb-24">
       <header className="flex flex-col gap-4 mb-6 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="eyebrow mb-2">Contenido</p>
           <h1 className="h-display m-0">Farmacias</h1>
-          <p className="mt-2 text-[14px] text-[var(--color-muted)] max-w-lg text-pretty">
-            Cada farmacia es la fuente de una landing pública. Edita textos,
-            servicios y horarios; publica cuando estés listo.
+          <p className="mt-2 text-[14.5px] text-[var(--color-muted)] max-w-lg text-pretty">
+            Cada farmacia tiene su web. Entra para editar sus textos, fotos,
+            servicios y horario, y publícala cuando esté lista.
           </p>
           {lastUpdate && (
             <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[var(--color-muted-2)] font-mono-tabular">
@@ -58,8 +49,6 @@ export async function FarmaciasListView() {
         </div>
         )}
       </header>
-
-      <FarmaciaStats counts={counts} />
 
       <FarmaciasList farmacias={farmacias} canDuplicate={isAdmin} canWrite={!!user && canEditContent(user)} />
     </div>

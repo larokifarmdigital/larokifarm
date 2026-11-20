@@ -21,7 +21,7 @@
   --color-ink: #0B1829;
   --color-ink-2: #1B2A44;
   --color-muted: #5B6B82;
-  --color-muted-2: #8A98AE;
+  --color-muted-2: #5F6E85;          /* ≥4,5:1 sobre bg y surface-2 (antes #8A98AE, 2,6:1) */
   --color-hairline: #DAE3EE;         /* bordes 1px (más azulado, menos gris plano) */
   --color-hairline-strong: #BFCDDD;  /* bordes énfasis, hover */
 
@@ -170,6 +170,23 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Cursor de mano en todo lo clicable: Tailwind v4 dejó los <button> con
+   cursor por defecto. Va en @layer base para que una utilidad pueda cambiarlo. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  summary,
+  select,
+  label[for] {
+    cursor: pointer;
+  }
+}
+
+/* Estilos de componente DENTRO de @layer components: así las utilidades de
+   Tailwind (pl-9, pr-11, p-4…) que se pasan a .field/.card/.label mandan.
+   Fuera de capa, estas reglas pisaban cualquier utilidad (la lupa del buscador
+   tapaba el texto, la contraseña larga quedaba bajo el botón del ojo). */
+@layer components {
 /* ============================================================
  * Utilidades semánticas
  * ============================================================ */
@@ -552,6 +569,7 @@ dialog.editor-section-sheet::backdrop {
 @media (prefers-reduced-motion: reduce) {
   dialog.editor-section-sheet[open],
   dialog.editor-section-sheet::backdrop { animation: none }
+}
 }
 
 /* -------------------------------------------------------------------------- */

@@ -84,6 +84,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
         publishedStatus: true,
         idiomasActivos: true,
         updatedAt: true,
+        lastPublishedAt: true,
         logoUrl: true,
         imagenes: {
           where: { role: 'logo' },
@@ -107,6 +108,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
           ? (r.idiomasActivos as unknown as Farmacia['idiomasActivos'])
           : ['es'],
         updatedAt: r.updatedAt.toISOString(),
+        ultimaPublicacion: r.lastPublishedAt?.toISOString(),
         logo: logoImg
           ? {
               id: logoImg.id,

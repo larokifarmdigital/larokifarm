@@ -56,17 +56,26 @@ const COMPONENTS: Record<string, React.ComponentType> = {
   seo: SeoTab,
 };
 
-export function FarmaciaEditor({ initial, readOnly = false }: { initial: Farmacia; readOnly?: boolean }) {
+export function FarmaciaEditor({
+  initial,
+  readOnly = false,
+  volverA = '/farmacias',
+}: {
+  initial: Farmacia;
+  readOnly?: boolean;
+  /** Destino de la flecha de volver: el listado (admin) o el Inicio (personal). */
+  volverA?: string;
+}) {
   return (
     <FarmaciaEditorProvider initial={initial} readOnly={readOnly}>
-      <FarmaciaEditorLayout />
+      <FarmaciaEditorLayout volverA={volverA} />
     </FarmaciaEditorProvider>
   );
 }
 
 /** La sección activa vive en el contexto: el aviso de publicar y el chip de
  *  salud también navegan a una sección. */
-function FarmaciaEditorLayout() {
+function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
   const { activeSectionKey, goToSection, readOnly } = useFarmaciaEditor();
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -99,7 +108,7 @@ function FarmaciaEditorLayout() {
 
   return (
     <>
-      <EditorTopBar />
+      <EditorTopBar volverA={volverA} />
 
       <div className="max-w-[1200px] mx-auto px-3 sm:px-6 pt-6 sm:pt-8 pb-40 sm:pb-24">
         <div className="grid gap-5 sm:gap-7 grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)]">

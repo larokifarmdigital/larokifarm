@@ -16,24 +16,23 @@ archivos — evita re-leer las 500-1000 líneas del editor solo para orientarse.
 - **next-auth v5** (adoptado de conciliador-albaranes)
 - Login: usuarios reales de la tabla `users` (Neon compartida). No hay credenciales demo
 
-## Paleta y DNA visual (Humblytics-inspired)
+## Paleta y DNA visual (actualizado 20-11-2026)
 
-Todo en `src/app/globals.css` como CSS vars:
-- **`--color-bg`**: `#FAF6F1` crema — reemplaza el blanco puro
-- **`--color-ink`**: `#1A0F0A` chocolate — nunca negro puro
-- **`--color-accent`**: `#F84A00` naranja Humblytics — reservado para
-  **acciones de commitment** (Publicar, Publicar cambios, Nueva farmacia,
-  Entrar en el login, botones "Añadir servicio", chip activo del pill nav)
-- **`--color-hairline`**: `#E8E1D8` warm — todos los bordes 1px
-- **`--shadow-focus`**: `0 0 0 3px var(--color-accent-tint)` — halo naranja soft
-  al focus
-- **Type**: Inter Tight (todo) + Geist Mono (`.font-mono-tabular` para códigos,
-  slugs, times, contadores)
-- **Motion**: `cubic-bezier(0.32, 0.72, 0, 1)` — 200ms base, 140ms fast
-
-⚠️ **NUNCA** uses botones negros/chocolate para acciones principales — el
-mockup dice ink para "Guardar" (que no aparece porque hay autosave) y accent
-naranja para todo lo que compromete.
+Todo en `src/app/globals.css` como CSS vars (`@theme`):
+- **Fondo** `--color-bg #F4F7FB` (azul muy claro) · superficies `--color-surface`
+  (blanco), `--color-surface-2 #EEF3F9`, `--color-surface-sunken #E4ECF4`.
+- **Texto** `--color-ink #0B1829` · `--color-muted #5B6B82` · `--color-muted-2
+  #5F6E85` (≥4,5:1 en todos los fondos; antes #8A98AE daba 2,6:1).
+- **Acento** `--color-accent #1265b5` (azul) para acciones principales.
+- **Tipo**: Gilroy (sans) + Geist Mono (`.font-mono-tabular`).
+- **Capas CSS**: los estilos de componente (`.field`, `.card`, `.label`,
+  `.chip`…) van DENTRO de `@layer components`, para que las utilidades de
+  Tailwind que se les pasan manden. Fuera de capa pisaban `pl-9`/`pr-11` (la
+  lupa tapaba el texto del buscador). El cursor de mano global está en
+  `@layer base` (Tailwind v4 lo quitó de los `<button>`).
+- **Logo**: único sitio en `shared/components/atoms/BrandMark` (provisional).
+- **Soporte**: `NEXT_PUBLIC_SUPPORT_EMAIL` (`shared/lib/support.ts`). Si no
+  está definido, los enlaces de ayuda no se muestran.
 
 ## Estructura de carpetas (skill `nextjs-conventions`)
 
@@ -177,7 +176,12 @@ Diferencias schema vs UI documentadas:
 
 1. **Naranja = commitment**. Nunca botones negros para publicar/entrar/crear.
 2. **Section title sin numeración** (`01 · General` fue quitado 22-09-2026).
-3. **Nav: pill flotante bottom con 4 grupos** (no single-scroll, no sidebar).
+3. **Navegación del editor**: columna de grupos a la izquierda (escritorio) y
+   barra inferior (móvil). **Shell de la app** (fase 1, 20-11-2026): sidebar
+   sin títulos de sección — Inicio · Farmacias (admin) / Mi web (personal, va
+   directo al editor de SU farmacia) · Albaranes (Nueva conciliación,
+   Historial). Config en `features/shell/ui/lib/navConfig.ts` (`buildNav`),
+   lista compartida sidebar/drawer en `NavList`.
 4. **En móvil: 3 stickies apilables** — TopBar → segmented sub-nav (si aplica)
    → LangTabs (si es multilang). Action bar bottom SIEMPRE fija (`z-40 +
    will-change`).
@@ -196,6 +200,16 @@ Diferencias schema vs UI documentadas:
 11. **Módulos WIP ocultos del sidebar** con `hidden: true` en
     `features/shell/ui/lib/navConfig.ts` hasta estar listos para producción —
     la ruta sigue accesible por URL para desarrollo, pero el cliente no la ve.
+12. **Pantalla de Inicio** (`/inicio`, destino tras login): personal de
+    farmacia → tarjeta "Tu web" con estado en lenguaje llano ("Publicada y al
+    día" / "Tienes cambios sin publicar" = `updatedAt > lastPublishedAt`) +
+    accesos directos a secciones del editor + últimas conciliaciones. Admin →
+    "Requiere atención" (borradores, cambios sin publicar, informes de error
+    abiertos) + farmacias + últimas conciliaciones.
+13. **Roles en lenguaje llano** (`ROL_LABEL`): Administrador · Responsable de
+    farmacia · Solo consulta.
+14. **Accesibilidad medida**: tras cambios de UI, agente `ux-a11y-auditor`
+    hasta 0 incidencias (WCAG AA, cursor, zonas táctiles ≥24px/44px en móvil).
 
 ## Fases del roadmap
 

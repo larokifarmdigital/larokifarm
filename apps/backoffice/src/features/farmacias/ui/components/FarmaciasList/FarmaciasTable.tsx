@@ -47,7 +47,8 @@ export function FarmaciasTable({
               className={cn(
                 'group border-b border-[var(--color-hairline)] last:border-b-0 hover:bg-[var(--color-surface-sunken)]/60 transition-colors',
                 i % 2 === 1 && 'bg-[var(--color-surface-2)]',
-                dimmed && 'opacity-70',
+                // Archivadas: fondo apagado en vez de opacidad (la opacidad dejaba el texto a 2,7:1)
+                dimmed && 'bg-[var(--color-surface-sunken)]/50',
               )}
             >
               <td className="pl-4 pr-2 py-3">
@@ -59,9 +60,6 @@ export function FarmaciasTable({
                   <span className="min-w-0">
                     <span className="block truncate text-[var(--color-ink)] font-medium">
                       {f.nombre}
-                    </span>
-                    <span className="block truncate text-[12px] text-[var(--color-muted)] font-mono-tabular">
-                      /{f.slug}
                     </span>
                   </span>
                 </Link>

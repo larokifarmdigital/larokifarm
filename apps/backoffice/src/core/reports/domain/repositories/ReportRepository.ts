@@ -17,6 +17,16 @@ export interface ReportCounts {
   resolved: number;
 }
 
+/** Informe abierto con el contexto mínimo para listarlo (Inicio del admin). */
+export interface OpenReportItem {
+  id: string;
+  comparisonId: string;
+  note: string;
+  createdAt: Date;
+  supplier: string | null;
+  businessName: string;
+}
+
 export interface ReportRepository {
   create(input: CreateReportInput): Promise<Report>;
   resolve(input: ResolveReportInput): Promise<Report | null>;
@@ -24,4 +34,6 @@ export interface ReportRepository {
   listByComparison(comparisonId: string): Promise<Report[]>;
   /** Counts by status keyed by comparisonId. Missing ids mean zero reports. */
   countByComparisonIds(ids: string[]): Promise<Record<string, ReportCounts>>;
+  /** Informes abiertos más recientes (solo SUPER_ADMIN: sin filtro de negocio). */
+  listOpen(limit: number): Promise<OpenReportItem[]>;
 }

@@ -12,6 +12,6 @@ export default async function LoginPage({
   // src/proxy.ts (Auth.js) redirige con ?callbackUrl=<url absoluta>.
   const { from, callbackUrl } = await searchParams;
   // Sesión válida (usuario activo en BD) → fuera del login.
-  if (await getCurrentUser()) redirect('/farmacias');
+  if (await getCurrentUser()) redirect('/inicio');
   return <LoginView from={callbackUrl ?? from} />;
 }

@@ -3,29 +3,20 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as Tooltip from '@radix-ui/react-tooltip';
-import {
-  SECTION_LABELS,
-  visibleNavItems,
-  type NavRole,
-  type NavSection,
-  isNavItemActive,
-} from '@/features/shell/ui/lib/navConfig';
-import { NavIcon, type IconName } from '@/shared/components/atoms/NavIcon';
+import { buildNav } from '@/features/shell/ui/lib/navConfig';
+import type { ShellInfo } from '@/features/shell/ui/lib/shellInfo';
+import { NavList } from '@/features/shell/ui/components/NavList';
 import { useSidebar } from '@/features/shell/ui/components/SidebarProvider';
+import { BrandMark } from '@/shared/components/atoms/BrandMark';
+import { NavIcon } from '@/shared/components/atoms/NavIcon';
+import { supportMailto } from '@/shared/lib/support';
 import { cn } from '@/shared/lib/cn';
 
-const SECTIONS: NavSection[] = ['principal', 'operaciones', 'sistema'];
-
-export function AppSidebar({
-  userName,
-  userRole,
-}: {
-  userName: string;
-  userRole: NavRole | null;
-}) {
+export function AppSidebar({ shell }: { shell: ShellInfo }) {
   const pathname = usePathname();
   const { collapsed } = useSidebar();
-  const items = visibleNavItems(userRole);
+  const items = buildNav({ role: shell.rol, miFarmaciaId: shell.miFarmacia?.id });
+  const ayuda = supportMailto('Ayuda con el backoffice');
 
   return (
     <Tooltip.Provider delayDuration={200}>
@@ -35,149 +26,47 @@ export function AppSidebar({
         className={cn(
           'hidden lg:flex flex-col shrink-0 border-r border-[var(--color-hairline)] bg-[var(--color-surface-2)] h-[100dvh] sticky top-0',
           'transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]',
-          collapsed ? 'w-[56px]' : 'w-[240px]',
+          collapsed ? 'w-[64px]' : 'w-[248px]',
         )}
       >
-        <div className="px-3 py-4 border-b border-[var(--color-hairline)]">
+        <div className={cn('h-14 flex items-center border-b border-[var(--color-hairline)]', collapsed ? 'justify-center' : 'px-4')}>
           <Link
-            href="/farmacias"
-            aria-label="Ir al inicio del backoffice"
-            className={cn(
-              'flex items-center gap-2',
-              collapsed && 'justify-center',
-            )}
+            href="/inicio"
+            aria-label={collapsed ? 'Larokifarm, inicio' : undefined}
+            className="flex items-center rounded-[8px]"
           >
-            <span
-              aria-hidden
-              className="inline-flex h-7 w-7 items-center justify-center rounded-[6px] bg-[var(--color-accent)] text-white text-[13px] font-semibold tracking-[-0.02em] shrink-0"
-            >
-              l
-            </span>
-            {!collapsed && (
-              <span className="text-[15px] font-medium tracking-[-0.015em] text-[var(--color-ink)] truncate">
-                larokifarm
+            {collapsed ? (
+              <span
+                aria-hidden
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] bg-[var(--color-accent)] text-white text-[14px] font-semibold"
+              >
+                L
               </span>
+            ) : (
+              <BrandMark />
             )}
           </Link>
         </div>
 
-        <nav className={cn('flex-1 overflow-y-auto py-3', collapsed ? 'px-2' : 'px-3')}>
-          <div className={cn('space-y-4', !collapsed && 'space-y-6')}>
-            {SECTIONS.map((section) => {
-              const sectionItems = items.filter((i) => i.section === section);
-              if (sectionItems.length === 0) return null;
-              return (
-                <div key={section}>
-                  {!collapsed && (
-                    <div className="px-2 mb-1.5 eyebrow text-[10px]">
-                      {SECTION_LABELS[section]}
-                    </div>
-                  )}
-                  <ul className="space-y-0.5">
-                    {sectionItems.map((item) => {
-                      const active = isNavItemActive(item.href, pathname);
-                      const link = (
-                        <Link
-                          href={item.href}
-                          aria-current={active ? 'page' : undefined}
-                          aria-label={collapsed ? item.label : undefined}
-                          className={cn(
-                            'group flex items-center rounded-[6px] transition-colors duration-100',
-                            collapsed
-                              ? 'h-9 w-9 justify-center mx-auto'
-                              : 'px-2.5 py-1.5 gap-2.5 text-[13.5px]',
-                            active
-                              ? 'bg-[var(--color-surface)] text-[var(--color-ink)] shadow-[var(--shadow-hairline)]'
-                              : 'text-[var(--color-ink-2)] hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)]',
-                          )}
-                        >
-                          <NavIcon
-                            name={item.icon as IconName}
-                            size={collapsed ? 17 : 16}
-                            weight={active ? 'fill' : 'regular'}
-                            className={active ? 'text-[var(--color-accent)]' : ''}
-                          />
-                          {!collapsed && (
-                            <>
-                              <span className="flex-1 truncate">{item.label}</span>
-                              {item.badge === 'wip' && (
-                                <span className="text-[9.5px] uppercase tracking-wider font-semibold text-[var(--color-muted-2)] px-1.5 py-0.5 rounded bg-[var(--color-surface-sunken)]">
-                                  En obra
-                                </span>
-                              )}
-                              {item.badge === 'nuevo' && (
-                                <span className="text-[9.5px] uppercase tracking-wider font-semibold text-[var(--color-accent-ink)] px-1.5 py-0.5 rounded bg-[var(--color-accent-soft)]">
-                                  Nuevo
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </Link>
-                      );
-
-                      return (
-                        <li key={item.href}>
-                          {collapsed ? (
-                            <Tooltip.Root>
-                              <Tooltip.Trigger asChild>{link}</Tooltip.Trigger>
-                              <Tooltip.Portal>
-                                <Tooltip.Content
-                                  side="right"
-                                  sideOffset={8}
-                                  className="bg-[var(--color-ink)] text-white text-[12px] px-2 py-1 rounded-[4px] shadow-[var(--shadow-elevated)]"
-                                >
-                                  {item.label}
-                                  {item.badge === 'wip' && ' · en obra'}
-                                  <Tooltip.Arrow className="fill-[var(--color-ink)]" />
-                                </Tooltip.Content>
-                              </Tooltip.Portal>
-                            </Tooltip.Root>
-                          ) : (
-                            link
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
+        <nav aria-label="Secciones" className={cn('flex-1 overflow-y-auto py-4', collapsed ? 'px-2' : 'px-3')}>
+          <NavList items={items} pathname={pathname} collapsed={collapsed} />
         </nav>
 
-        <div className={cn('border-t border-[var(--color-hairline)] py-2.5', collapsed ? 'px-2' : 'px-3')}>
-          {collapsed ? (
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <div className="flex items-center justify-center h-9 rounded-[6px] text-[var(--color-muted)]">
-                  <NavIcon name="User" size={16} />
-                </div>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  side="right"
-                  sideOffset={8}
-                  className="bg-[var(--color-ink)] text-white text-[12px] px-2 py-1 rounded-[4px]"
-                >
-                  {userName}
-                  <Tooltip.Arrow className="fill-[var(--color-ink)]" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          ) : (
-            <>
-              <div className="flex items-center gap-2 px-2 py-1.5 rounded-[6px] text-[12px] text-[var(--color-muted)]">
-                <NavIcon name="User" size={14} />
-                <span className="truncate">{userName}</span>
-              </div>
-              <div className="mt-1 px-2 text-[10.5px] text-[var(--color-muted-2)] flex items-center gap-1.5">
-                <kbd>⌘</kbd>
-                <kbd>K</kbd>
-                <span>para buscar</span>
-              </div>
-            </>
-          )}
-        </div>
+        {ayuda && (
+          <div className={cn('border-t border-[var(--color-hairline)] py-3', collapsed ? 'px-2' : 'px-3')}>
+            <a
+              href={ayuda}
+              aria-label={collapsed ? 'Ayuda y soporte' : undefined}
+              className={cn(
+                'flex items-center rounded-[8px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)] transition-colors',
+                collapsed ? 'h-10 w-10 justify-center mx-auto' : 'min-h-9 px-2.5 gap-2.5 text-[14px]',
+              )}
+            >
+              <NavIcon name="Question" size={collapsed ? 18 : 16} className="text-[var(--color-muted)]" />
+              {!collapsed && 'Ayuda y soporte'}
+            </a>
+          </div>
+        )}
       </aside>
     </Tooltip.Provider>
   );

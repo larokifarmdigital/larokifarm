@@ -2,6 +2,13 @@ import Image from 'next/image';
 import type { FarmaciaSummary } from '@/core/farmacias/domain';
 import { cn } from '@/shared/lib/cn';
 
+/** Pide al servidor una miniatura (×2 para pantallas retina) en vez del
+ *  original: el logo de Torrents mide 2815px y tardaba en pintarse a 36px. */
+function miniatura(url: string, size: number): string {
+  if (!url.includes('/api/content-images/')) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}w=${size * 2}&auto=format`;
+}
+
 /** Logo de la farmacia o su inicial si no tiene. */
 export function FarmaciaAvatar({
   farmacia,
@@ -18,7 +25,7 @@ export function FarmaciaAvatar({
       )}
     >
       {farmacia.logo ? (
-        <Image src={farmacia.logo.url} alt="" width={size} height={size} className="object-cover" unoptimized />
+        <Image src={miniatura(farmacia.logo.url, size)} alt="" width={size} height={size} className="object-cover" unoptimized />
       ) : (
         <span
           className={cn(

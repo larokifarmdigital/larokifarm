@@ -2,71 +2,81 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { UserMenu } from '@/features/shell/ui/components/UserMenu';
 import { MobileNavDrawer } from '@/features/shell/ui/components/MobileNavDrawer';
-import { CommandStub } from '@/features/shell/ui/components/CommandStub';
 import { useSidebar } from '@/features/shell/ui/components/SidebarProvider';
-import type { Usuario } from '@/core/auth/domain';
-import { NAV_ITEMS } from '@/features/shell/ui/lib/navConfig';
+import type { ShellInfo } from '@/features/shell/ui/lib/shellInfo';
+import { cn } from '@/shared/lib/cn';
 
 type Crumb = { label: string; href?: string };
 
-/** Ids internos (cuid) no se enseñan: el nombre ya está en el h1 de la página. */
-function segmentLabel(parent: string | undefined, seg: string): string {
-  if (parent === 'farmacias') {
-    if (seg === 'nueva') return 'Nueva';
-    if (/^c[a-z0-9]{20,}$/.test(seg)) return 'Editar farmacia';
-  }
-  if (parent === 'albaranes' && seg === 'historial') return 'Historial';
-  if (parent === 'historial') return 'Detalle';
-  return decodeURIComponent(seg);
-}
+const ES_ID = /^c[a-z0-9]{20,}$/;
 
-function buildCrumbs(pathname: string): Crumb[] {
-  const segs = pathname.split('/').filter(Boolean);
-  const crumbs: Crumb[] = [];
-  let acc = '';
-  for (let i = 0; i < segs.length; i++) {
-    acc += `/${segs[i]}`;
-    const nav = NAV_ITEMS.find((n) => n.href === acc);
-    const label = nav?.label ?? segmentLabel(segs[i - 1], segs[i]);
-    crumbs.push({ label, href: i === segs.length - 1 ? undefined : acc });
-  }
-  return crumbs;
-}
-
-export function AppTopbar({ user }: { user: Usuario }) {
-  const pathname = usePathname();
-  const crumbs = useMemo(() => buildCrumbs(pathname), [pathname]);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [commandOpen, setCommandOpen] = useState(false);
-  const { collapsed, toggle } = useSidebar();
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setCommandOpen(true);
+/** Migas por ruta conocida (sin casa: "Inicio" ya está en el menú). */
+function buildCrumbs(pathname: string, shell: ShellInfo): Crumb[] {
+  const s = pathname.split('/').filter(Boolean);
+  const esAdmin = shell.rol === 'admin';
+  switch (s[0]) {
+    case 'inicio':
+      return [{ label: 'Inicio' }];
+    case 'farmacias':
+      if (s.length === 1) return [{ label: 'Farmacias' }];
+      if (s[1] === 'nueva') return [{ label: 'Farmacias', href: '/farmacias' }, { label: 'Nueva farmacia' }];
+      if (ES_ID.test(s[1] ?? '')) {
+        return esAdmin
+          ? [{ label: 'Farmacias', href: '/farmacias' }, { label: 'Editar farmacia' }]
+          : [{ label: 'Mi web' }];
       }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+      break;
+    case 'albaranes':
+      if (s.length === 1) return [{ label: 'Albaranes', href: '/albaranes' }, { label: 'Nueva conciliación' }];
+      if (s[1] === 'historial') {
+        return s.length === 2
+          ? [{ label: 'Albaranes', href: '/albaranes' }, { label: 'Historial' }]
+          : [
+              { label: 'Albaranes', href: '/albaranes' },
+              { label: 'Historial', href: '/albaranes/historial' },
+              { label: 'Detalle' },
+            ];
+      }
+      break;
+  }
+  return s.map((seg, i) => ({
+    label: decodeURIComponent(seg),
+    href: i === s.length - 1 ? undefined : `/${s.slice(0, i + 1).join('/')}`,
+  }));
+}
+
+export function AppTopbar({ shell }: { shell: ShellInfo }) {
+  const pathname = usePathname();
+  const crumbs = useMemo(() => buildCrumbs(pathname, shell), [pathname, shell]);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const abrirMenuRef = useRef<HTMLButtonElement>(null);
+  const { collapsed, toggle } = useSidebar();
+  // En el editor de una farmacia, en móvil, el editor ya tiene su propia
+  // cabecera fija: la de la app hace scroll para no apilar dos barras fijas.
+  const enEditor = /^\/farmacias\/c[a-z0-9]{20,}/.test(pathname);
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-[var(--color-bg)]/85 backdrop-blur border-b border-[var(--color-hairline)]">
-        <div className="h-14 flex items-center gap-3 px-4 sm:px-6">
+      <header
+        className={cn(
+          'top-0 z-30 bg-[var(--color-bg)]/90 backdrop-blur border-b border-[var(--color-hairline)]',
+          enEditor ? 'relative lg:sticky' : 'sticky',
+        )}
+      >
+        <div className="h-14 flex items-center gap-2 px-3 sm:px-6">
           <button
+            ref={abrirMenuRef}
             type="button"
             onClick={() => setMobileNavOpen(true)}
-            aria-label="Abrir navegación"
-            className="lg:hidden flex h-9 w-9 items-center justify-center rounded-[6px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] transition-colors"
+            aria-label="Abrir menú"
+            className="lg:hidden flex h-11 w-11 items-center justify-center rounded-[8px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] transition-colors"
           >
-            <NavIcon name="List" size={18} />
+            <NavIcon name="List" size={20} />
           </button>
 
           <Tooltip.Provider delayDuration={300}>
@@ -75,11 +85,11 @@ export function AppTopbar({ user }: { user: Usuario }) {
                 <button
                   type="button"
                   onClick={toggle}
-                  aria-label={collapsed ? 'Expandir menú lateral' : 'Colapsar menú lateral'}
-                  aria-pressed={collapsed}
-                  className="hidden lg:flex h-9 w-9 items-center justify-center rounded-[6px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] transition-colors"
+                  aria-label="Menú lateral"
+                  aria-expanded={!collapsed}
+                  className="hidden lg:flex h-9 w-9 items-center justify-center rounded-[8px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] transition-colors"
                 >
-                  <NavIcon name="SidebarSimple" size={16} weight={collapsed ? 'fill' : 'regular'} />
+                  <NavIcon name="SidebarSimple" size={17} weight={collapsed ? 'fill' : 'regular'} />
                 </button>
               </Tooltip.Trigger>
               <Tooltip.Portal>
@@ -96,56 +106,50 @@ export function AppTopbar({ user }: { user: Usuario }) {
           </Tooltip.Provider>
 
           <nav aria-label="Ruta de navegación" className="flex-1 min-w-0">
-            <ol className="flex items-center gap-1.5 text-[13px] text-[var(--color-muted)] overflow-hidden">
-              <li className="hidden sm:flex items-center">
-                <Link
-                  href="/farmacias"
-                  className="flex items-center gap-1 hover:text-[var(--color-ink-2)] transition-colors"
-                  aria-label="Inicio"
-                >
-                  <NavIcon name="House" size={13} />
-                </Link>
-              </li>
-              {crumbs.map((c, i) => (
-                <li key={i} className="flex items-center gap-1.5 min-w-0">
-                  <NavIcon
-                    name="CaretRight"
-                    size={11}
-                    className="text-[var(--color-muted-2)] shrink-0"
-                  />
-                  {c.href ? (
-                    <Link
-                      href={c.href}
-                      className="hover:text-[var(--color-ink-2)] transition-colors truncate max-w-[180px]"
-                    >
-                      {c.label}
-                    </Link>
-                  ) : (
-                    <span className="text-[var(--color-ink-2)] font-medium truncate max-w-[220px]">
-                      {c.label}
-                    </span>
-                  )}
-                </li>
-              ))}
+            <ol className="flex items-center gap-1.5 text-[14px] text-[var(--color-muted)] min-w-0">
+              {crumbs.map((c, i) => {
+                const ultimo = i === crumbs.length - 1;
+                return (
+                  <li
+                    key={i}
+                    // En móvil solo se ve la pantalla actual (sin flechas sueltas)
+                    className={cn('items-center gap-1.5 min-w-0', ultimo ? 'flex' : 'hidden sm:flex')}
+                  >
+                    {i > 0 && (
+                      <NavIcon
+                        name="CaretRight"
+                        size={11}
+                        className="hidden sm:block text-[var(--color-muted-2)] shrink-0"
+                      />
+                    )}
+                    {c.href ? (
+                      <Link
+                        href={c.href}
+                        className="py-2 hover:text-[var(--color-ink)] transition-colors truncate max-w-[200px]"
+                      >
+                        {c.label}
+                      </Link>
+                    ) : (
+                      <span aria-current="page" className="text-[var(--color-ink)] font-semibold truncate">
+                        {c.label}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ol>
           </nav>
 
-          {/* NOTE: Búsqueda global (⌘K) y notificaciones (Bell) están fuera
-              del scope de Fase 1. El atajo ⌘K sigue registrado por si el
-              usuario lo pulsa por reflejo (abre el modal WIP), pero los
-              botones de la topbar se ocultan para no invitar a usarlos. */}
-
-          <UserMenu user={user} />
+          <UserMenu shell={shell} />
         </div>
       </header>
 
       <MobileNavDrawer
         open={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
-        userName={user.nombre}
-        userRole={user.rol}
+        shell={shell}
+        devolverFocoA={abrirMenuRef}
       />
-      <CommandStub open={commandOpen} onClose={() => setCommandOpen(false)} />
     </>
   );
 }

@@ -7,16 +7,17 @@ import { EditorActionButtons } from '@/features/farmacias/ui/components/editor/n
 import { AutosaveIndicator } from '@/features/farmacias/ui/components/editor/status/AutosaveIndicator';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 
-export function EditorTopBar() {
+export function EditorTopBar({ volverA }: { volverA: string }) {
   const { farmacia } = useFarmaciaEditor();
 
   return (
-    <div className="sticky top-14 z-20 bg-[var(--color-bg)]/92 backdrop-blur border-b border-[var(--color-hairline)]">
+    // En móvil la barra de la app no es fija dentro del editor: esta se pega arriba del todo.
+    <div className="sticky top-0 lg:top-14 z-20 bg-[var(--color-bg)]/92 backdrop-blur border-b border-[var(--color-hairline)]">
       <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3">
         <Link
-          href="/farmacias"
-          aria-label="Volver a farmacias"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] transition-colors"
+          href={volverA}
+          aria-label={volverA === '/inicio' ? 'Volver al inicio' : 'Volver a farmacias'}
+          className="flex h-11 w-11 lg:h-9 lg:w-9 shrink-0 items-center justify-center rounded-[6px] text-[var(--color-muted)] hover:text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] transition-colors"
         >
           <NavIcon name="CaretRight" size={14} className="rotate-180" />
         </Link>

@@ -244,4 +244,7 @@ export type Farmacia = {
 export type FarmaciaSummary = Pick<
   Farmacia,
   'id' | 'slug' | 'nombre' | 'ciudad' | 'status' | 'idiomasActivos' | 'updatedAt' | 'logo' | 'web'
->;
+> & {
+  /** ISO de la última publicación (para "cambios sin publicar" en Inicio). */
+  ultimaPublicacion?: string;
+};
