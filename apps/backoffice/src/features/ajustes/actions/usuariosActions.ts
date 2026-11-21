@@ -46,6 +46,11 @@ export async function cambiarActivoUsuarioAction(id: string, activo: boolean): P
   return fin(await servicio().cambiarActivo(await actor(), id, activo));
 }
 
+export async function eliminarUsuarioAction(id: string): Promise<SaveResult<true>> {
+  if (typeof id !== 'string') return { ok: false, error: 'Petición no válida.' };
+  return fin(await servicio().eliminar(await actor(), id));
+}
+
 export async function restablecerContrasenaAction(id: string): Promise<SaveResult<CuentaConContrasena>> {
   if (typeof id !== 'string') return { ok: false, error: 'Petición no válida.' };
   return fin(await servicio().restablecerContrasena(await actor(), id));

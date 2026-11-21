@@ -1,6 +1,7 @@
 import { Prisma, type Role } from '@prisma/client';
 import { prisma } from '@/shared/lib/prisma';
 import {
+  CuentaConHistorialError,
   UltimoAdminError,
   type OpcionesEscrituraAdmin,
   type RolCuenta,
@@ -22,6 +23,7 @@ const SELECT = {
   createdAt: true,
   business: { select: { id: true, name: true } },
   farmacias: { select: { business: { select: { id: true, name: true } } } },
+  _count: { select: { comparisons: true, reportsCreated: true, reportsResolved: true, batchJobs: true, usage: true } },
 } satisfies Prisma.UserSelect;
 
 type Row = Prisma.UserGetPayload<{ select: typeof SELECT }>;
@@ -77,6 +79,7 @@ function mapRow(r: Row): UserAccount {
       .map((b) => ({ id: b.id, nombre: b.name }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
     activo: r.active,
+    tieneHistorial: Object.values(r._count).some((n) => n > 0),
     createdAt: r.createdAt.toISOString(),
   };
 }
@@ -152,6 +155,24 @@ export class UserAccountRepositoryPrisma implements UserAccountRepository {
 
   async setPasswordHash(id: string, hash: string) {
     await prisma.user.update({ where: { id }, data: { passwordHash: hash } });
+  }
+
+  async delete(id: string, opts?: OpcionesEscrituraAdmin) {
+    const borrar = async (tx: Tx) => {
+      // Se vuelve a mirar dentro de la transacción: pudo conciliar entre medias.
+      const c = await tx.user.findUnique({ where: { id }, select: { _count: SELECT._count } });
+      if (!c) return;
+      if (Object.values(c._count).some((n) => n > 0)) throw new CuentaConHistorialError();
+      await tx.user.delete({ where: { id } });
+    };
+    try {
+      if (opts?.exigirOtroAdminActivo) await escribirGuardandoAdmin(id, opts, borrar);
+      else await prisma.$transaction(borrar);
+    } catch (e) {
+      // Clave foránea: alguna tabla la referencia (historial creado en la carrera).
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') throw new CuentaConHistorialError();
+      throw e;
+    }
   }
 
   async countActiveAdmins(exceptId?: string) {

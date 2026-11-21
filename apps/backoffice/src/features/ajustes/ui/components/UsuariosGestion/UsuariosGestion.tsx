@@ -20,6 +20,7 @@ import {
   cambiarActivoUsuarioAction,
   crearUsuarioAction,
   editarUsuarioAction,
+  eliminarUsuarioAction,
   restablecerContrasenaAction,
 } from '../../../actions/usuariosActions';
 import { ETIQUETA_ROL } from '../../lib/roles';
@@ -28,7 +29,33 @@ import { ContrasenaTemporalDialog } from '../ContrasenaTemporalDialog';
 
 const SIN_FARMACIA = '__sin__';
 const ROLES: RolCuenta[] = ['admin', 'manager', 'viewer'];
-const CHIP_ROL: Record<RolCuenta, string> = { admin: 'chip-accent', manager: 'chip-green', viewer: 'chip-neutral' };
+// Un color por rol, sin chocar con el verde/gris del estado.
+const CHIP_ROL: Record<RolCuenta, string> = { admin: 'chip-violet', manager: 'chip-blue', viewer: 'chip-neutral' };
+
+/** "Gestión Larokifarm" → "GL". */
+const iniciales = (nombre: string) =>
+  nombre
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]!.toUpperCase())
+    .join('');
+
+function Avatar({ c }: { c: UserAccount }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'grid h-9 w-9 shrink-0 place-items-center rounded-full text-[13px] font-semibold',
+        c.activo
+          ? 'bg-[var(--color-blue-soft)] text-[var(--color-blue-ink)]'
+          : 'border border-dashed border-[var(--color-hairline-strong)] text-[var(--color-muted)]',
+      )}
+    >
+      {iniciales(c.nombre)}
+    </span>
+  );
+}
 
 /** "Torrents, Chamarro" — todas sus farmacias (pocas por persona), o null si ninguna. */
 const nombresFarmacias = (c: UserAccount) => (c.farmacias.length ? c.farmacias.map((f) => f.nombre).join(', ') : null);
@@ -72,6 +99,7 @@ export function UsuariosGestion({
   const [editando, setEditando] = useState<UserAccount | null | undefined>(undefined);
   const [confirmar, setConfirmar] = useState<UserAccount | null>(null);
   const [restablecer, setRestablecer] = useState<UserAccount | null>(null);
+  const [eliminar, setEliminar] = useState<UserAccount | null>(null);
   const [temporal, setTemporal] = useState<Temporal>(null);
   const [, startTransition] = useTransition();
 
@@ -133,6 +161,20 @@ export function UsuariosGestion({
     });
   }
 
+  function hacerEliminar(c: UserAccount) {
+    startTransition(async () => {
+      const res = await eliminarUsuarioAction(c.id);
+      setEliminar(null);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(`Cuenta de ${c.nombre} eliminada`);
+      // La fila desaparece: el foco va al buscador para no perderse.
+      requestAnimationFrame(() => document.getElementById(buscadorId)?.focus());
+    });
+  }
+
   function hacerRestablecer(c: UserAccount) {
     startTransition(async () => {
       const res = await restablecerContrasenaAction(c.id);
@@ -175,6 +217,13 @@ export function UsuariosGestion({
                 Reactivar
               </RowActionsItem>
             )}
+            {c.tieneHistorial ? (
+              <RowActionsNote>Tiene conciliaciones guardadas: no se puede eliminar, solo desactivar.</RowActionsNote>
+            ) : (
+              <RowActionsItem icon="Trash" peligro onSelect={() => setEliminar(c)}>
+                Eliminar
+              </RowActionsItem>
+            )}
           </>
         )}
       </RowActionsMenu>
@@ -197,9 +246,10 @@ export function UsuariosGestion({
     </button>
   );
 
+  // Mismo lenguaje que «Publicada» en Farmacias: etiqueta con punto.
   const estadoDe = (activo: boolean) => (
-    <span className={cn('inline-flex items-center gap-1.5 text-[13.5px]', activo ? 'text-[var(--color-green-ink)]' : 'text-[var(--color-muted)]')}>
-      <span aria-hidden className={cn('h-2 w-2 rounded-full', activo ? 'bg-[var(--color-green-ink)]' : 'bg-[var(--color-muted)]')} />
+    <span className={cn('chip whitespace-nowrap', activo ? 'chip-green' : 'chip-neutral')}>
+      <span aria-hidden className={cn('h-1.5 w-1.5 rounded-full', activo ? 'bg-[var(--color-green-ink)]' : 'bg-[var(--color-muted)]')} />
       {activo ? 'Activo' : 'Desactivado'}
     </span>
   );
@@ -344,15 +394,20 @@ export function UsuariosGestion({
               </thead>
               <tbody className="divide-y divide-[var(--color-hairline)]">
                 {filtradas.map((c) => (
-                  <tr key={c.id} className={cn('transition-colors hover:bg-[var(--color-surface-2)]', !c.activo && 'bg-[var(--color-surface-2)]/60')}>
+                  <tr key={c.id} className="transition-colors hover:bg-[var(--color-surface-2)]">
                     <td className="px-5 py-3">
-                      <span className="flex items-center gap-2">
-                        {nombreDe(c, cn('font-semibold', c.activo ? 'text-[var(--color-ink)]' : 'text-[var(--color-ink-2)]'))}
-                        {c.id === miId && <span className="chip chip-neutral">Tú</span>}
+                      <span className="flex items-center gap-3">
+                        <Avatar c={c} />
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-2">
+                            {nombreDe(c, cn('font-semibold', c.activo ? 'text-[var(--color-ink)]' : 'text-[var(--color-muted)]'))}
+                            {c.id === miId && <span className="chip chip-accent">Tú</span>}
+                          </span>
+                          <span className="block text-[13px] text-[var(--color-muted)] break-all">{c.email}</span>
+                        </span>
                       </span>
-                      <span className="block text-[13px] text-[var(--color-muted)] break-all">{c.email}</span>
                     </td>
-                    <td className="px-3 py-3 text-[var(--color-ink-2)]">
+                    <td className={cn('px-3 py-3', c.activo ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-muted)]')}>
                       {nombresFarmacias(c) ?? <span className="text-[var(--color-muted)]">Sin farmacia</span>}
                     </td>
                     <td className="px-3 py-3">
@@ -373,16 +428,17 @@ export function UsuariosGestion({
           {/* Móvil: tarjetas */}
           <ul className="m-0 flex list-none flex-col gap-2 p-0 md:hidden">
             {filtradas.map((c) => (
-              <li key={c.id} className={cn('card p-4', !c.activo && 'bg-[var(--color-surface-2)]')}>
+              <li key={c.id} className="card p-4">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  {nombreDe(c, 'text-[15px] font-semibold text-[var(--color-ink)]')}
-                  {c.id === miId && <span className="chip chip-neutral">Tú</span>}
+                  <Avatar c={c} />
+                  {nombreDe(c, cn('text-[15px] font-semibold', c.activo ? 'text-[var(--color-ink)]' : 'text-[var(--color-muted)]'))}
+                  {c.id === miId && <span className="chip chip-accent">Tú</span>}
                   <span className={cn('chip', CHIP_ROL[c.rol])}>{ETIQUETA_ROL[c.rol]}</span>
                 </div>
                 <p className="m-0 mt-1 text-[13.5px] text-[var(--color-muted)] break-all">{c.email}</p>
                 <div className="mt-2 flex items-center justify-between gap-3">
                   <div className="min-w-0 text-[13.5px]">
-                    <p className="m-0 text-[var(--color-ink-2)]">{nombresFarmacias(c) ?? 'Sin farmacia'}</p>
+                    <p className="m-0 mb-1.5 text-[var(--color-ink-2)]">{nombresFarmacias(c) ?? 'Sin farmacia'}</p>
                     {estadoDe(c.activo)}
                   </div>
                   {acciones(c)}
@@ -412,6 +468,15 @@ export function UsuariosGestion({
         description="No podrá entrar al backoffice (como mucho en unos minutos se cierra su sesión abierta). Sus conciliaciones y reportes se conservan y puedes reactivarlo cuando quieras."
         confirmLabel="Desactivar"
         onConfirm={() => confirmar && cambiarActivo(confirmar, false)}
+      />
+
+      <ConfirmDialog
+        open={!!eliminar}
+        onOpenChange={(o) => !o && setEliminar(null)}
+        title={`¿Eliminar la cuenta de ${eliminar?.nombre ?? ''}?`}
+        description={`Se borra para siempre ${eliminar?.email ?? ''} y deja de poder entrar. No se puede deshacer. Si solo quieres que no entre por ahora, usa Desactivar.`}
+        confirmLabel="Eliminar cuenta"
+        onConfirm={() => eliminar && hacerEliminar(eliminar)}
       />
 
       <ConfirmDialog

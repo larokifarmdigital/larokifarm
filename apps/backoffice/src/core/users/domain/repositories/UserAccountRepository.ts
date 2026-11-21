@@ -12,6 +12,13 @@ export class UltimoAdminError extends Error {
   }
 }
 
+/** La cuenta tiene historial (conciliaciones, reportes, uso): solo se puede desactivar. */
+export class CuentaConHistorialError extends Error {
+  constructor() {
+    super('Tiene conciliaciones o reportes guardados: no se puede eliminar, solo desactivar.');
+  }
+}
+
 /** `exigirOtroAdminActivo`: comprobar y escribir en la misma transacción (lanza UltimoAdminError). */
 export interface OpcionesEscrituraAdmin {
   exigirOtroAdminActivo?: boolean;
@@ -27,6 +34,8 @@ export interface UserAccountRepository {
   update(id: string, input: UpdateUserAccountInput, opts?: OpcionesEscrituraAdmin): Promise<UserAccount>;
   setActive(id: string, activo: boolean, opts?: OpcionesEscrituraAdmin): Promise<UserAccount>;
   setPasswordHash(id: string, hash: string): Promise<void>;
+  /** Borra la cuenta si no tiene historial (lanza CuentaConHistorialError). */
+  delete(id: string, opts?: OpcionesEscrituraAdmin): Promise<void>;
   /** Administradores activos, sin contar `exceptId`. */
   countActiveAdmins(exceptId?: string): Promise<number>;
   listFarmacias(): Promise<FarmaciaOpcion[]>;

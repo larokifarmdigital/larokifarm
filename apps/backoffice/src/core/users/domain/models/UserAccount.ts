@@ -14,6 +14,8 @@ export interface UserAccount {
   /** Todas las farmacias que lleva, ordenadas por nombre. Mismo rol en todas. */
   farmacias: FarmaciaOpcion[];
   activo: boolean;
+  /** Tiene conciliaciones, reportes o uso de IA a su nombre: no se puede eliminar, solo desactivar. */
+  tieneHistorial: boolean;
   createdAt: string;
 }
 

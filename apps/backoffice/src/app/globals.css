@@ -47,6 +47,8 @@
   --color-green-ink: #15803d;
   --color-blue-soft: #dbeafe;
   --color-blue-ink: #1e40af;
+  --color-violet-soft: #ede9fe;
+  --color-violet-ink: #5b21b6;
 
   /* Tipografía — Gilroy (misma que usa farmacia Torrents) + Geist Mono para números */
   --font-sans: var(--font-sans-family, 'Gilroy'), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -325,6 +327,12 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--color-blue-soft);
   color: var(--color-blue-ink);
   border-color: color-mix(in srgb, var(--color-blue-ink) 18%, transparent);
+}
+
+.chip-violet {
+  background: var(--color-violet-soft);
+  color: var(--color-violet-ink);
+  border-color: color-mix(in srgb, var(--color-violet-ink) 18%, transparent);
 }
 
 /* Keystroke visual */

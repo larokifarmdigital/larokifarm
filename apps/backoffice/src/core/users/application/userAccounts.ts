@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { SaveResult } from '@/core/shared';
 import {
+  CuentaConHistorialError,
   ROLES_CUENTA,
   UltimoAdminError,
   type ActorCuenta,
@@ -64,6 +65,7 @@ function erroresDe(e: z.ZodError): SaveResult<never> {
  * - Responsable y Solo consulta necesitan al menos una farmacia (mismo rol en
  *   todas); el administrador puede no tener ninguna.
  * - Las contraseñas temporales se generan aquí y se devuelven una sola vez.
+ * - Solo se elimina una cuenta sin historial; con conciliaciones, se desactiva.
  */
 export class UserAccountsService {
   constructor(private readonly repo: UserAccountRepository) {}
@@ -173,6 +175,27 @@ export class UserAccountsService {
       if (e instanceof UltimoAdminError) return { ok: false, error: e.message };
       registrarFallo(activo ? 'reactivar' : 'desactivar', e);
       return { ok: false, error: ERROR_GENERICO };
+    }
+  }
+
+  async eliminar(actor: ActorCuenta | null, id: string): Promise<SaveResult<true>> {
+    if (!this.esAdmin(actor) || !(await this.esAdminVigente(actor))) return { ok: false, error: SOLO_ADMIN };
+    const actual = await this.repo.findById(id);
+    if (!actual) return { ok: false, error: 'Ese usuario ya no existe.' };
+    if (actual.id === actor.id) return { ok: false, error: 'No puedes eliminar tu propia cuenta.' };
+    if (actual.tieneHistorial) return { ok: false, error: new CuentaConHistorialError().message };
+    const eraAdminActivo = actual.rol === 'admin' && actual.activo;
+    if (eraAdminActivo && (await this.repo.countActiveAdmins(id)) === 0) {
+      return { ok: false, error: 'Tiene que quedar al menos un administrador activo.' };
+    }
+    try {
+      await this.repo.delete(id, { exigirOtroAdminActivo: eraAdminActivo });
+      registrar(actor.id, 'eliminar', id);
+      return { ok: true, data: true };
+    } catch (e) {
+      if (e instanceof UltimoAdminError || e instanceof CuentaConHistorialError) return { ok: false, error: e.message };
+      registrarFallo('eliminar', e);
+      return { ok: false, error: 'No se ha podido eliminar. Vuelve a intentarlo.' };
     }
   }
 
