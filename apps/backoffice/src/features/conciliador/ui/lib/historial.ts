@@ -95,13 +95,20 @@ export function etiquetaDia(ymd: string, ahora = new Date()): string {
   return txt.charAt(0).toUpperCase() + txt.slice(1);
 }
 
-export function agruparPorDia<T extends { createdAt: Date }>(items: T[]): { ymd: string; items: T[] }[] {
-  const grupos: { ymd: string; items: T[] }[] = [];
-  for (const it of items) {
-    const ymd = ymdMadrid(it.createdAt);
-    const ultimo = grupos[grupos.length - 1];
-    if (ultimo?.ymd === ymd) ultimo.items.push(it);
-    else grupos.push({ ymd, items: [it] });
+const DIA_CORTO = new Intl.DateTimeFormat('es-ES', { timeZone: ZONA, weekday: 'short', day: 'numeric', month: 'short' });
+const DIA_CORTO_ANYO = new Intl.DateTimeFormat('es-ES', { timeZone: ZONA, day: 'numeric', month: 'short', year: 'numeric' });
+
+/** Fecha de una fila del historial: "Hoy · 11:14", "Ayer · 09:52", "Jue 19 nov · 11:14" (con año si no es el actual). */
+export function fechaFila(d: Date, ahora = new Date()): { corta: string; larga: string } {
+  const ymd = ymdMadrid(d);
+  const hoy = ymdMadrid(ahora);
+  const hora = horaMadrid(d);
+  let dia: string;
+  if (ymd === hoy) dia = 'Hoy';
+  else if (ymd === sumarDias(hoy, -1)) dia = 'Ayer';
+  else {
+    const txt = (ymd.slice(0, 4) === hoy.slice(0, 4) ? DIA_CORTO : DIA_CORTO_ANYO).format(d).replace(/,/g, '').replace(/\./g, '');
+    dia = txt.charAt(0).toUpperCase() + txt.slice(1);
   }
-  return grupos;
+  return { corta: `${dia} · ${hora}`, larga: `${etiquetaDia(ymd, ahora)} a las ${hora}` };
 }

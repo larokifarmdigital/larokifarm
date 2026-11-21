@@ -1,6 +1,6 @@
 'use client';
 
-import type { Locale } from '@/core/shared';
+import { LOCALE_NOMBRE, type Locale } from '@/core/shared';
 import type { MissingSummary } from '@/features/farmacias/ui/lib/i18nStatus';
 import { Button } from '@/shared/components/atoms/Button';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
@@ -98,7 +98,7 @@ export function PublishMissingDialog({
 }
 
 // Nombres en castellano para el copy (LOCALE_LABELS los da en su propio idioma).
-const LOCALE_NAMES_ES: Record<Locale, string> = { es: 'castellano', en: 'inglés', ca: 'catalán' };
+const LOCALE_NAMES_ES = LOCALE_NOMBRE;
 
 function joinLabels(locales: Locale[]): string {
   const names = locales.map((l) => LOCALE_NAMES_ES[l]);

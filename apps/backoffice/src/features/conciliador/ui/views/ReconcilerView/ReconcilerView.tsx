@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import type { BudgetStatus } from '@/core/comparisons';
 import type { Role } from '@/core/shared';
 import type { PairResult, UploadKind } from '@/core/engine';
-import { ReconciliationTable } from '@/features/conciliador/ui/components/ReconciliationTable';
+import { TarjetaLineas } from '@/features/conciliador/ui/components/HistoryResultCard';
 // NOTE: import directo al componente para no arrastrar HistoryListView/ComparisonDetailView
 // (server components que usan Prisma y romperían el bundle client con `node:crypto`).
 import { ReportarError, ReportsList, type ReportView } from '@/features/conciliador/ui/components/ReportsSection';
@@ -328,7 +328,7 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
             </div>
           </div>
 
-          <ul className="space-y-4">
+          <ul className="space-y-8">
             {results.map((r) => (
               <ResultCard
                 key={r.id}
@@ -626,15 +626,18 @@ function ResultCard({
       ]
     : [];
 
+  // Mismo criterio que Inicio e Historial: el proveedor es el título; el envío, secundario.
+  const titulo = r.supplier || r.label || 'Proveedor sin identificar';
+  const secundario = r.label && r.label !== titulo ? r.label : null;
+
   return (
-    <li className="card overflow-hidden p-0">
-      <div className="p-4 sm:p-5">
+    <li className="flex flex-col gap-4">
+      {/* 1. Cabecera del envío */}
+      <article className="card p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-start gap-3">
           <div className="flex-1 min-w-0">
-            <h2 className="m-0 truncate text-[17px] font-bold tracking-[-0.01em] text-[var(--color-ink)]">{r.label || r.supplier}</h2>
-            {r.supplier && r.label !== r.supplier && (
-              <p className="m-0 mt-0.5 truncate text-[13px] text-[var(--color-muted)]">Proveedor: {r.supplier}</p>
-            )}
+            <h2 className="m-0 break-words text-[17px] font-bold tracking-[-0.01em] text-[var(--color-ink)]">{titulo}</h2>
+            {secundario && <p className="m-0 mt-0.5 break-words text-[13px] text-[var(--color-muted)]">{secundario}</p>}
             <p
               className={cn(
                 'm-0 mt-2.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[14px] font-semibold',
@@ -670,7 +673,7 @@ function ResultCard({
               </button>
             )}
             {archivos.length > 0 && (
-              <button ref={verArchivosRef} type="button" onClick={() => setVerArchivos(true)} className={BTN_SECUNDARIO}>
+              <button aria-haspopup="dialog" ref={verArchivosRef} type="button" onClick={() => setVerArchivos(true)} className={BTN_SECUNDARIO}>
                 Ver archivos ({archivos.length})
               </button>
             )}
@@ -686,18 +689,21 @@ function ResultCard({
             {r.error}
           </p>
         )}
-      </div>
+      </article>
 
-      {r.detail && (
-        <div className="border-t border-[var(--color-hairline)]">
-          <ReconciliationTable lines={r.detail.lines} />
+      {/* 2. Las líneas, en su propia tarjeta (igual que en el historial) */}
+      {r.detail && <TarjetaLineas lineas={r.detail.lines} nivel={3} />}
+      {verDepuracion && r.detail?.rawLines && r.detail.rawLines.length > 0 && (
+        <div className="card overflow-hidden p-0">
+          <ExtractionDebug lines={r.detail.rawLines} />
         </div>
       )}
-      {verDepuracion && r.detail?.rawLines && r.detail.rawLines.length > 0 && <ExtractionDebug lines={r.detail.rawLines} />}
 
+      {/* 3. Reportes de error (solo si hay) */}
       <ReportsList
         reports={reportes}
         isSuperAdmin={currentUser?.role === 'SUPER_ADMIN'}
+        enTarjeta
         onResuelto={(res) => setReportes((prev) => prev.map((x) => (x.id === res.id ? res : x)))}
       />
 
@@ -827,7 +833,7 @@ function BudgetBlockedModal({
 function ExtractionDebug({ lines }: { lines: NonNullable<PairResult['detail']>['rawLines'] }) {
   if (!lines) return null;
   return (
-    <details className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs">
+    <details className="bg-slate-50 px-4 py-2 text-xs">
       <summary className="cursor-pointer font-semibold text-slate-500">
         🔎 Ver lo que leyó Gemini del PDF ({lines.length} líneas) — debug
       </summary>

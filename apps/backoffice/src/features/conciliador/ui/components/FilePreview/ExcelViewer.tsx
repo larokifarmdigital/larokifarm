@@ -70,7 +70,7 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center gap-2 text-sm text-slate-500">
+      <div className="flex h-full items-center justify-center gap-2 text-sm text-slate-600">
         <span
           className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"
           aria-hidden
@@ -90,7 +90,7 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
 
   if (!current || current.rows.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-slate-500">
+      <div className="flex h-full items-center justify-center text-sm text-slate-600">
         La hoja está vacía.
       </div>
     );
@@ -129,13 +129,13 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
         <table className="w-full min-w-max border-separate border-spacing-0 text-xs">
           <thead className="sticky top-0 z-10 bg-slate-100">
             <tr>
-              <th className="sticky left-0 z-20 border-b border-r border-slate-200 bg-slate-100 px-2 py-1 text-center text-[10px] font-semibold text-slate-500">
+              <th className="sticky left-0 z-20 border-b border-r border-slate-200 bg-slate-100 px-2 py-1 text-center text-[10px] font-semibold text-slate-600">
                 #
               </th>
               {Array.from({ length: columnCount }, (_, c) => (
                 <th
                   key={c}
-                  className="border-b border-r border-slate-200 bg-slate-100 px-2 py-1 text-center text-[10px] font-semibold text-slate-500"
+                  className="border-b border-r border-slate-200 bg-slate-100 px-2 py-1 text-center text-[10px] font-semibold text-slate-600"
                 >
                   {excelColumnLetter(c)}
                 </th>
@@ -145,7 +145,7 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
           <tbody>
             {current.rows.map((row, r) => (
               <tr key={r} className="hover:bg-slate-50">
-                <td className="sticky left-0 z-10 border-b border-r border-slate-200 bg-slate-50 px-2 py-1 text-center text-[10px] font-medium text-slate-500">
+                <td className="sticky left-0 z-10 border-b border-r border-slate-200 bg-slate-50 px-2 py-1 text-center text-[10px] font-medium text-slate-600">
                   {r + 1}
                 </td>
                 {Array.from({ length: columnCount }, (_, c) => {
@@ -174,7 +174,7 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
         </table>
       </div>
 
-      <p className="shrink-0 border-t border-slate-100 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-500">
+      <p className="shrink-0 border-t border-slate-100 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
         {current.rows.length} fila{current.rows.length === 1 ? '' : 's'} ·{' '}
         {columnCount} columna{columnCount === 1 ? '' : 's'}
       </p>

@@ -1,0 +1,170 @@
+{
+  "html": {
+    "lang": "de"
+  },
+  "dias": {
+    "Mo": "Montag",
+    "Tu": "Dienstag",
+    "We": "Mittwoch",
+    "Th": "Donnerstag",
+    "Fr": "Freitag",
+    "Sa": "Samstag",
+    "Su": "Sonntag",
+    "a": "bis"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Start",
+      "servicios": "Angebote",
+      "sobreNosotros": "Über uns",
+      "faqs": "FAQ",
+      "resenas": "Bewertungen",
+      "contacto": "Kontakt",
+      "aria": "Hauptnavigation"
+    },
+    "breadcrumb": {
+      "aria": "Brotkrümelnavigation"
+    },
+    "cta": {
+      "llamanos": "Rufen Sie uns an",
+      "llamarA": "{telefono} anrufen"
+    },
+    "menu": {
+      "abrir": "Menü öffnen",
+      "cerrar": "Menü schließen"
+    },
+    "idioma": {
+      "aria": "Sprache ändern"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Apotheke in {ciudad}",
+      "sinCiudad": "Ihre Apotheke des Vertrauens"
+    },
+    "ciudad": "Apotheke in {ciudad}",
+    "btnLlamar": "Jetzt anrufen",
+    "altInterior": "Innenansicht von {nombre}"
+  },
+  "about": {
+    "chip": "Über uns",
+    "tituloDefecto": "Eine Apotheke für Familien",
+    "cuerpoFallback": "In dieser Apotheke kümmern wir uns um die Gesundheit der ganzen Familie. Unser Team setzt sich für das Wohl Ihrer Kinder ein – mit persönlicher Betreuung, hochwertigen Produkten und der Beratung, die Sie als Eltern brauchen.",
+    "puntosDefecto": [
+      "Persönliche und professionelle Betreuung",
+      "Produkte höchster Qualität",
+      "Kostenlose Beratung",
+      "Freundliche Atmosphäre"
+    ],
+    "badge": {
+      "anyos": "Jahre",
+      "experiencia": "Erfahrung"
+    }
+  },
+  "servicios": {
+    "chip": "Unsere Angebote",
+    "titulo": "Unsere Angebote",
+    "subtitulo": "Wir bieten eine breite Auswahl an pharmazeutischen Angeboten und ausgewählten Produkten für die Pflege der ganzen Familie.",
+    "placeholder": "Bald ergänzen wir die Details zu unseren Angeboten.",
+    "btnAnterior": "Zurück",
+    "btnSiguiente": "Weiter",
+    "btnSlide": "Zu Folie {n}"
+  },
+  "faqs": {
+    "chip": "Häufige Fragen",
+    "titulo": "Wir beantworten Ihre Fragen",
+    "subtitulo": "Die Fragen, die uns unsere Kunden am häufigsten stellen. Wenn Sie weitere Fragen haben, schreiben Sie uns – wir antworten schnell."
+  },
+  "cta": {
+    "chip": "Kontaktieren Sie uns",
+    "tituloConCiudad": "Sie finden uns in {ciudad}",
+    "tituloSinCiudad": "Wir helfen Ihnen gern",
+    "subtitulo": "Besuchen Sie uns in {nombre} oder rufen Sie uns an, um eine persönliche pharmazeutische Beratung zu erhalten.",
+    "labelTelefono": "Telefon",
+    "labelDireccion": "Adresse",
+    "labelHorario": "Öffnungszeiten",
+    "btnEscribenos": "Schreiben Sie uns",
+    "btnLlamar": "Jetzt anrufen",
+    "ariaMapa": "Karte von {nombre}",
+    "cargarMapa": "Karte anzeigen",
+    "cargarMapaAviso": "Beim Klicken wird Google Maps geladen, das Cookies von Google setzt."
+  },
+  "footer": {
+    "servicios": "Angebote",
+    "informacion": "Informationen",
+    "contactanos": "Kontaktieren Sie uns",
+    "sobreNosotros": "Über uns",
+    "preguntasFrecuentes": "Häufige Fragen",
+    "resenas": "Bewertungen",
+    "contacto": "Kontakt",
+    "avisoLegal": "Impressum",
+    "politicaPrivacidad": "Datenschutzerklärung",
+    "copyright": "© {anyo} {nombre}. Alle Rechte vorbehalten.",
+    "nCol": "Kammer-Nr.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok"
+  },
+  "features": {
+    "atencionTitulo": "Persönliche Betreuung",
+    "atencionDesc": "Jede Familie ist einzigartig",
+    "calidadTitulo": "Zertifizierte Produkte",
+    "calidadDesc": "Garantierte Qualität",
+    "equipoTitulo": "Spezialisiertes Team",
+    "equipoDesc": "Auf Kinder spezialisierte Apotheker",
+    "horarioTitulo": "Lange Öffnungszeiten",
+    "horarioDescFallback": "Montag bis Samstag"
+  },
+  "flotante": {
+    "ariaWhatsApp": "Per WhatsApp kontaktieren"
+  },
+  "legal": {
+    "volver": "Zurück zur Startseite",
+    "avisoTitulo": "Impressum",
+    "privacidadTitulo": "Datenschutzerklärung",
+    "avisoMeta": "Impressum und Angaben zum Inhaber von {nombre}.",
+    "privacidadMeta": "Datenschutzerklärung und Verarbeitung personenbezogener Daten von {nombre}."
+  },
+  "resenas": {
+    "chip": "Google-Bewertungen",
+    "titulo": "Was unsere Kunden sagen",
+    "subtitulo": "{total} Bewertungen bei Google mit einer Durchschnittsnote von {media} / 5.",
+    "subtituloSinNumero": "Echte Bewertungen von Menschen, die in der Apotheke waren.",
+    "destacada": "Hervorgehobene Bewertung",
+    "verEnGoogle": "Bei Google ansehen",
+    "respuestaFarmacia": "Antwort der Apotheke",
+    "anonimo": "Kunde",
+    "hace": {
+      "diasUno": "vor {n} Tag",
+      "diasN": "vor {n} Tagen",
+      "semanasUno": "vor {n} Woche",
+      "semanasN": "vor {n} Wochen",
+      "mesesUno": "vor {n} Monat",
+      "mesesN": "vor {n} Monaten",
+      "anyosUno": "vor {n} Jahr",
+      "anyosN": "vor {n} Jahren",
+      "ahora": "gerade eben"
+    },
+    "ariaEstrellas": "{rating} von 5 Sternen",
+    "verTodas": "Alle Bewertungen ansehen",
+    "anterior": "Vorherige Bewertung",
+    "siguiente": "Nächste Bewertung",
+    "ariaSlider": "Wechselnde Bewertungen",
+    "irA": "Zur Bewertung {n}",
+    "tituloPagina": "Bewertungen von {nombre}",
+    "metaDescripcion": "Alle verifizierten Google-Bewertungen von {nombre}. Echte Meinungen von Kunden.",
+    "rangoNota": "{media} von 5 · {total} Bewertungen",
+    "filtroTodas": "Alle",
+    "filtroEstrellas": "{n} Sterne"
+  },
+  "p404": {
+    "tituloMeta": "Seite nicht gefunden · {nombre}",
+    "descMeta": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "chip": "Fehler 404",
+    "subtitulo1": "Diese Seite",
+    "subtitulo2": "existiert nicht",
+    "texto": "Möglicherweise ist der Link defekt, die Seite wurde verschoben oder die URL ist nicht korrekt.",
+    "btnInicio": "Zurück zur Startseite",
+    "buscas": "Suchen Sie etwas Bestimmtes?"
+  }
+}

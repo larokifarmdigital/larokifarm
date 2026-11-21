@@ -1,1 +1,1 @@
-export { HistoryResultCard, type HistoryResultCardProps } from './HistoryResultCard';
+export { HistoryResultCard, TarjetaLineas, type HistoryResultCardProps } from './HistoryResultCard';

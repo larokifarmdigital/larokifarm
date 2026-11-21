@@ -13,9 +13,8 @@ import {
   esLocaleValido,
   rutaConLocale,
   t,
-  type Locale,
-} from '@/lib/i18n';
-import { LEGAL } from '@/lib/legal';
+  type Locale, localesActivos } from '@/lib/i18n';
+import { legalPorDefecto } from '@/lib/legal';
 import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
 
 export async function getStaticPaths() {
@@ -48,7 +47,7 @@ const canonical = `${siteUrl}${rutaConLocale('/aviso-legal', lang)}`;
 const home = rutaConLocale('/', lang);
 
 const avisoHtml =
-  portableTextAHtml(localizar(farmacia.avisoLegal, lang)) || LEGAL[lang].avisoLegal;
+  portableTextAHtml(localizar(farmacia.avisoLegal, lang)) || legalPorDefecto(lang).avisoLegal;
 ---
 
 <BaseLayout
@@ -56,6 +55,7 @@ const avisoHtml =
   descripcion={t('legal.avisoMeta', lang, { nombre: farmacia.nombre })}
   canonical={canonical}
   lang={lang}
+  idiomas={localesActivos(farmacia.idiomasActivos)}
   rutaActual='/aviso-legal'
   nombreFarmacia={farmacia.nombre}
   logoFarmacia={farmacia.logo}

@@ -1,5 +1,5 @@
 import type { ImagenAsset } from '@/core/farmacias/domain';
-import { LOCALE_FLAGS, LOCALE_LABELS, type Locale } from '@/core/shared';
+import { LOCALE_LABELS, type Locale } from '@/core/shared';
 import { Button } from '@/shared/components/atoms/Button';
 import { Input } from '@/shared/components/atoms/Input';
 import { Label } from '@/shared/components/atoms/Label';
@@ -87,7 +87,6 @@ export function ImageDetailModal({
           {idiomasActivos.map((loc) => (
             <div key={loc}>
               <Label htmlFor={`alt-${image.id}-${loc}`} className="mb-1">
-                <span aria-hidden className="mr-1.5">{LOCALE_FLAGS[loc]}</span>
                 {LOCALE_LABELS[loc]}
               </Label>
               <Input

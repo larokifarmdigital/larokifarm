@@ -11,8 +11,13 @@ import {
   useState,
 } from 'react';
 import { tieneCambiosSinPublicar, validateFarmacia, type Farmacia, type FieldIssue } from '@/core/farmacias/domain';
-import { LOCALE_NOMBRE, type Locale } from '@/core/shared';
-import { activarIdiomaAction, desactivarIdiomaAction, saveFarmaciaPatchAction } from '@/features/farmacias/actions/saveFarmaciaAction';
+import { LOCALE_NOMBRE, LOCALE_PRINCIPAL, type Locale } from '@/core/shared';
+import { saveFarmaciaPatchAction } from '@/features/farmacias/actions/saveFarmaciaAction';
+import {
+  activarIdiomaAction,
+  desactivarIdiomaAction,
+  eliminarTraduccionesAction,
+} from '@/features/farmacias/actions/idiomasActions';
 import { toast } from 'sonner';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
@@ -164,14 +169,17 @@ type EditorContextValue = State & {
   esAdmin: boolean;
   /** Hay cambios (guardados o no) que todavía no están en la web. */
   pendientePublicar: boolean;
-  /** Activa un idioma en la web (acción explícita; pulsar la pestaña no escribe). */
+  /** Añade/reactiva un idioma en la web ("Idiomas de la web"; pulsar una pestaña no escribe). */
   activarIdioma: (l: Locale) => Promise<boolean>;
-  /** Solo SUPER_ADMIN (el servidor lo vuelve a comprobar); nunca el castellano. */
+  /** Deja de mostrarlo en la web (conserva los textos). Nunca el castellano. */
   desactivarIdioma: (l: Locale) => Promise<boolean>;
+  /** Borra para siempre los textos de un idioma desactivado. */
+  eliminarTraducciones: (l: Locale) => Promise<boolean>;
   patch: (p: Partial<Farmacia>) => void;
   setLocale: (l: Locale) => void;
   /** Cambia de sección (y opcionalmente de idioma) en un solo paso. */
-  goToSection: (key: string, locale?: Locale) => void;
+  /** `enfocar`: tras cambiar de sección, el foco va a su título (cuando el botón pulsado desaparece). */
+  goToSection: (key: string, locale?: Locale, enfocar?: boolean) => void;
   saveNow: () => Promise<void>;
   /** Aplica status/updatedAt devueltos por publicar (evita un falso conflicto). */
   syncFromServer: (f: Farmacia) => void;
@@ -238,8 +246,18 @@ export function FarmaciaEditorProvider({
     dispatch({ type: 'SET_LOCALE', locale: l });
   }, []);
 
-  const goToSection = useCallback((key: string, locale?: Locale) => {
+  const goToSection = useCallback((key: string, locale?: Locale, enfocar = false) => {
+    const anterior = enfocar ? document.querySelector('[data-titulo-seccion]') : null;
     dispatch({ type: 'GO_TO_SECTION', key, locale });
+    if (!enfocar) return;
+    // La sección nueva entra con animación: esperar a que su título exista.
+    let intentos = 0;
+    const buscar = () => {
+      const t = document.querySelector<HTMLElement>('[data-titulo-seccion]');
+      if (t && t !== anterior) t.focus();
+      else if (intentos++ < 90) requestAnimationFrame(buscar);
+    };
+    requestAnimationFrame(buscar);
   }, []);
 
   const syncFromServer = useCallback((f: Farmacia) => {
@@ -255,8 +273,8 @@ export function FarmaciaEditorProvider({
         return false;
       }
       dispatch({ type: 'SYNC', farmacia: res.data });
-      toast.success(`Has activado el ${LOCALE_NOMBRE[l]}`, {
-        description: 'Ya puedes escribir los textos. Saldrán en la web cuando publiques.',
+      toast.success(`Has añadido el ${LOCALE_NOMBRE[l]}`, {
+        description: 'Ya puedes traducir los textos. Lo que falte se verá en castellano. Saldrá en la web cuando publiques.',
       });
       return true;
     } catch {
@@ -274,12 +292,36 @@ export function FarmaciaEditorProvider({
         return false;
       }
       dispatch({ type: 'SYNC', farmacia: res.data });
+      if (stateRef.current.currentLocale === l) dispatch({ type: 'SET_LOCALE', locale: LOCALE_PRINCIPAL });
       toast.success(`Has desactivado el ${LOCALE_NOMBRE[l]}`, {
         description: 'Los textos se conservan. La web dejará de mostrarlo cuando publiques.',
       });
       return true;
     } catch {
       toast.error('No se pudo desactivar el idioma. Revisa la conexión.');
+      return false;
+    }
+  }, []);
+
+  const saveNowRef = useRef<() => Promise<void>>(async () => {});
+
+  const eliminarTraducciones = useCallback(async (l: Locale) => {
+    if (readOnlyRef.current) return false;
+    try {
+      // Primero se guarda lo pendiente: el servidor parte de lo guardado
+      await saveNowRef.current();
+      const sentRev = stateRef.current.rev;
+      const res = await eliminarTraduccionesAction(stateRef.current.farmacia.id, l);
+      if (!res.ok) {
+        toast.error(res.error);
+        return false;
+      }
+      dispatch({ type: 'SAVED', farmacia: res.data, sentRev });
+      if (stateRef.current.currentLocale === l) dispatch({ type: 'SET_LOCALE', locale: LOCALE_PRINCIPAL });
+      toast.success(`Textos en ${LOCALE_NOMBRE[l]} eliminados`);
+      return true;
+    } catch {
+      toast.error('No se pudieron eliminar los textos. Revisa la conexión.');
       return false;
     }
   }, []);
@@ -322,6 +364,9 @@ export function FarmaciaEditorProvider({
       }
     }
   }, []);
+  useEffect(() => {
+    saveNowRef.current = saveNow;
+  }, [saveNow]);
 
   // Autoguardado (debounce) + reintento si falló la red.
   useEffect(() => {
@@ -372,6 +417,7 @@ export function FarmaciaEditorProvider({
       pendientePublicar,
       activarIdioma,
       desactivarIdioma,
+      eliminarTraducciones,
       patch,
       setLocale,
       goToSection,
@@ -382,7 +428,7 @@ export function FarmaciaEditorProvider({
       touch,
       revealErrors,
     }),
-    [state, readOnly, esAdmin, pendientePublicar, activarIdioma, desactivarIdioma, patch, setLocale, goToSection, saveNow, syncFromServer, issues, isErrorVisible, touch, revealErrors],
+    [state, readOnly, esAdmin, pendientePublicar, activarIdioma, desactivarIdioma, eliminarTraducciones, patch, setLocale, goToSection, saveNow, syncFromServer, issues, isErrorVisible, touch, revealErrors],
   );
 
   return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;

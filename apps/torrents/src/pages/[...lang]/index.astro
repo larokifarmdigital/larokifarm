@@ -25,11 +25,7 @@ import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
 import {
   esLocaleValido,
   rutaConLocale,
-  type Locale,
-} from '@/lib/i18n';
-import diasEs from '@/i18n/es.json';
-import diasEn from '@/i18n/en.json';
-import diasCa from '@/i18n/ca.json';
+  type Locale, localesActivos, DIAS_POR_IDIOMA, CERRADO_POR_IDIOMA } from '@/lib/i18n';
 
 export async function getStaticPaths() {
   const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
@@ -63,12 +59,8 @@ const meta = construirMetaSeo(farmacia, siteUrl, lang, rutaConLocale('/', lang))
 const resenas = await obtenerResenasGoogle(SLUG_FARMACIA, 10, 4, true);
 const jsonLd = farmaciaAJsonLd(farmacia, siteUrl, lang, resenas, MOSTRAR_RESENAS);
 
-const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
-  es: diasEs.dias as DiasI18n,
-  en: diasEn.dias as DiasI18n,
-  ca: diasCa.dias as DiasI18n,
-};
-const CERRADO: Record<Locale, string> = { es: 'Cerrado', en: 'Closed', ca: 'Tancat' };
+const DIAS_POR_LANG = DIAS_POR_IDIOMA as Record<Locale, DiasI18n>;
+const CERRADO: Record<Locale, string> = CERRADO_POR_IDIOMA;
 
 const horarioTexto = rangoDiasAbiertos(farmacia.horarios, DIAS_POR_LANG[lang]);
 const horariosAgrupados = agruparHorarios(farmacia.horarios, DIAS_POR_LANG[lang], CERRADO[lang]);
@@ -86,6 +78,7 @@ const claim = localizar(farmacia.descripcionCorta, lang);
   imagenOg={meta.imagenOg}
   jsonLd={jsonLd}
   lang={lang}
+  idiomas={localesActivos(farmacia.idiomasActivos)}
   rutaActual='/'
   nombreFarmacia={farmacia.nombre}
   logoFarmacia={farmacia.logo}

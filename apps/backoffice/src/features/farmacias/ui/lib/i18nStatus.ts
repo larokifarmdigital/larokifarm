@@ -1,5 +1,5 @@
 import type { Farmacia } from '@/core/farmacias/domain';
-import type { Locale, MultilangText } from '@/core/shared';
+import { LOCALES, LOCALE_PRINCIPAL, type Locale, type MultilangText } from '@/core/shared';
 import { SECTION_BY_KEY } from './sectionsConfig';
 
 export type SectionKey =
@@ -147,13 +147,15 @@ function newCount(): LocaleFieldCount {
  * El popover del EditorHealthChip lo usa para listar qué sección tiene traducciones
  * pendientes y a qué idioma saltar.
  */
-export function countBySection(farmacia: Farmacia): SectionI18nStatus[] {
+export function countBySection(farmacia: Farmacia, locales?: readonly Locale[]): SectionI18nStatus[] {
+  // `active` = contra qué idiomas se mide "missing"; `medir` = de qué idiomas se cuenta
   const active = farmacia.idiomasActivos;
+  const medir = locales ?? active;
 
   const mk = (key: SectionKey): SectionI18nStatus => ({
     key,
     label: SECTION_LABELS[key],
-    byLocale: active.reduce(
+    byLocale: medir.reduce(
       (acc, l) => ({ ...acc, [l]: newCount() }),
       {} as Record<Locale, LocaleFieldCount>,
     ),
@@ -171,7 +173,7 @@ export function countBySection(farmacia: Farmacia): SectionI18nStatus[] {
   };
 
   const trackIn = (sec: SectionKey, v: MultilangText | undefined) => {
-    for (const l of active) {
+    for (const l of medir) {
       const c = sections[sec].byLocale[l];
       c.total++;
       const s = computeLocaleStatus(v, l, active);
@@ -288,4 +290,65 @@ export function localeWithMostMissing(
   sec: MissingSummary['sectionsWithMissing'][number],
 ): Locale | undefined {
   return [...sec.missingByLocale].sort((a, b) => b.missing - a.missing)[0]?.locale;
+}
+
+/** ¿Hay algún texto (no vacío) en este idioma en cualquier campo de la farmacia? */
+function tieneTextosEn(farmacia: Farmacia, locale: Locale): boolean {
+  const visto = new Set<unknown>();
+  const buscar = (v: unknown): boolean => {
+    if (!v || typeof v !== 'object' || visto.has(v)) return false;
+    visto.add(v);
+    if (Array.isArray(v)) return v.some(buscar);
+    const o = v as Record<string, unknown>;
+    if (isFilled(typeof o[locale] === 'string' ? (o[locale] as string) : undefined)) return true;
+    return Object.values(o).some(buscar);
+  };
+  const { resenas: _r, ...resto } = farmacia;
+  void _r;
+  return buscar(resto);
+}
+
+export type ResumenIdioma = {
+  locale: Locale;
+  principal: boolean;
+  activo: boolean;
+  /** Campos que tienen texto en algún idioma activo (lo que hay que traducir). */
+  total: number;
+  traducidos: number;
+  /** 0-100. */
+  porcentaje: number;
+  /** Primera sección con textos sin traducir a este idioma (para "Traducir"). */
+  primeraSeccionPendiente?: SectionKey;
+};
+
+/**
+ * Idiomas que se listan en "Idiomas de la web": los activos y los
+ * desactivados que conservan textos. Orden del catálogo.
+ */
+export function resumenIdiomas(farmacia: Farmacia): ResumenIdioma[] {
+  const visibles = LOCALES.filter(
+    (l) => l === LOCALE_PRINCIPAL || farmacia.idiomasActivos.includes(l) || tieneTextosEn(farmacia, l),
+  );
+  const secciones = countBySection(farmacia, visibles);
+  return visibles.map((locale) => {
+    let total = 0;
+    let traducidos = 0;
+    let primera: SectionKey | undefined;
+    for (const sec of secciones) {
+      const c = sec.byLocale[locale];
+      if (!c) continue;
+      total += c.filled + c.missing;
+      traducidos += c.filled;
+      if (!primera && c.missing > 0) primera = sec.key;
+    }
+    return {
+      locale,
+      principal: locale === LOCALE_PRINCIPAL,
+      activo: locale === LOCALE_PRINCIPAL || farmacia.idiomasActivos.includes(locale),
+      total,
+      traducidos,
+      porcentaje: total === 0 ? 100 : Math.round((traducidos / total) * 100),
+      primeraSeccionPendiente: primera,
+    };
+  });
 }

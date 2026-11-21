@@ -1,0 +1,189 @@
+{
+  "html": {
+    "lang": "it"
+  },
+  "dias": {
+    "Mo": "lunedì",
+    "Tu": "martedì",
+    "We": "mercoledì",
+    "Th": "giovedì",
+    "Fr": "venerdì",
+    "Sa": "sabato",
+    "Su": "domenica",
+    "a": "a"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Home",
+      "servicios": "Servizi",
+      "sobreNosotros": "La farmacia",
+      "faqs": "Domande",
+      "resenas": "Recensioni",
+      "contacto": "Contatti",
+      "aria": "Principale"
+    },
+    "cta": {
+      "llamanos": "Chiama",
+      "llamarA": "Chiama il {telefono}"
+    },
+    "menu": {
+      "abrir": "Menu",
+      "cerrar": "Chiudi"
+    },
+    "idioma": {
+      "aria": "Cambia lingua"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Farmacia · {ciudad}",
+      "sinCiudad": "La tua farmacia di fiducia"
+    },
+    "tituloDefecto": "Assistenza farmaceutica vicina a te, con competenza professionale.",
+    "btnLlamar": "Chiama ora",
+    "btnServicios": "Vedi i servizi",
+    "altInterior": "Interno di {nombre}",
+    "trust": {
+      "colegiados": "Farmacisti iscritti all'albo",
+      "colegiadosSub": "Consiglio esperto",
+      "horario": "Orario ampio",
+      "horarioSub": "Quando ne hai bisogno",
+      "consejo": "Consiglio senza appuntamento",
+      "consejoSub": "Senza attese"
+    },
+    "estado": {
+      "abierto": "Aperto ora",
+      "cerrado": "Chiuso ora",
+      "cierra": "chiude alle {hora}",
+      "abreHoy": "apre oggi alle {hora}",
+      "abreManana": "apre domani alle {hora}",
+      "verHorario": "Vedi orari"
+    },
+    "carrusel": {
+      "foto": "Foto {n} di {total}",
+      "pausar": "Metti in pausa le foto",
+      "reanudar": "Riprendi le foto"
+    }
+  },
+  "about": {
+    "chip": "La farmacia",
+    "tituloDefecto": "Un punto di riferimento nel quartiere",
+    "cuerpoFallback": "Da anni offriamo un'assistenza farmaceutica vicina a te, prodotti selezionati e il consiglio che solo un team professionale e attento può dare.",
+    "puntosDefecto": [
+      "Assistenza personalizzata",
+      "Team professionale",
+      "Prodotti selezionati",
+      "Consiglio vicino a te"
+    ],
+    "badge": {
+      "anyos": "anni",
+      "experiencia": "di esperienza"
+    }
+  },
+  "servicios": {
+    "chip": "Servizi",
+    "titulo": "Cosa offriamo",
+    "subtitulo": "Servizi farmaceutici e per la salute di tutta la famiglia. Rivolgiti al nostro team se hai bisogno di altre informazioni.",
+    "placeholder": "Servizi in preparazione.",
+    "verMas": "Maggiori informazioni"
+  },
+  "faqs": {
+    "chip": "Domande frequenti",
+    "titulo": "Prima di venire",
+    "subtitulo": "Risposte ai dubbi più comuni."
+  },
+  "cta": {
+    "chip": "Contatti",
+    "tituloConCiudad": "Ci trovi a {ciudad}",
+    "tituloSinCiudad": "Eccoci",
+    "subtitulo": "Passa in farmacia o chiamaci se preferisci una consulenza veloce.",
+    "labelTelefono": "Telefono",
+    "labelDireccion": "Indirizzo",
+    "labelHorario": "Orari",
+    "btnEscribenos": "Scrivici",
+    "btnLlamar": "Chiama",
+    "ariaMapa": "Mappa di {nombre}",
+    "cargarMapa": "Vedi mappa",
+    "cargarMapaAviso": "Cliccando si caricherà Google Maps, che installa cookie di Google.",
+    "comoLlegar": "Come arrivare"
+  },
+  "footer": {
+    "servicios": "Servizi",
+    "informacion": "Informazioni",
+    "contactanos": "Contatti",
+    "sobreNosotros": "La farmacia",
+    "preguntasFrecuentes": "Domande",
+    "resenas": "Recensioni",
+    "contacto": "Contatti",
+    "avisoLegal": "Note legali",
+    "politicaPrivacidad": "Informativa sulla privacy",
+    "copyright": "© {anyo} {nombre}",
+    "titular": "Titolare",
+    "badgeColegiada": "Farmacia autorizzata · Spagna",
+    "nCol": "N. iscr.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok",
+    "ctaTitulo": "Hai bisogno di aiuto?",
+    "ctaEm": "Siamo qui."
+  },
+  "features": {
+    "atencionTitulo": "Assistenza personalizzata",
+    "atencionDesc": "Ogni cliente è unico",
+    "calidadTitulo": "Prodotti selezionati",
+    "calidadDesc": "Con competenza professionale",
+    "equipoTitulo": "Team qualificato",
+    "equipoDesc": "Formazione continua",
+    "horarioTitulo": "Orario ampio",
+    "horarioDescFallback": "Dal lunedì al sabato",
+    "aria": "I nostri punti di forza"
+  },
+  "legal": {
+    "volver": "Torna alla home",
+    "avisoTitulo": "Note legali",
+    "privacidadTitulo": "Informativa sulla privacy",
+    "avisoMeta": "Note legali e informazioni sul titolare di {nombre}.",
+    "privacidadMeta": "Informativa sulla privacy e trattamento dei dati personali di {nombre}."
+  },
+  "resenas": {
+    "chip": "Recensioni",
+    "titulo": "Cosa dicono i clienti",
+    "subtitulo": "{total} recensioni su Google · valutazione media {media} / 5.",
+    "subtituloSinNumero": "Recensioni reali di persone che sono passate in farmacia.",
+    "destacada": "In evidenza",
+    "verEnGoogle": "Vedi tutte su Google",
+    "respuestaFarmacia": "Risposta della farmacia",
+    "anonimo": "Cliente",
+    "hace": {
+      "diasUno": "{n} giorno fa",
+      "diasN": "{n} giorni fa",
+      "semanasUno": "{n} settimana fa",
+      "semanasN": "{n} settimane fa",
+      "mesesUno": "{n} mese fa",
+      "mesesN": "{n} mesi fa",
+      "anyosUno": "{n} anno fa",
+      "anyosN": "{n} anni fa",
+      "ahora": "un momento fa"
+    },
+    "ariaEstrellas": "{rating} su 5 stelle",
+    "verTodas": "Tutte le recensioni",
+    "anterior": "Precedente",
+    "siguiente": "Successiva",
+    "ariaSlider": "Recensioni",
+    "tituloPagina": "Recensioni",
+    "metaDescripcion": "Tutte le recensioni Google di {nombre}. Testimonianze reali dei clienti.",
+    "rangoNota": "{media} · {total} recensioni",
+    "filtroTodas": "Tutte",
+    "filtroEstrellas": "{n} stelle"
+  },
+  "p404": {
+    "tituloMeta": "Pagina non trovata · {nombre}",
+    "descMeta": "La pagina che cerchi non esiste o è stata spostata.",
+    "chip": "404",
+    "subtitulo1": "Pagina non",
+    "subtitulo2": "trovata",
+    "texto": "Il link potrebbe non funzionare o la pagina è stata spostata.",
+    "btnInicio": "Torna alla home",
+    "buscas": "Cerchi qualcosa in particolare?"
+  }
+}

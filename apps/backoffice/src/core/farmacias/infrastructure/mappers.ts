@@ -47,7 +47,7 @@ function asArray<T>(v: unknown, mapper: (x: unknown) => T | null): T[] {
 }
 
 function asActiveLocales(v: unknown): Locale[] {
-  const arr = asArray(v, (x) => (typeof x === 'string' && (LOCALES as string[]).includes(x) ? (x as Locale) : null));
+  const arr = asArray(v, (x) => (typeof x === 'string' && (LOCALES as readonly string[]).includes(x) ? (x as Locale) : null));
   return arr.length > 0 ? arr : ['es'];
 }
 

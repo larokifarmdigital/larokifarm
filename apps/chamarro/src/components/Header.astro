@@ -1,5 +1,5 @@
 ---
-import { LOCALES_DISPONIBLES, rutaConLocale, t, type Locale } from '@/lib/i18n';
+import { localesActivos, NOMBRE_IDIOMA, rutaConLocale, t, type Locale } from '@/lib/i18n';
 import type { IdiomaActivo } from '@/lib/sanity';
 
 interface Props {
@@ -30,16 +30,9 @@ const {
 const logoUrl = logo || '/logo.png';
 
 const home = rutaConLocale('/', lang);
-const codigosActivos = new Set(
-  (idiomasActivos ?? []).map((i) => i.codigo).filter((c) => LOCALES_DISPONIBLES.includes(c as Locale)),
-);
-if (codigosActivos.size === 0) codigosActivos.add('es');
-const idiomasVisibles = LOCALES_DISPONIBLES.filter((l) => codigosActivos.has(l));
-const idiomaLabel: Record<Locale, string> = {
-  es: 'Español',
-  en: 'English',
-  ca: 'Català',
-};
+// Solo los idiomas activos de la farmacia (los demás no tienen web)
+const idiomasVisibles: Locale[] = localesActivos(idiomasActivos);
+const idiomaLabel = NOMBRE_IDIOMA;
 
 const enlaces = [
   { href: `${home}#servicios`, label: t('header.nav.servicios', lang) },

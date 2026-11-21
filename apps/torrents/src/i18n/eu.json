@@ -1,0 +1,170 @@
+{
+  "html": {
+    "lang": "eu"
+  },
+  "dias": {
+    "Mo": "astelehena",
+    "Tu": "asteartea",
+    "We": "asteazkena",
+    "Th": "osteguna",
+    "Fr": "ostirala",
+    "Sa": "larunbata",
+    "Su": "igandea",
+    "a": "-"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Hasiera",
+      "servicios": "Baliabideak",
+      "sobreNosotros": "Guri buruz",
+      "faqs": "Ohiko galderak",
+      "resenas": "Iritziak",
+      "contacto": "Kontaktua",
+      "aria": "Nagusia"
+    },
+    "breadcrumb": {
+      "aria": "Nabigazio-bidea"
+    },
+    "cta": {
+      "llamanos": "Deitu iezaguzu",
+      "llamarA": "Deitu {telefono} zenbakira"
+    },
+    "menu": {
+      "abrir": "Ireki menua",
+      "cerrar": "Itxi menua"
+    },
+    "idioma": {
+      "aria": "Hizkuntza aldatu"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Farmazia {ciudad}n",
+      "sinCiudad": "Zure konfiantzazko farmazia"
+    },
+    "ciudad": "Farmazia {ciudad}n",
+    "btnLlamar": "Deitu orain",
+    "altInterior": "{nombre}(r)en barrualdea"
+  },
+  "about": {
+    "chip": "Guri buruz",
+    "tituloDefecto": "Familientzako farmazia",
+    "cuerpoFallback": "Farmazia honetan familiaren osasuna zaintzen dugu. Gure taldeak zure seme-alaben ongizatearekin konpromisoa du: arreta hurbila, kalitatezko produktuak eta guraso gisa behar duzun aholkularitza eskaintzen ditugu.",
+    "puntosDefecto": [
+      "Arreta hurbila eta profesionala",
+      "Kalitate goreneko produktuak",
+      "Doako aholkularitza",
+      "Giro atsegina"
+    ],
+    "badge": {
+      "anyos": "urte",
+      "experiencia": "esperientzia"
+    }
+  },
+  "servicios": {
+    "chip": "Gure baliabideak",
+    "titulo": "Gure baliabideak",
+    "subtitulo": "Familia osoa zaintzeko baliabide farmazeutiko eta produktu hautatuen eskaintza zabala dugu.",
+    "placeholder": "Laster gehituko ditugu baliabideen xehetasunak.",
+    "btnAnterior": "Aurrekoa",
+    "btnSiguiente": "Hurrengoa",
+    "btnSlide": "Joan {n}. diapositibara"
+  },
+  "faqs": {
+    "chip": "Ohiko galderak",
+    "titulo": "Zure zalantzak argitzen ditugu",
+    "subtitulo": "Gure bezeroek gehien egiten dizkiguten galderak. Beste zalantzaren bat baduzu, idatzi iezaguzu eta berehala erantzungo dizugu."
+  },
+  "cta": {
+    "chip": "Jarri gurekin harremanetan",
+    "tituloConCiudad": "Aurki gaitzazu {ciudad}n",
+    "tituloSinCiudad": "Laguntzeko prest gaude",
+    "subtitulo": "Bisita gaitzazu {nombre}(e)n edo deitu iezaguzu aholkularitza farmazeutiko pertsonalizatua jasotzeko.",
+    "labelTelefono": "Telefonoa",
+    "labelDireccion": "Helbidea",
+    "labelHorario": "Ordutegia",
+    "btnEscribenos": "Idatzi iezaguzu",
+    "btnLlamar": "Deitu orain",
+    "ariaMapa": "{nombre}(r)en mapa",
+    "cargarMapa": "Ikusi mapa",
+    "cargarMapaAviso": "Sakatzean Google Maps kargatuko da, eta Googleren cookieak instalatzen ditu."
+  },
+  "footer": {
+    "servicios": "Baliabideak",
+    "informacion": "Informazioa",
+    "contactanos": "Jarri gurekin harremanetan",
+    "sobreNosotros": "Guri buruz",
+    "preguntasFrecuentes": "Ohiko galderak",
+    "resenas": "Iritziak",
+    "contacto": "Kontaktua",
+    "avisoLegal": "Lege-oharra",
+    "politicaPrivacidad": "Pribatutasun-politika",
+    "copyright": "© {anyo} {nombre}. Eskubide guztiak erreserbatuta.",
+    "nCol": "Elkargo-zk.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok"
+  },
+  "features": {
+    "atencionTitulo": "Arreta pertsonalizatua",
+    "atencionDesc": "Familia bakoitza bakarra da",
+    "calidadTitulo": "Produktu ziurtatuak",
+    "calidadDesc": "Kalitate bermatua",
+    "equipoTitulo": "Talde espezializatua",
+    "equipoDesc": "Pediatrian espezializatutako farmazialariak",
+    "horarioTitulo": "Ordutegi zabala",
+    "horarioDescFallback": "Astelehenetik larunbatera"
+  },
+  "flotante": {
+    "ariaWhatsApp": "Jarri harremanetan WhatsApp bidez"
+  },
+  "legal": {
+    "volver": "Itzuli hasierara",
+    "avisoTitulo": "Lege-oharra",
+    "privacidadTitulo": "Pribatutasun-politika",
+    "avisoMeta": "{nombre}(r)en lege-oharra eta titularraren informazioa.",
+    "privacidadMeta": "{nombre}(r)en pribatutasun-politika eta datu pertsonalen tratamendua."
+  },
+  "resenas": {
+    "chip": "Googleko iritziak",
+    "titulo": "Gure bezeroek diotena",
+    "subtitulo": "{total} iritzi Googlen, batez beste {media} / 5eko balorazioarekin.",
+    "subtituloSinNumero": "Farmaziatik igaro diren pertsonen benetako iritziak.",
+    "destacada": "Iritzi nabarmendua",
+    "verEnGoogle": "Ikusi Googlen",
+    "respuestaFarmacia": "Farmaziaren erantzuna",
+    "anonimo": "Bezeroa",
+    "hace": {
+      "diasUno": "duela {n} egun",
+      "diasN": "duela {n} egun",
+      "semanasUno": "duela {n} aste",
+      "semanasN": "duela {n} aste",
+      "mesesUno": "duela {n} hilabete",
+      "mesesN": "duela {n} hilabete",
+      "anyosUno": "duela {n} urte",
+      "anyosN": "duela {n} urte",
+      "ahora": "oraintxe bertan"
+    },
+    "ariaEstrellas": "{rating} izar 5etik",
+    "verTodas": "Ikusi iritzi guztiak",
+    "anterior": "Aurreko iritzia",
+    "siguiente": "Hurrengo iritzia",
+    "ariaSlider": "Txandakako iritziak",
+    "irA": "Joan {n}. iritzira",
+    "tituloPagina": "{nombre}(r)en iritziak",
+    "metaDescripcion": "{nombre}(r)en Googleko iritzi egiaztatu guztiak. Bezeroen benetako iritziak.",
+    "rangoNota": "{media} 5etik · {total} iritzi",
+    "filtroTodas": "Guztiak",
+    "filtroEstrellas": "{n} izar"
+  },
+  "p404": {
+    "tituloMeta": "Ez da orria aurkitu · {nombre}",
+    "descMeta": "Bilatzen duzun orria ez dago edo lekuz aldatu da.",
+    "chip": "404 errorea",
+    "subtitulo1": "Orri hau",
+    "subtitulo2": "ez dago",
+    "texto": "Baliteke esteka hautsita egotea, orria lekuz aldatu izana edo URLa okerra izatea.",
+    "btnInicio": "Itzuli hasierara",
+    "buscas": "Zerbait zehatza bilatzen duzu?"
+  }
+}

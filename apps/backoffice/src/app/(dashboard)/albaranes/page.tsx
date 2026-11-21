@@ -1,5 +1,5 @@
 import { requireUser, auth } from '@/core/auth';
-import { GetBudgetStatusUseCase, getComparisonRepository } from '@/core/comparisons';
+import { GetBudgetStatusUseCase, getAiUsageRepository, getComparisonRepository } from '@/core/comparisons';
 import { getBusinessRepository } from '@/core/businesses';
 import { ReconcilerView } from '@/features/conciliador';
 
@@ -11,7 +11,7 @@ export default async function ConciliadorPage() {
   const session = await auth();
   const businessId = session?.user?.businessId ?? null;
   const budgetStatus = businessId
-    ? await new GetBudgetStatusUseCase(getBusinessRepository(), getComparisonRepository()).execute(businessId)
+    ? await new GetBudgetStatusUseCase(getBusinessRepository(), getComparisonRepository(), getAiUsageRepository()).execute(businessId)
     : null;
   const currentUser = session?.user ? { id: session.user.id, role: session.user.role } : null;
   return <ReconcilerView budgetStatus={budgetStatus} currentUser={currentUser} />;

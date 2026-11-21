@@ -137,7 +137,7 @@ export function Select({
             collisionPadding={12}
             className={cn(
               'z-50 min-w-[var(--radix-select-trigger-width)] max-w-[min(420px,calc(100vw-24px))] overflow-hidden',
-              'max-h-[min(360px,var(--radix-select-content-available-height))]',
+              'max-h-[min(480px,var(--radix-select-content-available-height))]',
               'rounded-[10px] border border-[var(--color-hairline)] bg-[var(--color-surface)] shadow-[var(--shadow-elevated)]',
               'motion-reduce:animate-none',
             )}

@@ -85,7 +85,6 @@ export function FilePreviewModal({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm" />
         <Dialog.Content
-          aria-describedby={undefined}
           onCloseAutoFocus={(e) => {
             e.preventDefault();
             devolverFocoA.current?.focus();
@@ -96,6 +95,7 @@ export function FilePreviewModal({
             <Dialog.Title className="m-0 flex-1 min-w-0 truncate text-[15px] font-semibold text-[var(--color-ink)]">
               {selected?.name}
             </Dialog.Title>
+            <Dialog.Description className="sr-only">Vista previa de los archivos de la conciliación</Dialog.Description>
             {selected?.kind === 'pdf' && (
               <button type="button" onClick={abrirEnPestana} className={BTN}>
                 Abrir en pestaña

@@ -10,14 +10,12 @@ import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { PageHeader, ANCHO_PAGINA } from '@/shared/components/molecules/PageHeader';
 import { cn } from '@/shared/lib/cn';
 import { HistoryFilters, QuitarFiltros } from '../components/HistoryFilters';
-import { HistoryList, type GrupoHistorial } from '../components/HistoryList';
+import { HistoryList, type FilaHistorial } from '../components/HistoryList';
 import { Pagination } from '../components/Pagination';
 import { BTN_SECUNDARIO } from '../lib/botones';
 import {
   CLAVES_FILTRO,
-  agruparPorDia,
-  etiquetaDia,
-  horaMadrid,
+  fechaFila,
   rangoPeriodo,
   type Periodo,
 } from '../lib/historial';
@@ -87,26 +85,24 @@ export async function HistoryListView({ params }: { params: HistoryListParams })
 
   // Solo lo que se pinta. La farmacia, únicamente para SUPER_ADMIN (el coste
   // vive en "Datos técnicos" del detalle y en /admin/uso, no en la lista).
-  const grupos: GrupoHistorial[] = agruparPorDia(result.items).map((g) => ({
-    ymd: g.ymd,
-    etiqueta: etiquetaDia(g.ymd),
-    filas: g.items.map((c) => {
-      // Mismo criterio que Inicio: el proveedor es el título; el nombre del envío, secundario.
-      const titulo = c.supplier || c.label || 'Proveedor sin identificar';
-      const rep = reportes[c.id];
-      return {
-        id: c.id,
-        titulo,
-        envio: c.label && c.label !== titulo ? c.label : null,
-        hora: horaMadrid(c.createdAt),
-        usuario: c.user.name,
-        estado: c.status,
-        numDiscrepancias: c.numDiscrepancies,
-        reporte: rep?.open ? 'abierto' : rep?.resolved ? 'resuelto' : null,
-        ...(esAdmin ? { negocio: c.business.name } : {}),
-      };
-    }),
-  }));
+  const filas: FilaHistorial[] = result.items.map((c) => {
+    // Mismo criterio que Inicio: el proveedor es el título; el nombre del envío, secundario.
+    const titulo = c.supplier || c.label || 'Proveedor sin identificar';
+    const rep = reportes[c.id];
+    const fecha = fechaFila(c.createdAt);
+    return {
+      id: c.id,
+      titulo,
+      envio: c.label && c.label !== titulo ? c.label : null,
+      fecha: fecha.corta,
+      fechaLarga: fecha.larga,
+      usuario: c.user.name,
+      estado: c.status,
+      numDiscrepancias: c.numDiscrepancies,
+      reporte: rep?.open ? 'abierto' : rep?.resolved ? 'resuelto' : null,
+      ...(esAdmin ? { negocio: c.business.name } : {}),
+    };
+  });
 
   return (
     <div className={cn(ANCHO_PAGINA, 'pt-6 pb-10')}>
@@ -151,7 +147,7 @@ export async function HistoryListView({ params }: { params: HistoryListParams })
         <EstadoVacio conFiltros={hayFiltros} />
       ) : (
         <>
-          <HistoryList grupos={grupos} />
+          <HistoryList filas={filas} conFarmacia={esAdmin} />
           <Pagination page={result.page} totalPages={result.totalPages} buildHref={hrefPagina(params)} />
         </>
       )}

@@ -1,0 +1,189 @@
+{
+  "html": {
+    "lang": "eu"
+  },
+  "dias": {
+    "Mo": "astelehena",
+    "Tu": "asteartea",
+    "We": "asteazkena",
+    "Th": "osteguna",
+    "Fr": "ostirala",
+    "Sa": "larunbata",
+    "Su": "igandea",
+    "a": "-"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Hasiera",
+      "servicios": "Zerbitzuak",
+      "sobreNosotros": "Farmazia",
+      "faqs": "Galderak",
+      "resenas": "Iritziak",
+      "contacto": "Kontaktua",
+      "aria": "Nagusia"
+    },
+    "cta": {
+      "llamanos": "Deitu",
+      "llamarA": "Deitu {telefono} zenbakira"
+    },
+    "menu": {
+      "abrir": "Menua",
+      "cerrar": "Itxi"
+    },
+    "idioma": {
+      "aria": "Hizkuntza aldatu"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Farmazia · {ciudad}",
+      "sinCiudad": "Zure konfiantzazko farmazia"
+    },
+    "tituloDefecto": "Arreta farmazeutiko hurbila, irizpide profesionalarekin.",
+    "btnLlamar": "Deitu orain",
+    "btnServicios": "Ikusi zerbitzuak",
+    "altInterior": "{nombre}(r)en barrualdea",
+    "trust": {
+      "colegiados": "Farmazialari elkargokideak",
+      "colegiadosSub": "Aholku aditua",
+      "horario": "Ordutegi zabala",
+      "horarioSub": "Behar duzunean",
+      "consejo": "Aholkua hitzordurik gabe",
+      "consejoSub": "Itxaron gabe"
+    },
+    "estado": {
+      "abierto": "Irekita orain",
+      "cerrado": "Itxita orain",
+      "cierra": "{hora}etan ixten da",
+      "abreHoy": "gaur {hora}etan irekiko da",
+      "abreManana": "bihar {hora}etan irekiko da",
+      "verHorario": "Ikusi ordutegia"
+    },
+    "carrusel": {
+      "foto": "{n}. argazkia, {total}etik",
+      "pausar": "Pausatu argazkiak",
+      "reanudar": "Berrekin argazkiei"
+    }
+  },
+  "about": {
+    "chip": "Farmazia",
+    "tituloDefecto": "Auzoko erreferentzia",
+    "cuerpoFallback": "Urteak daramatzagu arreta farmazeutiko hurbila eskaintzen, produktu hautatuekin eta talde profesional hurbil batek bakarrik eman dezakeen aholkuarekin.",
+    "puntosDefecto": [
+      "Arreta pertsonalizatua",
+      "Talde profesionala",
+      "Produktu hautatuak",
+      "Aholku hurbila"
+    ],
+    "badge": {
+      "anyos": "urte",
+      "experiencia": "esperientzia"
+    }
+  },
+  "servicios": {
+    "chip": "Zerbitzuak",
+    "titulo": "Zer eskaintzen dugun",
+    "subtitulo": "Familia osoarentzako farmazia- eta osasun-zerbitzuak. Informazio gehiago behar baduzu, galdetu gure taldeari.",
+    "placeholder": "Zerbitzuak prestatzen.",
+    "verMas": "Informazio gehiago"
+  },
+  "faqs": {
+    "chip": "Ohiko galderak",
+    "titulo": "Etorri aurretik",
+    "subtitulo": "Ohiko zalantzen erantzunak."
+  },
+  "cta": {
+    "chip": "Kontaktua",
+    "tituloConCiudad": "{ciudad}n aurkituko gaituzu",
+    "tituloSinCiudad": "Hemen gaude",
+    "subtitulo": "Etorri farmaziara edo deitu, kontsulta azkar bat nahiago baduzu.",
+    "labelTelefono": "Telefonoa",
+    "labelDireccion": "Helbidea",
+    "labelHorario": "Ordutegia",
+    "btnEscribenos": "Idatzi iezaguzu",
+    "btnLlamar": "Deitu",
+    "ariaMapa": "{nombre}(r)en mapa",
+    "cargarMapa": "Ikusi mapa",
+    "cargarMapaAviso": "Sakatzean Google Maps kargatuko da, eta Googleren cookieak instalatzen ditu.",
+    "comoLlegar": "Nola iritsi"
+  },
+  "footer": {
+    "servicios": "Zerbitzuak",
+    "informacion": "Informazioa",
+    "contactanos": "Kontaktua",
+    "sobreNosotros": "Farmazia",
+    "preguntasFrecuentes": "Galderak",
+    "resenas": "Iritziak",
+    "contacto": "Kontaktua",
+    "avisoLegal": "Lege-oharra",
+    "politicaPrivacidad": "Pribatutasun-politika",
+    "copyright": "© {anyo} {nombre}",
+    "titular": "Titularra",
+    "badgeColegiada": "Elkargoko farmazia · Espainia",
+    "nCol": "Elkargo-zk.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok",
+    "ctaTitulo": "Laguntza behar duzu?",
+    "ctaEm": "Hemen gaude."
+  },
+  "features": {
+    "atencionTitulo": "Arreta pertsonalizatua",
+    "atencionDesc": "Bezero bakoitza bakarra da",
+    "calidadTitulo": "Produktu hautatuak",
+    "calidadDesc": "Irizpide profesionalarekin",
+    "equipoTitulo": "Talde kualifikatua",
+    "equipoDesc": "Etengabeko prestakuntza",
+    "horarioTitulo": "Ordutegi zabala",
+    "horarioDescFallback": "Astelehenetik larunbatera",
+    "aria": "Gure abantailak"
+  },
+  "legal": {
+    "volver": "Itzuli hasierara",
+    "avisoTitulo": "Lege-oharra",
+    "privacidadTitulo": "Pribatutasun-politika",
+    "avisoMeta": "{nombre}(r)en lege-oharra eta titularraren informazioa.",
+    "privacidadMeta": "{nombre}(r)en pribatutasun-politika eta datu pertsonalen tratamendua."
+  },
+  "resenas": {
+    "chip": "Iritziak",
+    "titulo": "Bezeroek diotena",
+    "subtitulo": "{total} iritzi Googlen · batez besteko balorazioa {media} / 5.",
+    "subtituloSinNumero": "Farmaziatik igaro diren pertsonen benetako iritziak.",
+    "destacada": "Nabarmendua",
+    "verEnGoogle": "Ikusi guztiak Googlen",
+    "respuestaFarmacia": "Farmaziaren erantzuna",
+    "anonimo": "Bezeroa",
+    "hace": {
+      "diasUno": "duela {n} egun",
+      "diasN": "duela {n} egun",
+      "semanasUno": "duela {n} aste",
+      "semanasN": "duela {n} aste",
+      "mesesUno": "duela {n} hilabete",
+      "mesesN": "duela {n} hilabete",
+      "anyosUno": "duela {n} urte",
+      "anyosN": "duela {n} urte",
+      "ahora": "oraintxe bertan"
+    },
+    "ariaEstrellas": "{rating} izar 5etik",
+    "verTodas": "Iritzi guztiak",
+    "anterior": "Aurrekoa",
+    "siguiente": "Hurrengoa",
+    "ariaSlider": "Iritziak",
+    "tituloPagina": "Iritziak",
+    "metaDescripcion": "{nombre}(r)en Googleko iritzi guztiak. Bezeroen benetako testigantzak.",
+    "rangoNota": "{media} · {total} iritzi",
+    "filtroTodas": "Guztiak",
+    "filtroEstrellas": "{n} izar"
+  },
+  "p404": {
+    "tituloMeta": "Ez da orria aurkitu · {nombre}",
+    "descMeta": "Bilatzen duzun orria ez dago edo lekuz aldatu da.",
+    "chip": "404",
+    "subtitulo1": "Ez da orria",
+    "subtitulo2": "aurkitu",
+    "texto": "Baliteke esteka hautsita egotea edo orria lekuz aldatu izana.",
+    "btnInicio": "Itzuli hasierara",
+    "buscas": "Zerbait zehatza bilatzen duzu?"
+  }
+}

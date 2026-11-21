@@ -1,6 +1,6 @@
-// NOTE: estado del presupuesto mensual del negocio (Coste Gemini USD del mes en curso vs monthlyBudgetUsd). Aviso amarillo al 80%, bloqueo duro al 100%.
+// NOTE: estado del presupuesto mensual del negocio: coste Gemini USD del mes en curso (conciliaciones + traducciones del editor) vs monthlyBudgetUsd. Aviso amarillo al 80%, bloqueo duro al 100%.
 import type { BusinessRepository } from '@/core/businesses';
-import { startOfMonthUTC, type ComparisonRepository } from '../domain';
+import { startOfMonthUTC, type AiUsageRepository, type ComparisonRepository } from '../domain';
 
 export type BudgetLevel = 'unlimited' | 'ok' | 'warning' | 'blocked';
 
@@ -18,6 +18,8 @@ export class GetBudgetStatusUseCase {
   constructor(
     private readonly businessRepo: BusinessRepository,
     private readonly comparisonRepo: ComparisonRepository,
+    /** Traducciones con IA del editor (usage_entries). Sin él solo cuentan las conciliaciones. */
+    private readonly aiUsageRepo?: AiUsageRepository,
   ) {}
 
   async execute(businessId: string): Promise<BudgetStatus> {
@@ -33,11 +35,11 @@ export class GetBudgetStatusUseCase {
     }
 
     const startCurrent = startOfMonthUTC(new Date());
-    const buckets = await this.comparisonRepo.aggregateByMonth(
-      { kind: 'business', businessId },
-      { from: startCurrent },
-    );
-    const spentUsd = buckets[0]?.metrics.geminiCostUsd ?? 0;
+    const [buckets, traducciones] = await Promise.all([
+      this.comparisonRepo.aggregateByMonth({ kind: 'business', businessId }, { from: startCurrent }),
+      this.aiUsageRepo ? this.aiUsageRepo.costSince(businessId, startCurrent) : Promise.resolve(0),
+    ]);
+    const spentUsd = (buckets[0]?.metrics.geminiCostUsd ?? 0) + traducciones;
     const budgetUsd = business.monthlyBudgetUsd;
 
     let level: BudgetLevel;

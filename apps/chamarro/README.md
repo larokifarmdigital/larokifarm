@@ -5,7 +5,7 @@ Astro 5 + Tailwind 4 + Sanity. Estética editorial minimalista (blanco → gris/
 ## Variables de entorno
 
 ```
-SITE_URL=https://farmaciachamarro.com
+SITE_URL=https://farmaciachamarro.es
 PUBLIC_SANITY_PROJECT_ID=yovi040n
 PUBLIC_SANITY_DATASET=calendario
 PUBLIC_FARMACIA_SLUG=chamarro

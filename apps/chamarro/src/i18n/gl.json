@@ -1,0 +1,189 @@
+{
+  "html": {
+    "lang": "gl"
+  },
+  "dias": {
+    "Mo": "luns",
+    "Tu": "martes",
+    "We": "mércores",
+    "Th": "xoves",
+    "Fr": "venres",
+    "Sa": "sábado",
+    "Su": "domingo",
+    "a": "a"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Inicio",
+      "servicios": "Servizos",
+      "sobreNosotros": "A farmacia",
+      "faqs": "Preguntas",
+      "resenas": "Opinións",
+      "contacto": "Contacto",
+      "aria": "Principal"
+    },
+    "cta": {
+      "llamanos": "Chamar",
+      "llamarA": "Chamar ao {telefono}"
+    },
+    "menu": {
+      "abrir": "Menú",
+      "cerrar": "Pechar"
+    },
+    "idioma": {
+      "aria": "Cambiar idioma"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Farmacia · {ciudad}",
+      "sinCiudad": "A túa farmacia de confianza"
+    },
+    "tituloDefecto": "Atención farmacéutica próxima, con criterio profesional.",
+    "btnLlamar": "Chamar agora",
+    "btnServicios": "Ver servizos",
+    "altInterior": "Interior de {nombre}",
+    "trust": {
+      "colegiados": "Farmacéuticos colexiados",
+      "colegiadosSub": "Consello experto",
+      "horario": "Horario amplo",
+      "horarioSub": "Cando o necesites",
+      "consejo": "Consello sen cita",
+      "consejoSub": "Sen esperas"
+    },
+    "estado": {
+      "abierto": "Aberto agora",
+      "cerrado": "Pechado agora",
+      "cierra": "pecha ás {hora}",
+      "abreHoy": "abre hoxe ás {hora}",
+      "abreManana": "abre mañá ás {hora}",
+      "verHorario": "Ver horario"
+    },
+    "carrusel": {
+      "foto": "Foto {n} de {total}",
+      "pausar": "Pausar fotos",
+      "reanudar": "Retomar fotos"
+    }
+  },
+  "about": {
+    "chip": "A farmacia",
+    "tituloDefecto": "Un lugar de referencia no barrio",
+    "cuerpoFallback": "Levamos anos ofrecendo atención farmacéutica próxima, con produtos seleccionados e o consello que só un equipo profesional próximo pode dar.",
+    "puntosDefecto": [
+      "Atención personalizada",
+      "Equipo profesional",
+      "Produtos seleccionados",
+      "Consello próximo"
+    ],
+    "badge": {
+      "anyos": "anos",
+      "experiencia": "de experiencia"
+    }
+  },
+  "servicios": {
+    "chip": "Servizos",
+    "titulo": "O que ofrecemos",
+    "subtitulo": "Servizos farmacéuticos e de saúde para toda a familia. Consulta ao noso equipo se precisas máis información.",
+    "placeholder": "Servizos en preparación.",
+    "verMas": "Máis información"
+  },
+  "faqs": {
+    "chip": "Preguntas frecuentes",
+    "titulo": "Antes de vir",
+    "subtitulo": "Respostas ás dúbidas máis habituais."
+  },
+  "cta": {
+    "chip": "Contacto",
+    "tituloConCiudad": "Atópasnos en {ciudad}",
+    "tituloSinCiudad": "Aquí estamos",
+    "subtitulo": "Pasa pola farmacia ou chámanos se prefires unha consulta rápida.",
+    "labelTelefono": "Teléfono",
+    "labelDireccion": "Enderezo",
+    "labelHorario": "Horario",
+    "btnEscribenos": "Escríbenos",
+    "btnLlamar": "Chamar",
+    "ariaMapa": "Mapa de {nombre}",
+    "cargarMapa": "Ver mapa",
+    "cargarMapaAviso": "Ao premer cargarase Google Maps, que instala cookies de Google.",
+    "comoLlegar": "Como chegar"
+  },
+  "footer": {
+    "servicios": "Servizos",
+    "informacion": "Información",
+    "contactanos": "Contacto",
+    "sobreNosotros": "A farmacia",
+    "preguntasFrecuentes": "Preguntas",
+    "resenas": "Opinións",
+    "contacto": "Contacto",
+    "avisoLegal": "Aviso legal",
+    "politicaPrivacidad": "Política de privacidade",
+    "copyright": "© {anyo} {nombre}",
+    "titular": "Titular",
+    "badgeColegiada": "Farmacia colexiada · España",
+    "nCol": "N.º col.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok",
+    "ctaTitulo": "Precisas axuda?",
+    "ctaEm": "Estamos aquí."
+  },
+  "features": {
+    "atencionTitulo": "Atención personalizada",
+    "atencionDesc": "Cada cliente é único",
+    "calidadTitulo": "Produtos seleccionados",
+    "calidadDesc": "Con criterio profesional",
+    "equipoTitulo": "Equipo cualificado",
+    "equipoDesc": "Formación continua",
+    "horarioTitulo": "Horario amplo",
+    "horarioDescFallback": "Luns a sábado",
+    "aria": "As nosas vantaxes"
+  },
+  "legal": {
+    "volver": "Volver ao inicio",
+    "avisoTitulo": "Aviso legal",
+    "privacidadTitulo": "Política de privacidade",
+    "avisoMeta": "Aviso legal e información do titular de {nombre}.",
+    "privacidadMeta": "Política de privacidade e tratamento de datos persoais de {nombre}."
+  },
+  "resenas": {
+    "chip": "Opinións",
+    "titulo": "O que din os clientes",
+    "subtitulo": "{total} opinións en Google · valoración media {media} / 5.",
+    "subtituloSinNumero": "Opinións reais de persoas que pasaron pola farmacia.",
+    "destacada": "Destacada",
+    "verEnGoogle": "Ver todas en Google",
+    "respuestaFarmacia": "Resposta da farmacia",
+    "anonimo": "Cliente",
+    "hace": {
+      "diasUno": "hai {n} día",
+      "diasN": "hai {n} días",
+      "semanasUno": "hai {n} semana",
+      "semanasN": "hai {n} semanas",
+      "mesesUno": "hai {n} mes",
+      "mesesN": "hai {n} meses",
+      "anyosUno": "hai {n} ano",
+      "anyosN": "hai {n} anos",
+      "ahora": "hai un momento"
+    },
+    "ariaEstrellas": "{rating} de 5 estrelas",
+    "verTodas": "Todas as opinións",
+    "anterior": "Anterior",
+    "siguiente": "Seguinte",
+    "ariaSlider": "Opinións",
+    "tituloPagina": "Opinións",
+    "metaDescripcion": "Todas as opinións de Google de {nombre}. Testemuños reais de clientes.",
+    "rangoNota": "{media} · {total} opinións",
+    "filtroTodas": "Todas",
+    "filtroEstrellas": "{n} estrelas"
+  },
+  "p404": {
+    "tituloMeta": "Páxina non atopada · {nombre}",
+    "descMeta": "A páxina que buscas non existe ou cambiou de lugar.",
+    "chip": "404",
+    "subtitulo1": "Páxina non",
+    "subtitulo2": "atopada",
+    "texto": "Pode que a ligazón estea rota ou que a páxina cambiase de lugar.",
+    "btnInicio": "Volver ao inicio",
+    "buscas": "Buscas algo concreto?"
+  }
+}

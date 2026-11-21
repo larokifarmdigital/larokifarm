@@ -2,7 +2,7 @@
 import '@/styles/global.css';
 import gilroyRegular from '@/assets/fonts/Gilroy-Regular.ttf?url';
 import gilroyBlack from '@/assets/fonts/Gilroy-Black.ttf?url';
-import { LOCALES_DISPONIBLES, LOCALE_DEFECTO, rutaConLocale, type Locale } from '@/lib/i18n';
+import { LOCALE_DEFECTO, OG_LOCALE, rutaConLocale, type Locale } from '@/lib/i18n';
 import { SLUG_FARMACIA, imagenSanity } from '@/lib/sanity';
 import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
@@ -14,6 +14,8 @@ export interface Props {
   imagenOg?: string;
   jsonLd?: unknown;
   lang: Locale;
+  /** Idiomas con web (los activos de la farmacia): hreflang y og:locale. */
+  idiomas?: Locale[];
   rutaActual?: string;
   nombreFarmacia?: string;
   logoFarmacia?: string;
@@ -26,6 +28,7 @@ const {
   imagenOg,
   jsonLd,
   lang,
+  idiomas,
   rutaActual = '/',
   nombreFarmacia,
   logoFarmacia
@@ -40,13 +43,10 @@ const ogImageAbsoluta = imagenOg?.startsWith('http')
     ? `${siteUrl}${imagenOg}`
     : undefined;
 
-const OG_LOCALES: Record<Locale, string> = {
-  es: 'es_ES',
-  en: 'en_US',
-  ca: 'ca_ES'
-};
+const OG_LOCALES = OG_LOCALE;
+const idiomasWeb: Locale[] = idiomas?.length ? idiomas : [...new Set<Locale>([LOCALE_DEFECTO, lang])];
 
-const hreflangs = LOCALES_DISPONIBLES.map(codigo => ({
+const hreflangs = idiomasWeb.map(codigo => ({
   hreflang: codigo,
   href: `${siteUrl}${rutaConLocale(rutaActual, codigo)}`.replace(/\/$/, '') || `${siteUrl}/`
 }));
@@ -78,7 +78,7 @@ const hrefDefault =
     <meta property='og:type' content='website' />
     <meta property='og:locale' content={OG_LOCALES[lang]} />
     {
-      LOCALES_DISPONIBLES.filter(l => l !== lang).map(l => (
+      idiomasWeb.filter(l => l !== lang).map(l => (
         <meta property='og:locale:alternate' content={OG_LOCALES[l]} />
       ))
     }

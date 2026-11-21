@@ -1,1 +1,1 @@
-export { HistoryList, type FilaHistorial, type GrupoHistorial } from './HistoryList';
+export { HistoryList, type FilaHistorial } from './HistoryList';

@@ -11,10 +11,7 @@ import type {
   DiasI18n
 } from '@/lib/sanity';
 import MarcaAgua from '@/components/MarcaAgua.astro';
-import { t, rutaConLocale, type Locale } from '@/lib/i18n';
-import diasEs from '@/i18n/es.json';
-import diasEn from '@/i18n/en.json';
-import diasCa from '@/i18n/ca.json';
+import { t, rutaConLocale, type Locale, DIAS_POR_IDIOMA, CERRADO_POR_IDIOMA } from '@/lib/i18n';
 
 export interface Props {
   nombre: string;
@@ -70,16 +67,8 @@ const serviciosTop = servicios.slice(0, 6).map(s => ({
 
 const descripcionTxt = localizar(descripcionCorta, lang);
 
-const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
-  es: diasEs.dias as DiasI18n,
-  en: diasEn.dias as DiasI18n,
-  ca: diasCa.dias as DiasI18n
-};
-const cerradoLabel: Record<Locale, string> = {
-  es: 'Cerrado',
-  en: 'Closed',
-  ca: 'Tancat'
-};
+const DIAS_POR_LANG = DIAS_POR_IDIOMA as Record<Locale, DiasI18n>;
+const cerradoLabel: Record<Locale, string> = CERRADO_POR_IDIOMA;
 const grupos =
   horariosAgrupados ?? agruparHorarios(horarios, DIAS_POR_LANG[lang], cerradoLabel[lang]);
 

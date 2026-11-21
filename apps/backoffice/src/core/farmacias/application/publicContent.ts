@@ -66,7 +66,17 @@ const DIA_LANDING: Record<Horario['dia'], LandingHorarioDia['dia']> = {
 };
 
 /** Nombres tal cual los tenía el documento `idioma` de Sanity. */
-const IDIOMA_NOMBRE: Record<string, string> = { es: 'Español', en: 'English', ca: 'Català' };
+const IDIOMA_NOMBRE: Record<string, string> = {
+  es: 'Español',
+  en: 'English',
+  ca: 'Català',
+  fr: 'Français',
+  de: 'Deutsch',
+  it: 'Italiano',
+  pt: 'Português',
+  eu: 'Euskara',
+  gl: 'Galego',
+};
 
 /** Tiptap emite `<p></p>` para un campo vacío. */
 const isBlankHtml = (v: string) => v.replace(/<p>\s*<\/p>/g, '').trim() === '';

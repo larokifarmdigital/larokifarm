@@ -1,3 +1,3 @@
 export * from './domain';
-export { getComparisonRepository } from './infrastructure';
+export { getComparisonRepository, getAiUsageRepository } from './infrastructure';
 export * from './application';

@@ -1,7 +1,7 @@
 ---
 import { imagenSanity } from '@/lib/sanity';
 import type { IdiomaActivo } from '@/lib/sanity';
-import { t, rutaConLocale, LOCALES_DISPONIBLES, esLocaleValido, type Locale } from '@/lib/i18n';
+import { t, rutaConLocale, localesActivos, NOMBRE_IDIOMA, type Locale } from '@/lib/i18n';
 
 export interface BreadcrumbItem {
   label: string;
@@ -41,10 +41,8 @@ const {
   breadcrumb
 } = Astro.props;
 
-const idiomasSelector: Locale[] =
-  idiomasActivos && idiomasActivos.length > 0
-    ? idiomasActivos.map(i => i.codigo).filter(esLocaleValido)
-    : [...LOCALES_DISPONIBLES];
+// Solo los idiomas activos de la farmacia (los demás no tienen web)
+const idiomasSelector: Locale[] = localesActivos(idiomasActivos);
 
 const logoOpt = imagenSanity(logo, { w: 96, h: 96, fit: 'crop' });
 const limpiarTel = (t?: string) => t?.replace(/\s+/g, '');
@@ -139,6 +137,8 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
                 <a
                   href={rutaConLocale(rutaActual, codigo)}
                   data-lang-link
+                  lang={codigo}
+                  title={NOMBRE_IDIOMA[codigo]}
                   class:list={[
                     'block px-4 py-2 text-sm font-semibold transition-colors hover:bg-secondary',
                     codigo === lang ? 'text-primary' : 'text-foreground'
@@ -259,7 +259,7 @@ const llamarLabel = telefono ? t('header.cta.llamarA', lang, { telefono }) : '';
       {/* ── Selector de idioma a 100% repartido ──────────────────────── */}
       <div
         class='mt-4 grid gap-1.5'
-        style={`grid-template-columns: repeat(${idiomasSelector.length}, 1fr);`}
+        style={`grid-template-columns: repeat(${Math.min(idiomasSelector.length, 5)}, 1fr);`}
       >
         {
           idiomasSelector.map(codigo => (

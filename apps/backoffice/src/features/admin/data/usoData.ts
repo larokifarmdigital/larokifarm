@@ -1,6 +1,19 @@
 import 'server-only';
 import { prisma } from '@/shared/lib/prisma';
 
+/**
+ * Coste de las traducciones con IA del editor (usage_entries, módulo TRADUCCION)
+ * por negocio desde `desde`. `::text` para no fallar si la BD aún no tiene ese
+ * valor del enum. Así el coste y el % coinciden con el límite mensual.
+ */
+async function costeTraduccionesPorNegocio(desde: Date): Promise<Map<string, number>> {
+  const filas = await prisma.$queryRaw<{ businessId: string; total: unknown }[]>`
+    SELECT "businessId", SUM("costUsd") AS total FROM "usage_entries"
+    WHERE "module"::text = 'TRADUCCION' AND "createdAt" >= ${desde}
+    GROUP BY "businessId"`;
+  return new Map(filas.map((f) => [f.businessId, Number(f.total ?? 0)]));
+}
+
 export type UsoGlobalKpis = {
   totalCostUsdMonth: number;
   totalComparisonsMonth: number;
@@ -37,7 +50,7 @@ function startOfMonthUtc(): Date {
 export async function getUsoData(): Promise<UsoData> {
   const startOfMonth = startOfMonthUtc();
 
-  const [businesses, monthAgg, monthCount, monthDiscrep, reportsOpen] = await Promise.all([
+  const [businesses, monthAgg, monthCount, monthDiscrep, reportsOpen, traducciones] = await Promise.all([
     prisma.business.findMany({
       select: { id: true, slug: true, name: true, monthlyBudgetUsd: true },
       orderBy: { name: 'asc' },
@@ -51,6 +64,7 @@ export async function getUsoData(): Promise<UsoData> {
       where: { createdAt: { gte: startOfMonth }, status: 'DISCREPANCIES' },
     }),
     prisma.comparisonReport.count({ where: { status: 'OPEN' } }),
+    costeTraduccionesPorNegocio(startOfMonth),
   ]);
 
   const perBiz: UsoPerBusiness[] = await Promise.all(
@@ -69,7 +83,7 @@ export async function getUsoData(): Promise<UsoData> {
         }),
       ]);
 
-      const costUsdMonth = Number(monthAgg._sum.geminiCostUsd ?? 0);
+      const costUsdMonth = Number(monthAgg._sum.geminiCostUsd ?? 0) + (traducciones.get(b.id) ?? 0);
       const monthlyBudgetUsd = b.monthlyBudgetUsd ? Number(b.monthlyBudgetUsd) : null;
       const budgetPct =
         monthlyBudgetUsd && monthlyBudgetUsd > 0
@@ -92,7 +106,8 @@ export async function getUsoData(): Promise<UsoData> {
 
   return {
     kpis: {
-      totalCostUsdMonth: Number(monthAgg._sum.geminiCostUsd ?? 0),
+      totalCostUsdMonth:
+        Number(monthAgg._sum.geminiCostUsd ?? 0) + [...traducciones.values()].reduce((a, b) => a + b, 0),
       totalComparisonsMonth: monthCount,
       totalDiscrepanciesMonth: monthDiscrep,
       totalReportsOpen: reportsOpen,

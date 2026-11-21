@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
-import { LOCALE_LABELS, type Locale, LOCALE_FLAGS } from '@/core/shared';
+import { LOCALE_CODIGO, LOCALE_LABELS, type Locale } from '@/core/shared';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { useI18nHealth } from '@/features/farmacias/ui/hooks/useI18nHealth';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
@@ -94,8 +94,8 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
                       onClick={() => jumpToLocale(l.locale)}
                       className="w-full min-h-11 sm:min-h-9 text-left flex items-center gap-2 group"
                     >
-                      <span aria-hidden className="text-[13px] leading-none w-4 text-center shrink-0">
-                        {LOCALE_FLAGS[l.locale]}
+                      <span aria-hidden className="text-[11px] font-semibold leading-none w-6 text-center shrink-0 text-[var(--color-muted)]">
+                        {LOCALE_CODIGO[l.locale]}
                       </span>
                       <span className="text-[12px] text-[var(--color-ink-2)] w-[74px] shrink-0 group-hover:text-[var(--color-ink)]">
                         {LOCALE_LABELS[l.locale]}
@@ -144,7 +144,7 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
                           className="inline-flex items-center gap-1 min-h-11 sm:min-h-8 px-2.5 sm:px-2 rounded bg-[var(--color-red-soft)] text-[var(--color-red-ink)] text-[12px] hover:brightness-95"
                           aria-label={`${sec.label}: faltan ${m.missing} en ${LOCALE_LABELS[m.locale]}`}
                         >
-                          <span aria-hidden>{LOCALE_FLAGS[m.locale]}</span>
+                          <span aria-hidden className="font-semibold">{LOCALE_CODIGO[m.locale]}</span>
                           {m.missing}
                         </button>
                       ))}

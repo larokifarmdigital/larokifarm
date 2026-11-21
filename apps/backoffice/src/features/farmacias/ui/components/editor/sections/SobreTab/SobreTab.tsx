@@ -220,6 +220,8 @@ export function SobreTab() {
           field="descripcionLarga.es"
           label="Vuestra historia"
           value={farmacia.descripcionLarga[currentLocale] ?? ''}
+          origen={farmacia.descripcionLarga.es}
+          locale={currentLocale}
           onChange={(html) =>
             patch({
               descripcionLarga: {

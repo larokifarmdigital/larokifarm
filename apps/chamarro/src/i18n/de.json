@@ -1,0 +1,189 @@
+{
+  "html": {
+    "lang": "de"
+  },
+  "dias": {
+    "Mo": "Montag",
+    "Tu": "Dienstag",
+    "We": "Mittwoch",
+    "Th": "Donnerstag",
+    "Fr": "Freitag",
+    "Sa": "Samstag",
+    "Su": "Sonntag",
+    "a": "bis"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Start",
+      "servicios": "Leistungen",
+      "sobreNosotros": "Die Apotheke",
+      "faqs": "Fragen",
+      "resenas": "Bewertungen",
+      "contacto": "Kontakt",
+      "aria": "Hauptnavigation"
+    },
+    "cta": {
+      "llamanos": "Anrufen",
+      "llamarA": "{telefono} anrufen"
+    },
+    "menu": {
+      "abrir": "Menü",
+      "cerrar": "Schließen"
+    },
+    "idioma": {
+      "aria": "Sprache ändern"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Apotheke · {ciudad}",
+      "sinCiudad": "Ihre Apotheke des Vertrauens"
+    },
+    "tituloDefecto": "Persönliche pharmazeutische Beratung mit fachlicher Kompetenz.",
+    "btnLlamar": "Jetzt anrufen",
+    "btnServicios": "Leistungen ansehen",
+    "altInterior": "Innenansicht von {nombre}",
+    "trust": {
+      "colegiados": "Approbierte Apotheker",
+      "colegiadosSub": "Fachkundige Beratung",
+      "horario": "Lange Öffnungszeiten",
+      "horarioSub": "Wenn Sie uns brauchen",
+      "consejo": "Beratung ohne Termin",
+      "consejoSub": "Ohne Wartezeit"
+    },
+    "estado": {
+      "abierto": "Jetzt geöffnet",
+      "cerrado": "Derzeit geschlossen",
+      "cierra": "schließt um {hora}",
+      "abreHoy": "öffnet heute um {hora}",
+      "abreManana": "öffnet morgen um {hora}",
+      "verHorario": "Öffnungszeiten ansehen"
+    },
+    "carrusel": {
+      "foto": "Foto {n} von {total}",
+      "pausar": "Fotos anhalten",
+      "reanudar": "Fotos fortsetzen"
+    }
+  },
+  "about": {
+    "chip": "Die Apotheke",
+    "tituloDefecto": "Eine feste Größe im Viertel",
+    "cuerpoFallback": "Seit Jahren bieten wir persönliche pharmazeutische Betreuung, ausgewählte Produkte und die Beratung, die nur ein engagiertes Fachteam geben kann.",
+    "puntosDefecto": [
+      "Persönliche Betreuung",
+      "Professionelles Team",
+      "Ausgewählte Produkte",
+      "Beratung aus der Nähe"
+    ],
+    "badge": {
+      "anyos": "Jahre",
+      "experiencia": "Erfahrung"
+    }
+  },
+  "servicios": {
+    "chip": "Leistungen",
+    "titulo": "Unser Angebot",
+    "subtitulo": "Pharmazeutische und gesundheitliche Leistungen für die ganze Familie. Fragen Sie unser Team, wenn Sie weitere Informationen benötigen.",
+    "placeholder": "Leistungen in Vorbereitung.",
+    "verMas": "Mehr erfahren"
+  },
+  "faqs": {
+    "chip": "Häufige Fragen",
+    "titulo": "Bevor Sie kommen",
+    "subtitulo": "Antworten auf die häufigsten Fragen."
+  },
+  "cta": {
+    "chip": "Kontakt",
+    "tituloConCiudad": "Sie finden uns in {ciudad}",
+    "tituloSinCiudad": "Hier sind wir",
+    "subtitulo": "Kommen Sie in der Apotheke vorbei oder rufen Sie uns an, wenn Sie eine kurze Beratung wünschen.",
+    "labelTelefono": "Telefon",
+    "labelDireccion": "Adresse",
+    "labelHorario": "Öffnungszeiten",
+    "btnEscribenos": "Schreiben Sie uns",
+    "btnLlamar": "Anrufen",
+    "ariaMapa": "Karte von {nombre}",
+    "cargarMapa": "Karte anzeigen",
+    "cargarMapaAviso": "Beim Klicken wird Google Maps geladen, das Cookies von Google setzt.",
+    "comoLlegar": "Route planen"
+  },
+  "footer": {
+    "servicios": "Leistungen",
+    "informacion": "Informationen",
+    "contactanos": "Kontakt",
+    "sobreNosotros": "Die Apotheke",
+    "preguntasFrecuentes": "Fragen",
+    "resenas": "Bewertungen",
+    "contacto": "Kontakt",
+    "avisoLegal": "Impressum",
+    "politicaPrivacidad": "Datenschutzerklärung",
+    "copyright": "© {anyo} {nombre}",
+    "titular": "Inhaber",
+    "badgeColegiada": "Zugelassene Apotheke · Spanien",
+    "nCol": "Kammer-Nr.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok",
+    "ctaTitulo": "Brauchen Sie Hilfe?",
+    "ctaEm": "Wir sind für Sie da."
+  },
+  "features": {
+    "atencionTitulo": "Persönliche Betreuung",
+    "atencionDesc": "Jeder Kunde ist einzigartig",
+    "calidadTitulo": "Ausgewählte Produkte",
+    "calidadDesc": "Mit fachlicher Kompetenz",
+    "equipoTitulo": "Qualifiziertes Team",
+    "equipoDesc": "Laufende Fortbildung",
+    "horarioTitulo": "Lange Öffnungszeiten",
+    "horarioDescFallback": "Montag bis Samstag",
+    "aria": "Unsere Vorteile"
+  },
+  "legal": {
+    "volver": "Zurück zur Startseite",
+    "avisoTitulo": "Impressum",
+    "privacidadTitulo": "Datenschutzerklärung",
+    "avisoMeta": "Impressum und Angaben zum Inhaber von {nombre}.",
+    "privacidadMeta": "Datenschutzerklärung und Verarbeitung personenbezogener Daten von {nombre}."
+  },
+  "resenas": {
+    "chip": "Bewertungen",
+    "titulo": "Was unsere Kunden sagen",
+    "subtitulo": "{total} Bewertungen bei Google · Durchschnitt {media} / 5.",
+    "subtituloSinNumero": "Echte Bewertungen von Menschen, die in der Apotheke waren.",
+    "destacada": "Hervorgehoben",
+    "verEnGoogle": "Alle bei Google ansehen",
+    "respuestaFarmacia": "Antwort der Apotheke",
+    "anonimo": "Kunde",
+    "hace": {
+      "diasUno": "vor {n} Tag",
+      "diasN": "vor {n} Tagen",
+      "semanasUno": "vor {n} Woche",
+      "semanasN": "vor {n} Wochen",
+      "mesesUno": "vor {n} Monat",
+      "mesesN": "vor {n} Monaten",
+      "anyosUno": "vor {n} Jahr",
+      "anyosN": "vor {n} Jahren",
+      "ahora": "gerade eben"
+    },
+    "ariaEstrellas": "{rating} von 5 Sternen",
+    "verTodas": "Alle Bewertungen",
+    "anterior": "Zurück",
+    "siguiente": "Weiter",
+    "ariaSlider": "Bewertungen",
+    "tituloPagina": "Bewertungen",
+    "metaDescripcion": "Alle Google-Bewertungen von {nombre}. Echte Erfahrungen von Kunden.",
+    "rangoNota": "{media} · {total} Bewertungen",
+    "filtroTodas": "Alle",
+    "filtroEstrellas": "{n} Sterne"
+  },
+  "p404": {
+    "tituloMeta": "Seite nicht gefunden · {nombre}",
+    "descMeta": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "chip": "404",
+    "subtitulo1": "Seite nicht",
+    "subtitulo2": "gefunden",
+    "texto": "Der Link ist möglicherweise defekt oder die Seite wurde verschoben.",
+    "btnInicio": "Zurück zur Startseite",
+    "buscas": "Suchen Sie etwas Bestimmtes?"
+  }
+}

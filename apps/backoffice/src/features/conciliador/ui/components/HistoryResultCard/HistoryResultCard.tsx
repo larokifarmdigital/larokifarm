@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { ReconciledLine } from '@/core/engine';
 import type { Role } from '@/core/shared';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
@@ -56,8 +56,9 @@ export function HistoryResultCard({
   const ok = !errorProceso && porRevisar === 0;
 
   return (
-    <article className="card overflow-hidden p-0">
-      <div className="p-4 sm:p-6">
+    <div className="flex flex-col gap-4 sm:gap-5">
+      {/* 1. Cabecera: qué es, cómo salió y qué puedes hacer */}
+      <article className="card p-4 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1">
             <h1 className="m-0 break-words text-[22px] sm:text-[26px] font-bold tracking-[-0.02em] text-[var(--color-ink)]">
@@ -96,7 +97,7 @@ export function HistoryResultCard({
               </a>
             )}
             {archivos.length > 0 && (
-              <button ref={verArchivosRef} type="button" onClick={() => setVerArchivos(true)} className={BTN_SECUNDARIO}>
+              <button aria-haspopup="dialog" ref={verArchivosRef} type="button" onClick={() => setVerArchivos(true)} className={BTN_SECUNDARIO}>
                 Ver archivos ({archivos.length})
               </button>
             )}
@@ -109,30 +110,49 @@ export function HistoryResultCard({
             {mensajeError}
           </p>
         )}
-      </div>
+      </article>
 
-      {lineas && lineas.length > 0 ? (
-        <div className="border-t border-[var(--color-hairline)]">
-          <ReconciliationTable lines={lineas} />
-        </div>
-      ) : (
-        !errorProceso && (
-          <p className="m-0 border-t border-[var(--color-hairline)] px-4 py-5 sm:px-6 text-[14px] text-[var(--color-muted)]">
-            Esta conciliación es antigua y no guardó el detalle por líneas. Lo tienes en el informe.
-          </p>
-        )
-      )}
+      {/* 2. Las líneas, en su propia tarjeta */}
+      {!errorProceso && <TarjetaLineas lineas={lineas} />}
 
+      {/* 3. Reportes de error (solo si hay) */}
       <ReportsList
         reports={reportes}
         isSuperAdmin={currentUser.role === 'SUPER_ADMIN'}
         nivel={2}
+        enTarjeta
         onResuelto={(res) => setReportes((prev) => prev.map((x) => (x.id === res.id ? res : x)))}
       />
 
       {verArchivos && (
         <FilePreviewModal files={archivos} onClose={() => setVerArchivos(false)} devolverFocoA={verArchivosRef} />
       )}
-    </article>
+    </div>
+  );
+}
+
+/**
+ * Tarjeta de líneas (compartida con el resultado de "Nueva conciliación"):
+ * título propio y la tabla con su filtro "Mostrar todas las líneas".
+ */
+export function TarjetaLineas({ lineas, nivel = 2 }: { lineas: ReconciledLine[] | null; nivel?: 2 | 3 }) {
+  const Titulo = nivel === 2 ? 'h2' : 'h3';
+  const tituloId = useId();
+  return (
+    <section aria-labelledby={tituloId} className="card overflow-hidden p-0">
+      <div className="px-4 pt-4 pb-3 sm:px-5 sm:pt-5">
+        <Titulo id={tituloId} className="m-0 text-[17px] font-bold tracking-[-0.01em] text-[var(--color-ink)]">Qué ha llegado</Titulo>
+        <p className="m-0 mt-0.5 text-[14px] text-[var(--color-muted)]">Tu pedido comparado con el albarán, línea a línea.</p>
+      </div>
+      {lineas && lineas.length > 0 ? (
+        <div className="border-t border-[var(--color-hairline)]">
+          <ReconciliationTable lines={lineas} />
+        </div>
+      ) : (
+        <p className="m-0 border-t border-[var(--color-hairline)] px-4 py-5 sm:px-5 text-[14px] text-[var(--color-muted)]">
+          Esta conciliación es antigua y no guardó el detalle por líneas. Lo tienes en el informe.
+        </p>
+      )}
+    </section>
   );
 }

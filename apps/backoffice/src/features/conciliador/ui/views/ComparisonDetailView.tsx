@@ -159,7 +159,7 @@ export async function ComparisonDetailView({ id }: { id: string }) {
       />
 
       {esSuperAdmin && (
-        <details className="card mt-6 p-0 overflow-hidden">
+        <details className="card mt-4 sm:mt-5 p-0 overflow-hidden">
           <summary className="flex min-h-12 cursor-pointer select-none items-center px-4 sm:px-6 text-[15px] font-semibold text-[var(--color-ink)] hover:bg-[var(--color-surface-2)] focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] focus-visible:-outline-offset-2">
             Datos técnicos
             <span className="ml-2 text-[13px] font-normal text-[var(--color-muted)]">solo administradores</span>

@@ -84,19 +84,25 @@ export function ReportsList({
   isSuperAdmin,
   onResuelto,
   nivel = 3,
+  enTarjeta = false,
 }: {
   reports: ReportView[];
   isSuperAdmin: boolean;
   onResuelto: (r: ReportView) => void;
   /** 2 en el detalle del historial (bajo el h1); 3 en la tarjeta de la fase 2 (bajo un h2). */
   nivel?: 2 | 3;
+  /** En su propia tarjeta (detalle y resultado) en vez de como franja de otra. */
+  enTarjeta?: boolean;
 }) {
   const tituloId = useId();
   const Titulo = nivel === 2 ? 'h2' : 'h3';
   if (reports.length === 0) return null;
 
   return (
-    <section aria-labelledby={tituloId} className="border-t border-[var(--color-hairline)] px-4 py-4 sm:px-5">
+    <section
+      aria-labelledby={tituloId}
+      className={enTarjeta ? 'card p-4 sm:p-6' : 'border-t border-[var(--color-hairline)] px-4 py-4 sm:px-5'}
+    >
       <Titulo id={tituloId} className="m-0 mb-3 text-[15px] font-semibold text-[var(--color-ink)]">
         {reports.length === 1 ? 'Reporte de error' : `Reportes de error (${reports.length})`}
       </Titulo>

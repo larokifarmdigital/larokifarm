@@ -37,10 +37,12 @@ import { FaqsTab } from '@/features/farmacias/ui/components/editor/sections/Faqs
 import { ResenasTab, ResenasVisibilidad } from '@/features/farmacias/ui/components/editor/sections/ResenasTab';
 import { LegalTab } from '@/features/farmacias/ui/components/editor/sections/LegalTab';
 import { SeoTab } from '@/features/farmacias/ui/components/editor/sections/SeoTab';
+import { IdiomasTab } from '@/features/farmacias/ui/components/editor/sections/IdiomasTab';
 
 const COMPONENTS: Record<string, React.ComponentType> = {
   horario: HorarioTab,
   general: GeneralTab,
+  idiomas: IdiomasTab,
   hero: HeroTab,
   features: FeaturesTab,
   sobre: SobreTab,

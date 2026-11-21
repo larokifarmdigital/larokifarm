@@ -34,8 +34,16 @@ const PLACEHOLDER_PRIV_EN = `
 <p>This website is informational only. The full privacy policy will be published soon.</p>
 `;
 
-export const LEGAL: Record<Locale, LegalTextos> = {
+/**
+ * Textos legales por defecto (si la farmacia no escribe los suyos). Solo existen
+ * en algunos idiomas: para el resto se usa el castellano (`legalPorDefecto`).
+ */
+export const LEGAL: Partial<Record<Locale, LegalTextos>> & { es: LegalTextos } = {
   es: { avisoLegal: PLACEHOLDER_ES, politicaPrivacidad: PLACEHOLDER_PRIV_ES },
   ca: { avisoLegal: PLACEHOLDER_CA, politicaPrivacidad: PLACEHOLDER_PRIV_CA },
   en: { avisoLegal: PLACEHOLDER_EN, politicaPrivacidad: PLACEHOLDER_PRIV_EN },
 };
+
+export function legalPorDefecto(lang: Locale): LegalTextos {
+  return LEGAL[lang] ?? LEGAL.es;
+}

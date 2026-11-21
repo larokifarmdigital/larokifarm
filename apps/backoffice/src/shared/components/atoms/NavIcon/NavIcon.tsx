@@ -1,5 +1,7 @@
 import {
   FunnelSimpleIcon,
+  EyeIcon,
+  SparkleIcon,
   EyeSlashIcon,
   ArrowCounterClockwiseIcon,
   KeyIcon,
@@ -135,6 +137,8 @@ const ICONS = {
   ArrowUp: ArrowUpIcon,
   ArrowDown: ArrowDownIcon,
   CaretUp: CaretUpIcon,
+  Eye: EyeIcon,
+  Sparkle: SparkleIcon,
   EyeSlash: EyeSlashIcon,
   ArrowCounterClockwise: ArrowCounterClockwiseIcon,
   Key: KeyIcon,

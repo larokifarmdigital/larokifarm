@@ -90,6 +90,7 @@ en `ui/lib/sectionsConfig.ts`; i18n en `ui/lib/i18nStatus.ts`.
 |---|---|---|
 | Tu farmacia | Horario (`horario`, entrada por defecto) | `HorarioTab` → horario semanal |
 | Tu farmacia | Contacto y dirección (`general`) | nombre, titular, colegiado, logo, contacto, redes, dirección, Google Maps · bloque **Solo administrador**: identificador (cambio en modal) y mapa insertado |
+| Tu farmacia | Idiomas de la web (`idiomas`) | idiomas activos, % traducido, añadir/desactivar/eliminar textos |
 | Portada | Portada (`hero`) | etiqueta, frase principal, frase de apoyo, fotos, tarjetas sobre la foto (máx. 3) |
 | Portada | Puntos fuertes (`features`) | tarjetas (máx. 6; reloj sin descripción = horario) |
 | Contenido | Quiénes somos (`sobre`) | historia (Tiptap), fotos, puntos destacados, cabecera plegada |
@@ -117,15 +118,38 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
 - `EditorHealthChip` = solo traducciones ("Faltan N traducciones"), oculto si la
   web tiene un idioma.
 
-### Idiomas
-- `LangTabs` por sección: pulsar una pestaña NUNCA escribe. Si el idioma no
-  está activado: aviso + "Activar" con confirmación → `activarIdiomaAction`
-  (única vía; el autoguardado rechaza `idiomasActivos`). Punto rojo = a ESTA
-  sección le falta traducir en ese idioma.
-- Desactivar: solo SUPER_ADMIN, enlace bajo las pestañas + confirmación →
-  `desactivarIdiomaAction` (rol admin, tenant, nunca el castellano,
-  `expectedUpdatedAt`). Los textos se conservan; la web deja de mostrarlo al
-  publicar.
+### Idiomas (catálogo cerrado, 21-11-2026)
+- Catálogo en `core/shared/domain/i18n.ts` (`LOCALES`): es, en, ca, fr, de,
+  it, pt, eu, gl (orden = el de la API pública; es/en/ca primero). Castellano
+  = `LOCALE_PRINCIPAL`: raíz de la web, reserva y no se desactiva. Añadir un
+  idioma al catálogo = también `apps/<landing>/src/i18n/<código>.json` y
+  `LOCALES_DISPONIBLES` de cada landing (sus textos fijos).
+- Sección **"Idiomas de la web"** (`#idiomas`, grupo Tu farmacia,
+  `sections/IdiomasTab`): lista con Principal / En la web / Desactivado ·
+  textos guardados y % traducido (`resumenIdiomas` en `ui/lib/i18nStatus.ts`).
+  Menú ⋯: Traducir/Revisar · Desactivar (activos) · Activar · Eliminar sus
+  textos (solo desactivados). "Añadir idioma" → Modal con Select del catálogo.
+- Acciones en `features/farmacias/actions/idiomasActions.ts`:
+  `activarIdiomaAction`, `desactivarIdiomaAction`, `eliminarTraduccionesAction`.
+  SUPER_ADMIN y responsable (manager) de esa farmacia; USER no. Tenant y
+  permiso los vuelve a comprobar el repo; control optimista con `updatedAt`.
+  Eliminar borra el idioma de todos los textos (`patchSinIdioma`, en
+  `core/farmacias/application/idiomas.ts`) y del alt de las fotos. El
+  autoguardado rechaza `idiomasActivos`.
+- `LangTabs`: SOLO idiomas activos + botón "Gestionar idiomas" (→ #idiomas).
+  Pulsar una pestaña nunca escribe. Con solo castellano: frase "Tu web está
+  solo en castellano · Añadir otro idioma". Punto rojo = a ESTA sección le
+  falta traducir. Chips/contadores con código (`LOCALE_CODIGO`), sin banderas.
+- **Sugerir traducción (IA)**: `fields/SugerirTraduccion` bajo
+  `MultilangInput`/`MultilangTextarea`/`TiptapField` (props `origen` +
+  `locale`) cuando se edita un idioma ≠ castellano y hay texto en castellano.
+  Borrador con "Usar esta traducción" / "Descartar"; nunca guarda sola.
+  Servidor: `sugerirTraduccionAction` (`actions/traduccionActions.ts`) →
+  `traducirTexto` (`core/farmacias/application/traducir.ts`, gemini-2.5-flash
+  por fetch). Respeta el presupuesto mensual del conciliador (bloqueado =
+  mensaje), clave Gemini del negocio o `GEMINI_API_KEY`, límite 40 por usuario
+  cada 10 min (en memoria), HTML saneado. El coste va al log
+  (`{evento:'traduccion', costeUsd…}`).
 - Cambiar de idioma también funciona en solo consulta: `BotonIdioma` se pinta
   como `div role=button` cuando el editor está dentro del `fieldset disabled`.
 
@@ -182,6 +206,19 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
   combinables (estado por defecto "Todos": los desactivados van al final).
 
 ### Patrones de listas de gestión (21-11-2026, iguales en todo el backoffice)
+- **Historial en tabla** (xl+, dentro de una región `overflow-x-auto` como red
+  de seguridad): mismo `thead` que Usuarios/Farmacias, SIN agrupar por día
+  (decisión del usuario 21-11-2026: casi cada día tenía una sola fila) →
+  columna **Fecha** "Hoy · 11:14" / "Ayer · 09:52" / "Jue 19 nov · 11:14"
+  (`fechaFila` en `ui/lib/historial.ts`, hora de Madrid). Cada fila tiene UN
+  enlace (el proveedor, con la fecha larga en `sr-only`) estirado a toda la
+  fila (`after:absolute after:inset-0`, `tr relative`); el anillo de foco se
+  pinta en el `::after`; Fecha/Quién/Farmacia son `relative` para poder
+  seleccionar el texto. Por debajo de xl: tarjetas (sin agrupar).
+- **Resultado de una conciliación = tarjetas separadas** (detalle del historial
+  y "Nueva conciliación"): cabecera (proveedor, envío, estado, chips,
+  acciones) · "Qué ha llegado" (`TarjetaLineas`, con la tabla y su filtro) ·
+  reportes (`ReportsList enTarjeta`, solo si hay) · Datos técnicos (admin).
 - **Acciones de fila = UN solo menú "⋯"** (Radix DropdownMenu) con TODAS las
   acciones: Editar primero; lo destructivo (Desactivar/Eliminar) al final tras
   un separador. El nombre de la fila es la acción principal (botón o enlace
@@ -315,9 +352,9 @@ Diferencias schema vs UI documentadas:
     farmacia · Solo consulta.
 14. **Accesibilidad medida**: tras cambios de UI, agente `ux-a11y-auditor`
     hasta 0 incidencias (WCAG AA, cursor, zonas táctiles ≥24px/44px en móvil).
-15. **Historial de conciliaciones** (fase 3, 20-11-2026): lista agrupada por
-    día en hora de Madrid (`ui/lib/historial.ts`: Hoy / Ayer / "Martes 17
-    nov"), cada fila un único enlace. Filtros = chips que fusionan su propio
+15. **Historial de conciliaciones** (fase 3, 20-11-2026): tabla con columna
+    Fecha en hora de Madrid (`ui/lib/historial.ts`: Hoy / Ayer / "Jue 19
+    nov"; ya no se agrupa por día), cada fila un único enlace. Filtros = chips que fusionan su propio
     parámetro de URL (`q`, `periodo=hoy|7d|30d|fechas`+`from`/`to`, `status`,
     `reportes=abiertos` y `business` solo admin) + buscador con debounce 300 ms
     (proveedor O etiqueta); sin botón "Aplicar". **21-11-2026**: los chips
@@ -480,6 +517,25 @@ Diferencias schema vs UI documentadas:
   en móvil, alta de farmacia en un paso con responsable opcional, lista con
   "Activas" y "Cambios sin publicar" ✅
 - **Pendientes**:
+  - **Coste de "Sugerir traducción"**: HECHO en código (21-11-2026), falta
+    que el usuario ejecute en Neon
+    `ALTER TYPE "UsageModule" ADD VALUE IF NOT EXISTS 'TRADUCCION';`
+    (migración aditiva en
+    `apps/conciliador-albaranes/prisma/migrations/20261121090000_usage_traduccion`;
+    el esquema fuente es el del conciliador, `pnpm sync-schema` lo copia aquí;
+    NO `migrate dev`/reset contra Neon). Qué hace:
+    - `traduccionActions.ts` registra cada traducción en `usage_entries`
+      (module TRADUCCION, action 'translate', costUsd, tokens, userId) vía
+      `getAiUsageRepository()` (`core/comparisons`).
+    - Límites contando filas: 40 por usuario cada 10 min y 300 por farmacia al
+      día. El `Map` en memoria queda solo de respaldo.
+    - `GetBudgetStatusUseCase` suma ese coste (3er parámetro opcional, ya
+      pasado en `/api/conciliar`, `/albaranes` y la traducción) y
+      `/admin/uso` (`usoData.ts`) también, así el % coincide con el bloqueo.
+    - Las lecturas comparan `"module"::text`, así que no fallan antes del
+      ALTER; el INSERT sí falla → se captura (`ModuloIaNoMigradoError`), se
+      devuelve la traducción igual y se avisa en el log "falta ejecutar la
+      migración TRADUCCION". Desplegar antes del ALTER no rompe nada.
   - Editor en escritorio: dos barras fijas arriba (barra general + cabecera
     del editor). Que la cabecera del editor absorba la miga y la general no
     sea fija en esa página (revisión de diseño 21-11-2026)

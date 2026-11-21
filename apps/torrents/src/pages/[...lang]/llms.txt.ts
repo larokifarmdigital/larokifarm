@@ -8,15 +8,11 @@ import {
   type DiasI18n,
 } from '@/lib/sanity';
 import {
-  LOCALES_DISPONIBLES,
   esLocaleValido,
+  localesActivos,
   LOCALE_DEFECTO,
   rutaConLocale,
-  type Locale,
-} from '@/lib/i18n';
-import diasEs from '@/i18n/es.json';
-import diasEn from '@/i18n/en.json';
-import diasCa from '@/i18n/ca.json';
+  type Locale, DIAS_POR_IDIOMA, CERRADO_POR_IDIOMA } from '@/lib/i18n';
 
 export async function getStaticPaths() {
   const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
@@ -30,14 +26,8 @@ export async function getStaticPaths() {
   }));
 }
 
-const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
-  es: diasEs.dias as DiasI18n,
-  en: diasEn.dias as DiasI18n,
-  ca: diasCa.dias as DiasI18n,
-};
-const CERRADO_LABEL: Record<Locale, string> = {
-  es: 'Cerrado', en: 'Closed', ca: 'Tancat',
-};
+const DIAS_POR_LANG = DIAS_POR_IDIOMA as Record<Locale, DiasI18n>;
+const CERRADO_LABEL: Record<Locale, string> = CERRADO_POR_IDIOMA;
 
 function lineaSiHay(etiqueta: string, valor?: string | null): string | null {
   if (!valor) return null;
@@ -132,7 +122,7 @@ ${servicios}
 - La información de horarios, recursos y datos de contacto se gestiona desde el CMS (Sanity) y puede actualizarse en cualquier momento. Verifica siempre la versión actual en la web oficial.
 - Esta web tiene carácter divulgativo. Las recomendaciones sanitarias deben confirmarse con un profesional farmacéutico o médico.
 - Para contacto inmediato, prioriza el teléfono o WhatsApp indicados en la sección "Información clave".
-- Esta versión del documento corresponde al idioma: ${lang}. Otras versiones disponibles en ${LOCALES_DISPONIBLES.filter((l) => l !== lang).join(', ')}.
+- Esta versión del documento corresponde al idioma: ${lang}. Otras versiones disponibles en ${localesActivos(farmacia.idiomasActivos).filter((l) => l !== lang).join(', ') || 'ninguno'}.
 `;
 
   return new Response(cuerpo, {

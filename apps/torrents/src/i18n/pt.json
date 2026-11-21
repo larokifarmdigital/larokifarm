@@ -1,0 +1,170 @@
+{
+  "html": {
+    "lang": "pt"
+  },
+  "dias": {
+    "Mo": "segunda-feira",
+    "Tu": "terça-feira",
+    "We": "quarta-feira",
+    "Th": "quinta-feira",
+    "Fr": "sexta-feira",
+    "Sa": "sábado",
+    "Su": "domingo",
+    "a": "a"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Início",
+      "servicios": "Recursos",
+      "sobreNosotros": "Sobre nós",
+      "faqs": "Perguntas frequentes",
+      "resenas": "Avaliações",
+      "contacto": "Contacto",
+      "aria": "Principal"
+    },
+    "breadcrumb": {
+      "aria": "Caminho de navegação"
+    },
+    "cta": {
+      "llamanos": "Ligue-nos",
+      "llamarA": "Ligar para {telefono}"
+    },
+    "menu": {
+      "abrir": "Abrir menu",
+      "cerrar": "Fechar menu"
+    },
+    "idioma": {
+      "aria": "Mudar de idioma"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Farmácia em {ciudad}",
+      "sinCiudad": "A sua farmácia de confiança"
+    },
+    "ciudad": "Farmácia em {ciudad}",
+    "btnLlamar": "Ligar agora",
+    "altInterior": "Interior de {nombre}"
+  },
+  "about": {
+    "chip": "Sobre nós",
+    "tituloDefecto": "Uma farmácia para famílias",
+    "cuerpoFallback": "Nesta farmácia dedicamo-nos ao cuidado da saúde familiar. A nossa equipa está empenhada no bem-estar dos seus filhos, com um atendimento próximo, produtos de qualidade e o aconselhamento de que precisa enquanto pai ou mãe.",
+    "puntosDefecto": [
+      "Atendimento próximo e profissional",
+      "Produtos da mais alta qualidade",
+      "Aconselhamento gratuito",
+      "Ambiente acolhedor"
+    ],
+    "badge": {
+      "anyos": "anos",
+      "experiencia": "de experiência"
+    }
+  },
+  "servicios": {
+    "chip": "Os nossos recursos",
+    "titulo": "Os nossos recursos",
+    "subtitulo": "Oferecemos uma ampla gama de recursos farmacêuticos e produtos selecionados para cuidar de toda a família.",
+    "placeholder": "Em breve acrescentaremos o detalhe dos recursos.",
+    "btnAnterior": "Anterior",
+    "btnSiguiente": "Seguinte",
+    "btnSlide": "Ir para o diapositivo {n}"
+  },
+  "faqs": {
+    "chip": "Perguntas frequentes",
+    "titulo": "Esclarecemos as suas dúvidas",
+    "subtitulo": "As perguntas que os nossos clientes nos fazem com mais frequência. Se tiver mais alguma dúvida, escreva-nos e respondemos rapidamente."
+  },
+  "cta": {
+    "chip": "Contacte-nos",
+    "tituloConCiudad": "Encontre-nos em {ciudad}",
+    "tituloSinCiudad": "Estamos aqui para ajudar",
+    "subtitulo": "Visite-nos em {nombre} ou ligue-nos para receber aconselhamento farmacêutico personalizado.",
+    "labelTelefono": "Telefone",
+    "labelDireccion": "Morada",
+    "labelHorario": "Horário",
+    "btnEscribenos": "Escreva-nos",
+    "btnLlamar": "Ligar agora",
+    "ariaMapa": "Mapa de {nombre}",
+    "cargarMapa": "Ver mapa",
+    "cargarMapaAviso": "Ao clicar, será carregado o Google Maps, que instala cookies da Google."
+  },
+  "footer": {
+    "servicios": "Recursos",
+    "informacion": "Informação",
+    "contactanos": "Contacte-nos",
+    "sobreNosotros": "Sobre nós",
+    "preguntasFrecuentes": "Perguntas frequentes",
+    "resenas": "Avaliações",
+    "contacto": "Contacto",
+    "avisoLegal": "Aviso legal",
+    "politicaPrivacidad": "Política de privacidade",
+    "copyright": "© {anyo} {nombre}. Todos os direitos reservados.",
+    "nCol": "N.º de inscrição",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok"
+  },
+  "features": {
+    "atencionTitulo": "Atendimento personalizado",
+    "atencionDesc": "Cada família é única",
+    "calidadTitulo": "Produtos certificados",
+    "calidadDesc": "Qualidade garantida",
+    "equipoTitulo": "Equipa especializada",
+    "equipoDesc": "Farmacêuticos especializados em pediatria",
+    "horarioTitulo": "Horário alargado",
+    "horarioDescFallback": "Segunda a sábado"
+  },
+  "flotante": {
+    "ariaWhatsApp": "Contactar por WhatsApp"
+  },
+  "legal": {
+    "volver": "Voltar ao início",
+    "avisoTitulo": "Aviso legal",
+    "privacidadTitulo": "Política de privacidade",
+    "avisoMeta": "Aviso legal e informação sobre o titular de {nombre}.",
+    "privacidadMeta": "Política de privacidade e tratamento de dados pessoais de {nombre}."
+  },
+  "resenas": {
+    "chip": "Avaliações Google",
+    "titulo": "O que dizem os nossos clientes",
+    "subtitulo": "{total} avaliações no Google com uma classificação média de {media} / 5.",
+    "subtituloSinNumero": "Opiniões reais de pessoas que passaram pela farmácia.",
+    "destacada": "Avaliação em destaque",
+    "verEnGoogle": "Ver no Google",
+    "respuestaFarmacia": "Resposta da farmácia",
+    "anonimo": "Cliente",
+    "hace": {
+      "diasUno": "há {n} dia",
+      "diasN": "há {n} dias",
+      "semanasUno": "há {n} semana",
+      "semanasN": "há {n} semanas",
+      "mesesUno": "há {n} mês",
+      "mesesN": "há {n} meses",
+      "anyosUno": "há {n} ano",
+      "anyosN": "há {n} anos",
+      "ahora": "há um momento"
+    },
+    "ariaEstrellas": "{rating} de 5 estrelas",
+    "verTodas": "Ver todas as avaliações",
+    "anterior": "Avaliação anterior",
+    "siguiente": "Avaliação seguinte",
+    "ariaSlider": "Avaliações em rotação",
+    "irA": "Ir para a avaliação {n}",
+    "tituloPagina": "Avaliações de {nombre}",
+    "metaDescripcion": "Todas as avaliações verificadas do Google de {nombre}. Opiniões reais de clientes.",
+    "rangoNota": "{media} de 5 · {total} avaliações",
+    "filtroTodas": "Todas",
+    "filtroEstrellas": "{n} estrelas"
+  },
+  "p404": {
+    "tituloMeta": "Página não encontrada · {nombre}",
+    "descMeta": "A página que procura não existe ou foi movida.",
+    "chip": "Erro 404",
+    "subtitulo1": "Esta página",
+    "subtitulo2": "não existe",
+    "texto": "É possível que a ligação esteja quebrada, que a página tenha sido movida ou que o URL não esteja correto.",
+    "btnInicio": "Voltar ao início",
+    "buscas": "Procura algo em particular?"
+  }
+}

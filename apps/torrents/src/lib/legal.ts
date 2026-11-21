@@ -22,7 +22,11 @@ const GOOGLE_PRIV_EN = '<a href="https://policies.google.com/privacy" target="_b
 
 export type LegalTextos = { avisoLegal: string; politicaPrivacidad: string };
 
-export const LEGAL: Record<Locale, LegalTextos> = {
+/**
+ * Textos legales por defecto (si la farmacia no escribe los suyos). Solo existen
+ * en algunos idiomas: para el resto se usa el castellano (`legalPorDefecto`).
+ */
+export const LEGAL: Partial<Record<Locale, LegalTextos>> & { es: LegalTextos } = {
   es: {
     avisoLegal: `
 <h1>Aviso legal</h1>
@@ -219,3 +223,7 @@ export const LEGAL: Record<Locale, LegalTextos> = {
 `,
   },
 };
+
+export function legalPorDefecto(lang: Locale): LegalTextos {
+  return LEGAL[lang] ?? LEGAL.es;
+}

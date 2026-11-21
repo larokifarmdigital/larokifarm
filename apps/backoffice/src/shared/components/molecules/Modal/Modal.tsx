@@ -56,7 +56,7 @@ export function Modal({
             // En formularios, el foco empieza en el primer campo (no en "Cerrar").
             const campo = Array.from(
               (e.currentTarget as HTMLElement | null)?.querySelectorAll<HTMLElement>(
-                'input:not([type=hidden]):not([type=file]), textarea, select',
+                'input:not([type=hidden]):not([type=file]), textarea, select, button[role="combobox"]',
               ) ?? [],
             ).find((el) => el.matches(':enabled'));
             if (campo) {

@@ -1,0 +1,189 @@
+{
+  "html": {
+    "lang": "fr"
+  },
+  "dias": {
+    "Mo": "lundi",
+    "Tu": "mardi",
+    "We": "mercredi",
+    "Th": "jeudi",
+    "Fr": "vendredi",
+    "Sa": "samedi",
+    "Su": "dimanche",
+    "a": "à"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Accueil",
+      "servicios": "Services",
+      "sobreNosotros": "La pharmacie",
+      "faqs": "Questions",
+      "resenas": "Avis",
+      "contacto": "Contact",
+      "aria": "Principale"
+    },
+    "cta": {
+      "llamanos": "Appeler",
+      "llamarA": "Appeler le {telefono}"
+    },
+    "menu": {
+      "abrir": "Menu",
+      "cerrar": "Fermer"
+    },
+    "idioma": {
+      "aria": "Changer de langue"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Pharmacie · {ciudad}",
+      "sinCiudad": "Votre pharmacie de confiance"
+    },
+    "tituloDefecto": "Un conseil pharmaceutique de proximité, avec rigueur professionnelle.",
+    "btnLlamar": "Appeler maintenant",
+    "btnServicios": "Voir les services",
+    "altInterior": "Intérieur de {nombre}",
+    "trust": {
+      "colegiados": "Pharmaciens diplômés",
+      "colegiadosSub": "Conseil d'expert",
+      "horario": "Horaires étendus",
+      "horarioSub": "Quand vous en avez besoin",
+      "consejo": "Conseil sans rendez-vous",
+      "consejoSub": "Sans attente"
+    },
+    "estado": {
+      "abierto": "Ouvert maintenant",
+      "cerrado": "Fermé actuellement",
+      "cierra": "ferme à {hora}",
+      "abreHoy": "ouvre aujourd'hui à {hora}",
+      "abreManana": "ouvre demain à {hora}",
+      "verHorario": "Voir les horaires"
+    },
+    "carrusel": {
+      "foto": "Photo {n} sur {total}",
+      "pausar": "Mettre les photos en pause",
+      "reanudar": "Reprendre les photos"
+    }
+  },
+  "about": {
+    "chip": "La pharmacie",
+    "tituloDefecto": "Une référence dans le quartier",
+    "cuerpoFallback": "Depuis des années, nous offrons un conseil pharmaceutique de proximité, des produits sélectionnés et l'accompagnement que seule une équipe professionnelle et attentive peut apporter.",
+    "puntosDefecto": [
+      "Accueil personnalisé",
+      "Équipe professionnelle",
+      "Produits sélectionnés",
+      "Conseil de proximité"
+    ],
+    "badge": {
+      "anyos": "ans",
+      "experiencia": "d'expérience"
+    }
+  },
+  "servicios": {
+    "chip": "Services",
+    "titulo": "Ce que nous proposons",
+    "subtitulo": "Services pharmaceutiques et de santé pour toute la famille. Consultez notre équipe si vous avez besoin de plus d'informations.",
+    "placeholder": "Services en préparation.",
+    "verMas": "En savoir plus"
+  },
+  "faqs": {
+    "chip": "Questions fréquentes",
+    "titulo": "Avant de venir",
+    "subtitulo": "Réponses aux questions les plus courantes."
+  },
+  "cta": {
+    "chip": "Contact",
+    "tituloConCiudad": "Retrouvez-nous à {ciudad}",
+    "tituloSinCiudad": "Nous sommes là",
+    "subtitulo": "Passez à la pharmacie ou appelez-nous si vous préférez une consultation rapide.",
+    "labelTelefono": "Téléphone",
+    "labelDireccion": "Adresse",
+    "labelHorario": "Horaires",
+    "btnEscribenos": "Écrivez-nous",
+    "btnLlamar": "Appeler",
+    "ariaMapa": "Carte de {nombre}",
+    "cargarMapa": "Voir la carte",
+    "cargarMapaAviso": "En cliquant, Google Maps se chargera et installera des cookies de Google.",
+    "comoLlegar": "Itinéraire"
+  },
+  "footer": {
+    "servicios": "Services",
+    "informacion": "Informations",
+    "contactanos": "Contact",
+    "sobreNosotros": "La pharmacie",
+    "preguntasFrecuentes": "Questions",
+    "resenas": "Avis",
+    "contacto": "Contact",
+    "avisoLegal": "Mentions légales",
+    "politicaPrivacidad": "Politique de confidentialité",
+    "copyright": "© {anyo} {nombre}",
+    "titular": "Titulaire",
+    "badgeColegiada": "Pharmacie agréée · Espagne",
+    "nCol": "N° d'inscription",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok",
+    "ctaTitulo": "Besoin d'aide ?",
+    "ctaEm": "Nous sommes là."
+  },
+  "features": {
+    "atencionTitulo": "Accueil personnalisé",
+    "atencionDesc": "Chaque client est unique",
+    "calidadTitulo": "Produits sélectionnés",
+    "calidadDesc": "Avec rigueur professionnelle",
+    "equipoTitulo": "Équipe qualifiée",
+    "equipoDesc": "Formation continue",
+    "horarioTitulo": "Horaires étendus",
+    "horarioDescFallback": "Du lundi au samedi",
+    "aria": "Nos atouts"
+  },
+  "legal": {
+    "volver": "Retour à l'accueil",
+    "avisoTitulo": "Mentions légales",
+    "privacidadTitulo": "Politique de confidentialité",
+    "avisoMeta": "Mentions légales et informations sur le titulaire de {nombre}.",
+    "privacidadMeta": "Politique de confidentialité et traitement des données personnelles de {nombre}."
+  },
+  "resenas": {
+    "chip": "Avis",
+    "titulo": "Ce que disent nos clients",
+    "subtitulo": "{total} avis sur Google · note moyenne {media} / 5.",
+    "subtituloSinNumero": "Des avis réels de personnes venues à la pharmacie.",
+    "destacada": "À la une",
+    "verEnGoogle": "Voir tous les avis sur Google",
+    "respuestaFarmacia": "Réponse de la pharmacie",
+    "anonimo": "Client",
+    "hace": {
+      "diasUno": "il y a {n} jour",
+      "diasN": "il y a {n} jours",
+      "semanasUno": "il y a {n} semaine",
+      "semanasN": "il y a {n} semaines",
+      "mesesUno": "il y a {n} mois",
+      "mesesN": "il y a {n} mois",
+      "anyosUno": "il y a {n} an",
+      "anyosN": "il y a {n} ans",
+      "ahora": "à l'instant"
+    },
+    "ariaEstrellas": "{rating} sur 5 étoiles",
+    "verTodas": "Tous les avis",
+    "anterior": "Précédent",
+    "siguiente": "Suivant",
+    "ariaSlider": "Avis",
+    "tituloPagina": "Avis",
+    "metaDescripcion": "Tous les avis Google de {nombre}. Des témoignages réels de clients.",
+    "rangoNota": "{media} · {total} avis",
+    "filtroTodas": "Tous",
+    "filtroEstrellas": "{n} étoiles"
+  },
+  "p404": {
+    "tituloMeta": "Page introuvable · {nombre}",
+    "descMeta": "La page que vous cherchez n'existe pas ou a été déplacée.",
+    "chip": "404",
+    "subtitulo1": "Page",
+    "subtitulo2": "introuvable",
+    "texto": "Le lien est peut-être cassé ou la page a été déplacée.",
+    "btnInicio": "Retour à l'accueil",
+    "buscas": "Vous cherchez quelque chose de précis ?"
+  }
+}

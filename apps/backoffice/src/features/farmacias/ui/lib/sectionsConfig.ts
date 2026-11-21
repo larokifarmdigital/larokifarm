@@ -21,6 +21,8 @@ export const SECTION_META: SectionMeta[] = [
     hint: 'Los días y las horas en que abre la farmacia.', multilang: false },
   { key: 'general', label: 'Contacto y dirección', icon: 'Storefront',
     hint: 'Nombre, teléfono, correo, redes sociales, dirección y logotipo.', multilang: false },
+  { key: 'idiomas', label: 'Idiomas de la web', icon: 'Translate',
+    hint: 'En qué idiomas se ve tu web y cuánto falta por traducir.', multilang: false },
   { key: 'hero', label: 'Portada', icon: 'Image',
     hint: 'Lo primero que se ve al entrar en tu web: textos, fotos y tarjetas.', multilang: true },
   { key: 'features', label: 'Puntos fuertes', icon: 'Lightning',
@@ -46,7 +48,7 @@ export type GroupMeta = {
 };
 
 export const GROUPS: GroupMeta[] = [
-  { key: 'farmacia', label: 'Tu farmacia', sectionKeys: ['horario', 'general'] },
+  { key: 'farmacia', label: 'Tu farmacia', sectionKeys: ['horario', 'general', 'idiomas'] },
   { key: 'portada', label: 'Portada', sectionKeys: ['hero', 'features'] },
   { key: 'contenido', label: 'Contenido', sectionKeys: ['sobre', 'servicios', 'faqs', 'resenas'] },
   { key: 'avanzado', label: 'Avanzado', sectionKeys: ['legal', 'seo'] },

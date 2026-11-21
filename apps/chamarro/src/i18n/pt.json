@@ -1,0 +1,189 @@
+{
+  "html": {
+    "lang": "pt"
+  },
+  "dias": {
+    "Mo": "segunda-feira",
+    "Tu": "terça-feira",
+    "We": "quarta-feira",
+    "Th": "quinta-feira",
+    "Fr": "sexta-feira",
+    "Sa": "sábado",
+    "Su": "domingo",
+    "a": "a"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Início",
+      "servicios": "Serviços",
+      "sobreNosotros": "A farmácia",
+      "faqs": "Perguntas",
+      "resenas": "Opiniões",
+      "contacto": "Contacto",
+      "aria": "Principal"
+    },
+    "cta": {
+      "llamanos": "Ligar",
+      "llamarA": "Ligar para {telefono}"
+    },
+    "menu": {
+      "abrir": "Menu",
+      "cerrar": "Fechar"
+    },
+    "idioma": {
+      "aria": "Mudar de idioma"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Farmácia · {ciudad}",
+      "sinCiudad": "A sua farmácia de confiança"
+    },
+    "tituloDefecto": "Atendimento farmacêutico próximo, com rigor profissional.",
+    "btnLlamar": "Ligar agora",
+    "btnServicios": "Ver serviços",
+    "altInterior": "Interior de {nombre}",
+    "trust": {
+      "colegiados": "Farmacêuticos inscritos na Ordem",
+      "colegiadosSub": "Aconselhamento especializado",
+      "horario": "Horário alargado",
+      "horarioSub": "Quando precisar",
+      "consejo": "Aconselhamento sem marcação",
+      "consejoSub": "Sem esperas"
+    },
+    "estado": {
+      "abierto": "Aberto agora",
+      "cerrado": "Fechado agora",
+      "cierra": "fecha às {hora}",
+      "abreHoy": "abre hoje às {hora}",
+      "abreManana": "abre amanhã às {hora}",
+      "verHorario": "Ver horário"
+    },
+    "carrusel": {
+      "foto": "Foto {n} de {total}",
+      "pausar": "Pausar fotos",
+      "reanudar": "Retomar fotos"
+    }
+  },
+  "about": {
+    "chip": "A farmácia",
+    "tituloDefecto": "Uma referência no bairro",
+    "cuerpoFallback": "Há anos que oferecemos um atendimento farmacêutico próximo, produtos selecionados e o aconselhamento que só uma equipa profissional e atenta pode dar.",
+    "puntosDefecto": [
+      "Atendimento personalizado",
+      "Equipa profissional",
+      "Produtos selecionados",
+      "Aconselhamento próximo"
+    ],
+    "badge": {
+      "anyos": "anos",
+      "experiencia": "de experiência"
+    }
+  },
+  "servicios": {
+    "chip": "Serviços",
+    "titulo": "O que oferecemos",
+    "subtitulo": "Serviços farmacêuticos e de saúde para toda a família. Fale com a nossa equipa se precisar de mais informações.",
+    "placeholder": "Serviços em preparação.",
+    "verMas": "Mais informações"
+  },
+  "faqs": {
+    "chip": "Perguntas frequentes",
+    "titulo": "Antes de vir",
+    "subtitulo": "Respostas às dúvidas mais habituais."
+  },
+  "cta": {
+    "chip": "Contacto",
+    "tituloConCiudad": "Encontra-nos em {ciudad}",
+    "tituloSinCiudad": "Aqui estamos",
+    "subtitulo": "Passe pela farmácia ou ligue-nos se preferir uma consulta rápida.",
+    "labelTelefono": "Telefone",
+    "labelDireccion": "Morada",
+    "labelHorario": "Horário",
+    "btnEscribenos": "Escreva-nos",
+    "btnLlamar": "Ligar",
+    "ariaMapa": "Mapa de {nombre}",
+    "cargarMapa": "Ver mapa",
+    "cargarMapaAviso": "Ao clicar, será carregado o Google Maps, que instala cookies da Google.",
+    "comoLlegar": "Como chegar"
+  },
+  "footer": {
+    "servicios": "Serviços",
+    "informacion": "Informação",
+    "contactanos": "Contacto",
+    "sobreNosotros": "A farmácia",
+    "preguntasFrecuentes": "Perguntas",
+    "resenas": "Opiniões",
+    "contacto": "Contacto",
+    "avisoLegal": "Aviso legal",
+    "politicaPrivacidad": "Política de privacidade",
+    "copyright": "© {anyo} {nombre}",
+    "titular": "Titular",
+    "badgeColegiada": "Farmácia licenciada · Espanha",
+    "nCol": "N.º de inscrição",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok",
+    "ctaTitulo": "Precisa de ajuda?",
+    "ctaEm": "Estamos aqui."
+  },
+  "features": {
+    "atencionTitulo": "Atendimento personalizado",
+    "atencionDesc": "Cada cliente é único",
+    "calidadTitulo": "Produtos selecionados",
+    "calidadDesc": "Com rigor profissional",
+    "equipoTitulo": "Equipa qualificada",
+    "equipoDesc": "Formação contínua",
+    "horarioTitulo": "Horário alargado",
+    "horarioDescFallback": "Segunda a sábado",
+    "aria": "As nossas vantagens"
+  },
+  "legal": {
+    "volver": "Voltar ao início",
+    "avisoTitulo": "Aviso legal",
+    "privacidadTitulo": "Política de privacidade",
+    "avisoMeta": "Aviso legal e informação sobre o titular de {nombre}.",
+    "privacidadMeta": "Política de privacidade e tratamento de dados pessoais de {nombre}."
+  },
+  "resenas": {
+    "chip": "Opiniões",
+    "titulo": "O que dizem os clientes",
+    "subtitulo": "{total} opiniões no Google · classificação média {media} / 5.",
+    "subtituloSinNumero": "Opiniões reais de pessoas que passaram pela farmácia.",
+    "destacada": "Em destaque",
+    "verEnGoogle": "Ver todas no Google",
+    "respuestaFarmacia": "Resposta da farmácia",
+    "anonimo": "Cliente",
+    "hace": {
+      "diasUno": "há {n} dia",
+      "diasN": "há {n} dias",
+      "semanasUno": "há {n} semana",
+      "semanasN": "há {n} semanas",
+      "mesesUno": "há {n} mês",
+      "mesesN": "há {n} meses",
+      "anyosUno": "há {n} ano",
+      "anyosN": "há {n} anos",
+      "ahora": "há um momento"
+    },
+    "ariaEstrellas": "{rating} de 5 estrelas",
+    "verTodas": "Todas as opiniões",
+    "anterior": "Anterior",
+    "siguiente": "Seguinte",
+    "ariaSlider": "Opiniões",
+    "tituloPagina": "Opiniões",
+    "metaDescripcion": "Todas as opiniões do Google sobre {nombre}. Testemunhos reais de clientes.",
+    "rangoNota": "{media} · {total} opiniões",
+    "filtroTodas": "Todas",
+    "filtroEstrellas": "{n} estrelas"
+  },
+  "p404": {
+    "tituloMeta": "Página não encontrada · {nombre}",
+    "descMeta": "A página que procura não existe ou foi movida.",
+    "chip": "404",
+    "subtitulo1": "Página não",
+    "subtitulo2": "encontrada",
+    "texto": "A ligação pode estar quebrada ou a página foi movida.",
+    "btnInicio": "Voltar ao início",
+    "buscas": "Procura algo em concreto?"
+  }
+}

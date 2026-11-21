@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/core/auth';
 import {
   GetBudgetStatusUseCase,
-  getComparisonRepository,
+  getAiUsageRepository, getComparisonRepository,
 } from '@/core/comparisons';
 import { getBusinessRepository } from '@/core/businesses';
 import { getStorage } from '@/core/storage';
@@ -137,6 +137,7 @@ export async function POST(req: Request) {
   const budgetStatus = await new GetBudgetStatusUseCase(
     getBusinessRepository(),
     getComparisonRepository(),
+    getAiUsageRepository(),
   ).execute(ctx.business.id);
   if (budgetStatus.level === 'blocked') {
     return NextResponse.json(

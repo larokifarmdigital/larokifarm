@@ -4,7 +4,7 @@ import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import type { Farmacia } from '@/lib/sanity';
 import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
-import { rutaConLocale, t, type Locale } from '@/lib/i18n';
+import { rutaConLocale, t, type Locale, localesActivos } from '@/lib/i18n';
 
 interface Props {
   farmacia: Farmacia | null;
@@ -27,6 +27,7 @@ const home = rutaConLocale('/', lang);
   descripcion={t('p404.descMeta', lang)}
   canonical={`${siteUrl}${home}`}
   lang={lang}
+  idiomas={localesActivos(farmacia.idiomasActivos)}
   rutaActual='/'
 >
   <Header

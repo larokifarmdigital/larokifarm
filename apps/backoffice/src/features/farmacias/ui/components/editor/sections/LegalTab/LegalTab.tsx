@@ -63,6 +63,8 @@ export function LegalTab() {
           label="Cuerpo del aviso legal"
           value={farmacia.avisoLegal?.[currentLocale] ?? ''}
           onChange={setAviso}
+          origen={farmacia.avisoLegal?.es}
+          locale={currentLocale}
           placeholder="Datos identificativos, política de cookies, propietario del sitio, licencia…"
           minHeight={260}
         />
@@ -90,6 +92,8 @@ export function LegalTab() {
           label="Cuerpo de la política de privacidad"
           value={farmacia.politicaPrivacidad?.[currentLocale] ?? ''}
           onChange={setPolitica}
+          origen={farmacia.politicaPrivacidad?.es}
+          locale={currentLocale}
           placeholder="Datos que se recogen, finalidad, derechos ARCO, responsable del tratamiento…"
           minHeight={260}
         />

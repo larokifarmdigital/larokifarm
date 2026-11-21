@@ -1,0 +1,170 @@
+{
+  "html": {
+    "lang": "gl"
+  },
+  "dias": {
+    "Mo": "luns",
+    "Tu": "martes",
+    "We": "mércores",
+    "Th": "xoves",
+    "Fr": "venres",
+    "Sa": "sábado",
+    "Su": "domingo",
+    "a": "a"
+  },
+  "header": {
+    "nav": {
+      "inicio": "Inicio",
+      "servicios": "Recursos",
+      "sobreNosotros": "Sobre nós",
+      "faqs": "Preguntas frecuentes",
+      "resenas": "Recensións",
+      "contacto": "Contacto",
+      "aria": "Principal"
+    },
+    "breadcrumb": {
+      "aria": "Ruta de navegación"
+    },
+    "cta": {
+      "llamanos": "Chámanos",
+      "llamarA": "Chamar ao {telefono}"
+    },
+    "menu": {
+      "abrir": "Abrir menú",
+      "cerrar": "Pechar menú"
+    },
+    "idioma": {
+      "aria": "Cambiar idioma"
+    }
+  },
+  "hero": {
+    "chip": {
+      "conCiudad": "Farmacia en {ciudad}",
+      "sinCiudad": "A túa farmacia de confianza"
+    },
+    "ciudad": "Farmacia en {ciudad}",
+    "btnLlamar": "Chamar agora",
+    "altInterior": "Interior de {nombre}"
+  },
+  "about": {
+    "chip": "Sobre nós",
+    "tituloDefecto": "Unha farmacia para familias",
+    "cuerpoFallback": "Nesta farmacia dedicámonos ao coidado da saúde familiar. O noso equipo está comprometido co benestar dos teus fillos, ofrecendo atención próxima, produtos de calidade e o asesoramento que precisas como pai ou nai.",
+    "puntosDefecto": [
+      "Atención próxima e profesional",
+      "Produtos da máxima calidade",
+      "Asesoramento gratuíto",
+      "Ambiente agradable"
+    ],
+    "badge": {
+      "anyos": "anos",
+      "experiencia": "de experiencia"
+    }
+  },
+  "servicios": {
+    "chip": "Os nosos recursos",
+    "titulo": "Os nosos recursos",
+    "subtitulo": "Ofrecemos unha ampla gama de recursos farmacéuticos e produtos seleccionados para o coidado de toda a familia.",
+    "placeholder": "Axiña engadiremos o detalle dos recursos.",
+    "btnAnterior": "Anterior",
+    "btnSiguiente": "Seguinte",
+    "btnSlide": "Ir á diapositiva {n}"
+  },
+  "faqs": {
+    "chip": "Preguntas frecuentes",
+    "titulo": "Resolvemos as túas dúbidas",
+    "subtitulo": "As preguntas máis habituais que nos fan os nosos clientes. Se tes algunha dúbida máis, escríbenos e respondémosche axiña."
+  },
+  "cta": {
+    "chip": "Contacta connosco",
+    "tituloConCiudad": "Atópanos en {ciudad}",
+    "tituloSinCiudad": "Estamos aquí para axudarte",
+    "subtitulo": "Visítanos en {nombre} ou chámanos para recibir asesoramento farmacéutico personalizado.",
+    "labelTelefono": "Teléfono",
+    "labelDireccion": "Enderezo",
+    "labelHorario": "Horario",
+    "btnEscribenos": "Escríbenos",
+    "btnLlamar": "Chamar agora",
+    "ariaMapa": "Mapa de {nombre}",
+    "cargarMapa": "Ver mapa",
+    "cargarMapaAviso": "Ao premer cargarase Google Maps, que instala cookies de Google."
+  },
+  "footer": {
+    "servicios": "Recursos",
+    "informacion": "Información",
+    "contactanos": "Contacta connosco",
+    "sobreNosotros": "Sobre nós",
+    "preguntasFrecuentes": "Preguntas frecuentes",
+    "resenas": "Recensións",
+    "contacto": "Contacto",
+    "avisoLegal": "Aviso legal",
+    "politicaPrivacidad": "Política de privacidade",
+    "copyright": "© {anyo} {nombre}. Todos os dereitos reservados.",
+    "nCol": "N.º col.",
+    "ariaInstagram": "Instagram",
+    "ariaFacebook": "Facebook",
+    "ariaTiktok": "TikTok"
+  },
+  "features": {
+    "atencionTitulo": "Atención personalizada",
+    "atencionDesc": "Cada familia é única",
+    "calidadTitulo": "Produtos certificados",
+    "calidadDesc": "Calidade garantida",
+    "equipoTitulo": "Equipo especializado",
+    "equipoDesc": "Farmacéuticos pediátricos",
+    "horarioTitulo": "Horario amplo",
+    "horarioDescFallback": "Luns a sábado"
+  },
+  "flotante": {
+    "ariaWhatsApp": "Contactar por WhatsApp"
+  },
+  "legal": {
+    "volver": "Volver ao inicio",
+    "avisoTitulo": "Aviso legal",
+    "privacidadTitulo": "Política de privacidade",
+    "avisoMeta": "Aviso legal e información do titular de {nombre}.",
+    "privacidadMeta": "Política de privacidade e tratamento de datos persoais de {nombre}."
+  },
+  "resenas": {
+    "chip": "Recensións de Google",
+    "titulo": "O que din os nosos clientes",
+    "subtitulo": "{total} recensións en Google cunha valoración media de {media} / 5.",
+    "subtituloSinNumero": "Opinións reais de persoas que pasaron pola farmacia.",
+    "destacada": "Recensión destacada",
+    "verEnGoogle": "Ver en Google",
+    "respuestaFarmacia": "Resposta da farmacia",
+    "anonimo": "Cliente",
+    "hace": {
+      "diasUno": "hai {n} día",
+      "diasN": "hai {n} días",
+      "semanasUno": "hai {n} semana",
+      "semanasN": "hai {n} semanas",
+      "mesesUno": "hai {n} mes",
+      "mesesN": "hai {n} meses",
+      "anyosUno": "hai {n} ano",
+      "anyosN": "hai {n} anos",
+      "ahora": "hai un momento"
+    },
+    "ariaEstrellas": "{rating} de 5 estrelas",
+    "verTodas": "Ver todas as recensións",
+    "anterior": "Recensión anterior",
+    "siguiente": "Recensión seguinte",
+    "ariaSlider": "Recensións en rotación",
+    "irA": "Ir á recensión {n}",
+    "tituloPagina": "Recensións de {nombre}",
+    "metaDescripcion": "Todas as recensións verificadas de Google de {nombre}. Opinións reais de clientes.",
+    "rangoNota": "{media} de 5 · {total} recensións",
+    "filtroTodas": "Todas",
+    "filtroEstrellas": "{n} estrelas"
+  },
+  "p404": {
+    "tituloMeta": "Páxina non atopada · {nombre}",
+    "descMeta": "A páxina que buscas non existe ou cambiou de lugar.",
+    "chip": "Erro 404",
+    "subtitulo1": "Esta páxina",
+    "subtitulo2": "non existe",
+    "texto": "É posible que a ligazón estea rota, que a páxina cambiase de lugar ou que a URL non sexa correcta.",
+    "btnInicio": "Volver ao inicio",
+    "buscas": "Buscas algo en concreto?"
+  }
+}

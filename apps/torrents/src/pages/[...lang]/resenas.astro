@@ -17,12 +17,8 @@ import {
   esLocaleValido,
   rutaConLocale,
   t,
-  type Locale,
-} from '@/lib/i18n';
+  type Locale, localesActivos, DIAS_POR_IDIOMA, CERRADO_POR_IDIOMA } from '@/lib/i18n';
 import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
-import diasEs from '@/i18n/es.json';
-import diasEn from '@/i18n/en.json';
-import diasCa from '@/i18n/ca.json';
 
 export async function getStaticPaths() {
   // Mientras MOSTRAR_RESENAS sea false no generamos la ruta /resenas en
@@ -57,14 +53,8 @@ const [resumen, todas] = await Promise.all([
   listarResenasGoogle(SLUG_FARMACIA),
 ]);
 
-const DIAS_POR_LANG: Record<Locale, DiasI18n> = {
-  es: diasEs.dias as DiasI18n,
-  en: diasEn.dias as DiasI18n,
-  ca: diasCa.dias as DiasI18n,
-};
-const CERRADO_LABEL: Record<Locale, string> = {
-  es: 'Cerrado', en: 'Closed', ca: 'Tancat',
-};
+const DIAS_POR_LANG = DIAS_POR_IDIOMA as Record<Locale, DiasI18n>;
+const CERRADO_LABEL: Record<Locale, string> = CERRADO_POR_IDIOMA;
 const horariosAgrupados = agruparHorarios(
   farmacia.horarios,
   DIAS_POR_LANG[lang],
@@ -109,6 +99,7 @@ const filtros = [5, 4, 3, 2, 1];
   descripcion={descripcion}
   canonical={canonical}
   lang={lang}
+  idiomas={localesActivos(farmacia.idiomasActivos)}
   rutaActual='/resenas'
   nombreFarmacia={farmacia.nombre}
   logoFarmacia={farmacia.logo}
