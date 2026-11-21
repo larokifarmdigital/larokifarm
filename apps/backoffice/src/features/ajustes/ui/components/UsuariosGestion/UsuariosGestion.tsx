@@ -63,7 +63,9 @@ const nombresFarmacias = (c: UserAccount) => (c.farmacias.length ? c.farmacias.m
 const sinAcentos = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
 type Temporal = { id: string; nombre: string; email: string; contrasena: string; nueva: boolean } | null;
-type Estado = '' | 'activos' | 'desactivados';
+// Por defecto solo activos: los desactivados se consultan a propósito.
+type Estado = 'activos' | 'desactivados';
+const ESTADO_INICIAL: Estado = 'activos';
 
 /** Tabla (escritorio) y tarjetas (móvil) conviven en el DOM: elige el visible. */
 function visible(selector: string) {
@@ -94,7 +96,7 @@ export function UsuariosGestion({
   const [farmacia, setFarmacia] = useState('');
   const [rolFiltro, setRolFiltro] = useState('');
   // Por defecto "Todos": no escondemos a nadie; los desactivados van al final y atenuados.
-  const [estado, setEstado] = useState<Estado>('');
+  const [estado, setEstado] = useState<Estado>(ESTADO_INICIAL);
   /** undefined = cerrado · null = crear · cuenta = editar */
   const [editando, setEditando] = useState<UserAccount | null | undefined>(undefined);
   const [confirmar, setConfirmar] = useState<UserAccount | null>(null);
@@ -104,32 +106,41 @@ export function UsuariosGestion({
   const [, startTransition] = useTransition();
 
   // Activos primero; luego por farmacia ("Sin farmacia" al final) y por nombre.
-  const filtradas = useMemo(() => {
+  // Coincidencias sin mirar el estado: sirven para avisar de las del otro estado.
+  const coinciden = useMemo(() => {
     const q = sinAcentos(texto.trim());
+    return cuentas.filter((c) => {
+      if (farmacia === SIN_FARMACIA ? c.farmacias.length > 0 : farmacia && !c.farmacias.some((f) => f.id === farmacia)) return false;
+      if (rolFiltro && c.rol !== rolFiltro) return false;
+      return !q || sinAcentos(`${c.nombre} ${c.email}`).includes(q);
+    });
+  }, [cuentas, texto, farmacia, rolFiltro]);
+
+  const filtradas = useMemo(() => {
     const nombreFarmacia = (c: UserAccount) => nombresFarmacias(c) ?? '\uffff';
-    return cuentas
-      .filter((c) => {
-        if (farmacia === SIN_FARMACIA ? c.farmacias.length > 0 : farmacia && !c.farmacias.some((f) => f.id === farmacia)) return false;
-        if (rolFiltro && c.rol !== rolFiltro) return false;
-        if (estado === 'activos' && !c.activo) return false;
-        if (estado === 'desactivados' && c.activo) return false;
-        return !q || sinAcentos(`${c.nombre} ${c.email}`).includes(q);
-      })
+    return coinciden
+      .filter((c) => (estado === 'activos' ? c.activo : !c.activo))
       .sort(
         (x, y) =>
           Number(y.activo) - Number(x.activo) ||
           nombreFarmacia(x).localeCompare(nombreFarmacia(y), 'es') ||
           x.nombre.localeCompare(y.nombre, 'es'),
       );
-  }, [cuentas, texto, farmacia, rolFiltro, estado]);
+  }, [coinciden, estado]);
 
-  const hayFiltros = !!texto.trim() || !!farmacia || !!rolFiltro || !!estado;
+  const enOtroEstado = coinciden.length - filtradas.length;
+  const totalEstado = cuentas.filter((c) => (estado === 'activos' ? c.activo : !c.activo)).length;
+  const nombreEstado = estado === 'activos' ? 'activos' : 'desactivados';
+  const otroEstado: Estado = estado === 'activos' ? 'desactivados' : 'activos';
+
+  // «Activos» es el punto de partida, no cuenta como filtro.
+  const hayFiltros = !!texto.trim() || !!farmacia || !!rolFiltro || estado !== ESTADO_INICIAL;
 
   function quitarFiltros() {
     setTexto('');
     setFarmacia('');
     setRolFiltro('');
-    setEstado('');
+    setEstado(ESTADO_INICIAL);
     document.getElementById(buscadorId)?.focus();
   }
 
@@ -156,8 +167,12 @@ export function UsuariosGestion({
         toast.error(res.error);
         return;
       }
-      toast.success(activo ? `${c.nombre} puede volver a entrar` : `${c.nombre} ya no puede entrar`);
+      toast.success(activo ? `${c.nombre} puede volver a entrar` : `${c.nombre} ya no puede entrar`, {
+        description: activo ? 'Pasa a la lista de activos.' : 'Pasa a la lista de desactivados.',
+      });
       setConfirmar(null);
+      // La fila sale de la lista actual: el foco va al buscador para no perderse.
+      requestAnimationFrame(() => document.getElementById(buscadorId)?.focus());
     });
   }
 
@@ -294,7 +309,6 @@ export function UsuariosGestion({
             value={estado}
             onValueChange={(v) => setEstado(v as Estado)}
             options={[
-              { value: '', label: 'Todos los estados' },
               { value: 'activos', label: 'Activos' },
               { value: 'desactivados', label: 'Desactivados' },
             ]}
@@ -340,7 +354,7 @@ export function UsuariosGestion({
         <div className="hidden md:contents">{controles('', false)}</div>
         <div className="shrink-0 md:hidden">
           <FiltrosMovil
-            activos={[farmacia, rolFiltro, estado].filter(Boolean).length}
+            activos={[farmacia, rolFiltro, estado !== ESTADO_INICIAL].filter(Boolean).length}
             resultados={filtradas.length === 1 ? 'Ver 1 usuario' : `Ver ${filtradas.length} usuarios`}
             onQuitar={quitarFiltros}
           >
@@ -352,10 +366,10 @@ export function UsuariosGestion({
       <div className="mb-3 flex min-h-11 items-center justify-between gap-3 px-1">
         <p role="status" className="m-0 text-[14px] text-[var(--color-muted)]">
           {filtradas.length === 0
-            ? 'No hay usuarios con estos filtros.'
-            : hayFiltros
-              ? `${filtradas.length} de ${cuentas.length} usuarios`
-              : `${cuentas.length} ${cuentas.length === 1 ? 'usuario' : 'usuarios'}`}
+            ? `No hay usuarios ${nombreEstado} con estos filtros.`
+            : filtradas.length < totalEstado
+              ? `${filtradas.length} de ${totalEstado} usuarios ${nombreEstado}`
+              : `${totalEstado} ${totalEstado === 1 ? `usuario ${nombreEstado.slice(0, -1)}` : `usuarios ${nombreEstado}`}`}
         </p>
         {hayFiltros && filtradas.length > 0 && (
           <Button type="button" variant="ghost" size="sm" onClick={quitarFiltros}>
@@ -367,9 +381,27 @@ export function UsuariosGestion({
 
       {filtradas.length === 0 ? (
         <div className="card flex flex-col items-center gap-3 px-5 py-10 text-center">
-          <h2 className="m-0 text-[17px] font-bold text-[var(--color-ink)]">Nadie coincide</h2>
-          <p className="m-0 text-[14.5px] text-[var(--color-muted)]">Prueba con otro nombre, otra farmacia u otro rol.</p>
-          {hayFiltros && (
+          <h2 className="m-0 text-[17px] font-bold text-[var(--color-ink)]">
+            {estado === 'activos' ? 'Ningún usuario activo coincide' : 'Ningún usuario desactivado coincide'}
+          </h2>
+          {enOtroEstado > 0 ? (
+            <>
+              <p className="m-0 text-[14.5px] text-[var(--color-muted)]">
+                {enOtroEstado === 1
+                  ? `Hay 1 usuario ${otroEstado.slice(0, -1)} que coincide.`
+                  : `Hay ${enOtroEstado} usuarios ${otroEstado} que coinciden.`}
+              </p>
+              <Button type="button" variant="secondary" onClick={() => {
+                  setEstado(otroEstado);
+                  requestAnimationFrame(() => document.getElementById(buscadorId)?.focus());
+                }}>
+                Ver {otroEstado}
+              </Button>
+            </>
+          ) : (
+            <p className="m-0 text-[14.5px] text-[var(--color-muted)]">Prueba con otro nombre, otra farmacia u otro rol.</p>
+          )}
+          {hayFiltros && enOtroEstado === 0 && (
             <Button type="button" variant="secondary" onClick={quitarFiltros}>
               Quitar filtros
             </Button>
