@@ -10,12 +10,15 @@ import { estadoFila } from './statusMeta';
 /** Listado móvil: cards apiladas. */
 export function FarmaciasCardList({
   farmacias,
+  resaltada,
   pending,
   onAction,
   canDuplicate,
   canWrite,
 }: {
   farmacias: FarmaciaSummary[];
+  /** Id de la farmacia recién creada (se resalta). */
+  resaltada?: string;
   pending: boolean;
   onAction: RowActionRunner;
   canDuplicate: boolean;
@@ -33,6 +36,7 @@ export function FarmaciasCardList({
               'card p-3 flex items-center gap-3',
               // Archivadas: fondo apagado en vez de opacidad (contraste del texto)
               dimmed && 'bg-[var(--color-surface-2)]',
+              f.id === resaltada && 'bg-[var(--color-accent-soft)] border-[var(--color-accent)]',
             )}
           >
             <Link

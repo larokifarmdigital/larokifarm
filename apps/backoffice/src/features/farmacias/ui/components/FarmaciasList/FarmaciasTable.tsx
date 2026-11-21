@@ -11,12 +11,15 @@ import { estadoFila } from './statusMeta';
 /** Listado desktop: tabla. */
 export function FarmaciasTable({
   farmacias,
+  resaltada,
   pending,
   onAction,
   canDuplicate,
   canWrite,
 }: {
   farmacias: FarmaciaSummary[];
+  /** Id de la farmacia recién creada (se resalta). */
+  resaltada?: string;
   pending: boolean;
   onAction: RowActionRunner;
   canDuplicate: boolean;
@@ -25,14 +28,15 @@ export function FarmaciasTable({
   return (
     <div className="hidden md:block card overflow-hidden">
     <table className="w-full text-left text-[14px]">
+      <caption className="sr-only">Farmacias</caption>
       <thead>
-        <tr className="border-b border-[var(--color-hairline)] text-[11px] uppercase tracking-wider text-[var(--color-muted)]">
-          <th className="pl-4 pr-2 py-2.5 font-medium">Farmacia</th>
-          <th className="px-2 py-2.5 font-medium">Ciudad</th>
-          <th className="px-2 py-2.5 font-medium hidden lg:table-cell">Idiomas</th>
-          <th className="px-2 py-2.5 font-medium">Estado</th>
-          <th className="px-2 py-2.5 font-medium hidden lg:table-cell">Actualizado</th>
-          <th className="pl-2 pr-4 py-2.5 font-medium text-right w-14">
+        <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-surface-2)] text-[12.5px] text-[var(--color-muted)]">
+          <th scope="col" className="pl-5 pr-3 py-2.5 font-semibold">Farmacia</th>
+          <th scope="col" className="px-3 py-2.5 font-semibold">Ciudad</th>
+          <th scope="col" className="px-3 py-2.5 font-semibold hidden lg:table-cell">Idiomas</th>
+          <th scope="col" className="px-3 py-2.5 font-semibold">Estado</th>
+          <th scope="col" className="px-3 py-2.5 font-semibold hidden lg:table-cell">Actualizado</th>
+          <th scope="col" className="pl-3 pr-5 py-2.5 text-right w-14">
             <span className="sr-only">Acciones</span>
           </th>
         </tr>
@@ -49,6 +53,7 @@ export function FarmaciasTable({
                 i % 2 === 1 && 'bg-[var(--color-surface-2)]',
                 // Archivadas: fondo apagado en vez de opacidad (la opacidad dejaba el texto a 2,7:1)
                 dimmed && 'bg-[var(--color-surface-sunken)]/50',
+                f.id === resaltada && 'bg-[var(--color-accent-soft)] hover:bg-[var(--color-accent-soft)]',
               )}
             >
               <td className="pl-4 pr-2 py-3">

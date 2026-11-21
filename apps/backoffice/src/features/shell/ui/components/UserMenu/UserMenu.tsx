@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { signOut } from 'next-auth/react';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
@@ -7,6 +8,7 @@ import { ROL_LABEL } from '@/features/shell/ui/lib/navConfig';
 import type { ShellInfo } from '@/features/shell/ui/lib/shellInfo';
 import { landingUrl } from '@/shared/lib/landingUrl';
 import { supportMailto } from '@/shared/lib/support';
+import { CambiarContrasenaDialog } from '../CambiarContrasenaDialog';
 
 function initials(name: string) {
   return name
@@ -18,13 +20,15 @@ function initials(name: string) {
 }
 
 const ITEM =
-  'flex items-center gap-2.5 min-h-10 px-2.5 rounded-[6px] text-[14px] text-[var(--color-ink-2)] outline-none cursor-pointer data-[highlighted]:bg-[var(--color-surface-2)] data-[highlighted]:text-[var(--color-ink)]';
+  'flex items-center gap-2.5 min-h-11 sm:min-h-10 px-2.5 rounded-[6px] text-[14px] text-[var(--color-ink-2)] outline-none cursor-pointer data-[highlighted]:bg-[var(--color-surface-2)] data-[highlighted]:text-[var(--color-ink)]';
 
 export function UserMenu({ shell }: { shell: ShellInfo }) {
   const miWeb = shell.miFarmacia ? landingUrl(shell.miFarmacia.web) : undefined;
   const ayuda = supportMailto('Ayuda con el backoffice');
+  const [cambiarClave, setCambiarClave] = useState(false);
 
   return (
+    <>
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
         aria-label={`Menú de usuario, sesión abierta como ${shell.nombre}`}
@@ -55,7 +59,12 @@ export function UserMenu({ shell }: { shell: ShellInfo }) {
             </div>
           </div>
 
-          {(miWeb || ayuda) && <DropdownMenu.Separator className="h-px bg-[var(--color-hairline)] my-1" />}
+          <DropdownMenu.Separator className="h-px bg-[var(--color-hairline)] my-1" />
+
+          <DropdownMenu.Item className={ITEM} onSelect={() => setCambiarClave(true)}>
+            <NavIcon name="User" size={15} className="text-[var(--color-muted)]" />
+            Cambiar mi contraseña
+          </DropdownMenu.Item>
 
           {miWeb && (
             <DropdownMenu.Item asChild className={ITEM}>
@@ -82,7 +91,7 @@ export function UserMenu({ shell }: { shell: ShellInfo }) {
               e.preventDefault();
               void signOut({ callbackUrl: '/login' });
             }}
-            className="flex items-center gap-2.5 min-h-10 px-2.5 rounded-[6px] text-[14px] text-[var(--color-red-ink)] outline-none cursor-pointer data-[highlighted]:bg-[var(--color-red-soft)]"
+            className="flex items-center gap-2.5 min-h-11 sm:min-h-10 px-2.5 rounded-[6px] text-[14px] text-[var(--color-red-ink)] outline-none cursor-pointer data-[highlighted]:bg-[var(--color-red-soft)]"
           >
             <NavIcon name="SignOut" size={15} />
             Cerrar sesión
@@ -90,5 +99,7 @@ export function UserMenu({ shell }: { shell: ShellInfo }) {
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
+    <CambiarContrasenaDialog open={cambiarClave} onOpenChange={setCambiarClave} />
+    </>
   );
 }

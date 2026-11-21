@@ -63,6 +63,7 @@ function ServicioModal({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<Servicio | null>(initial);
+  const { readOnly } = useFarmaciaEditor();
 
   if (initial && draft?.id !== initial.id) setDraft(initial);
   if (!initial && draft !== null) setDraft(null);
@@ -70,13 +71,14 @@ function ServicioModal({
 
   return (
     <Modal
+      soloLectura={readOnly}
       open={open}
       onOpenChange={(o) => !o && onClose()}
-      title={mode === 'create' ? 'Nuevo servicio' : 'Editar servicio'}
+      title={mode === 'create' ? 'Nuevo servicio' : (readOnly ? 'Servicio' : 'Editar servicio')}
       description="Sale como una tarjeta en la sección de servicios de tu web."
       footer={
         <>
-          <Button variant="ghost" size="md" onClick={onClose}>
+          <Button variant="secondary" size="md" onClick={onClose}>
             Cancelar
           </Button>
           <Button

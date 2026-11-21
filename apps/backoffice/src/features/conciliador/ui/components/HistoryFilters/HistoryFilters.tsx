@@ -1,30 +1,59 @@
 'use client';
 
-import { useId, useRef, useState } from 'react';
+import { Select } from '@/shared/components/atoms/Select';
+import { FiltrosMovil } from '@/shared/components/molecules/FiltrosMovil';
+import { DateRangePicker, enfocarDia, resumenCorto } from '@/shared/components/molecules/DateRangePicker';
+import { useEffect, useId, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
-import { CLAVES_FILTRO, PERIODOS } from '../../lib/historial';
+import { PERIODOS } from '../../lib/historial';
 
-const CHIP =
-  'inline-flex items-center gap-1.5 min-h-11 sm:min-h-9 px-3.5 rounded-full border text-[14px] font-medium transition-colors';
 export const BUSCADOR_ID = 'buscador-historial';
 
-const CHIP_OFF =
-  'border-[var(--color-control-border)] bg-[var(--color-surface)] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-2)]';
-const CHIP_ON = 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent-ink)]';
+/** Valor del Select "Periodo" → claves de la URL (las mismas de siempre: periodo, from, to). */
+const OPCIONES_PERIODO = [
+  { value: '', label: 'Cualquier fecha' },
+  ...PERIODOS.map((p) => ({ value: p.id, label: p.label })),
+  { value: 'fechas', label: 'Elegir fechas…' },
+];
+
+/** Opción extra del Select "Periodo" cuando ya hay un rango: reabre el calendario. */
+const CAMBIAR_FECHAS = '__cambiar_fechas';
+
+const OPCIONES_REPORTES = [
+  { value: '', label: 'Todos los reportes' },
+  { value: 'abiertos', label: 'Con error reportado' },
+];
+
+/** Valor de la URL solo si es una opción conocida (si no, se ignora: ni Select vacío ni contado). */
+const valido = (v: string | null, opciones: { value: string }[]) =>
+  v && opciones.some((o) => o.value === v) ? v : '';
+
+const OPCIONES_RESULTADO = [
+  { value: '', label: 'Todos los resultados' },
+  { value: 'DISCREPANCIES', label: 'Por revisar' },
+  { value: 'OK', label: 'Todo coincide' },
+  { value: 'ERROR', label: 'No se pudo comprobar' },
+];
 
 /**
- * Filtros del historial. Cada chip cambia SOLO su parámetro de la URL (se
- * combinan: "Últimos 7 días" + "Por revisar"); pulsar uno activo lo quita.
- * El buscador aplica solo a los 300 ms de dejar de escribir; no hay "Aplicar".
+ * Barra de filtros estándar (misma que /ajustes/usuarios): buscador + Selects.
+ * Cada control cambia SOLO su parámetro de la URL (se combinan) y se aplica al
+ * momento; el buscador, a los 300 ms de dejar de escribir. "Quitar filtros" y
+ * el recuento viven en la fila de resultados (HistoryListView).
+ * Móvil: apilado compacto en 2 columnas, sin panel escondido: con 2-4 Selects
+ * cabe en dos filas y el usuario ve siempre qué filtros tiene puestos.
  */
 export function HistoryFilters({
   esAdmin,
   negocios,
+  total,
 }: {
   esAdmin: boolean;
   negocios: { slug: string; name: string }[];
+  /** Resultados con los filtros actuales (texto del botón del diálogo móvil). */
+  total: number;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,14 +61,16 @@ export function HistoryFilters({
   const buscadorId = BUSCADOR_ID;
   const buscadorRef = useRef<HTMLInputElement>(null);
   const negocioId = useId();
-  const desdeId = useId();
-  const hastaId = useId();
+  const periodoId = useId();
+  const resultadoId = useId();
+  const reportesId = useId();
 
-  const periodo = sp.get('periodo') ?? (sp.get('from') || sp.get('to') ? 'fechas' : null);
-  const status = sp.get('status');
-  const reportes = sp.get('reportes');
-  const negocio = sp.get('business') ?? '';
-  const hayFiltros = CLAVES_FILTRO.some((k) => sp.get(k));
+  const periodo = valido(sp.get('periodo') ?? (sp.get('from') || sp.get('to') ? 'fechas' : null), OPCIONES_PERIODO) || null;
+  const status = valido(sp.get('status'), OPCIONES_RESULTADO);
+  const reportes = esAdmin ? valido(sp.get('reportes'), OPCIONES_REPORTES) : '';
+  const negocio = esAdmin ? valido(sp.get('business'), negocios.map((n) => ({ value: n.slug }))) : '';
+  const desde = sp.get('from') ?? '';
+  const hasta = sp.get('to') ?? '';
 
   // Buscador: estado local + debounce. Si la URL cambia por otra vía (p. ej.
   // "Quitar filtros"), el campo se sincroniza; lo que acabamos de enviar no.
@@ -52,6 +83,18 @@ export function HistoryFilters({
     if (qUrl !== enviado) setTexto(qUrl);
   }
   const temporizador = useRef<number | undefined>(undefined);
+  // "Elegir fechas…": en escritorio el calendario cuelga del propio Select "Periodo".
+  const [abrirCalendario, setAbrirCalendario] = useState(false);
+  // Móvil (diálogo de filtros): al elegir "Elegir fechas…" el foco pasa al calendario.
+  const enfocarCalendario = useRef(false);
+  const rangoMovilId = useId();
+  useEffect(() => {
+    // (abrirCalendario solo cuenta al montar el selector: no hace falta reiniciarlo)
+    if (periodo !== 'fechas' || !enfocarCalendario.current) return;
+    enfocarCalendario.current = false;
+    const id = requestAnimationFrame(() => enfocarDia(document.getElementById(rangoMovilId)));
+    return () => cancelAnimationFrame(id);
+  }, [periodo, rangoMovilId]);
 
   function actualizar(cambios: Record<string, string | null>, modo: 'push' | 'replace' = 'push') {
     const params = new URLSearchParams(sp.toString());
@@ -76,25 +119,131 @@ export function HistoryFilters({
   }
 
   function elegirPeriodo(id: string) {
-    if (periodo === id) actualizar({ periodo: null, from: null, to: null });
-    else actualizar({ periodo: id, from: null, to: null });
+    const escritorioYa = window.matchMedia('(min-width: 768px)').matches;
+    // "Cambiar fechas…": reabre el calendario sin perder el rango actual
+    if (id === CAMBIAR_FECHAS) {
+      // Tras cerrarse el Select (devuelve el foco a su botón); si no, ese foco
+      // "fuera" cerraría el calendario recién abierto.
+      if (escritorioYa) window.setTimeout(() => setAbrirCalendario(true), 50);
+      // Móvil: el calendario ya está en línea en el diálogo; solo llevamos el foco
+      else window.setTimeout(() => enfocarDia(document.getElementById(rangoMovilId)), 50);
+      return;
+    }
+    actualizar({ periodo: id || null, from: null, to: null });
+    // Escritorio: el calendario se abre solo. Móvil: va en línea dentro del diálogo.
+    const escritorio = window.matchMedia('(min-width: 768px)').matches;
+    setAbrirCalendario(id === 'fechas' && escritorio);
+    enfocarCalendario.current = id === 'fechas' && !escritorio;
   }
+
+  const rango = periodo === 'fechas' ? resumenCorto(desde, hasta) : '';
+  const opcionesPeriodo = OPCIONES_PERIODO.flatMap((o) =>
+    o.value === 'fechas' && rango
+      ? [{ value: 'fechas', label: rango }, { value: CAMBIAR_FECHAS, label: 'Cambiar fechas…' }]
+      : [o],
+  );
+
+  const muestraNegocio = esAdmin && negocios.length > 1;
+  const activos = [periodo, status, reportes, negocio].filter(Boolean).length;
 
   function quitarTodo() {
     window.clearTimeout(temporizador.current);
     setTexto('');
     setEnviado('');
     router.push(pathname, { scroll: false });
-    // El botón desaparece al no haber filtros: el foco pasa al buscador
-    buscadorRef.current?.focus();
   }
 
+  /**
+   * Los Selects se pintan dos veces con ids distintos: en línea en escritorio
+   * (etiqueta solo para lectores) y dentro del diálogo "Filtros" en móvil
+   * (etiqueta visible; así los valores cortos se entienden y no se recortan).
+   */
+  const controles = (sufijo: string, etiquetaVisible: boolean) => {
+    const etiqueta = cn(
+      etiquetaVisible ? 'mb-1.5 block text-[14px] font-medium text-[var(--color-ink-2)]' : 'sr-only',
+    );
+    const caja = etiquetaVisible ? '' : 'md:w-[170px]';
+    return (
+      <>
+        <div className={etiquetaVisible ? '' : 'md:w-[170px]'}>
+          <label htmlFor={periodoId + sufijo} className={etiqueta}>
+            Periodo
+          </label>
+          {etiquetaVisible ? (
+            <Select id={periodoId + sufijo} value={periodo ?? ''} onValueChange={elegirPeriodo} options={opcionesPeriodo} />
+          ) : (
+            // Escritorio: el calendario cuelga del Select (sin un control extra en la barra)
+            <DateRangePicker
+              ancla={
+                <Select id={periodoId + sufijo} value={periodo ?? ''} onValueChange={elegirPeriodo} options={opcionesPeriodo} />
+              }
+              abierto={periodo === 'fechas' && abrirCalendario}
+              onAbiertoChange={setAbrirCalendario}
+              idFocoAlCerrar={periodoId + sufijo}
+              from={desde}
+              to={hasta}
+              onChange={(r) => actualizar({ periodo: 'fechas', from: r.from || null, to: r.to || null }, 'replace')}
+            />
+          )}
+        </div>
+        {periodo === 'fechas' &&
+          etiquetaVisible && (
+            <div id={rangoMovilId} role="group" aria-label="Fechas">
+              <DateRangePicker
+                enLinea
+                from={desde}
+                to={hasta}
+                onChange={(r) => actualizar({ periodo: 'fechas', from: r.from || null, to: r.to || null }, 'replace')}
+              />
+            </div>
+          )}
+        <div className={etiquetaVisible ? '' : 'md:w-[190px]'}>
+          <label htmlFor={resultadoId + sufijo} className={etiqueta}>
+            Resultado
+          </label>
+          <Select
+            id={resultadoId + sufijo}
+            value={status}
+            onValueChange={(v) => actualizar({ status: v || null })}
+            options={OPCIONES_RESULTADO}
+          />
+        </div>
+        {muestraNegocio && (
+          <div className={etiquetaVisible ? '' : 'md:w-[180px]'}>
+            <label htmlFor={negocioId + sufijo} className={etiqueta}>
+              Farmacia
+            </label>
+            <Select
+              id={negocioId + sufijo}
+              value={negocio}
+              onValueChange={(v) => actualizar({ business: v || null })}
+              options={[{ value: '', label: 'Todas las farmacias' }, ...negocios.map((n) => ({ value: n.slug, label: n.name }))]}
+            />
+          </div>
+        )}
+        {esAdmin && (
+          <div className={caja}>
+            <label htmlFor={reportesId + sufijo} className={etiqueta}>
+              Reportes de error
+            </label>
+            <Select
+              id={reportesId + sufijo}
+              value={reportes}
+              onValueChange={(v) => actualizar({ reportes: v || null })}
+              options={OPCIONES_REPORTES}
+            />
+          </div>
+        )}
+      </>
+    );
+  };
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="relative flex-1 sm:max-w-md">
+    <div className="flex flex-col gap-2">
+      <div role="search" aria-label="Filtrar conciliaciones" className="flex items-center gap-2 md:flex-wrap xl:flex-nowrap">
+        <div className="relative min-w-0 flex-1 md:min-w-[220px] xl:min-w-[140px]">
           <label htmlFor={buscadorId} className="sr-only">
-            Buscar por proveedor o nombre
+            Buscar por proveedor o nombre del envío
           </label>
           <NavIcon
             name="MagnifyingGlass"
@@ -107,128 +256,23 @@ export function HistoryFilters({
             type="search"
             value={texto}
             onChange={(e) => onBuscar(e.target.value)}
-            placeholder="Buscar por proveedor o nombre"
+            placeholder="Buscar proveedor…"
             autoComplete="off"
-            className="field min-h-11 pl-9 text-[15px]"
+            className="field pl-9"
           />
         </div>
-        {esAdmin && negocios.length > 1 && (
-          <div className="sm:w-64">
-            <label htmlFor={negocioId} className="sr-only">
-              Farmacia
-            </label>
-            <select
-              id={negocioId}
-              value={negocio}
-              onChange={(e) => actualizar({ business: e.target.value || null })}
-              className="field min-h-11 text-[15px]"
-            >
-              <option value="">Todas las farmacias</option>
-              {negocios.map((n) => (
-                <option key={n.slug} value={n.slug}>
-                  {n.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        <div className="hidden md:contents">{controles('', false)}</div>
+        <div className="shrink-0 md:hidden">
+          <FiltrosMovil
+            activos={activos}
+            resultados={total === 1 ? 'Ver 1 conciliación' : `Ver ${total} conciliaciones`}
+            onQuitar={quitarTodo}
+          >
+            {controles('-movil', true)}
+          </FiltrosMovil>
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div role="group" aria-label="Fecha" className="flex flex-wrap gap-2">
-          {PERIODOS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              aria-pressed={periodo === p.id}
-              onClick={() => elegirPeriodo(p.id)}
-              className={cn(CHIP, periodo === p.id ? CHIP_ON : CHIP_OFF)}
-            >
-              {p.label}
-            </button>
-          ))}
-          <button
-            type="button"
-            aria-pressed={periodo === 'fechas'}
-            onClick={() => elegirPeriodo('fechas')}
-            className={cn(CHIP, periodo === 'fechas' ? CHIP_ON : CHIP_OFF)}
-          >
-            <NavIcon name="CalendarBlank" size={15} />
-            Elegir fechas
-          </button>
-        </div>
-
-        <span aria-hidden className="hidden sm:block h-6 w-px bg-[var(--color-hairline-strong)] mx-1" />
-
-        <div role="group" aria-label="Resultado" className="flex flex-wrap gap-2">
-          {[
-            { id: 'DISCREPANCIES', label: 'Por revisar' },
-            { id: 'ERROR', label: 'No se pudo comprobar' },
-          ].map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              aria-pressed={status === s.id}
-              onClick={() => actualizar({ status: status === s.id ? null : s.id })}
-              className={cn(CHIP, status === s.id ? CHIP_ON : CHIP_OFF)}
-            >
-              {s.label}
-            </button>
-          ))}
-          {esAdmin && (
-            <button
-              type="button"
-              aria-pressed={reportes === 'abiertos'}
-              onClick={() => actualizar({ reportes: reportes === 'abiertos' ? null : 'abiertos' })}
-              className={cn(CHIP, reportes === 'abiertos' ? CHIP_ON : CHIP_OFF)}
-            >
-              Con reportes abiertos
-            </button>
-          )}
-        </div>
-
-        {hayFiltros && (
-          <button
-            type="button"
-            onClick={quitarTodo}
-            className="inline-flex items-center gap-1 min-h-11 sm:min-h-9 px-3 rounded-[8px] text-[14px] font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]"
-          >
-            <NavIcon name="X" size={14} />
-            Quitar filtros
-          </button>
-        )}
-      </div>
-
-      {periodo === 'fechas' && (
-        <div className="flex flex-wrap items-end gap-3">
-          <div>
-            <label htmlFor={desdeId} className="mb-1 block text-[13.5px] font-medium text-[var(--color-ink-2)]">
-              Desde
-            </label>
-            <input
-              id={desdeId}
-              type="date"
-              value={sp.get('from') ?? ''}
-              max={sp.get('to') ?? undefined}
-              onChange={(e) => actualizar({ periodo: 'fechas', from: e.target.value || null }, 'replace')}
-              className="field min-h-11 w-auto text-[15px] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--color-accent)]"
-            />
-          </div>
-          <div>
-            <label htmlFor={hastaId} className="mb-1 block text-[13.5px] font-medium text-[var(--color-ink-2)]">
-              Hasta
-            </label>
-            <input
-              id={hastaId}
-              type="date"
-              value={sp.get('to') ?? ''}
-              min={sp.get('from') ?? undefined}
-              onChange={(e) => actualizar({ periodo: 'fechas', to: e.target.value || null }, 'replace')}
-              className="field min-h-11 w-auto text-[15px] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--color-accent)]"
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

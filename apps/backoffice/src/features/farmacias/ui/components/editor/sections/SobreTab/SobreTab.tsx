@@ -56,6 +56,7 @@ function PuntoModal({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<MultilangText | null>(initial);
+  const { readOnly } = useFarmaciaEditor();
   const [seed, setSeed] = useState({ open, initial });
 
   // Re-seed el draft cada vez que se abre con un `initial` nuevo; limpia al
@@ -70,13 +71,14 @@ function PuntoModal({
 
   return (
     <Modal
+      soloLectura={readOnly}
       open={open}
       onOpenChange={(o) => !o && onClose()}
-      title={mode === 'create' ? 'Nuevo punto destacado' : 'Editar punto'}
+      title={mode === 'create' ? 'Nuevo punto destacado' : (readOnly ? 'Punto destacado' : 'Editar punto')}
       description="Frase corta que resume un valor de la farmacia. Aparece como ítem de lista en la sección «Sobre nosotros»."
       footer={
         <>
-          <Button variant="ghost" size="md" onClick={onClose}>
+          <Button variant="secondary" size="md" onClick={onClose}>
             Cancelar
           </Button>
           <Button

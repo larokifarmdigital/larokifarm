@@ -1,54 +1,25 @@
-import Link from 'next/link';
 import { canEditContent, getCurrentUser } from '@/core/auth';
 import { getFarmaciaRepository } from '@/core/farmacias';
-import { Button } from '@/shared/components/atoms/Button';
-import { NavIcon } from '@/shared/components/atoms/NavIcon';
-import { formatRelativeDate } from '@/shared/lib/format';
+import { PageHeader, ANCHO_PAGINA } from '@/shared/components/molecules/PageHeader';
+import { cn } from '@/shared/lib/cn';
 import { FarmaciasList } from '@/features/farmacias/ui/components/FarmaciasList';
+import { NuevaFarmaciaBoton } from '@/features/farmacias/ui/components/NuevaFarmaciaDialog';
 
 export async function FarmaciasListView() {
-  const [farmacias, user] = await Promise.all([getFarmaciaRepository().listFarmacias(), getCurrentUser()]);
+  const repo = getFarmaciaRepository();
+  const [farmacias, user] = await Promise.all([repo.listFarmacias(), getCurrentUser()]);
   // Crear/duplicar farmacias es de SUPER_ADMIN (el servidor también lo exige).
   const isAdmin = user?.rol === 'admin';
+  const responsables = isAdmin ? await repo.listResponsablesDisponibles() : [];
 
-  // Última actualización global entre todas las farmacias — da contexto en el header
-  // sin tener que entrar al listado.
-  const lastUpdate = farmacias
-    .map((f) => f.updatedAt)
-    .filter(Boolean)
-    .sort()
-    .pop();
 
   return (
-    <div className="max-w-[1200px] mx-auto px-3 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-16 sm:pb-24">
-      <header className="flex flex-col gap-4 mb-6 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="h-display m-0">Farmacias</h1>
-          <p className="mt-2 text-[14.5px] text-[var(--color-muted)] max-w-lg text-pretty">
-            Cada farmacia tiene su web. Entra para editar sus textos, fotos,
-            servicios y horario, y publícala cuando esté lista.
-          </p>
-          {lastUpdate && (
-            <p className="mt-2 flex items-center gap-1.5 text-[13px] text-[var(--color-muted)]">
-              <span
-                aria-hidden
-                className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-green-ink)]"
-              />
-              Última actualización {formatRelativeDate(lastUpdate)}
-            </p>
-          )}
-        </div>
-        {isAdmin && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="accent" size="md" asChild className="flex-1 sm:flex-none">
-            <Link href="/farmacias/nueva">
-              <NavIcon name="Plus" size={14} />
-              Nueva farmacia
-            </Link>
-          </Button>
-        </div>
-        )}
-      </header>
+    <div className={cn(ANCHO_PAGINA, 'pt-6 pb-10')}>
+      <PageHeader
+        titulo="Farmacias"
+        descripcion="Cada farmacia tiene su web. Entra para editar sus textos, fotos, servicios y horario, y publícala cuando esté lista."
+        accion={isAdmin ? <NuevaFarmaciaBoton responsables={responsables} /> : undefined}
+      />
 
       <FarmaciasList farmacias={farmacias} canDuplicate={isAdmin} canWrite={!!user && canEditContent(user)} />
     </div>

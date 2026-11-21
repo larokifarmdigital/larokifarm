@@ -63,6 +63,7 @@ function FeatureModal({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<FeatureTarjeta | null>(initial);
+  const { readOnly } = useFarmaciaEditor();
 
   if (initial && draft?.id !== initial.id) setDraft(initial);
   if (!initial && draft !== null) setDraft(null);
@@ -72,13 +73,14 @@ function FeatureModal({
 
   return (
     <Modal
+      soloLectura={readOnly}
       open={open}
       onOpenChange={(o) => !o && onClose()}
-      title={mode === 'create' ? 'Nueva tarjeta' : 'Editar tarjeta'}
+      title={mode === 'create' ? 'Nueva tarjeta' : (readOnly ? 'Punto fuerte' : 'Editar tarjeta')}
       description="Cada tarjeta ocupa una columna en la franja bajo el hero. Se recomienda 4 tarjetas."
       footer={
         <>
-          <Button variant="ghost" size="md" onClick={onClose}>
+          <Button variant="secondary" size="md" onClick={onClose}>
             Cancelar
           </Button>
           <Button

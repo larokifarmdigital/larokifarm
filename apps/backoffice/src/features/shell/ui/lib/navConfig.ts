@@ -53,7 +53,7 @@ export function buildNav({ role, miFarmaciaId }: NavContext): NavItem[] {
     { href: '/scout', label: 'Scout precios', icon: 'MagnifyingGlass', badge: 'nuevo', hidden: true },
     { href: '/inventario', label: 'Inventario', icon: 'Package', badge: 'wip', hidden: true },
     { href: '/admin/uso', label: 'Uso', icon: 'Scales', requiresRole: 'admin', badge: 'nuevo', hidden: true },
-    { href: '/ajustes', label: 'Ajustes', icon: 'GearSix', hidden: true },
+    { href: '/ajustes/usuarios', label: 'Usuarios', icon: 'UsersThree', requiresRole: 'admin' },
   ];
 
   return items.filter((i) => !i.hidden && (!i.requiresRole || i.requiresRole === role));

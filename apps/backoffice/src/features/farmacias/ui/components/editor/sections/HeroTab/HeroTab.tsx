@@ -59,6 +59,7 @@ function TarjetaModal({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<HeroTarjetaFlotante | null>(initial);
+  const { readOnly } = useFarmaciaEditor();
 
   if (initial && draft?.id !== initial.id) setDraft(initial);
   if (!initial && draft !== null) setDraft(null);
@@ -68,13 +69,14 @@ function TarjetaModal({
 
   return (
     <Modal
+      soloLectura={readOnly}
       open={open}
       onOpenChange={(o) => !o && onClose()}
-      title={isNew ? 'Nueva tarjeta sobre la foto' : 'Editar tarjeta'}
+      title={isNew ? 'Nueva tarjeta sobre la foto' : (readOnly ? 'Tarjeta sobre la foto' : 'Editar tarjeta')}
       description="Sale encima de la foto principal de la portada. Su posición se elige sola."
       footer={
         <>
-          <Button variant="ghost" size="md" onClick={onClose}>Cancelar</Button>
+          <Button variant="secondary" size="md" onClick={onClose}>Cancelar</Button>
           <Button variant="accent" size="md"
             disabled={!Object.values(draft.titulo ?? {}).some((v) => (v ?? '').trim()) || !Object.values(draft.subtitulo ?? {}).some((v) => (v ?? '').trim())}
             title={Object.values(draft.titulo ?? {}).some((v) => (v ?? '').trim()) ? undefined : 'Rellena el campo obligatorio'} onClick={() => { onSave(draft); onClose(); }}>

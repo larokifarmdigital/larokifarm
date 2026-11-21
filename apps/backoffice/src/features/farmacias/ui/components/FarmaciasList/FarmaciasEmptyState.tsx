@@ -39,7 +39,7 @@ export function FarmaciasEmptyState({ hasQuery, totalCount }: { hasQuery: boolea
         </p>
         <div className="mt-6">
           <Button asChild variant="accent" size="md">
-            <Link href="/farmacias/nueva">
+            <Link href="/farmacias?nueva=1" scroll={false}>
               <NavIcon name="Plus" size={14} />
               Crear primera farmacia
             </Link>

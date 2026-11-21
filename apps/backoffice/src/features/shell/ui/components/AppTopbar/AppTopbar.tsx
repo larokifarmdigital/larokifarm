@@ -31,6 +31,8 @@ function buildCrumbs(pathname: string, shell: ShellInfo): Crumb[] {
           : [{ label: 'Mi web' }];
       }
       break;
+    case 'ajustes':
+      return [{ label: 'Usuarios' }];
     case 'albaranes':
       if (s.length === 1) return [{ label: 'Albaranes', href: '/albaranes' }, { label: 'Nueva conciliación' }];
       if (s[1] === 'historial') {

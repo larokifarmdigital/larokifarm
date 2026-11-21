@@ -6,6 +6,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
+import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 
 const ITEM =
   'flex w-full min-h-11 items-center gap-2.5 px-3 rounded-[6px] text-[14px] text-[var(--color-ink)] outline-none cursor-pointer data-[highlighted]:bg-[var(--color-surface-sunken)] data-[disabled]:opacity-40 data-[disabled]:cursor-default';
@@ -48,13 +49,50 @@ export function FilaLista({
   onRemove: () => void;
   onMove: (delta: -1 | 1) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const { readOnly } = useFarmaciaEditor();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: readOnly });
   const ref = useRef<HTMLLIElement | null>(null);
   const nombre = titulo.trim() || `${tipo[0].toUpperCase()}${tipo.slice(1)} sin título`;
 
   useEffect(() => {
     if (destacar) ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }, [destacar]);
+
+  if (readOnly) {
+    // Solo consulta: la fila se abre para LEER. Es un div role=button porque
+    // cualquier <button> dentro del fieldset desactivado del editor no se puede pulsar.
+    return (
+      <li ref={setNodeRef} className="flex items-center rounded-[var(--radius-sm)] border border-transparent hover:border-[var(--color-hairline)] bg-[var(--color-surface)]">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={onEdit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onEdit();
+            }
+          }}
+          className="flex flex-1 min-w-0 min-h-11 items-center gap-3 px-3 py-2.5 text-left rounded-[6px] cursor-pointer"
+        >
+          {icono && <span className="shrink-0">{icono}</span>}
+          <span className="min-w-0 flex-1">
+            <span
+              className={cn(
+                'block text-[14px] font-medium leading-snug line-clamp-2',
+                titulo.trim() ? 'text-[var(--color-ink)]' : 'text-[var(--color-muted)] italic',
+              )}
+            >
+              {nombre}
+            </span>
+            {detalle && <span className="hidden sm:block text-[13px] text-[var(--color-muted)] truncate leading-tight mt-0.5">{detalle}</span>}
+          </span>
+          <span className="shrink-0 text-[13px] font-medium text-[var(--color-accent)]">Ver</span>
+          <span className="sr-only">: ver {tipo} completo</span>
+        </div>
+      </li>
+    );
+  }
 
   return (
     <li

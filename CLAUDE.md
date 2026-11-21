@@ -152,11 +152,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-20T08:30:25Z).
+Actualizado automáticamente al hacer commit (2026-11-20T10:40:38Z).
 
+- `1677acd` 2026-11-20 — Feat(backoffice): rediseño fase 4 — gestión de contenidos de las landings
 - `587677a` 2026-11-20 — Feat(backoffice): rediseño fase 3 — historial de conciliaciones
 - `5a25dd0` 2026-11-20 — Feat(backoffice): rediseño fase 2 — nueva conciliación por envíos
 - `5d71ce9` 2026-11-20 — Feat(backoffice): rediseño fase 1 — login, Inicio y navegación
 - `44cb2c5` 2026-11-19 — Fix(cima-chat): despliegue en CI y tipo ChatResponse
-- `63132f2` 2026-11-19 — Fix(cima-chat): anillo de foco del botón flotante con contraste AA
 <!-- auto:recent-commits:end -->

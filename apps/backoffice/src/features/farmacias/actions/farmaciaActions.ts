@@ -1,7 +1,6 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { requireUser } from '@/core/auth';
 import { getStorage } from '@/core/storage';
 import {
@@ -51,6 +50,7 @@ export async function publishFarmaciaAction(id: string, publish: boolean): Promi
 
 export type CreateFarmaciaState =
   | { status: 'idle' }
+  | { status: 'ok'; id: string; nombre: string }
   | { status: 'error'; message: string; fieldErrors?: Record<string, string> };
 
 export async function createFarmaciaAction(
@@ -69,6 +69,7 @@ export async function createFarmaciaAction(
     return { status: 'error', message: res.error, fieldErrors: res.fieldErrors };
   }
 
+  // Se crea desde un modal en /farmacias: nos quedamos en la lista (toast con "Abrir editor").
   revalidatePath('/farmacias');
-  redirect(`/farmacias/${res.data.id}`);
+  return { status: 'ok', id: res.data.id, nombre: res.data.nombre };
 }

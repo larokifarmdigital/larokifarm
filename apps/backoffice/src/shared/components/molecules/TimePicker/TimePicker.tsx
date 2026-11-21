@@ -149,7 +149,7 @@ function ScrollColumn({
 
   return (
     <div className="flex flex-col items-center min-w-[54px]">
-      <p className="text-[9.5px] font-mono-tabular uppercase tracking-[0.08em] text-[var(--color-muted-2)] text-center py-1 m-0 select-none">
+      <p className="text-[12px] font-medium text-[var(--color-muted)] text-center py-1 m-0 select-none">
         {label}
       </p>
       <div

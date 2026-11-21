@@ -8,6 +8,8 @@ declare module 'next-auth' {
     role: Role;
     businessId: string | null;
     businessSlug: string | null;
+    /** Huella de la contraseña (solo viaja dentro del JWT cifrado). */
+    pv?: string;
   }
 
   interface Session {
@@ -27,5 +29,7 @@ declare module 'next-auth/jwt' {
     role: Role;
     businessId: string | null;
     businessSlug: string | null;
+    pv?: string;
+    checkedAt?: number;
   }
 }

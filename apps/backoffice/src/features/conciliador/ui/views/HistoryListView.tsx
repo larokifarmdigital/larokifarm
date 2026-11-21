@@ -5,12 +5,14 @@ import { scopeFromSession } from '@/core/shared';
 import { getComparisonRepository, type ComparisonStatus } from '@/core/comparisons';
 import { ListBusinessesUseCase, getBusinessRepository } from '@/core/businesses';
 import { getReportRepository } from '@/core/reports';
+import { Button } from '@/shared/components/atoms/Button';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
-import { formatUsd } from '@/shared/lib/format';
+import { PageHeader, ANCHO_PAGINA } from '@/shared/components/molecules/PageHeader';
+import { cn } from '@/shared/lib/cn';
 import { HistoryFilters, QuitarFiltros } from '../components/HistoryFilters';
 import { HistoryList, type GrupoHistorial } from '../components/HistoryList';
 import { Pagination } from '../components/Pagination';
-import { BTN_ACCENT, BTN_SECUNDARIO } from '../lib/botones';
+import { BTN_SECUNDARIO } from '../lib/botones';
 import {
   CLAVES_FILTRO,
   agruparPorDia,
@@ -83,57 +85,67 @@ export async function HistoryListView({ params }: { params: HistoryListParams })
 
   const reportes = await getReportRepository().countByComparisonIds(result.items.map((r) => r.id));
 
-  // Solo lo que se pinta. Coste y farmacia, únicamente para SUPER_ADMIN.
+  // Solo lo que se pinta. La farmacia, únicamente para SUPER_ADMIN (el coste
+  // vive en "Datos técnicos" del detalle y en /admin/uso, no en la lista).
   const grupos: GrupoHistorial[] = agruparPorDia(result.items).map((g) => ({
     ymd: g.ymd,
     etiqueta: etiquetaDia(g.ymd),
     filas: g.items.map((c) => {
-      const titulo = c.label || c.supplier || 'Proveedor sin identificar';
+      // Mismo criterio que Inicio: el proveedor es el título; el nombre del envío, secundario.
+      const titulo = c.supplier || c.label || 'Proveedor sin identificar';
       const rep = reportes[c.id];
       return {
         id: c.id,
         titulo,
-        proveedor: c.supplier && c.supplier !== titulo ? c.supplier : null,
+        envio: c.label && c.label !== titulo ? c.label : null,
         hora: horaMadrid(c.createdAt),
         usuario: c.user.name,
         estado: c.status,
         numDiscrepancias: c.numDiscrepancies,
         reporte: rep?.open ? 'abierto' : rep?.resolved ? 'resuelto' : null,
-        ...(esAdmin ? { negocio: c.business.name, coste: formatUsd(c.geminiCostUsd) } : {}),
+        ...(esAdmin ? { negocio: c.business.name } : {}),
       };
     }),
   }));
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-6 pb-10 sm:px-6">
-      <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="m-0 text-[24px] sm:text-[28px] font-bold tracking-[-0.02em] text-[var(--color-ink)]">
-            Historial de conciliaciones
-          </h1>
-          <p className="m-0 mt-1 text-[15px] text-[var(--color-muted)]">
-            Vuelve a consultar cualquier conciliación y descarga su informe.
-          </p>
-        </div>
-        <Link href="/albaranes" className={BTN_ACCENT}>
-          <NavIcon name="Plus" size={17} />
-          Nueva conciliación
-        </Link>
-      </header>
+    <div className={cn(ANCHO_PAGINA, 'pt-6 pb-10')}>
+      <PageHeader
+        titulo="Historial de conciliaciones"
+        descripcion="Vuelve a consultar cualquier conciliación y descarga su informe."
+        accion={
+          <Button asChild variant="accent">
+            <Link href="/albaranes">
+              <NavIcon name="Plus" size={16} />
+              Nueva conciliación
+            </Link>
+          </Button>
+        }
+      />
 
       {(hayFiltros || result.total > 0) && (
-        <div className="mb-5">
-          <HistoryFilters esAdmin={esAdmin} negocios={negocios.map((b) => ({ slug: b.slug, name: b.name }))} />
+        <div className="mb-3">
+          <HistoryFilters esAdmin={esAdmin} total={result.total} negocios={negocios.map((b) => ({ slug: b.slug, name: b.name }))} />
         </div>
       )}
 
-      <p role="status" className="m-0 mb-3 px-1 text-[14px] text-[var(--color-muted)]">
-        {result.total > 0
-          ? `${result.total} ${result.total === 1 ? 'conciliación' : 'conciliaciones'}${hayFiltros ? ' con estos filtros' : ''}`
-          : hayFiltros
-            ? 'No hay conciliaciones con estos filtros'
-            : ''}
-      </p>
+      {/* Recuento + "Quitar filtros": misma fila que en /ajustes/usuarios */}
+      <div className="mb-3 flex min-h-11 items-center justify-between gap-3 px-1">
+        <p role="status" className="m-0 text-[14px] text-[var(--color-muted)]">
+          {result.total > 0
+            ? `${result.total} ${result.total === 1 ? 'conciliación' : 'conciliaciones'}${hayFiltros ? ' con estos filtros' : ''}`
+            : hayFiltros
+              ? 'No hay conciliaciones con estos filtros'
+              : ''}
+        </p>
+        {hayFiltros && result.total > 0 && (
+          <QuitarFiltros
+            href={BASE}
+            conIcono
+            className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-[8px] px-3 text-[14px] font-medium text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] hover:text-[var(--color-ink)]"
+          />
+        )}
+      </div>
 
       {result.total === 0 ? (
         <EstadoVacio conFiltros={hayFiltros} />
@@ -167,10 +179,12 @@ function EstadoVacio({ conFiltros }: { conFiltros: boolean }) {
       {conFiltros ? (
         <QuitarFiltros href={BASE} className={BTN_SECUNDARIO} />
       ) : (
-        <Link href="/albaranes" className={BTN_ACCENT}>
-          <NavIcon name="Plus" size={17} />
-          Nueva conciliación
-        </Link>
+        <Button asChild variant="accent">
+          <Link href="/albaranes">
+            <NavIcon name="Plus" size={16} />
+            Nueva conciliación
+          </Link>
+        </Button>
       )}
     </div>
   );

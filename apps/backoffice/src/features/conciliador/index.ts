@@ -3,4 +3,3 @@
 export { ReconcilerView } from './ui/views/ReconcilerView';
 export { HistoryListView, type HistoryListParams } from './ui/views/HistoryListView';
 export { ComparisonDetailView } from './ui/views/ComparisonDetailView';
-export { ConciliadorTabs } from './ui/components/ConciliadorTabs';

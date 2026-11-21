@@ -1,59 +1,62 @@
-import { Input } from '@/shared/components/atoms/Input';
-import { NavIcon } from '@/shared/components/atoms/NavIcon';
-import { cn } from '@/shared/lib/cn';
-import { STATUS_FILTERS, type StatusCounts, type StatusFilter } from './statusMeta';
+'use client';
 
+import { useId } from 'react';
+import { NavIcon } from '@/shared/components/atoms/NavIcon';
+import { Select } from '@/shared/components/atoms/Select';
+import { STATUS_FILTERS, type StatusFilter } from './statusMeta';
+
+export const BUSCADOR_FARMACIAS_ID = 'buscador-farmacias';
+
+/**
+ * Barra de filtros estándar (igual que Usuarios e Historial): buscador + Select
+ * "Estado" con opciones fijas (no aparecen ni desaparecen según los datos).
+ * Con un solo Select no hace falta el botón "Filtros" en móvil: buscador y
+ * Estado caben en una fila (44 px).
+ */
 export function FarmaciasListFilters({
   query,
   onQueryChange,
   status,
   onStatusChange,
-  counts,
 }: {
   query: string;
   onQueryChange: (q: string) => void;
   status: StatusFilter;
   onStatusChange: (s: StatusFilter) => void;
-  counts: StatusCounts;
 }) {
+  const estadoId = useId();
   return (
-  <div className="flex flex-col gap-2.5 mb-4 sm:mb-5 sm:flex-row sm:items-center sm:gap-3">
-    <div className="relative flex-1 sm:max-w-md">
-      <NavIcon
-        name="MagnifyingGlass"
-        size={14}
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)] pointer-events-none"
-      />
-      <Input
-        type="search"
-        value={query}
-        onChange={(e) => onQueryChange(e.target.value)}
-        placeholder="Buscar por nombre o ciudad"
-        aria-label="Buscar farmacia por nombre o ciudad"
-        className="pl-9"
-      />
-    </div>
-    <div className="-mx-3 sm:mx-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <div className="inline-flex items-center gap-1 bg-[var(--color-surface)] border border-[var(--color-control-border)] rounded-[8px] p-0.5 mx-3 sm:mx-0">
-        {STATUS_FILTERS.filter(({ key }) => key === 'activas' || key === status || counts[key] > 0).map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => onStatusChange(key)}
-            aria-pressed={status === key}
-            className={cn(
-              'shrink-0 px-3 h-11 sm:h-9 text-[13.5px] rounded-[6px] transition-colors whitespace-nowrap',
-              status === key
-                ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent-ink)] font-semibold'
-                : 'text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)]',
-            )}
-          >
-            {label}
-            <span className="ml-1.5 text-[var(--color-muted)]">{counts[key]}</span>
-          </button>
-        ))}
+    <div role="search" aria-label="Filtrar farmacias" className="flex flex-row items-center gap-2">
+      <div className="relative min-w-0 flex-1 sm:max-w-md">
+        <label htmlFor={BUSCADOR_FARMACIAS_ID} className="sr-only">
+          Buscar por nombre o ciudad
+        </label>
+        <NavIcon
+          name="MagnifyingGlass"
+          size={17}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]"
+        />
+        <input
+          id={BUSCADOR_FARMACIAS_ID}
+          type="search"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Buscar farmacia"
+          autoComplete="off"
+          className="field pl-9"
+        />
+      </div>
+      <div className="w-[148px] shrink-0 sm:w-[240px]">
+        <label htmlFor={estadoId} className="sr-only">
+          Estado
+        </label>
+        <Select
+          id={estadoId}
+          value={status}
+          onValueChange={(v) => onStatusChange(v as StatusFilter)}
+          options={STATUS_FILTERS.map(({ key, label }) => ({ value: key, label }))}
+        />
       </div>
     </div>
-  </div>
   );
 }

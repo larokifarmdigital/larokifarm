@@ -52,7 +52,7 @@ export function PublishBlockedDialog({
       <div className="flex flex-col gap-3">
         {bySection.map(([sectionKey, list]) => (
           <section key={sectionKey}>
-            <h3 className="m-0 mb-1 text-[11px] font-mono-tabular uppercase tracking-[0.08em] text-[var(--color-muted-2)]">
+            <h3 className="m-0 mb-1 text-[13px] font-semibold text-[var(--color-ink-2)]">
               {SECTION_BY_KEY[sectionKey]?.label ?? sectionKey}
             </h3>
             <ul className="m-0 p-0 list-none divide-y divide-[var(--color-hairline)]">

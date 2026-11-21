@@ -55,6 +55,7 @@ function FaqModal({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<Faq | null>(initial);
+  const { readOnly } = useFarmaciaEditor();
 
   if (initial && draft?.id !== initial.id) setDraft(initial);
   if (!initial && draft !== null) setDraft(null);
@@ -62,13 +63,14 @@ function FaqModal({
 
   return (
     <Modal
+      soloLectura={readOnly}
       open={open}
       onOpenChange={(o) => !o && onClose()}
-      title={mode === 'create' ? 'Nueva pregunta frecuente' : 'Editar pregunta'}
+      title={mode === 'create' ? 'Nueva pregunta frecuente' : (readOnly ? 'Pregunta frecuente' : 'Editar pregunta')}
       description="Sale en la sección de preguntas frecuentes de tu web."
       footer={
         <>
-          <Button variant="ghost" size="md" onClick={onClose}>
+          <Button variant="secondary" size="md" onClick={onClose}>
             Cancelar
           </Button>
           <Button

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { LOCALES, LOCALE_FLAGS, LOCALE_LABELS, LOCALE_NOMBRE, type Locale } from '@/core/shared';
 import { countBySection, type SectionKey } from '@/features/farmacias/ui/lib/i18nStatus';
@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { Button } from '@/shared/components/atoms/Button';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
+import { BotonIdioma } from '@/features/farmacias/ui/components/editor/fields/BotonIdioma';
 
 /**
  * Pestañas de idioma de una sección.
@@ -16,9 +17,16 @@ import { cn } from '@/shared/lib/cn';
  * - El punto rojo indica que a ESTA sección le falta traducir algo en ese idioma.
  */
 export function LangTabs({ sectionKey }: { sectionKey: string }) {
-  const { farmacia, currentLocale, setLocale, activarIdioma, readOnly } = useFarmaciaEditor();
+  const { farmacia, currentLocale, setLocale, activarIdioma, desactivarIdioma, readOnly, esAdmin } = useFarmaciaEditor();
   const [confirmar, setConfirmar] = useState(false);
+  const [confirmarDesactivar, setConfirmarDesactivar] = useState(false);
   const [activando, setActivando] = useState(false);
+  const grupoRef = useRef<HTMLDivElement>(null);
+  // Tras activar/desactivar, el botón que abrió el diálogo desaparece: el foco va a la pestaña del idioma.
+  const enfocarPestana = () =>
+    requestAnimationFrame(() => grupoRef.current?.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus());
+  const principal = currentLocale === LOCALES[0];
+  const puedeDesactivar = esAdmin && !readOnly && !principal;
 
   const seccion = countBySection(farmacia).find((s) => s.key === (sectionKey as SectionKey));
   const faltan = (l: Locale) => seccion?.byLocale[l]?.missing ?? 0;
@@ -27,6 +35,7 @@ export function LangTabs({ sectionKey }: { sectionKey: string }) {
   return (
     <div className="mb-6">
       <div
+        ref={grupoRef}
         role="group"
         aria-label="Idioma que estás editando"
         className="flex items-center gap-1 overflow-x-auto border-b border-[var(--color-hairline)]"
@@ -36,11 +45,11 @@ export function LangTabs({ sectionKey }: { sectionKey: string }) {
           const activated = farmacia.idiomasActivos.includes(l);
           const n = activated ? faltan(l) : 0;
           return (
-            <button
+            <BotonIdioma
               key={l}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setLocale(l)}
+              pulsado={active}
+              onPulsar={() => setLocale(l)}
+              enFieldsetDesactivado={readOnly}
               className={cn(
                 'relative flex min-h-11 shrink-0 items-center gap-2 px-3 sm:px-4 text-[14px] whitespace-nowrap transition-colors',
                 '-mb-px border-b-2',
@@ -58,7 +67,7 @@ export function LangTabs({ sectionKey }: { sectionKey: string }) {
                   <span className="sr-only">, faltan {n} {n === 1 ? 'texto' : 'textos'} por traducir</span>
                 </>
               )}
-            </button>
+            </BotonIdioma>
           );
         })}
       </div>
@@ -80,6 +89,35 @@ export function LangTabs({ sectionKey }: { sectionKey: string }) {
         </div>
       )}
 
+      {activo && puedeDesactivar && (
+        <div className="mt-2 flex justify-end">
+          <button
+            type="button"
+            disabled={activando}
+            onClick={() => setConfirmarDesactivar(true)}
+            className="min-h-11 sm:min-h-8 px-2 rounded-[8px] text-[13.5px] text-[var(--color-muted)] underline underline-offset-2 hover:text-[var(--color-red-ink)] disabled:opacity-50"
+          >
+            Desactivar el {LOCALE_NOMBRE[currentLocale]} en la web
+          </button>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={confirmarDesactivar}
+        onOpenChange={setConfirmarDesactivar}
+        title={`¿Desactivar el ${LOCALE_NOMBRE[currentLocale]}?`}
+        description={`Los textos en ${LOCALE_NOMBRE[currentLocale]} se conservan; la web dejará de mostrarlo cuando publiques. Puedes volver a activarlo cuando quieras.`}
+        confirmLabel={`Desactivar ${LOCALE_NOMBRE[currentLocale]}`}
+        variant="danger"
+        onConfirm={() => {
+          setActivando(true);
+          void desactivarIdioma(currentLocale).finally(() => {
+            setActivando(false);
+            enfocarPestana();
+          });
+        }}
+      />
+
       <ConfirmDialog
         open={confirmar}
         onOpenChange={setConfirmar}
@@ -89,7 +127,10 @@ export function LangTabs({ sectionKey }: { sectionKey: string }) {
         variant="accent"
         onConfirm={() => {
           setActivando(true);
-          void activarIdioma(currentLocale).finally(() => setActivando(false));
+          void activarIdioma(currentLocale).finally(() => {
+            setActivando(false);
+            enfocarPestana();
+          });
         }}
       />
     </div>

@@ -66,3 +66,27 @@ export async function activarIdiomaAction(id: string, locale: string): Promise<S
   }
   return res;
 }
+
+/**
+ * Desactiva un idioma en la web. Solo SUPER_ADMIN y nunca el castellano
+ * (principal y fallback de la landing). Los textos se conservan en la BD.
+ */
+export async function desactivarIdiomaAction(id: string, locale: string): Promise<SaveResult<Farmacia>> {
+  const user = await requireUser();
+  if (user.rol !== 'admin') return { ok: false, error: 'Solo un administrador puede desactivar idiomas.' };
+  if (typeof id !== 'string' || !(LOCALES as readonly string[]).includes(locale)) {
+    return { ok: false, error: 'Idioma no válido' };
+  }
+  if (locale === LOCALES[0]) return { ok: false, error: 'El castellano es el idioma principal y no se puede desactivar.' };
+  const repo = getFarmaciaRepository();
+  const current = await repo.getFarmacia(id);
+  if (!current) return { ok: false, error: 'Farmacia no encontrada' };
+  if (!current.idiomasActivos.includes(locale as Locale)) return { ok: true, data: current };
+  const idiomasActivos = LOCALES.filter((l) => l !== locale && (l === LOCALES[0] || current.idiomasActivos.includes(l)));
+  const res = await repo.saveFarmacia(id, { idiomasActivos }, { expectedUpdatedAt: current.updatedAt });
+  if (res.ok) {
+    revalidatePath('/farmacias');
+    revalidatePath(`/farmacias/${id}`);
+  }
+  return res;
+}

@@ -46,15 +46,23 @@ function sumarDias(ymd: string, dias: number): string {
 }
 
 /** Instante (UTC) en que empieza ese día en Madrid. */
-function inicioDia(ymd: string): Date {
+function inicioDia(ymd: string): Date | undefined {
   const mediodia = new Date(`${ymd}T12:00:00Z`);
   const off = OFFSET.formatToParts(mediodia).find((p) => p.type === 'timeZoneName')?.value ?? 'GMT';
+  // Años antiguos dan offsets LMT ("GMT-0:14:44") que no son ISO válidos → fecha inválida
   const offset = off === 'GMT' ? '+00:00' : off.replace('GMT', '');
-  return new Date(`${ymd}T00:00:00${offset}`);
+  const d = new Date(`${ymd}T00:00:00${offset}`);
+  return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
 export function esYmd(v: string | undefined): v is string {
-  return !!v && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(new Date(`${v}T12:00:00Z`).getTime());
+  // Solo años 2000-2099: fechas a medio teclear ("0002-01-01") rompían la consulta (HTTP 500).
+  return !!v && /^20\d{2}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(new Date(`${v}T12:00:00Z`).getTime());
+}
+
+function finDe(ymd: string): Date | undefined {
+  const siguiente = inicioDia(sumarDias(ymd, 1));
+  return siguiente ? new Date(siguiente.getTime() - 1) : undefined;
 }
 
 /** Rango [desde, hasta] para el repositorio según el periodo elegido. */
@@ -71,7 +79,7 @@ export function rangoPeriodo(
     return {
       from: esYmd(desde) ? inicioDia(desde) : undefined,
       // "hasta" incluye todo ese día
-      to: esYmd(hasta) ? new Date(inicioDia(sumarDias(hasta, 1)).getTime() - 1) : undefined,
+      to: esYmd(hasta) ? finDe(hasta) : undefined,
     };
   }
   return {};

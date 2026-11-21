@@ -1,6 +1,7 @@
 'use client';
 
 import * as Dialog from '@radix-ui/react-dialog';
+import { Button } from '@/shared/components/atoms/Button';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
 import { useRef, type ReactNode } from 'react';
@@ -13,6 +14,11 @@ export type ModalProps = {
   children: ReactNode;
   footer?: ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg';
+  /**
+   * Solo consulta: los campos se muestran desactivados (se pueden leer) y el
+   * pie es solo "Cerrar". El portal queda fuera del fieldset del editor.
+   */
+  soloLectura?: boolean;
 };
 
 const MAX_WIDTHS = {
@@ -29,6 +35,7 @@ export function Modal({
   children,
   footer,
   maxWidth = 'md',
+  soloLectura = false,
 }: ModalProps) {
   // Sin Dialog.Trigger, Radix no sabe a dónde devolver el foco al cerrar:
   // guardamos quién lo tenía al abrir y se lo devolvemos (si sigue en el DOM).
@@ -47,9 +54,11 @@ export function Modal({
             if (disparador) el = document.getElementById(disparador) ?? el;
             previo.current = el;
             // En formularios, el foco empieza en el primer campo (no en "Cerrar").
-            const campo = (e.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>(
-              'input:not([type=hidden]):not([type=file]):not([disabled]), textarea:not([disabled]), select:not([disabled])',
-            );
+            const campo = Array.from(
+              (e.currentTarget as HTMLElement | null)?.querySelectorAll<HTMLElement>(
+                'input:not([type=hidden]):not([type=file]), textarea, select',
+              ) ?? [],
+            ).find((el) => el.matches(':enabled'));
             if (campo) {
               e.preventDefault();
               campo.focus();
@@ -63,7 +72,8 @@ export function Modal({
             // Eliminar de la fila borrada), a la fila recién añadida o al título
             // de la sección; nunca a <body>.
             requestAnimationFrame(() => {
-              if (el?.isConnected && document.activeElement === el) return;
+              // (si se abrió sin disparador, p. ej. desde la URL, el previo es <body>: no vale)
+            if (el?.isConnected && el !== document.body && document.activeElement === el) return;
               const destino =
                 document.querySelector<HTMLElement>('[data-foco-tras-modal]') ??
                 document.querySelector<HTMLElement>('[data-titulo-seccion]');
@@ -99,9 +109,31 @@ export function Modal({
             </Dialog.Close>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+          <div
+            // Solo lectura: los campos van desactivados, así que el cuerpo tiene que poder
+            // enfocarse para desplazarlo con el teclado.
+            {...(soloLectura ? { tabIndex: 0, role: 'region', 'aria-label': `Contenido: ${title}` } : {})}
+            className="flex-1 overflow-y-auto px-5 py-4"
+          >
+            {soloLectura ? (
+              <fieldset disabled className="m-0 min-w-0 border-0 p-0">
+                <p className="m-0 mb-4 rounded-[8px] bg-[var(--color-surface-2)] px-3 py-2 text-[13.5px] text-[var(--color-ink-2)]">
+                  Solo consulta: puedes leerlo, pero no cambiarlo.
+                </p>
+                {children}
+              </fieldset>
+            ) : (
+              children
+            )}
+          </div>
 
-          {footer && (
+          {soloLectura ? (
+            <div className="shrink-0 flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--color-hairline)] bg-[var(--color-surface-2)]">
+              <Dialog.Close className="inline-flex min-h-11 sm:min-h-9 items-center justify-center px-4 rounded-[8px] border border-[var(--color-control-border)] bg-[var(--color-surface)] text-[14px] font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface-sunken)]">
+                Cerrar
+              </Dialog.Close>
+            </div>
+          ) : footer && (
             <div className="shrink-0 flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--color-hairline)] bg-[var(--color-surface-2)]">
               {footer}
             </div>
@@ -109,5 +141,46 @@ export function Modal({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+/**
+ * Pie estándar de los modales de crear/editar: "Cancelar" (secondary) y la
+ * acción principal (accent, sin icono, siempre activa: valida al enviar y lleva
+ * el foco al primer error). En fila también en móvil (mitad y mitad).
+ */
+export function ModalAcciones({
+  onCancelar,
+  textoPrincipal,
+  textoEnviando,
+  enviando = false,
+  form,
+  onPrincipal,
+}: {
+  onCancelar: () => void;
+  textoPrincipal: string;
+  /** Texto mientras se envía, p. ej. "Creando…". */
+  textoEnviando?: string;
+  enviando?: boolean;
+  /** id del <form> (el botón es type=submit de ese formulario). */
+  form?: string;
+  onPrincipal?: () => void;
+}) {
+  return (
+    <div className="flex w-full gap-2 sm:justify-end">
+      <Button type="button" variant="secondary" onClick={onCancelar} disabled={enviando} className="flex-1 sm:flex-none">
+        Cancelar
+      </Button>
+      <Button
+        type={form ? 'submit' : 'button'}
+        form={form}
+        variant="accent"
+        disabled={enviando}
+        onClick={onPrincipal}
+        className="flex-1 sm:flex-none"
+      >
+        {enviando && textoEnviando ? textoEnviando : textoPrincipal}
+      </Button>
+    </div>
   );
 }

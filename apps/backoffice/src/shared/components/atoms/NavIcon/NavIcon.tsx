@@ -1,4 +1,10 @@
 import {
+  FunnelSimpleIcon,
+  EyeSlashIcon,
+  ArrowCounterClockwiseIcon,
+  KeyIcon,
+  UserMinusIcon,
+  UserCheckIcon,
   StorefrontIcon,
   MagnifyingGlassIcon,
   ReceiptIcon,
@@ -65,6 +71,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr';
 
 const ICONS = {
+  FunnelSimple: FunnelSimpleIcon,
   Storefront: StorefrontIcon,
   MagnifyingGlass: MagnifyingGlassIcon,
   Receipt: ReceiptIcon,
@@ -128,6 +135,11 @@ const ICONS = {
   ArrowUp: ArrowUpIcon,
   ArrowDown: ArrowDownIcon,
   CaretUp: CaretUpIcon,
+  EyeSlash: EyeSlashIcon,
+  ArrowCounterClockwise: ArrowCounterClockwiseIcon,
+  Key: KeyIcon,
+  UserMinus: UserMinusIcon,
+  UserCheck: UserCheckIcon,
 } as const;
 
 export type IconName = keyof typeof ICONS;

@@ -116,9 +116,11 @@ export async function ComparisonDetailView({ id }: { id: string }) {
       return kind ? [{ name: f.filename, src: f.downloadUrl, kind }] : [];
     });
 
-  const titulo = comparison.label || comparison.supplier || 'Conciliación sin proveedor';
+  // Mismo título que en Inicio y en la lista del historial: el proveedor; el
+  // nombre del envío (nº de albarán) va en la línea secundaria.
+  const titulo = comparison.supplier || comparison.label || 'Conciliación sin proveedor';
   const meta = [
-    comparison.supplier && comparison.supplier !== titulo ? comparison.supplier : null,
+    comparison.label && comparison.label !== titulo ? comparison.label : null,
     fechaHoraMadrid(comparison.createdAt),
     comparison.user.name,
     esSuperAdmin ? comparison.business.name : null,

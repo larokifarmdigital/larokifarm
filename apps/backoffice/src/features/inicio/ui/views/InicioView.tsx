@@ -7,6 +7,7 @@ import { getComparisonRepository, type ComparisonRow } from '@/core/comparisons'
 import { getReportRepository, type OpenReportItem } from '@/core/reports';
 import { scopeFromSession } from '@/core/shared';
 import { FarmaciaAvatar } from '@/features/farmacias/ui/components/FarmaciasList/FarmaciaAvatar';
+import { PageHeader, ANCHO_PAGINA } from '@/shared/components/molecules/PageHeader';
 import { NavIcon, type IconName } from '@/shared/components/atoms/NavIcon';
 import { formatRelativeDate } from '@/shared/lib/format';
 import { landingUrl } from '@/shared/lib/landingUrl';
@@ -95,8 +96,14 @@ function ListaConciliaciones({ items, conFarmacia }: { items: ComparisonRow[]; c
                   {c.supplier || c.label || 'Proveedor sin identificar'}
                 </span>
                 <span className="block text-[12.5px] text-[var(--color-muted)] truncate">
-                  {formatRelativeDate(c.createdAt.toISOString())}
-                  {conFarmacia ? ` · ${c.business.name}` : ''}
+                  {/* Mismo criterio que el Historial: proveedor de título; nombre del envío, secundario */}
+                  {[
+                    c.label && c.label !== c.supplier ? c.label : null,
+                    formatRelativeDate(c.createdAt.toISOString()),
+                    conFarmacia ? c.business.name : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </span>
               </span>
               <span className={cn('chip shrink-0', r.clase)}>{r.texto}</span>
@@ -138,7 +145,7 @@ const BTN_PRIMARIO =
   'inline-flex items-center justify-center gap-2 min-h-11 px-4 rounded-[8px] bg-[var(--color-accent)] text-white text-[14.5px] font-semibold hover:bg-[var(--color-accent-hover)] transition-colors';
 const BTN_SECUNDARIO =
   'inline-flex items-center justify-center gap-2 min-h-11 px-4 rounded-[8px] border border-[var(--color-hairline-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-[14.5px] font-medium hover:bg-[var(--color-surface-2)] transition-colors';
-const ENLACE = 'inline-flex items-center gap-1 py-2 text-[14px] font-medium text-[var(--color-accent)] hover:underline underline-offset-2';
+const ENLACE = 'inline-flex min-h-11 sm:min-h-0 items-center gap-1 py-2 text-[14px] font-medium text-[var(--color-accent)] hover:underline underline-offset-2';
 
 const ATAJOS: { hash: string; label: string; icon: IconName }[] = [
   { hash: '#horario', label: 'Horario', icon: 'Clock' },
@@ -167,13 +174,11 @@ export async function InicioView() {
   const nombre = user.nombre.split(/\s+/)[0];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10">
-      <h1 className="m-0 text-[28px] sm:text-[32px] font-semibold tracking-[-0.035em] text-[var(--color-ink)]">
-        Hola, {nombre}
-      </h1>
-      <p className="mt-1.5 mb-7 text-[15px] text-[var(--color-muted)]">
-        {esAdmin ? 'Esto es lo que pasa en tus farmacias.' : (farmacias[0]?.nombre ?? 'Tu farmacia')}
-      </p>
+    <div className={cn(ANCHO_PAGINA, 'pt-6 pb-10')}>
+      <PageHeader
+        titulo={`Hola, ${nombre}`}
+        descripcion={esAdmin ? 'Esto es lo que pasa en tus farmacias.' : (farmacias[0]?.nombre ?? 'Tu farmacia')}
+      />
 
       {esAdmin ? (
         <InicioAdmin farmacias={farmacias} conciliaciones={conciliaciones.items} informes={informes} />

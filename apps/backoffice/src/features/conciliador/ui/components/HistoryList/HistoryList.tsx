@@ -2,19 +2,19 @@ import Link from 'next/link';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
 
-/** Fila ya preparada en el servidor: coste y negocio solo llegan si es SUPER_ADMIN. */
+/** Fila ya preparada en el servidor: la farmacia solo llega si es SUPER_ADMIN. */
 export interface FilaHistorial {
   id: string;
+  /** Proveedor (como en Inicio). */
   titulo: string;
-  /** Solo si no es ya el título. */
-  proveedor: string | null;
+  /** Nombre del envío, si no es ya el título. */
+  envio: string | null;
   hora: string;
   usuario: string;
   estado: 'OK' | 'DISCREPANCIES' | 'ERROR';
   numDiscrepancias: number;
   reporte: 'abierto' | 'resuelto' | null;
   negocio?: string;
-  coste?: string;
 }
 
 export interface GrupoHistorial {
@@ -41,7 +41,7 @@ export function HistoryList({ grupos }: { grupos: GrupoHistorial[] }) {
           <ul className="card divide-y divide-[var(--color-hairline)] overflow-hidden p-0">
             {g.filas.map((f) => {
               const e = estado(f);
-              const meta = [f.proveedor, f.hora, f.usuario, f.negocio, f.coste].filter(Boolean).join(' · ');
+              const meta = [f.envio, f.hora, f.usuario, f.negocio].filter(Boolean).join(' · ');
               return (
                 <li key={f.id}>
                   <Link

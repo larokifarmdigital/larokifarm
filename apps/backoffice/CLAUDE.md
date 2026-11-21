@@ -89,7 +89,7 @@ en `ui/lib/sectionsConfig.ts`; i18n en `ui/lib/i18nStatus.ts`.
 | Grupo | Sección (clave = hash) | Contenido |
 |---|---|---|
 | Tu farmacia | Horario (`horario`, entrada por defecto) | `HorarioTab` → horario semanal |
-| Tu farmacia | Contacto y dirección (`general`) | nombre, ciudad, titular, colegiado, logo, contacto, redes, dirección, Google Maps · bloque **Solo administrador**: identificador (cambio en modal) y mapa insertado |
+| Tu farmacia | Contacto y dirección (`general`) | nombre, titular, colegiado, logo, contacto, redes, dirección, Google Maps · bloque **Solo administrador**: identificador (cambio en modal) y mapa insertado |
 | Portada | Portada (`hero`) | etiqueta, frase principal, frase de apoyo, fotos, tarjetas sobre la foto (máx. 3) |
 | Portada | Puntos fuertes (`features`) | tarjetas (máx. 6; reloj sin descripción = horario) |
 | Contenido | Quiénes somos (`sobre`) | historia (Tiptap), fotos, puntos destacados, cabecera plegada |
@@ -100,6 +100,10 @@ en `ui/lib/sectionsConfig.ts`; i18n en `ui/lib/i18nStatus.ts`.
 | Avanzado | Google y redes sociales (`seo`) | título/descripción en Google + vista previa + imagen al compartir |
 
 Las claves no cambiaron: los hash antiguos (`#hero`, `#seo`…) siguen valiendo.
+
+**Ciudad**: un solo campo, en la dirección. Al escribir se guardan a la vez
+`direccion.ciudad` (lo que lee la web: `publicContent` usa `direccion.ciudad ??
+ciudad`) y `ciudad` (lista y buscador del backoffice).
 
 ### Estado y publicación
 - Dos ejes en la cabecera: **¿guardado?** (`AutosaveIndicator`: Guardando… /
@@ -118,6 +122,18 @@ Las claves no cambiaron: los hash antiguos (`#hero`, `#seo`…) siguen valiendo.
   está activado: aviso + "Activar" con confirmación → `activarIdiomaAction`
   (única vía; el autoguardado rechaza `idiomasActivos`). Punto rojo = a ESTA
   sección le falta traducir en ese idioma.
+- Desactivar: solo SUPER_ADMIN, enlace bajo las pestañas + confirmación →
+  `desactivarIdiomaAction` (rol admin, tenant, nunca el castellano,
+  `expectedUpdatedAt`). Los textos se conservan; la web deja de mostrarlo al
+  publicar.
+- Cambiar de idioma también funciona en solo consulta: `BotonIdioma` se pinta
+  como `div role=button` cuando el editor está dentro del `fieldset disabled`.
+
+### Solo consulta (USER)
+- Editor dentro de `<fieldset disabled>`. Las filas de las listas (`FilaLista`)
+  se abren igual para LEER (div role=button "Ver") y el `Modal` recibe
+  `soloLectura`: campos desactivados, aviso "Solo consulta", pie solo "Cerrar",
+  cuerpo enfocable. Títulos sin "Editar" ("Servicio", "Pregunta frecuente"…).
 
 ### Listas (servicios, preguntas, puntos fuertes, tarjetas, puntos)
 - `FilaLista`: toda la fila abre Editar; escritorio = asa + Editar + Eliminar
@@ -155,6 +171,88 @@ Las claves no cambiaron: los hash antiguos (`#hero`, `#seo`…) siguen valiendo.
   **`Label`**, **`Modal`** (cerrar 44 px en móvil), **`IconPicker`**,
   **`ConfirmDialog`**.
 - `.field` en móvil: `min-height: 44px` y 16 px de letra (iOS no hace zoom).
+- **`Select`** (`shared/components/atoms/Select`, Radix) es el ÚNICO desplegable:
+  **prohibido `<select>` nativo** (opciones sin estilo y flecha distinta en
+  cada navegador). Admite `id` (para `<label htmlFor>`), `aria-describedby`,
+  `aria-invalid`, `required`, opción con `value: ''` (se mapea internamente),
+  `description` (segunda línea) y `disabled` por opción, `value` controlado o
+  `defaultValue`, y `name` → `<input type="hidden">` (FormData/useActionState).
+- **Ajustes → Usuarios**: tabla en escritorio (Usuario · Farmacia · Rol ·
+  Estado · Acciones) y tarjetas en móvil; filtros farmacia/rol/estado
+  combinables (estado por defecto "Todos": los desactivados van al final).
+
+### Patrones de listas de gestión (21-11-2026, iguales en todo el backoffice)
+- **Acciones de fila = UN solo menú "⋯"** (Radix DropdownMenu) con TODAS las
+  acciones: Editar primero; lo destructivo (Desactivar/Eliminar) al final tras
+  un separador. El nombre de la fila es la acción principal (botón o enlace
+  que abre Editar / el editor). Nunca un botón "Editar" suelto junto a un
+  menú con el resto. Componente compartido
+  `shared/components/molecules/RowActionsMenu` (`RowActionsMenu`,
+  `RowActionsItem` con `icon`/`href`/`externo`/`peligro`, `RowActionsSeparator`,
+  `RowActionsNote`): trigger ⋯ horizontal de 44 px en móvil y 32 px en
+  escritorio. Lo usan Usuarios (`triggerProps={{'data-acciones': id}}` para
+  devolver el foco) y Farmacias (`FarmaciaRowActions`). Iconos distintos para
+  acciones distintas (Pasar a borrador = `EyeSlash`, nunca el lápiz). El menú
+  móvil de `FilaLista` (editor) sigue con su propio DropdownMenu (mismo ⋯).
+- **Barra de filtros estándar**: buscador + `Select`s que se aplican al
+  momento y se combinan + recuento `role=status` + "Quitar filtros" en la
+  fila del recuento. En móvil (< md): buscador + botón "Filtros (N)"
+  (`shared/components/molecules/FiltrosMovil`) que abre un diálogo con los
+  Selects y sus etiquetas visibles ("Ver N resultados" cierra). Los controles
+  se pintan dos veces con ids distintos (`controles(sufijo, etiquetaVisible)`):
+  en línea en escritorio (`hidden md:contents`) y dentro del diálogo.
+  Usuarios: farmacia/rol/estado (estado local). Farmacias: buscador + Select
+  "Estado" fijo (Activas / Cambios sin publicar / Publicadas / Borradores /
+  Archivadas) + recuento visible. Historial: Periodo (Cualquier fecha / Hoy /
+  7 días / 30 días / Elegir fechas…), Resultado y, solo admin, Farmacia y
+  Reportes ("Todos los reportes" / "Con error reportado"); en la URL con las
+  claves de siempre (`q`, `periodo`, `from`, `to`, `status`, `reportes`,
+  `business`). Valores desconocidos en la URL se ignoran (ni Select vacío ni
+  contados). "Quitar filtros" dentro de `FiltrosMovil` deja el foco en "Ver N…".
+- **Fechas**: `shared/components/molecules/DateRangePicker` (react-day-picker
+  en español, semana desde el lunes, etiquetas accesibles en castellano). En
+  escritorio el calendario CUELGA del propio Select "Periodo" (`ancla` +
+  `abierto` + `idFocoAlCerrar`, sin control extra en la barra): al elegir
+  "Elegir fechas…" se abre con el foco en el día elegido u hoy; con un rango
+  puesto, la opción muestra el rango corto (`resumenCorto`: "10–16 nov") y
+  aparece "Cambiar fechas…" para reabrirlo. El rango elegido se anuncia
+  (`aria-live`) en las dos variantes. Dentro de un diálogo, `enLinea`. Prohibido
+  `<input type="date">`. El servidor solo acepta fechas 20xx válidas
+  (`esYmd`/`inicioDia` en `historial.ts`; antes "0002-01-01" daba HTTP 500).
+- **Cabecera y ancho**: `shared/components/molecules/PageHeader` (título,
+  descripción, acción accent) + `ANCHO_PAGINA` (`max-w-6xl`) en Inicio,
+  Farmacias, Historial y Usuarios.
+- **Pie de modal de crear/editar**: `ModalAcciones` (en `Modal`): Cancelar
+  secondary + principal accent sin icono, SIEMPRE activa (valida al enviar y
+  enfoca el primer error), en fila también en móvil. Lo usan Nueva farmacia,
+  Nuevo/Editar usuario y Cambiar mi contraseña. Los modales del editor
+  (servicio, pregunta…) mantienen su validación con botón desactivado
+  (campos multidioma) pero con Cancelar secondary.
+- **Historial e Inicio**: una conciliación se titula igual en los dos — el
+  proveedor es el título y el nombre del envío va en la línea secundaria. Sin
+  coste por fila (está en "Datos técnicos" del detalle y en /admin/uso).
+- **Albaranes sin pestañas propias**: "Nueva conciliación" e "Historial" están
+  en el menú lateral/cajón (se borró `ConciliadorTabs`).
+- **Botón de crear de la cabecera**: SIEMPRE `Button variant="accent"` (como
+  enlace con `asChild` + `Link` cuando navega). Nada de clases propias.
+- **Tablas de gestión**: `thead` como Usuarios (`bg-surface-2`, 12,5 px
+  semibold muted, `th scope="col"`, caption sr-only).
+- **Tarjetas de elección** (idiomas, rol): una por fila, control a la
+  izquierda con `shared/components/atoms/IndicadorEleccion` (input real
+  `sr-only` dentro del `<label>`, anillo de foco en la tarjeta).
+- **Etiquetas de formulario (`.label`)**: frase normal, 13,5 px, peso 500,
+  `--color-ink-2` (sin MAYÚSCULAS desde 21-11-2026).
+- **Crear en modal**: formularios cortos (≤ ~6 campos) se crean en un `Modal`
+  abierto desde el botón accent de la cabecera de su lista, nunca en una
+  página ni en un wizard. "Nueva farmacia" (`NuevaFarmaciaDialog` →
+  `NuevaFarmaciaBoton`): nombre, ciudad, idiomas, identificador generado con
+  "Cambiar" plegado en "Opciones avanzadas" (se abre si el servidor da error
+  en él) y responsable opcional (si no hay usuarios libres, una línea de ayuda
+  en vez del Select); el nombre vacío se marca al enviar (`aria-invalid` +
+  mensaje enlazado); `createFarmaciaAction` devuelve
+  `{status:'ok', id, nombre}` (ya no redirige): se cierra, la fila queda
+  resaltada (`/farmacias?creada=<id>`) y un toast ofrece "Abrir editor".
+  `/farmacias?nueva=1` abre el modal; `/farmacias/nueva` redirige ahí.
 
 ### Horario semanal
 - `HorarioSemanal`: cada día con interruptor Abierto/Cerrado visible sin
@@ -222,7 +320,8 @@ Diferencias schema vs UI documentadas:
     nov"), cada fila un único enlace. Filtros = chips que fusionan su propio
     parámetro de URL (`q`, `periodo=hoy|7d|30d|fechas`+`from`/`to`, `status`,
     `reportes=abiertos` y `business` solo admin) + buscador con debounce 300 ms
-    (proveedor O etiqueta); sin botón "Aplicar". El detalle
+    (proveedor O etiqueta); sin botón "Aplicar". **21-11-2026**: los chips
+    pasan a la barra estándar de Selects (ver "Patrones de listas de gestión"). El detalle
     (`HistoryResultCard`) calca la tarjeta de resultado de "Nueva
     conciliación". **Coste, tokens, email y duración solo SUPER_ADMIN**, y se
     filtran en el servidor (la vista construye filas/props sin esos campos);
@@ -235,6 +334,42 @@ Diferencias schema vs UI documentadas:
 17. **Componentes compartidos del conciliador**: `FilePreviewModal` (visor
     PDF/Excel para `File` o URL `/api/files/…`), `ui/lib/botones.ts`
     (`BTN_ACCENT`, `BTN_SECUNDARIO`), `ReconciliationTable` sin `max-h`.
+18. **Usuarios** (fase 5, 20-11-2026): `/ajustes/usuarios`, solo SUPER_ADMIN
+    (item "Usuarios" del sidebar; `/ajustes` redirige ahí o a `/inicio`).
+    Tabla (antes lista agrupada por farmacia: mareaba) con buscador y filtros;
+    acciones en el menú "⋯" (Editar dentro) y el nombre abre Editar; rol con `ROL_LABEL` (el
+    rol USER sigue siendo "Solo consulta", decisión del usuario). Crear y
+    editar en `CuentaDialog` (rol con tarjetas que explican qué puede hacer;
+    el correo solo se escribe al crear). Nunca se borra: se desactiva (FK de
+    conciliaciones y reportes). Contraseña temporal generada en el servidor
+    (`generarContrasenaTemporal`, 3 bloques de 4) y mostrada UNA vez
+    (`ContrasenaTemporalDialog` con "Copiar"). "Cambiar mi contraseña" en el
+    menú del avatar para todos los roles (mín. 10 caracteres, pide la actual).
+    Reglas en el servidor (`core/users/application/userAccounts.ts`,
+    `UserAccountsService`): solo admin; nadie se desactiva, se restablece ni
+    se quita el rol de admin a sí mismo; siempre ≥1 admin activo; email único
+    en minúsculas; responsable y solo consulta necesitan farmacia. La
+    revalidación de la sesión (5 min) relee también el nombre.
+    **Seguridad de sesiones** (sin migración):
+    - El JWT lleva `pv` = huella (sha256 truncado) del `passwordHash`; la
+      revalidación (`authjs.ts`, `releerUsuario`) cierra la sesión si no
+      coincide → restablecer o cambiar la contraseña echa las sesiones
+      abiertas en ≤5 min. Tokens anteriores sin `pv` la adoptan una vez. La
+      sesión (`session` callback) nunca expone `pv`.
+    - "Cambiar mi contraseña" llama a `unstable_update`: la propia sesión
+      adopta la huella nueva y sigue; las demás de esa cuenta caen.
+    - Las escrituras de admin releen al actor de la BD (activo y
+      SUPER_ADMIN): un JWT con rol viejo no sirve.
+    - "≥1 admin activo": comprobación + escritura en transacción
+      Serializable con reintento ante P2034 (`UltimoAdminError`).
+    - Contraseñas ≤72 bytes UTF-8 (límite de bcrypt), también al entrar.
+      Login con hash ficticio si el usuario no existe (mismo tiempo).
+    - Log `{evento:'usuarios', actorId, accion, targetId}` sin datos
+      personales. `AUTH_RECHECK_MS` solo para pruebas.
+    **Pendiente**: rate limiting de login y "Cambiar mi contraseña" (necesita
+    almacenamiento: tabla o Redis); caducidad / cambio obligatorio de la
+    contraseña temporal (necesita columna nueva → migración en la BD
+    compartida con el conciliador).
 
 ## Fases del roadmap
 
@@ -262,7 +397,8 @@ Diferencias schema vs UI documentadas:
   `useI18nHealth` (fuente única con el HealthChip) + `goToSection(key, locale?)`
   en el EditorContext (la sección activa ya no es estado local de
   FarmaciaEditor). Los chips del popover del HealthChip también navegan ✅
-- **Wizard Nueva farmacia 11-11-2026**: paso 2 "Idiomas" (tarjetas-checkbox,
+- **Wizard Nueva farmacia 11-11-2026** (sustituido el 21-11-2026 por el modal
+  `NuevaFarmaciaDialog`, ver "Patrones de listas de gestión"): paso 2 "Idiomas" (tarjetas-checkbox,
   castellano fijo como principal = fallback de la landing); `createFarmacia`
   acepta `idiomasActivos`. Arreglado bug: los campos del paso 1 se desmontaban
   y el submit del paso 3 llegaba vacío (no se podía crear ninguna farmacia) →
@@ -336,7 +472,7 @@ Diferencias schema vs UI documentadas:
   BO en globals.css). Un solo item «Conciliador» en el sidebar; dentro,
   pestañas «Nueva conciliación · Historial» (`albaranes/layout.tsx` +
   `ConciliadorTabs`). Envs: `GEMINI_API_KEY` y `ENCRYPTION_KEY` (claves Gemini
-  por negocio). Usuarios/negocios/uso: pendiente, irán a Ajustes ✅
+  por negocio). Usuarios: hechos en la fase 5 (decisión 18); negocios/uso: pendientes ✅
 - **Rediseño 20-11-2026**: fase 1 login + Inicio + navegación; fase 2 nueva
   conciliación por envíos; fase 3 historial (ver decisión 15-17); fase 4
   gestión de contenidos: secciones por tareas en lenguaje llano, estado de
@@ -344,6 +480,9 @@ Diferencias schema vs UI documentadas:
   en móvil, alta de farmacia en un paso con responsable opcional, lista con
   "Activas" y "Cambios sin publicar" ✅
 - **Pendientes**:
+  - Editor en escritorio: dos barras fijas arriba (barra general + cabecera
+    del editor). Que la cabecera del editor absorba la miga y la general no
+    sea fija en esa página (revisión de diseño 21-11-2026)
   - Borrador vs publicado: hoy el autoguardado escribe el contenido que lee
     la API; un deploy incluye ediciones a medias aunque no se pulse
     "Publicar cambios" (necesita snapshot publicado)

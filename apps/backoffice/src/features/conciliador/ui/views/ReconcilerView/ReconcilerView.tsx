@@ -1,5 +1,6 @@
 'use client';
 
+import { Select } from '@/shared/components/atoms/Select';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -14,6 +15,7 @@ import { ReportarError, ReportsList, type ReportView } from '@/features/concilia
 import { FilePreviewModal } from '@/features/conciliador/ui/components/FilePreviewModal';
 import { BTN_ACCENT, BTN_SECUNDARIO } from '../../lib/botones';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
+import { PageHeader, ANCHO_PAGINA } from '@/shared/components/molecules/PageHeader';
 import { cn } from '@/shared/lib/cn';
 import {
   reconcilePairs,
@@ -191,18 +193,12 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
   const esAdmin = currentUser?.role === 'SUPER_ADMIN';
 
   return (
-    <div className={cn('mx-auto max-w-5xl px-4 pt-5 sm:px-6 sm:pt-8', fase === 'editando' && envios.length > 0 ? 'pb-0' : 'pb-12')}>
+    <div className={cn(ANCHO_PAGINA, 'pt-6', fase === 'editando' && envios.length > 0 ? 'pb-0' : 'pb-10')}>
       {fase !== 'resultado' && (
-        <header className="mb-5 sm:mb-7">
-          {/* En móvil el título ya está en la barra superior y en las pestañas */}
-          <h1 className="sr-only lg:not-sr-only m-0 text-[28px] font-bold tracking-[-0.03em] text-[var(--color-ink)]">
-            Nueva conciliación
-          </h1>
-          <p className="m-0 lg:mt-1.5 text-[15px] leading-[1.55] text-[var(--color-muted)] max-w-2xl">
-            Sube lo que te ha enviado el proveedor y tu pedido. Comprobamos unidades,
-            precios y descuentos línea a línea.
-          </p>
-        </header>
+        <PageHeader
+          titulo="Nueva conciliación"
+          descripcion="Sube lo que te ha enviado el proveedor y tu pedido. Comprobamos unidades, precios y descuentos línea a línea."
+        />
       )}
 
       {isBudgetWarning && budgetStatus && fase === 'editando' && <BudgetWarningBanner status={budgetStatus} />}
@@ -580,24 +576,20 @@ function EnvioCard({
       </div>
 
       {!completo && candidatos.length > 0 && (
-        <label className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 text-[14px] text-[var(--color-ink-2)]">
-          <span className="font-medium">{envio.excels.length === 0 ? '¿Qué pedido es?' : '¿De qué proveedor es?'}</span>
-          <select
+        <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 text-[14px] text-[var(--color-ink-2)]">
+          <label htmlFor={`unir-${envio.id}`} className="font-medium">
+            {envio.excels.length === 0 ? '¿Qué pedido es?' : '¿De qué proveedor es?'}
+          </label>
+          <Select
+            id={`unir-${envio.id}`}
             disabled={bloqueado}
-            defaultValue=""
-            onChange={(e) => e.target.value && onUnir(e.target.value)}
-            className="field sm:max-w-sm min-h-11"
-          >
-            <option value="" disabled>
-              Elige un archivo…
-            </option>
-            {candidatos.map((c) => (
-              <option key={c.id} value={c.id}>
-                {[...c.pdfs, ...c.excels].map((a) => a.name).join(' + ')}
-              </option>
-            ))}
-          </select>
-        </label>
+            value=""
+            onValueChange={(v) => v && onUnir(v)}
+            placeholder="Elige un archivo…"
+            className="sm:max-w-sm min-h-11"
+            options={candidatos.map((c) => ({ value: c.id, label: [...c.pdfs, ...c.excels].map((a) => a.name).join(' + ') }))}
+          />
+        </div>
       )}
     </article>
   );

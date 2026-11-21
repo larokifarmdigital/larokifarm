@@ -4,6 +4,7 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 import { LOCALES, LOCALE_FLAGS, LOCALE_LABELS, type Locale, type MultilangText } from '@/core/shared';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { cn } from '@/shared/lib/cn';
+import { BotonIdioma } from '@/features/farmacias/ui/components/editor/fields/BotonIdioma';
 
 const ScopedLocaleContext = createContext<Locale | null>(null);
 
@@ -28,7 +29,7 @@ export function ModalLocaleScope({
   values: (MultilangText | undefined)[];
   children: ReactNode | ((locale: Locale) => ReactNode);
 }) {
-  const { farmacia, currentLocale } = useFarmaciaEditor();
+  const { farmacia, currentLocale, readOnly } = useFarmaciaEditor();
   const activos = LOCALES.filter((l) => farmacia.idiomasActivos.includes(l));
   const [locale, setLocale] = useState<Locale>(activos.includes(currentLocale) ? currentLocale : (activos[0] ?? 'es'));
 
@@ -43,11 +44,11 @@ export function ModalLocaleScope({
             const completo = values.every((v) => !activos.some((o) => filled(v, o)) || filled(v, l));
             const falta = algunoRelleno && !completo;
             return (
-              <button
+              <BotonIdioma
                 key={l}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setLocale(l)}
+                pulsado={active}
+                onPulsar={() => setLocale(l)}
+                enFieldsetDesactivado={readOnly}
                 className={cn(
                   'relative flex-1 flex items-center justify-center gap-1.5 h-11 sm:h-8 rounded-[7px] text-[13px] transition-colors',
                   active
@@ -63,7 +64,7 @@ export function ModalLocaleScope({
                     <span className="sr-only">, falta por traducir</span>
                   </>
                 )}
-              </button>
+              </BotonIdioma>
             );
           })}
         </div>

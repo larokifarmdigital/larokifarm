@@ -86,10 +86,6 @@ export function GeneralTab() {
             <FieldError {...fe.nombre} />
           </div>
           <div>
-            <Label htmlFor="ciudad">Ciudad</Label>
-            <Input id="ciudad" value={farmacia.ciudad ?? ''} onChange={(e) => patch({ ciudad: e.target.value })} />
-          </div>
-          <div>
             <Label htmlFor="titular">Farmacéutica o farmacéutico titular</Label>
             <Input
               id="titular"
@@ -98,7 +94,7 @@ export function GeneralTab() {
               autoComplete="name"
             />
           </div>
-          <div className="sm:col-span-2">
+          <div>
             <Label htmlFor="colegiado">Número de colegiado</Label>
             <Input
               id="colegiado"
@@ -285,7 +281,11 @@ export function GeneralTab() {
           </div>
           <div className="sm:col-span-4">
             <Label htmlFor="ciudad-dir" required>Ciudad</Label>
-            <Input id="ciudad-dir" {...fe.ciudad.inputProps} value={d.ciudad ?? farmacia.ciudad ?? ''} onChange={(e) => setDir('ciudad', e.target.value)} autoComplete="address-level2" />
+            <Input id="ciudad-dir" {...fe.ciudad.inputProps} value={d.ciudad ?? farmacia.ciudad ?? ''} onChange={(e) => {
+                // Un solo campo "Ciudad": la dirección (lo que lee la web) y la ciudad de la
+                // farmacia (lista y buscador del backoffice) se guardan siempre a la vez.
+                patch({ direccion: { ...d, ciudad: e.target.value }, ciudad: e.target.value });
+              }} autoComplete="address-level2" />
             <FieldError {...fe.ciudad} />
           </div>
           <div className="sm:col-span-3">

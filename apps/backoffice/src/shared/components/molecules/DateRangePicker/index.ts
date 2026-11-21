@@ -1,1 +1,1 @@
-export { DateRangePicker } from './DateRangePicker';
+export { DateRangePicker, enfocarDia, resumenCorto } from './DateRangePicker';

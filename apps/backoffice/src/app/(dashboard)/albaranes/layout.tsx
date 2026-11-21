@@ -1,13 +1,5 @@
-import { ConciliadorTabs } from '@/features/conciliador';
-
 export default function ConciliadorLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      {/* En escritorio los sub-apartados ya están en el menú lateral */}
-      <div className="lg:hidden">
-        <ConciliadorTabs />
-      </div>
-      {children}
-    </>
-  );
+  // Sin pestañas propias: "Nueva conciliación" e "Historial" ya están en el menú
+  // lateral (y en el cajón en móvil), y el Historial tiene su botón accent.
+  return <>{children}</>;
 }

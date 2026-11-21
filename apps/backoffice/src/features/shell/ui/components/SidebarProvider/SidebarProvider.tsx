@@ -52,7 +52,7 @@ function writeManualCollapsed(v: boolean | null) {
 }
 
 function shouldAutoCollapse(pathname: string): boolean {
-  if (pathname === '/farmacias' || pathname === '/farmacias/nueva') return false;
+  if (pathname === '/farmacias') return false;
   if (pathname.startsWith('/farmacias/')) return true;
   return false;
 }

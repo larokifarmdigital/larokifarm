@@ -1,0 +1,1 @@
+export { BotonIdioma } from './BotonIdioma';

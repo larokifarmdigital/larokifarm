@@ -1,11 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { FarmaciaSummary } from '@/core/farmacias/domain';
-import { NavIcon } from '@/shared/components/atoms/NavIcon';
+import {
+  RowActionsItem,
+  RowActionsMenu,
+  RowActionsSeparator,
+} from '@/shared/components/molecules/RowActionsMenu';
 import { landingUrl } from '@/shared/lib/landingUrl';
 import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { DeleteFarmaciaDialog } from './DeleteFarmaciaDialog';
@@ -40,116 +42,73 @@ export function FarmaciaRowActions({
   const [confirmBorrador, setConfirmBorrador] = useState(false);
   return (
     <>
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger
-        aria-label={`Acciones para ${farmacia.nombre}`}
-        disabled={pending}
-        className="inline-flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-[6px] text-[var(--color-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-surface)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
-      >
-        <NavIcon name="DotsThreeVertical" size={18} weight="bold" />
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          align="end"
-          sideOffset={4}
-          className="min-w-[200px] bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[8px] shadow-[var(--shadow-elevated)] p-1 outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+    <RowActionsMenu label={`Acciones para ${farmacia.nombre}`} disabled={pending}>
+      <RowActionsItem icon="PencilSimple" href={`/farmacias/${farmacia.id}`}>
+        Editar su web
+      </RowActionsItem>
+      {canDuplicate && (
+        <RowActionsItem
+          icon="Copy"
+          onSelect={() => {
+            onAction(async () => {
+              const res = await duplicateFarmaciaAction(farmacia.id);
+              if (!res.ok) throw new Error(res.error);
+              toast.success(`"${farmacia.nombre}" duplicada`);
+            });
+          }}
         >
-          <DropdownMenu.Item asChild>
-            <Link
-              href={`/farmacias/${farmacia.id}`}
-              className="flex items-center gap-2 px-2.5 min-h-11 sm:min-h-9 rounded-[4px] text-[14px] sm:text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none"
-            >
-              <NavIcon name="PencilSimple" size={13} /> Editar
-            </Link>
-          </DropdownMenu.Item>
-          {canDuplicate && (
-          <DropdownMenu.Item
-            className="flex items-center gap-2 px-2.5 min-h-11 sm:min-h-9 rounded-[4px] text-[14px] sm:text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none cursor-pointer"
+          Duplicar
+        </RowActionsItem>
+      )}
+      {webUrl ? (
+        <RowActionsItem icon="ArrowSquareOut" href={webUrl} externo>
+          Ver su web
+        </RowActionsItem>
+      ) : (
+        <RowActionsItem icon="ArrowSquareOut" disabled title="Falta la dirección de la web en Contacto y dirección" extra="Sin web">
+          Ver su web
+        </RowActionsItem>
+      )}
+      {canWrite &&
+        (farmacia.status === 'published' ? (
+          <RowActionsItem icon="EyeSlash" onSelect={() => setConfirmBorrador(true)}>
+            Pasar a borrador
+          </RowActionsItem>
+        ) : farmacia.status === 'draft' ? (
+          <RowActionsItem icon="Check" href={`/farmacias/${farmacia.id}`}>
+            Abrir para publicar
+          </RowActionsItem>
+        ) : (
+          <RowActionsItem
+            icon="ArrowCounterClockwise"
             onSelect={() => {
               onAction(async () => {
-                const res = await duplicateFarmaciaAction(farmacia.id);
+                const res = await publishFarmaciaAction(farmacia.id, false);
                 if (!res.ok) throw new Error(res.error);
-                toast.success(`"${farmacia.nombre}" duplicada`);
+                toast.success(`"${farmacia.nombre}" restaurada como borrador`);
               });
             }}
           >
-            <NavIcon name="Copy" size={13} /> Duplicar
-          </DropdownMenu.Item>
-          )}
-          {webUrl ? (
-            <DropdownMenu.Item asChild>
-              <a
-                href={webUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-2 px-2.5 min-h-11 sm:min-h-9 rounded-[4px] text-[14px] sm:text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none"
-              >
-                <NavIcon name="ArrowSquareOut" size={13} /> Ver su web
-              </a>
-            </DropdownMenu.Item>
-          ) : (
-            <DropdownMenu.Item
-              disabled
-              title="Falta la dirección de la web en Contacto y dirección"
-              className="flex items-center gap-2 px-2.5 min-h-11 sm:min-h-9 rounded-[4px] text-[14px] sm:text-[13px] text-[var(--color-muted-2)] outline-none"
-            >
-              <NavIcon name="ArrowSquareOut" size={13} /> Ver su web
-              <span className="ml-auto text-[12px]">Sin web</span>
-            </DropdownMenu.Item>
-          )}
-          {canWrite && (farmacia.status === 'published' ? (
-            <DropdownMenu.Item
-              className="flex items-center gap-2 px-2.5 min-h-11 sm:min-h-9 rounded-[4px] text-[14px] sm:text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none cursor-pointer"
-              onSelect={() => setConfirmBorrador(true)}
-            >
-              <NavIcon name="PencilSimple" size={13} /> Pasar a borrador
-            </DropdownMenu.Item>
-          ) : farmacia.status === 'draft' ? (
-            <DropdownMenu.Item asChild>
-              <Link
-                href={`/farmacias/${farmacia.id}`}
-                className="flex items-center gap-2 px-2.5 min-h-11 sm:min-h-9 rounded-[4px] text-[14px] sm:text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none"
-              >
-                <NavIcon name="Check" size={13} /> Abrir para publicar
-              </Link>
-            </DropdownMenu.Item>
-          ) : (
-            <DropdownMenu.Item
-              className="flex items-center gap-2 px-2.5 min-h-11 sm:min-h-9 rounded-[4px] text-[14px] sm:text-[13px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface-sunken)] outline-none cursor-pointer"
-              onSelect={() => {
-                onAction(async () => {
-                  const res = await publishFarmaciaAction(farmacia.id, false);
-                  if (!res.ok) throw new Error(res.error);
-                  toast.success(`"${farmacia.nombre}" restaurada como borrador`);
-                });
-              }}
-            >
-              <NavIcon name="ArrowsClockwise" size={13} /> Restaurar como borrador
-            </DropdownMenu.Item>
-          ))}
-          {canWrite && <DropdownMenu.Separator className="h-px bg-[var(--color-hairline)] my-1" />}
-          {canWrite && farmacia.status !== 'archived' && (
-          <DropdownMenu.Item
-            className="flex items-center gap-2 px-2.5 min-h-11 sm:min-h-9 rounded-[4px] text-[14px] sm:text-[13px] text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)] outline-none cursor-pointer"
-            onSelect={() => setConfirmArchive(true)}
-          >
-            <NavIcon name="Archive" size={13} /> Archivar
-          </DropdownMenu.Item>
-          )}
-          {canDuplicate && farmacia.status === 'archived' && (
-            <>
-              <DropdownMenu.Separator className="h-px bg-[var(--color-hairline)] my-1" />
-              <DropdownMenu.Item
-                className="flex items-center gap-2 px-2.5 min-h-11 sm:min-h-9 rounded-[4px] text-[14px] sm:text-[13px] text-[var(--color-red-ink)] hover:bg-[var(--color-red-soft)] outline-none cursor-pointer"
-                onSelect={() => setConfirmDelete(true)}
-              >
-                <NavIcon name="Trash" size={13} /> Eliminar definitivamente
-              </DropdownMenu.Item>
-            </>
-          )}
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+            Restaurar como borrador
+          </RowActionsItem>
+        ))}
+      {canWrite && farmacia.status !== 'archived' && (
+        <>
+          <RowActionsSeparator />
+          <RowActionsItem icon="Archive" peligro onSelect={() => setConfirmArchive(true)}>
+            Archivar
+          </RowActionsItem>
+        </>
+      )}
+      {canDuplicate && farmacia.status === 'archived' && (
+        <>
+          <RowActionsSeparator />
+          <RowActionsItem icon="Trash" peligro onSelect={() => setConfirmDelete(true)}>
+            Eliminar definitivamente
+          </RowActionsItem>
+        </>
+      )}
+    </RowActionsMenu>
     <ConfirmDialog
       open={confirmArchive}
       onOpenChange={setConfirmArchive}

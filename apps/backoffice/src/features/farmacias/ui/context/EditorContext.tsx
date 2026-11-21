@@ -12,7 +12,7 @@ import {
 } from 'react';
 import { tieneCambiosSinPublicar, validateFarmacia, type Farmacia, type FieldIssue } from '@/core/farmacias/domain';
 import { LOCALE_NOMBRE, type Locale } from '@/core/shared';
-import { activarIdiomaAction, saveFarmaciaPatchAction } from '@/features/farmacias/actions/saveFarmaciaAction';
+import { activarIdiomaAction, desactivarIdiomaAction, saveFarmaciaPatchAction } from '@/features/farmacias/actions/saveFarmaciaAction';
 import { toast } from 'sonner';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
@@ -166,6 +166,8 @@ type EditorContextValue = State & {
   pendientePublicar: boolean;
   /** Activa un idioma en la web (acción explícita; pulsar la pestaña no escribe). */
   activarIdioma: (l: Locale) => Promise<boolean>;
+  /** Solo SUPER_ADMIN (el servidor lo vuelve a comprobar); nunca el castellano. */
+  desactivarIdioma: (l: Locale) => Promise<boolean>;
   patch: (p: Partial<Farmacia>) => void;
   setLocale: (l: Locale) => void;
   /** Cambia de sección (y opcionalmente de idioma) en un solo paso. */
@@ -263,6 +265,25 @@ export function FarmaciaEditorProvider({
     }
   }, []);
 
+  const desactivarIdioma = useCallback(async (l: Locale) => {
+    if (readOnlyRef.current) return false;
+    try {
+      const res = await desactivarIdiomaAction(stateRef.current.farmacia.id, l);
+      if (!res.ok) {
+        toast.error(res.error);
+        return false;
+      }
+      dispatch({ type: 'SYNC', farmacia: res.data });
+      toast.success(`Has desactivado el ${LOCALE_NOMBRE[l]}`, {
+        description: 'Los textos se conservan. La web dejará de mostrarlo cuando publiques.',
+      });
+      return true;
+    } catch {
+      toast.error('No se pudo desactivar el idioma. Revisa la conexión.');
+      return false;
+    }
+  }, []);
+
   const saveNow = useCallback(async () => {
     const current = stateRef.current;
     if (readOnlyRef.current) return;
@@ -350,6 +371,7 @@ export function FarmaciaEditorProvider({
       esAdmin,
       pendientePublicar,
       activarIdioma,
+      desactivarIdioma,
       patch,
       setLocale,
       goToSection,
@@ -360,7 +382,7 @@ export function FarmaciaEditorProvider({
       touch,
       revealErrors,
     }),
-    [state, readOnly, esAdmin, pendientePublicar, activarIdioma, patch, setLocale, goToSection, saveNow, syncFromServer, issues, isErrorVisible, touch, revealErrors],
+    [state, readOnly, esAdmin, pendientePublicar, activarIdioma, desactivarIdioma, patch, setLocale, goToSection, saveNow, syncFromServer, issues, isErrorVisible, touch, revealErrors],
   );
 
   return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;
