@@ -8,13 +8,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  // Personal de farmacia: su farmacia (el listado ya viene filtrado por tenant).
+  // Personal de farmacia: su farmacia, o sus farmacias si lleva varias (el
+  // listado ya viene filtrado por tenant).
   let miFarmacia: ShellInfo['miFarmacia'];
-  if (user.rol !== 'admin' && user.farmaciaId) {
-    const [f] = await getFarmaciaRepository().listFarmacias();
-    if (f) miFarmacia = { id: f.id, nombre: f.nombre, web: f.web };
+  let misFarmacias: ShellInfo['misFarmacias'];
+  if (user.rol !== 'admin' && user.farmaciaIds.length > 0) {
+    const farmacias = await getFarmaciaRepository().listFarmacias();
+    if (farmacias.length === 1) {
+      const [f] = farmacias;
+      miFarmacia = { id: f.id, nombre: f.nombre, web: f.web };
+    } else if (farmacias.length > 1) {
+      misFarmacias = farmacias.map((f) => f.nombre).sort((a, b) => a.localeCompare(b, 'es'));
+    }
   }
-  const shell: ShellInfo = { nombre: user.nombre, email: user.email, rol: user.rol, miFarmacia };
+  const shell: ShellInfo = { nombre: user.nombre, email: user.email, rol: user.rol, miFarmacia, misFarmacias };
 
   return (
     <SidebarProvider>

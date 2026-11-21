@@ -244,7 +244,8 @@ export type Farmacia = {
 };
 
 /** Usuario sin farmacia asignada que se puede poner de responsable al crear una. */
-export type ResponsableDisponible = { id: string; nombre: string; email: string };
+/** Usuario que se puede poner de responsable de una farmacia nueva; `farmacias` = las que ya lleva. */
+export type ResponsableDisponible = { id: string; nombre: string; email: string; farmacias: string[] };
 
 /**
  * Hay cambios guardados que aún no están en la web: nunca publicada, o

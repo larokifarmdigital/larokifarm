@@ -9,8 +9,10 @@ export interface UserAccount {
   nombre: string;
   email: string;
   rol: RolCuenta;
+  /** Farmacia principal (la del conciliador antiguo); siempre está en `farmacias` si no es null. */
   farmaciaId: string | null;
-  farmaciaNombre: string | null;
+  /** Todas las farmacias que lleva, ordenadas por nombre. Mismo rol en todas. */
+  farmacias: FarmaciaOpcion[];
   activo: boolean;
   createdAt: string;
 }
@@ -24,14 +26,15 @@ export interface CreateUserAccountInput {
   nombre: string;
   email: string;
   rol: RolCuenta;
-  farmaciaId: string | null;
+  farmaciaIds: string[];
   passwordHash: string;
 }
 
 export interface UpdateUserAccountInput {
   nombre?: string;
   rol?: RolCuenta;
-  farmaciaId?: string | null;
+  /** Sustituye la lista completa de farmacias. */
+  farmaciaIds?: string[];
 }
 
 /** Quien hace la operación (sesión). */

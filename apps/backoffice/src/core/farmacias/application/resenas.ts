@@ -1,4 +1,4 @@
-import { READ_ONLY_ERROR, canEditContent, getCurrentUser } from '@/core/auth';
+import { READ_ONLY_ERROR, canEditContent, getCurrentUser, puedeAccederFarmaciaUsuario } from '@/core/auth';
 import type { ResenaRepository } from '../domain';
 
 type VoidResult = { ok: true } | { ok: false; error: string };
@@ -18,7 +18,7 @@ export class SetResenaVisibleUseCase {
     const user = await getCurrentUser();
     if (!user) return { ok: false, error: 'Sesión requerida' };
     if (!canEditContent(user)) return { ok: false, error: READ_ONLY_ERROR };
-    if (user.rol !== 'admin' && user.farmaciaId !== businessId) return { ok: false, error: 'Acceso denegado al negocio' };
+    if (!puedeAccederFarmaciaUsuario(user, businessId)) return { ok: false, error: 'Acceso denegado al negocio' };
 
     const owner = await this.resenas.findBusinessId(resenaId);
     if (!owner) return { ok: false, error: 'Reseña no encontrada' };

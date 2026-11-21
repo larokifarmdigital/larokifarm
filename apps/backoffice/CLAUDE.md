@@ -172,11 +172,31 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
 - `idiomasActivos`: solo con `activarIdiomaAction`.
 - Publicar valida en el servidor (`PublishFarmaciaUseCase`); el menú de la lista
   ya no publica: "Abrir para publicar" lleva al editor.
-- Rutas por rol (QA 20-11-2026): `/farmacias` solo admin (el personal va a SU
-  editor); `/farmacias/nueva`, `/admin/uso`, `/ajustes`, `/scout` e
-  `/inventario` redirigen a `/inicio` si no eres SUPER_ADMIN.
+- Rutas por rol (QA 20-11-2026): `/farmacias` es la lista del admin; el
+  personal con UNA farmacia va a SU editor y con VARIAS ve la lista de las
+  suyas ("Mis webs", sin archivar/eliminar/duplicar); `/farmacias/nueva`,
+  `/admin/uso`, `/ajustes`, `/scout` e `/inventario` redirigen a `/inicio` si
+  no eres SUPER_ADMIN.
 - Solo consulta (USER): `fieldset disabled` + Tiptap no editable
   (`aria-readonly`, sin barra) + sin "Empezar con un horario típico".
+
+### Usuarios con varias farmacias (21-11-2026)
+- Tabla `user_businesses` (PK userId+businessId). Mismo rol en todas.
+  `users.businessId` sigue siendo la **farmacia principal** (la usa el
+  conciliador antiguo): al cambiar la lista se conserva si sigue en ella; si
+  no, pasa a ser la primera (o null).
+- Sesión: el JWT lleva `businessIds` (se relee cada `AUTH_RECHECK_MS`; tokens
+  antiguos sin el campo se releen ya). Permiso SIEMPRE con
+  `puedeAccederFarmacia(session, id)` / `puedeAccederFarmaciaUsuario(user, id)`
+  (`core/shared` / `core/auth`); nunca comparar `businessId ===` a mano.
+  Scope: `{kind:'business'|'user', businessIds}` → `businessId: { in }`.
+- `/api/conciliar?farmacia=<id>`: obligatoria si lleva varias; la pertenencia
+  se comprueba contra la BD (`farmaciasActualesDe`), no contra el JWT.
+- UI con varias: Select "Farmacia" obligatorio en Nueva conciliación (cada una
+  con su límite mensual); filtro y columna "Farmacia" en el historial; Inicio
+  con "Tus webs"; Ajustes → Usuarios con casillas "Farmacias que lleva".
+- Nueva farmacia: el responsable puede ser cualquier usuario activo no
+  administrador; la farmacia se le SUMA a las que ya lleva.
 
 ### Foco y listas
 - `Modal`: el foco empieza en el primer campo del formulario y al cerrar vuelve

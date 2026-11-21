@@ -30,9 +30,9 @@ function whereFromScope(scope: Scope): Prisma.ComparisonWhereInput {
     case 'all':
       return {};
     case 'business':
-      return { businessId: scope.businessId };
+      return { businessId: { in: scope.businessIds } };
     case 'user':
-      return { userId: scope.userId };
+      return { userId: scope.userId, businessId: { in: scope.businessIds } };
   }
 }
 
@@ -60,7 +60,8 @@ function whereFromFilters(
   if (filters.withOpenReports) {
     where.reports = { some: { status: 'OPEN' } };
   }
-  if (filters.businessSlug && scope.kind === 'all') {
+  // Se suma (AND) al filtro del scope: acota, nunca amplía.
+  if (filters.businessSlug) {
     where.business = { slug: filters.businessSlug };
   }
   return where;

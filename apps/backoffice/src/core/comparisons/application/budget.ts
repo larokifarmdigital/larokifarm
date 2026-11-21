@@ -36,7 +36,7 @@ export class GetBudgetStatusUseCase {
 
     const startCurrent = startOfMonthUTC(new Date());
     const [buckets, traducciones] = await Promise.all([
-      this.comparisonRepo.aggregateByMonth({ kind: 'business', businessId }, { from: startCurrent }),
+      this.comparisonRepo.aggregateByMonth({ kind: 'business', businessIds: [businessId] }, { from: startCurrent }),
       this.aiUsageRepo ? this.aiUsageRepo.costSince(businessId, startCurrent) : Promise.resolve(0),
     ]);
     const spentUsd = (buckets[0]?.metrics.geminiCostUsd ?? 0) + traducciones;

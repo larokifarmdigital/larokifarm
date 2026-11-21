@@ -1,6 +1,7 @@
 import type { Role } from '@prisma/client';
 import { auth } from '../infrastructure/authjs';
 import type { Usuario } from '@/core/auth/domain';
+import { farmaciasDeSesion } from '@/core/shared';
 
 // NOTE: adapter fino next-auth → Usuario (el tipo local de la UI). Así los
 // componentes que ya consumen `Usuario` no se tocan.
@@ -24,6 +25,7 @@ export async function getCurrentUser(): Promise<Usuario | null> {
     nombre: session.user.name,
     rol: mapRole(session.user.role),
     farmaciaId: session.user.businessId ?? undefined,
+    farmaciaIds: farmaciasDeSesion(session),
     // NOTE: no lo trae la sesión, se aproxima. Si algún consumer lo necesita
     // preciso, se hace un findUnique aparte por id.
     createdAt: new Date().toISOString(),

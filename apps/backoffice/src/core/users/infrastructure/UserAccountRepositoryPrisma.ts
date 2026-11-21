@@ -20,7 +20,8 @@ const SELECT = {
   businessId: true,
   active: true,
   createdAt: true,
-  business: { select: { name: true } },
+  business: { select: { id: true, name: true } },
+  farmacias: { select: { business: { select: { id: true, name: true } } } },
 } satisfies Prisma.UserSelect;
 
 type Row = Prisma.UserGetPayload<{ select: typeof SELECT }>;
@@ -51,6 +52,19 @@ async function escribirGuardandoAdmin<T>(id: string, opts: OpcionesEscrituraAdmi
   }
 }
 
+/**
+ * Sustituye las farmacias de un usuario y ajusta la principal (`businessId`):
+ * se mantiene si sigue en la lista; si no, pasa a ser la primera (o ninguna).
+ */
+async function escribirFarmacias(tx: Tx, userId: string, ids: string[], principalActual: string | null) {
+  await tx.userBusiness.deleteMany({ where: { userId, businessId: { notIn: ids } } });
+  if (ids.length > 0) {
+    await tx.userBusiness.createMany({ data: ids.map((businessId) => ({ userId, businessId })), skipDuplicates: true });
+  }
+  const principal = principalActual && ids.includes(principalActual) ? principalActual : (ids[0] ?? null);
+  if (principal !== principalActual) await tx.user.update({ where: { id: userId }, data: { businessId: principal } });
+}
+
 function mapRow(r: Row): UserAccount {
   return {
     id: r.id,
@@ -58,7 +72,10 @@ function mapRow(r: Row): UserAccount {
     email: r.email,
     rol: DE_DB[r.role],
     farmaciaId: r.businessId,
-    farmaciaNombre: r.business?.name ?? null,
+    // La principal cuenta aunque le falte su fila en user_businesses.
+    farmacias: [...new Map([...(r.business ? [r.business] : []), ...r.farmacias.map((f) => f.business)].map((b) => [b.id, b])).values()]
+      .map((b) => ({ id: b.id, nombre: b.name }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
     activo: r.active,
     createdAt: r.createdAt.toISOString(),
   };
@@ -89,29 +106,40 @@ export class UserAccountRepositoryPrisma implements UserAccountRepository {
   }
 
   async create(input: Parameters<UserAccountRepository['create']>[0]) {
-    const r = await prisma.user.create({
-      data: {
-        name: input.nombre,
-        email: input.email,
-        role: A_DB[input.rol],
-        businessId: input.farmaciaId,
-        passwordHash: input.passwordHash,
-      },
-      select: SELECT,
+    const r = await prisma.$transaction(async (tx) => {
+      const creado = await tx.user.create({
+        data: {
+          name: input.nombre,
+          email: input.email,
+          role: A_DB[input.rol],
+          businessId: input.farmaciaIds[0] ?? null,
+          passwordHash: input.passwordHash,
+        },
+        select: { id: true },
+      });
+      await escribirFarmacias(tx, creado.id, input.farmaciaIds, input.farmaciaIds[0] ?? null);
+      return tx.user.findUniqueOrThrow({ where: { id: creado.id }, select: SELECT });
     });
     return mapRow(r);
   }
 
   async update(id: string, input: Parameters<UserAccountRepository['update']>[1], opts?: OpcionesEscrituraAdmin) {
-    const r = await escribirGuardandoAdmin(id, opts, (tx) => tx.user.update({
-      where: { id },
-      data: {
-        ...(input.nombre !== undefined ? { name: input.nombre } : {}),
-        ...(input.rol !== undefined ? { role: A_DB[input.rol] } : {}),
-        ...(input.farmaciaId !== undefined ? { businessId: input.farmaciaId } : {}),
-      },
-      select: SELECT,
-    }));
+    const escribir = async (tx: Tx) => {
+      const antes = await tx.user.update({
+        where: { id },
+        data: {
+          ...(input.nombre !== undefined ? { name: input.nombre } : {}),
+          ...(input.rol !== undefined ? { role: A_DB[input.rol] } : {}),
+        },
+        select: { businessId: true },
+      });
+      if (input.farmaciaIds !== undefined) await escribirFarmacias(tx, id, input.farmaciaIds, antes.businessId);
+      return tx.user.findUniqueOrThrow({ where: { id }, select: SELECT });
+    };
+    // Sin la comprobación de administradores también va en transacción: datos y farmacias a la vez.
+    const r = opts?.exigirOtroAdminActivo
+      ? await escribirGuardandoAdmin(id, opts, escribir)
+      : await prisma.$transaction(escribir);
     return mapRow(r);
   }
 
@@ -137,7 +165,8 @@ export class UserAccountRepositoryPrisma implements UserAccountRepository {
     return rows.map((b) => ({ id: b.id, nombre: b.name }));
   }
 
-  async farmaciaExists(id: string) {
-    return !!(await prisma.business.findUnique({ where: { id }, select: { id: true } }));
+  async farmaciasExisten(ids: string[]) {
+    if (ids.length === 0) return true;
+    return (await prisma.business.count({ where: { id: { in: ids } } })) === ids.length;
   }
 }

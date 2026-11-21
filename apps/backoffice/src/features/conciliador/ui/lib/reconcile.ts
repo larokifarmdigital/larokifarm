@@ -33,6 +33,8 @@ export class ReconcileError extends Error {
 /** Calls `POST /api/conciliar` with the completed pairs. */
 export async function reconcilePairs(
   pairs: PairToSend[],
+  /** Obligatoria si el usuario lleva varias farmacias (el servidor la valida). */
+  farmaciaId?: string,
 ): Promise<ReconciliationResponse> {
   const fd = new FormData();
   pairs.forEach((p, i) => {
@@ -41,7 +43,8 @@ export async function reconcilePairs(
     fd.append(`label_${i}`, p.label);
   });
 
-  const res = await fetch('/api/conciliar', {
+  const url = farmaciaId ? `/api/conciliar?farmacia=${encodeURIComponent(farmaciaId)}` : '/api/conciliar';
+  const res = await fetch(url, {
     method: 'POST',
     body: fd,
   });

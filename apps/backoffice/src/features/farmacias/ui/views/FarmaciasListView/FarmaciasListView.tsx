@@ -16,12 +16,17 @@ export async function FarmaciasListView() {
   return (
     <div className={cn(ANCHO_PAGINA, 'pt-6 pb-10')}>
       <PageHeader
-        titulo="Farmacias"
+        titulo={isAdmin ? 'Farmacias' : 'Mis webs'}
         descripcion="Cada farmacia tiene su web. Entra para editar sus textos, fotos, servicios y horario, y publícala cuando esté lista."
         accion={isAdmin ? <NuevaFarmaciaBoton responsables={responsables} /> : undefined}
       />
 
-      <FarmaciasList farmacias={farmacias} canDuplicate={isAdmin} canWrite={!!user && canEditContent(user)} />
+      <FarmaciasList
+        farmacias={farmacias}
+        canDuplicate={isAdmin}
+        canWrite={!!user && canEditContent(user)}
+        conFiltros={isAdmin}
+      />
     </div>
   );
 }

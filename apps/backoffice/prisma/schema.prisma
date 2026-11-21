@@ -82,6 +82,7 @@ model Business {
 
   // Relaciones existentes
   users       User[]
+  miembros    UserBusiness[]
   comparisons Comparison[]
 
   // ── Relaciones Fase 1.A ────────────────────────────────────────
@@ -116,8 +117,25 @@ model User {
   batchJobs ScoutBatchJob[]
   usage     UsageEntry[]
 
+  // Farmacias que lleva (puede ser más de una). `businessId` se mantiene como
+  // farmacia principal para el conciliador antiguo, que solo entiende una.
+  farmacias UserBusiness[]
+
   @@index([businessId])
   @@map("users")
+}
+
+model UserBusiness {
+  userId     String
+  businessId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@id([userId, businessId])
+  @@index([businessId])
+  @@map("user_businesses")
 }
 
 enum ComparisonStatus {

@@ -49,9 +49,16 @@ interface ReconcilerViewProps {
   budgetStatus: BudgetStatus | null;
   /** null = no autenticado; sin él no se puede reportar (los CTAs de reporte no se renderizan). */
   currentUser: { id: string; role: Role } | null;
+  /** Solo si el usuario lleva varias farmacias: tiene que elegir para cuál es (cada una con su límite). */
+  farmacias?: { id: string; nombre: string; budgetStatus: BudgetStatus | null }[];
 }
 
-export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProps) {
+export function ReconcilerView({ budgetStatus: budgetUnica, currentUser, farmacias }: ReconcilerViewProps) {
+  const variasFarmacias = (farmacias?.length ?? 0) > 1;
+  const [farmaciaId, setFarmaciaId] = useState('');
+  const [errorFarmacia, setErrorFarmacia] = useState(false);
+  const farmaciaElegida = farmacias?.find((f) => f.id === farmaciaId);
+  const budgetStatus = variasFarmacias ? (farmaciaElegida?.budgetStatus ?? null) : budgetUnica;
   const router = useRouter();
   const [envios, setEnvios] = useState<Envio[]>([]);
   const [fase, setFase] = useState<Fase>('editando');
@@ -153,6 +160,11 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
 
   async function comprobar() {
     if (listos.length === 0) return;
+    if (variasFarmacias && !farmaciaElegida) {
+      setErrorFarmacia(true);
+      document.getElementById('farmacia-conciliacion')?.focus();
+      return;
+    }
     if (isBudgetBlocked) {
       // NOTE: si ya sabemos server-side que está bloqueado, ni llamamos a la API.
       if (!budgetBlocked && budgetStatus) {
@@ -170,7 +182,7 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
         pdfs: e.pdfs.map((a) => a.file),
         xlsxs: e.excels.map((a) => a.file),
       }));
-      const { summary } = await reconcilePairs(envio);
+      const { summary } = await reconcilePairs(envio, variasFarmacias ? farmaciaElegida?.id : undefined);
       setResults(summary);
       setEnviosComprobados(snapshot);
       setFase('resultado');
@@ -207,6 +219,38 @@ export function ReconcilerView({ budgetStatus, currentUser }: ReconcilerViewProp
       {fase !== 'resultado' && (
         <>
           {procesando && <PanelProcesando total={listos.length} />}
+
+          {variasFarmacias && farmacias && (
+            <div className="mb-4 max-w-sm">
+              <label htmlFor="farmacia-conciliacion" className="label">
+                Farmacia
+                <span aria-hidden className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none align-[-0.05em]">
+                  *
+                </span>
+                <span className="sr-only">, obligatorio</span>
+              </label>
+              <Select
+                id="farmacia-conciliacion"
+                value={farmaciaId}
+                onValueChange={(v) => {
+                  setFarmaciaId(v);
+                  setErrorFarmacia(false);
+                  setBudgetBlocked(null);
+                }}
+                disabled={procesando}
+                required
+                placeholder="¿Para qué farmacia es?"
+                aria-invalid={errorFarmacia}
+                aria-describedby={errorFarmacia ? 'farmacia-conciliacion-error' : undefined}
+                options={farmacias.map((f) => ({ value: f.id, label: f.nombre }))}
+              />
+              {errorFarmacia && (
+                <p id="farmacia-conciliacion-error" role="alert" className="m-0 mt-1.5 text-[13px] text-[var(--color-red-ink)]">
+                  Elige para qué farmacia es esta conciliación
+                </p>
+              )}
+            </div>
+          )}
 
           {envios.length === 0 ? (
             <Dropzone onArchivos={anadir} />

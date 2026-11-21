@@ -23,7 +23,7 @@ export function MobileNavDrawer({
   /** El botón que abre el drawer no es un Dialog.Trigger: hay que devolverle el foco a mano. */
   devolverFocoA?: RefObject<HTMLButtonElement | null>;
 }) {
-  const items = buildNav({ role: shell.rol, miFarmaciaId: shell.miFarmacia?.id });
+  const items = buildNav({ role: shell.rol, miFarmaciaId: shell.miFarmacia?.id, variasFarmacias: (shell.misFarmacias?.length ?? 0) > 1 });
   const pathname = usePathname();
   const ayuda = supportMailto('Ayuda con el backoffice');
 
@@ -76,7 +76,7 @@ export function MobileNavDrawer({
             <div className="text-[14px] font-medium text-[var(--color-ink)] truncate">{shell.nombre}</div>
             <div className="text-[12.5px] text-[var(--color-muted)] truncate">
               {ROL_LABEL[shell.rol]}
-              {shell.miFarmacia ? ` · ${shell.miFarmacia.nombre}` : ''}
+              {shell.miFarmacia ? ` · ${shell.miFarmacia.nombre}` : shell.misFarmacias?.length ? ` · ${shell.misFarmacias.length} farmacias` : ''}
             </div>
             <button
               type="button"

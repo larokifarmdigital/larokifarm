@@ -7,4 +7,6 @@ export type ShellInfo = {
   rol: NavRole;
   /** Personal de farmacia: su farmacia (para "Mi web" y "Ver mi web"). */
   miFarmacia?: { id: string; nombre: string; web?: string };
+  /** Personal que lleva varias farmacias: sus nombres (sin `miFarmacia`). */
+  misFarmacias?: string[];
 };

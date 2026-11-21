@@ -28,14 +28,14 @@ export async function crearUsuarioAction(datos: {
   nombre: string;
   email: string;
   rol: string;
-  farmaciaId: string | null;
+  farmaciaIds: string[];
 }): Promise<SaveResult<CuentaConContrasena>> {
   return fin(await servicio().crear(await actor(), datos));
 }
 
 export async function editarUsuarioAction(
   id: string,
-  datos: { nombre: string; rol: string; farmaciaId: string | null },
+  datos: { nombre: string; rol: string; farmaciaIds: string[] },
 ): Promise<SaveResult<UserAccount>> {
   if (typeof id !== 'string') return { ok: false, error: 'Petición no válida.' };
   return fin(await servicio().editar(await actor(), id, datos));

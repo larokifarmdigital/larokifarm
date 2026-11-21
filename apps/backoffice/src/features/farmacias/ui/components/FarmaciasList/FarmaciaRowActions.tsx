@@ -31,7 +31,7 @@ export function FarmaciaRowActions({
   farmacia: FarmaciaSummary;
   pending: boolean;
   onAction: RowActionRunner;
-  /** Duplicar = crear farmacia → solo SUPER_ADMIN. */
+  /** Duplicar = crear farmacia → solo SUPER_ADMIN (también archivar y eliminar). */
   canDuplicate: boolean;
   /** Publicar/archivar: no para el rol de solo lectura. */
   canWrite: boolean;
@@ -78,7 +78,8 @@ export function FarmaciaRowActions({
           <RowActionsItem icon="Check" href={`/farmacias/${farmacia.id}`}>
             Abrir para publicar
           </RowActionsItem>
-        ) : (
+        ) : canDuplicate ? (
+          // Restaurar una archivada: como archivar, solo el administrador.
           <RowActionsItem
             icon="ArrowCounterClockwise"
             onSelect={() => {
@@ -91,8 +92,8 @@ export function FarmaciaRowActions({
           >
             Restaurar como borrador
           </RowActionsItem>
-        ))}
-      {canWrite && farmacia.status !== 'archived' && (
+        ) : null)}
+      {canDuplicate && canWrite && farmacia.status !== 'archived' && (
         <>
           <RowActionsSeparator />
           <RowActionsItem icon="Archive" peligro onSelect={() => setConfirmArchive(true)}>

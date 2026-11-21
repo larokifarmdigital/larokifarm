@@ -9,7 +9,7 @@
 
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/shared/lib/prisma';
-import { READ_ONLY_ERROR, canEditContent, getCurrentUser } from '@/core/auth';
+import { READ_ONLY_ERROR, canEditContent, getCurrentUser, puedeAccederFarmaciaUsuario } from '@/core/auth';
 import type {
   Farmacia,
   FarmaciaRepository,
@@ -30,21 +30,20 @@ class SaveConflictError extends Error {}
 // Guards de tenant
 // ───────────────────────────────────────────────────────────────────
 
-/** Si el usuario NO es SUPER_ADMIN, devuelve su businessId obligatorio.
- *  Si es SUPER_ADMIN, devuelve `null` (ver todos). */
-async function tenantFilter(): Promise<string | null> {
+/** Si el usuario NO es SUPER_ADMIN, devuelve sus farmacias (al menos una).
+ *  Si es SUPER_ADMIN, devuelve `null` (ver todas). */
+async function tenantFilter(): Promise<string[] | null> {
   const user = await getCurrentUser();
   if (!user) throw new Error('Sesión requerida');
   if (user.rol === 'admin') return null; // SUPER_ADMIN pool mode
-  if (!user.farmaciaId) throw new Error('Usuario sin negocio asignado');
-  return user.farmaciaId;
+  if (user.farmaciaIds.length === 0) throw new Error('Usuario sin negocio asignado');
+  return user.farmaciaIds;
 }
 
 async function ensureCanAccessBusiness(id: string): Promise<void> {
-  const filter = await tenantFilter();
-  if (filter !== null && filter !== id) {
-    throw new Error('Acceso denegado al negocio');
-  }
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Sesión requerida');
+  if (!puedeAccederFarmaciaUsuario(user, id)) throw new Error('Acceso denegado al negocio');
 }
 
 /** Acceso al negocio + rol con permiso de escritura (USER = solo lectura). */
@@ -86,7 +85,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
   async listFarmacias(): Promise<FarmaciaSummary[]> {
     const filter = await tenantFilter();
     const rows = await prisma.business.findMany({
-      where: filter ? { id: filter } : undefined,
+      where: filter ? { id: { in: filter } } : undefined,
       orderBy: { updatedAt: 'desc' },
       select: {
         id: true,
@@ -145,7 +144,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
       include: CONTENT_INCLUDE,
     });
     if (!row) return null;
-    if (filter !== null && filter !== row.id) return null;
+    if (filter !== null && !filter.includes(row.id)) return null;
     return mapBusinessToFarmacia(row as BusinessWithContent);
   },
 
@@ -156,7 +155,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
       include: CONTENT_INCLUDE,
     });
     if (!row) return null;
-    if (filter !== null && filter !== row.id) return null;
+    if (filter !== null && !filter.includes(row.id)) return null;
     return mapBusinessToFarmacia(row as BusinessWithContent);
   },
 
@@ -285,18 +284,18 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
       };
     }
 
-    // Responsable: solo un usuario activo, sin farmacia y que no sea SUPER_ADMIN
-    // (nunca se "roba" el usuario de otra farmacia).
+    // Responsable: cualquier usuario activo que no sea SUPER_ADMIN. Si ya
+    // lleva otras farmacias, esta se le AÑADE (no se le quita ninguna).
     if (input.responsableId) {
       const u = await prisma.user.findUnique({
         where: { id: input.responsableId },
-        select: { businessId: true, role: true, active: true },
+        select: { role: true, active: true },
       });
-      if (!u || !u.active || u.businessId || u.role === 'SUPER_ADMIN') {
+      if (!u || !u.active || u.role === 'SUPER_ADMIN') {
         return {
           ok: false,
           error: 'Ese usuario no se puede asignar',
-          fieldErrors: { responsable: 'Elige un usuario sin farmacia asignada' },
+          fieldErrors: { responsable: 'Elige un usuario activo' },
         };
       }
     }
@@ -314,12 +313,17 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
           include: CONTENT_INCLUDE,
         });
         if (input.responsableId) {
-          // updateMany con la condición: si entretanto se asignó a otra, no se toca.
-          const res = await tx.user.updateMany({
-            where: { id: input.responsableId, businessId: null, active: true, role: { not: 'SUPER_ADMIN' } },
-            data: { businessId: created.id },
+          // Se vuelve a comprobar dentro de la transacción (pudo desactivarse entretanto).
+          const u = await tx.user.findFirst({
+            where: { id: input.responsableId, active: true, role: { not: 'SUPER_ADMIN' } },
+            select: { businessId: true },
           });
-          if (res.count !== 1) throw new ResponsableNoDisponibleError('El usuario elegido ya no está disponible');
+          if (!u) throw new ResponsableNoDisponibleError('El usuario elegido ya no está disponible');
+          await tx.userBusiness.create({ data: { userId: input.responsableId, businessId: created.id } });
+          // Sin farmacia principal todavía: esta pasa a serlo.
+          if (!u.businessId) {
+            await tx.user.update({ where: { id: input.responsableId }, data: { businessId: created.id } });
+          }
         }
         return created;
       });
@@ -336,11 +340,16 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
     const user = await getCurrentUser();
     if (user?.rol !== 'admin') return [];
     const rows = await prisma.user.findMany({
-      where: { businessId: null, active: true, role: { not: 'SUPER_ADMIN' } },
-      select: { id: true, name: true, email: true },
+      where: { active: true, role: { not: 'SUPER_ADMIN' } },
+      select: { id: true, name: true, email: true, farmacias: { select: { business: { select: { name: true } } } } },
       orderBy: { name: 'asc' },
     });
-    return rows.map((r) => ({ id: r.id, nombre: r.name, email: r.email }));
+    return rows.map((r) => ({
+      id: r.id,
+      nombre: r.name,
+      email: r.email,
+      farmacias: r.farmacias.map((f) => f.business.name),
+    }));
   },
 
   async publishFarmacia(id, status) {

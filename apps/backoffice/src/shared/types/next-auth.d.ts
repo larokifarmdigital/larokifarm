@@ -8,6 +8,8 @@ declare module 'next-auth' {
     role: Role;
     businessId: string | null;
     businessSlug: string | null;
+    /** Farmacias que lleva (incluye la principal `businessId`). */
+    businessIds: string[];
     /** Huella de la contraseña (solo viaja dentro del JWT cifrado). */
     pv?: string;
   }
@@ -20,6 +22,8 @@ declare module 'next-auth' {
       role: Role;
       businessId: string | null;
       businessSlug: string | null;
+      /** Farmacias que lleva (incluye la principal `businessId`). */
+      businessIds: string[];
     };
   }
 }
@@ -29,6 +33,7 @@ declare module 'next-auth/jwt' {
     role: Role;
     businessId: string | null;
     businessSlug: string | null;
+    businessIds?: string[];
     pv?: string;
     checkedAt?: number;
   }

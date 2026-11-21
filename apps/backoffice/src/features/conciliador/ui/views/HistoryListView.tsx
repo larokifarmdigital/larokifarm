@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/core/auth';
-import { scopeFromSession } from '@/core/shared';
+import { farmaciasDeSesion, scopeFromSession } from '@/core/shared';
 import { getComparisonRepository, type ComparisonStatus } from '@/core/comparisons';
 import { ListBusinessesUseCase, getBusinessRepository } from '@/core/businesses';
 import { getReportRepository } from '@/core/reports';
@@ -63,6 +63,8 @@ export async function HistoryListView({ params }: { params: HistoryListParams })
   if (!session?.user) redirect('/login');
 
   const esAdmin = session.user.role === 'SUPER_ADMIN';
+  // Admin o personal con varias farmacias: filtro y columna "Farmacia".
+  const variasFarmacias = esAdmin || farmaciasDeSesion(session).length > 1;
   const hayFiltros = CLAVES_FILTRO.some((k) => params[k]);
   const busqueda = (params.q ?? params.supplier)?.trim() || undefined;
 
@@ -74,16 +76,17 @@ export async function HistoryListView({ params }: { params: HistoryListParams })
         status: parseStatus(params.status),
         search: busqueda,
         withOpenReports: esAdmin && params.reportes === 'abiertos',
-        businessSlug: esAdmin ? params.business?.trim() || undefined : undefined,
+        // El repositorio lo suma al scope: solo acota dentro de sus farmacias.
+        businessSlug: variasFarmacias ? params.business?.trim() || undefined : undefined,
       },
       { page: Math.max(1, Number(params.page) || 1) },
     ),
-    esAdmin ? new ListBusinessesUseCase(getBusinessRepository()).execute(session) : Promise.resolve([]),
+    variasFarmacias ? new ListBusinessesUseCase(getBusinessRepository()).execute(session) : Promise.resolve([]),
   ]);
 
   const reportes = await getReportRepository().countByComparisonIds(result.items.map((r) => r.id));
 
-  // Solo lo que se pinta. La farmacia, únicamente para SUPER_ADMIN (el coste
+  // Solo lo que se pinta. La farmacia, solo si ve más de una (el coste
   // vive en "Datos técnicos" del detalle y en /admin/uso, no en la lista).
   const filas: FilaHistorial[] = result.items.map((c) => {
     // Mismo criterio que Inicio: el proveedor es el título; el nombre del envío, secundario.
@@ -100,7 +103,7 @@ export async function HistoryListView({ params }: { params: HistoryListParams })
       estado: c.status,
       numDiscrepancias: c.numDiscrepancies,
       reporte: rep?.open ? 'abierto' : rep?.resolved ? 'resuelto' : null,
-      ...(esAdmin ? { negocio: c.business.name } : {}),
+      ...(variasFarmacias ? { negocio: c.business.name } : {}),
     };
   });
 
@@ -147,7 +150,7 @@ export async function HistoryListView({ params }: { params: HistoryListParams })
         <EstadoVacio conFiltros={hayFiltros} />
       ) : (
         <>
-          <HistoryList filas={filas} conFarmacia={esAdmin} />
+          <HistoryList filas={filas} conFarmacia={variasFarmacias} />
           <Pagination page={result.page} totalPages={result.totalPages} buildHref={hrefPagina(params)} />
         </>
       )}

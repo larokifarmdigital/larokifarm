@@ -23,7 +23,8 @@ export async function duplicateFarmaciaAction(id: string): Promise<ActionResult>
 }
 
 export async function archiveFarmaciaAction(id: string): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (user.rol !== 'admin') return { ok: false, error: 'Solo un administrador puede archivar farmacias.' };
   const res = await getFarmaciaRepository().archiveFarmacia(id);
   if (res.ok) revalidatePath('/farmacias');
   return res.ok ? { ok: true } : { ok: false, error: res.error };
@@ -41,7 +42,15 @@ export type PublishFarmaciaResult =
   | { ok: false; error: string };
 
 export async function publishFarmaciaAction(id: string, publish: boolean): Promise<PublishFarmaciaResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (user.rol !== 'admin') {
+    // Sacar una farmacia del archivo (publicarla o pasarla a borrador) es cosa del administrador.
+    const actual = await getFarmaciaRepository().getFarmacia(id);
+    if (!actual) return { ok: false, error: 'Farmacia no encontrada' };
+    if (actual.status === 'archived') {
+      return { ok: false, error: 'Esta farmacia está archivada. Pide al administrador que la recupere.' };
+    }
+  }
   const res = await new PublishFarmaciaUseCase(getFarmaciaRepository(), getLandingDeployer()).execute(id, publish);
   revalidatePath('/farmacias');
   revalidatePath(`/farmacias/${id}`);

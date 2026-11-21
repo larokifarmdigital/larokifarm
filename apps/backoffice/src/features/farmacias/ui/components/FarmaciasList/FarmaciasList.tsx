@@ -19,10 +19,13 @@ export function FarmaciasList({
   farmacias,
   canDuplicate = false,
   canWrite = true,
+  conFiltros = true,
 }: {
   farmacias: FarmaciaSummary[];
   canDuplicate?: boolean;
   canWrite?: boolean;
+  /** false = personal con pocas farmacias: todas a la vista (también archivadas), sin barra de filtros. */
+  conFiltros?: boolean;
 }) {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('activas');
@@ -33,14 +36,14 @@ export function FarmaciasList({
   const filtered = useMemo(() => {
     const q = normalize(query.trim());
     return farmacias.filter((f) => {
-      if (!cumpleFiltro(f, status)) return false;
+      if (conFiltros && !cumpleFiltro(f, status)) return false;
       if (!q) return true;
       return (
         normalize(f.nombre).includes(q) ||
         normalize(f.ciudad ?? '').includes(q)
       );
     });
-  }, [farmacias, query, status]);
+  }, [farmacias, query, status, conFiltros]);
 
 
   const hayFiltros = Boolean(query.trim()) || status !== 'activas';
@@ -56,14 +59,17 @@ export function FarmaciasList({
 
   return (
     <section aria-label="Listado de farmacias">
-      <FarmaciasListFilters
-        query={query}
-        onQueryChange={setQuery}
-        status={status}
-        onStatusChange={setStatus}
-      />
+      {conFiltros && (
+        <FarmaciasListFilters
+          query={query}
+          onQueryChange={setQuery}
+          status={status}
+          onStatusChange={setStatus}
+        />
+      )}
 
       {/* Recuento visible + "Quitar filtros": misma fila que Usuarios e Historial */}
+      {conFiltros && (
       <div className="mt-2 mb-3 flex min-h-11 items-center justify-between gap-3 px-1">
         <p role="status" className="m-0 text-[14px] text-[var(--color-muted)]">
           {filtered.length === 0
@@ -85,6 +91,7 @@ export function FarmaciasList({
           </button>
         )}
       </div>
+      )}
 
       {filtered.length === 0 ? (
         <FarmaciasEmptyState hasQuery={Boolean(query) || status !== 'activas'} totalCount={farmacias.length} />

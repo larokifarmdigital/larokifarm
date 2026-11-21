@@ -1,6 +1,5 @@
 'use client';
 
-import { Select } from '@/shared/components/atoms/Select';
 import { useId, useState, useTransition } from 'react';
 import { Modal, ModalAcciones } from '@/shared/components/molecules/Modal';
 import { Label } from '@/shared/components/atoms/Label';
@@ -9,13 +8,14 @@ import { IndicadorEleccion } from '@/shared/components/atoms/IndicadorEleccion';
 import type { FarmaciaOpcion, RolCuenta, UserAccount } from '@/core/users/domain';
 import { DESCRIPCION_ROL, ETIQUETA_ROL } from '../../lib/roles';
 
-export type DatosCuenta = { nombre: string; email: string; rol: RolCuenta; farmaciaId: string | null };
+export type DatosCuenta = { nombre: string; email: string; rol: RolCuenta; farmaciaIds: string[] };
 
 type Resultado = { ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
 /**
  * Crear o editar una cuenta. El correo solo se escribe al crear (es el usuario
- * de acceso). Responsable y Solo consulta necesitan farmacia; el administrador no.
+ * de acceso). Responsable y Solo consulta necesitan al menos una farmacia (el
+ * mismo permiso en todas); el administrador no.
  */
 export function CuentaDialog({
   open,
@@ -37,7 +37,7 @@ export function CuentaDialog({
   const [nombre, setNombre] = useState(cuenta?.nombre ?? '');
   const [email, setEmail] = useState(cuenta?.email ?? '');
   const [rol, setRol] = useState<RolCuenta>(cuenta?.rol ?? 'manager');
-  const [farmaciaId, setFarmaciaId] = useState(cuenta?.farmaciaId ?? '');
+  const [farmaciaIds, setFarmaciaIds] = useState<string[]>(cuenta?.farmacias.map((f) => f.id) ?? []);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [pendiente, startTransition] = useTransition();
@@ -47,7 +47,7 @@ export function CuentaDialog({
     e.preventDefault();
     setErrorGeneral(null);
     startTransition(async () => {
-      const res = await onGuardar({ nombre, email, rol, farmaciaId: farmaciaId || null });
+      const res = await onGuardar({ nombre, email, rol, farmaciaIds });
       if (res.ok) return;
       setErrores(res.fieldErrors ?? {});
       setErrorGeneral(res.fieldErrors && Object.keys(res.fieldErrors).length ? null : res.error);
@@ -55,6 +55,10 @@ export function CuentaDialog({
       const primero = res.fieldErrors && Object.keys(res.fieldErrors)[0];
       if (primero) requestAnimationFrame(() => document.getElementById(`${id}-${primero}`)?.focus());
     });
+  }
+
+  function alternarFarmacia(fid: string) {
+    setFarmaciaIds((ids) => (ids.includes(fid) ? ids.filter((x) => x !== fid) : [...ids, fid]));
   }
 
   const err = (k: string) => errores[k];
@@ -189,30 +193,58 @@ export function CuentaDialog({
           {errorCampo('rol')}
         </fieldset>
 
-        <div>
-          <Label htmlFor={`${id}-farmaciaId`} required={rol !== 'admin'}>
-            Farmacia
-          </Label>
-          <Select
-            id={`${id}-farmaciaId`}
-            value={farmaciaId}
-            onValueChange={setFarmaciaId}
-            required={rol !== 'admin'}
-            aria-invalid={!!err('farmaciaId')}
-            aria-describedby={describe('farmaciaId', rol === 'admin' ? `${id}-farmacia-ayuda` : undefined)}
-            placeholder="Elige una farmacia…"
-            options={[
-              ...(rol === 'admin' ? [{ value: '', label: 'Ninguna (ve todas)' }] : []),
-              ...farmacias.map((f) => ({ value: f.id, label: f.nombre })),
-            ]}
-          />
-          {rol === 'admin' && (
-            <p id={`${id}-farmacia-ayuda`} className="m-0 mt-1.5 text-[13px] text-[var(--color-muted)]">
-              El administrador ve todas las farmacias tenga o no una asignada.
-            </p>
-          )}
-          {errorCampo('farmaciaId')}
-        </div>
+        <fieldset
+          className="m-0 min-w-0 border-0 p-0"
+          aria-describedby={describe('farmaciaIds', `${id}-farmacias-ayuda`)}
+          aria-invalid={!!err('farmaciaIds')}
+        >
+          <legend className="label mb-2">
+            <span>
+              Farmacias que lleva
+              {rol !== 'admin' && (
+                <>
+                  <span aria-hidden className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none align-[-0.05em]">
+                    *
+                  </span>
+                  <span className="sr-only">, obligatorio</span>
+                </>
+              )}
+            </span>
+          </legend>
+          <div className="flex flex-col gap-2">
+            {farmacias.map((f, i) => {
+              const marcada = farmaciaIds.includes(f.id);
+              return (
+                <label
+                  key={f.id}
+                  className={cn(
+                    'flex items-center gap-3 rounded-[10px] border px-3.5 py-2.5 min-h-11 cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--color-accent)] has-[:focus-visible]:outline-offset-2',
+                    marcada
+                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
+                      : 'border-[var(--color-control-border)] bg-[var(--color-surface)]',
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    // Destino del foco si el servidor devuelve un error en las farmacias
+                    id={i === 0 ? `${id}-farmaciaIds` : undefined}
+                    checked={marcada}
+                    onChange={() => alternarFarmacia(f.id)}
+                    className="sr-only cursor-pointer"
+                  />
+                  <IndicadorEleccion tipo="checkbox" marcado={marcada} />
+                  <span className="text-[14.5px] text-[var(--color-ink)]">{f.nombre}</span>
+                </label>
+              );
+            })}
+          </div>
+          <p id={`${id}-farmacias-ayuda`} className="m-0 mt-1.5 text-[13px] text-[var(--color-muted)]">
+            {rol === 'admin'
+              ? 'El administrador ve todas las farmacias aunque no marques ninguna.'
+              : 'Puede llevar varias; tendrá el mismo permiso en todas.'}
+          </p>
+          {errorCampo('farmaciaIds')}
+        </fieldset>
       </form>
     </Modal>
   );

@@ -24,7 +24,7 @@ import type { FieldIssue } from '@/core/farmacias/domain';
  * (confirmar, no bloquear).
  */
 export function EditorActionButtons({ compact = false }: { compact?: boolean }) {
-  const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly, issues, revealErrors, pendientePublicar } = useFarmaciaEditor();
+  const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly, esAdmin, issues, revealErrors, pendientePublicar } = useFarmaciaEditor();
   const [blockedOpen, setBlockedOpen] = useState(false);
   const health = useI18nHealth();
   const [pending, startTx] = useTransition();
@@ -85,7 +85,8 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
   const publishLabel = farmacia.status === 'published' ? 'Publicar cambios' : 'Publicar';
   const webUrl = landingUrl(farmacia.web);
   // "Publicar" solo cuando hay algo que llevar a la web; si no, la acción útil es verla.
-  const puedePublicar = !readOnly && pendientePublicar;
+  // Una farmacia archivada solo la saca del archivo el administrador.
+  const puedePublicar = !readOnly && pendientePublicar && (farmacia.status !== 'archived' || esAdmin);
 
   const verWeb = (
     <Button

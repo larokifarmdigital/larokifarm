@@ -68,7 +68,8 @@ export function HistoryFilters({
   const periodo = valido(sp.get('periodo') ?? (sp.get('from') || sp.get('to') ? 'fechas' : null), OPCIONES_PERIODO) || null;
   const status = valido(sp.get('status'), OPCIONES_RESULTADO);
   const reportes = esAdmin ? valido(sp.get('reportes'), OPCIONES_REPORTES) : '';
-  const negocio = esAdmin ? valido(sp.get('business'), negocios.map((n) => ({ value: n.slug }))) : '';
+  // `negocios` solo llega con más de una farmacia visible (admin o personal que lleva varias).
+  const negocio = negocios.length > 1 ? valido(sp.get('business'), negocios.map((n) => ({ value: n.slug }))) : '';
   const desde = sp.get('from') ?? '';
   const hasta = sp.get('to') ?? '';
 
@@ -143,7 +144,7 @@ export function HistoryFilters({
       : [o],
   );
 
-  const muestraNegocio = esAdmin && negocios.length > 1;
+  const muestraNegocio = negocios.length > 1;
   const activos = [periodo, status, reportes, negocio].filter(Boolean).length;
 
   function quitarTodo() {

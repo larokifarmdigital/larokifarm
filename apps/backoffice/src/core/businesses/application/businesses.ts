@@ -1,6 +1,6 @@
 // NOTE: SUPER_ADMIN puede crear/borrar; BUSINESS_ADMIN solo edita su propio negocio; USER no entra.
 import type { Session } from 'next-auth';
-import { ForbiddenError, ValidationError } from '@/core/shared';
+import { ForbiddenError, ValidationError, farmaciasDeSesion, puedeAccederFarmacia } from '@/core/shared';
 import type {
   BusinessRepository,
   BusinessRow,
@@ -16,7 +16,7 @@ function assertSuperAdmin(actor: Session) {
 
 function assertCanEditBusiness(actor: Session, businessId: string) {
   if (actor.user.role === 'SUPER_ADMIN') return;
-  if (actor.user.role === 'BUSINESS_ADMIN' && actor.user.businessId === businessId) return;
+  if (actor.user.role === 'BUSINESS_ADMIN' && puedeAccederFarmacia(actor, businessId)) return;
   throw new ForbiddenError('No puedes editar este negocio.');
 }
 
@@ -24,11 +24,11 @@ export class ListBusinessesUseCase {
   constructor(private readonly repo: BusinessRepository) {}
   async execute(actor: Session): Promise<BusinessRow[]> {
     if (actor.user.role === 'SUPER_ADMIN') return this.repo.list();
-    if (actor.user.role === 'BUSINESS_ADMIN' && actor.user.businessId) {
-      const b = await this.repo.findById(actor.user.businessId);
-      return b ? [b] : [];
+    // Resto de roles: solo las farmacias que lleva (para filtros y selectores).
+    {
+      const filas = await Promise.all(farmaciasDeSesion(actor).map((id) => this.repo.findById(id)));
+      return filas.filter((b): b is BusinessRow => b !== null);
     }
-    return [];
   }
 }
 

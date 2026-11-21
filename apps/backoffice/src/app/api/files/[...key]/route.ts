@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { auth } from '@/core/auth';
 import { prisma } from '@/shared/lib/prisma';
 import { getStorage } from '@/core/storage';
+import { farmaciasDeSesion } from '@/core/shared';
 
 export const runtime = 'nodejs';
 
@@ -20,17 +21,18 @@ export async function GET(
 
   const [businessSlug] = keyParts;
   if (session.user.role !== 'SUPER_ADMIN') {
-    if (!session.user.businessId) {
+    const ids = farmaciasDeSesion(session);
+    if (ids.length === 0 || !businessSlug) {
       return NextResponse.json(
         { error: 'Sin negocio asignado' },
         { status: 403 },
       );
     }
-    const business = await prisma.business.findUnique({
-      where: { id: session.user.businessId },
-      select: { slug: true },
+    const business = await prisma.business.findFirst({
+      where: { slug: businessSlug, id: { in: ids } },
+      select: { id: true },
     });
-    if (!business || business.slug !== businessSlug) {
+    if (!business) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
   }

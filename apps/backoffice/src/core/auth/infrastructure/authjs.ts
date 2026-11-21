@@ -31,6 +31,13 @@ function huellaContrasena(passwordHash: string): string {
   return createHash('sha256').update(passwordHash).digest('base64url').slice(0, 16);
 }
 
+/** Farmacias asignadas; la principal siempre cuenta aunque falte su fila. */
+function farmaciasDe(principal: string | null, filas: { businessId: string }[]): string[] {
+  const ids = new Set(filas.map((f) => f.businessId));
+  if (principal) ids.add(principal);
+  return [...ids];
+}
+
 /** Relee el usuario: null = la sesión ya no vale (desactivado, borrado o contraseña cambiada). */
 async function releerUsuario(token: JWT, aceptarHuellaNueva: boolean): Promise<JWT | null> {
   const fresh = await prisma.user.findUnique({
@@ -42,6 +49,7 @@ async function releerUsuario(token: JWT, aceptarHuellaNueva: boolean): Promise<J
       businessId: true,
       passwordHash: true,
       business: { select: { slug: true } },
+      farmacias: { select: { businessId: true } },
     },
   });
   if (!fresh || !fresh.active) return null;
@@ -53,6 +61,7 @@ async function releerUsuario(token: JWT, aceptarHuellaNueva: boolean): Promise<J
   token.name = fresh.name;
   token.businessId = fresh.businessId;
   token.businessSlug = fresh.business?.slug ?? null;
+  token.businessIds = farmaciasDe(fresh.businessId, fresh.farmacias);
   token.checkedAt = Date.now();
   return token;
 }
@@ -69,7 +78,10 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
 
         const user = await prisma.user.findUnique({
           where: { email: email.toLowerCase() },
-          include: { business: { select: { slug: true } } },
+          include: {
+            business: { select: { slug: true } },
+            farmacias: { select: { businessId: true } },
+          },
         });
         if (!user || !user.active) {
           await bcrypt.compare(password, HASH_FICTICIO);
@@ -86,6 +98,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           role: user.role,
           businessId: user.businessId,
           businessSlug: user.business?.slug ?? null,
+          businessIds: farmaciasDe(user.businessId, user.farmacias),
           pv: huellaContrasena(user.passwordHash),
         };
       },
@@ -98,6 +111,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         token.role = user.role;
         token.businessId = user.businessId;
         token.businessSlug = user.businessSlug;
+        token.businessIds = user.businessIds;
         token.pv = user.pv;
         token.checkedAt = Date.now();
         return token;
@@ -108,6 +122,8 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
       // La sesión es un JWT de 30 días: cada pocos minutos se re-lee el
       // usuario para que desactivarlo o cambiarle el rol/negocio surta efecto
       // sin esperar a que caduque.
+      // Tokens emitidos antes de las farmacias múltiples: se releen ya.
+      if (token.sub && !Array.isArray(token.businessIds)) return releerUsuario(token, false);
       if (token.sub && Date.now() - ((token.checkedAt as number | undefined) ?? 0) > RECHECK_MS) {
         return releerUsuario(token, false);
       }
@@ -119,6 +135,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         session.user.role = token.role;
         session.user.businessId = token.businessId;
         session.user.businessSlug = token.businessSlug;
+        session.user.businessIds = token.businessIds ?? [];
       }
       return session;
     },

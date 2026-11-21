@@ -267,12 +267,12 @@ export class GetResenaAvatarUseCase {
    */
   async execute(
     resenaId: string,
-    editor?: { esAdmin: boolean; farmaciaId?: string },
+    editor?: { esAdmin: boolean; farmaciaIds: string[] },
   ): Promise<{ ok: true; data: Buffer; contentType: string } | { ok: false; reason: 'not-found' | 'storage-error' }> {
     let key = await this.resenas.findVisibleAvatarKey(resenaId);
     if (!key && editor) {
       const any = await this.resenas.findAvatar(resenaId);
-      if (any?.key && (editor.esAdmin || editor.farmaciaId === any.businessId)) key = any.key;
+      if (any?.key && (editor.esAdmin || editor.farmaciaIds.includes(any.businessId))) key = any.key;
     }
     if (!key) return { ok: false, reason: 'not-found' };
     try {

@@ -23,6 +23,8 @@ export type NavContext = {
   role: NavRole | null;
   /** Personal de farmacia: id de SU farmacia → "Mi web" va directo al editor. */
   miFarmaciaId?: string;
+  /** Personal con varias farmacias: "Mis webs" lleva a su lista. */
+  variasFarmacias?: boolean;
 };
 
 /**
@@ -31,11 +33,13 @@ export type NavContext = {
  * - Personal de farmacia: "Mi web" (directo al editor de su farmacia).
  * - "Albaranes" (antes "Conciliador": es la palabra del mostrador).
  */
-export function buildNav({ role, miFarmaciaId }: NavContext): NavItem[] {
+export function buildNav({ role, miFarmaciaId, variasFarmacias }: NavContext): NavItem[] {
   const web: NavItem =
-    role === 'admin' || !miFarmaciaId
-      ? { href: '/farmacias', label: 'Farmacias', icon: 'Storefront' }
-      : { href: `/farmacias/${miFarmaciaId}`, label: 'Mi web', icon: 'Storefront' };
+    role !== 'admin' && miFarmaciaId
+      ? { href: `/farmacias/${miFarmaciaId}`, label: 'Mi web', icon: 'Storefront' }
+      : role !== 'admin' && variasFarmacias
+        ? { href: '/farmacias', label: 'Mis webs', icon: 'Storefront' }
+        : { href: '/farmacias', label: 'Farmacias', icon: 'Storefront' };
 
   const items: NavItem[] = [
     { href: '/inicio', label: 'Inicio', icon: 'House' },

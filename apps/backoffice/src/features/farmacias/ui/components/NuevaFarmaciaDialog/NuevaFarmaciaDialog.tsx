@@ -281,11 +281,15 @@ function FormularioNuevaFarmacia({
               aria-invalid={Boolean(fieldError('responsable'))}
               options={[
                 { value: '', label: 'Nadie por ahora' },
-                ...responsables.map((u) => ({ value: u.id, label: u.nombre, description: u.email })),
+                ...responsables.map((u) => ({
+                  value: u.id,
+                  label: u.nombre,
+                  description: u.farmacias.length > 0 ? `${u.email} · ya lleva ${u.farmacias.join(', ')}` : u.email,
+                })),
               ]}
             />
             <p id="responsable-ayuda" className="mt-1.5 mb-0 text-[13px] text-[var(--color-muted)]">
-              Solo salen usuarios que todavía no tienen farmacia. Podrá editar su web.
+              Si ya lleva otras farmacias, esta se le suma a las que tiene.
             </p>
             {fieldError('responsable') && (
               <p id="responsable-error" className="help help-error" role="alert">
@@ -295,7 +299,7 @@ function FormularioNuevaFarmacia({
           </div>
         ) : (
           <p className="m-0 rounded-[8px] bg-[var(--color-surface-2)] px-3 py-2.5 text-[13.5px] leading-[1.5] text-[var(--color-ink-2)]">
-            Quién la gestiona: no hay usuarios libres. Puedes crearlo en <strong>Usuarios</strong> y asignarle la farmacia después.
+            Quién la gestiona: no hay usuarios activos. Puedes crearlo en <strong>Usuarios</strong> y asignarle la farmacia después.
           </p>
         )}
 

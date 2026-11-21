@@ -30,6 +30,9 @@ const SIN_FARMACIA = '__sin__';
 const ROLES: RolCuenta[] = ['admin', 'manager', 'viewer'];
 const CHIP_ROL: Record<RolCuenta, string> = { admin: 'chip-accent', manager: 'chip-green', viewer: 'chip-neutral' };
 
+/** "Torrents, Chamarro" — todas sus farmacias (pocas por persona), o null si ninguna. */
+const nombresFarmacias = (c: UserAccount) => (c.farmacias.length ? c.farmacias.map((f) => f.nombre).join(', ') : null);
+
 const sinAcentos = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
 type Temporal = { id: string; nombre: string; email: string; contrasena: string; nueva: boolean } | null;
@@ -75,10 +78,10 @@ export function UsuariosGestion({
   // Activos primero; luego por farmacia ("Sin farmacia" al final) y por nombre.
   const filtradas = useMemo(() => {
     const q = sinAcentos(texto.trim());
-    const nombreFarmacia = (c: UserAccount) => c.farmaciaNombre ?? '\uffff';
+    const nombreFarmacia = (c: UserAccount) => nombresFarmacias(c) ?? '\uffff';
     return cuentas
       .filter((c) => {
-        if (farmacia === SIN_FARMACIA ? c.farmaciaId : farmacia && c.farmaciaId !== farmacia) return false;
+        if (farmacia === SIN_FARMACIA ? c.farmacias.length > 0 : farmacia && !c.farmacias.some((f) => f.id === farmacia)) return false;
         if (rolFiltro && c.rol !== rolFiltro) return false;
         if (estado === 'activos' && !c.activo) return false;
         if (estado === 'desactivados' && c.activo) return false;
@@ -111,7 +114,7 @@ export function UsuariosGestion({
       return { ok: true as const };
     }
     if (!editando) return { ok: true as const };
-    const res = await editarUsuarioAction(editando.id, { nombre: datos.nombre, rol: datos.rol, farmaciaId: datos.farmaciaId });
+    const res = await editarUsuarioAction(editando.id, { nombre: datos.nombre, rol: datos.rol, farmaciaIds: datos.farmaciaIds });
     if (!res.ok) return res;
     setEditando(undefined);
     toast.success('Cambios guardados', { description: 'Se aplican en su próximo acceso o en unos minutos.' });
@@ -331,7 +334,7 @@ export function UsuariosGestion({
               <thead>
                 <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-surface-2)] text-[12.5px] text-[var(--color-muted)]">
                   <th scope="col" className="px-5 py-2.5 font-semibold">Usuario</th>
-                  <th scope="col" className="px-3 py-2.5 font-semibold">Farmacia</th>
+                  <th scope="col" className="px-3 py-2.5 font-semibold">Farmacias</th>
                   <th scope="col" className="px-3 py-2.5 font-semibold">Rol</th>
                   <th scope="col" className="px-3 py-2.5 font-semibold">Estado</th>
                   <th scope="col" className="px-5 py-2.5">
@@ -350,7 +353,7 @@ export function UsuariosGestion({
                       <span className="block text-[13px] text-[var(--color-muted)] break-all">{c.email}</span>
                     </td>
                     <td className="px-3 py-3 text-[var(--color-ink-2)]">
-                      {c.farmaciaNombre ?? <span className="text-[var(--color-muted)]">Sin farmacia</span>}
+                      {nombresFarmacias(c) ?? <span className="text-[var(--color-muted)]">Sin farmacia</span>}
                     </td>
                     <td className="px-3 py-3">
                       <span className={cn('chip whitespace-nowrap', CHIP_ROL[c.rol])}>{ETIQUETA_ROL[c.rol]}</span>
@@ -379,7 +382,7 @@ export function UsuariosGestion({
                 <p className="m-0 mt-1 text-[13.5px] text-[var(--color-muted)] break-all">{c.email}</p>
                 <div className="mt-2 flex items-center justify-between gap-3">
                   <div className="min-w-0 text-[13.5px]">
-                    <p className="m-0 truncate text-[var(--color-ink-2)]">{c.farmaciaNombre ?? 'Sin farmacia'}</p>
+                    <p className="m-0 text-[var(--color-ink-2)]">{nombresFarmacias(c) ?? 'Sin farmacia'}</p>
                     {estadoDe(c.activo)}
                   </div>
                   {acciones(c)}

@@ -9,7 +9,7 @@
  */
 
 import { createId as cuid } from '@paralleldrive/cuid2';
-import { READ_ONLY_ERROR, canEditContent, getCurrentUser } from '@/core/auth';
+import { READ_ONLY_ERROR, canEditContent, getCurrentUser, puedeAccederFarmaciaUsuario } from '@/core/auth';
 import { detectImageType } from '@/shared/lib/detectImageType';
 import type { MultilangText, SaveResult } from '@/core/shared';
 import type { StorageRepository } from '@/core/storage';
@@ -37,7 +37,7 @@ async function ensureCanWriteBusiness(repo: ContentImageRepository, businessId: 
   const user = await getCurrentUser();
   if (!user) throw new Error('Sesión requerida');
   if (!canEditContent(user)) throw new Error(READ_ONLY_ERROR);
-  if (user.rol !== 'admin' && user.farmaciaId !== businessId) {
+  if (!puedeAccederFarmaciaUsuario(user, businessId)) {
     throw new Error('Acceso denegado al negocio');
   }
   const slug = await repo.getBusinessSlug(businessId);

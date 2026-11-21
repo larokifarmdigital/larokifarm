@@ -30,5 +30,6 @@ export interface UserAccountRepository {
   /** Administradores activos, sin contar `exceptId`. */
   countActiveAdmins(exceptId?: string): Promise<number>;
   listFarmacias(): Promise<FarmaciaOpcion[]>;
-  farmaciaExists(id: string): Promise<boolean>;
+  /** true si existen TODAS las farmacias indicadas. */
+  farmaciasExisten(ids: string[]): Promise<boolean>;
 }

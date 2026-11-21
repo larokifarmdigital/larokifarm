@@ -177,14 +177,18 @@ export async function InicioView() {
     <div className={cn(ANCHO_PAGINA, 'pt-6 pb-10')}>
       <PageHeader
         titulo={`Hola, ${nombre}`}
-        descripcion={esAdmin ? 'Esto es lo que pasa en tus farmacias.' : (farmacias[0]?.nombre ?? 'Tu farmacia')}
+        descripcion={
+          esAdmin || farmacias.length > 1
+            ? 'Esto es lo que pasa en tus farmacias.'
+            : (farmacias[0]?.nombre ?? 'Tu farmacia')
+        }
       />
 
       {esAdmin ? (
         <InicioAdmin farmacias={farmacias} conciliaciones={conciliaciones.items} informes={informes} />
       ) : (
         <InicioFarmacia
-          farmacia={farmacias[0]}
+          farmacias={farmacias}
           conciliaciones={conciliaciones.items}
           puedeEditar={canEditContent(user)}
         />
@@ -193,14 +197,48 @@ export async function InicioView() {
   );
 }
 
-function InicioFarmacia({ farmacia, conciliaciones, puedeEditar }: {
-  farmacia?: FarmaciaSummary;
+function ListaFarmacias({ farmacias }: { farmacias: FarmaciaSummary[] }) {
+  return (
+    <ul className="divide-y divide-[var(--color-hairline)]">
+      {farmacias.map((f) => {
+        const e = estadoWeb(f);
+        return (
+          <li key={f.id}>
+            <Link
+              href={`/farmacias/${f.id}`}
+              className="flex items-center gap-3 min-h-14 py-2.5 -mx-2 px-2 rounded-[8px] hover:bg-[var(--color-surface-2)] transition-colors"
+            >
+              <FarmaciaAvatar farmacia={f} size={36} />
+              <span className="flex-1 min-w-0">
+                <span className="block text-[14.5px] font-medium text-[var(--color-ink)] truncate">{f.nombre}</span>
+                <span className="block text-[12.5px] text-[var(--color-muted)]">{e.texto}</span>
+              </span>
+              <NavIcon name="CaretRight" size={13} className="text-[var(--color-muted-2)] shrink-0" />
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function InicioFarmacia({ farmacias, conciliaciones, puedeEditar }: {
+  farmacias: FarmaciaSummary[];
   conciliaciones: ComparisonRow[];
   puedeEditar: boolean;
 }) {
+  // Lleva varias farmacias: lista de sus webs (como el administrador) en vez de la tarjeta de una.
+  const varias = farmacias.length > 1;
+  const farmacia = varias ? undefined : farmacias[0];
   const web = farmacia ? landingUrl(farmacia.web) : undefined;
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-4 sm:gap-5 items-start">
+      {varias ? (
+        <Tarjeta titulo="Tus webs" accion={<Link href="/farmacias" className={ENLACE}>Ver todas</Link>}>
+          {/* Todas, también las archivadas: son pocas y el estado sale en cada fila. */}
+          <ListaFarmacias farmacias={farmacias} />
+        </Tarjeta>
+      ) : (
       <Tarjeta titulo="Tu web">
         {farmacia ? (
           <>
@@ -253,6 +291,7 @@ function InicioFarmacia({ farmacia, conciliaciones, puedeEditar }: {
           </p>
         )}
       </Tarjeta>
+      )}
 
       <Tarjeta
         titulo="Albaranes"
@@ -262,7 +301,7 @@ function InicioFarmacia({ farmacia, conciliaciones, puedeEditar }: {
           <NavIcon name="Plus" size={16} />
           Nueva conciliación
         </Link>
-        <ListaConciliaciones items={conciliaciones} conFarmacia={false} />
+        <ListaConciliaciones items={conciliaciones} conFarmacia={varias} />
       </Tarjeta>
     </div>
   );
@@ -328,26 +367,7 @@ function InicioAdmin({ farmacias, conciliaciones, informes }: {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-start">
         <Tarjeta titulo="Farmacias" accion={<Link href="/farmacias" className={ENLACE}>Ver todas</Link>}>
-          <ul className="divide-y divide-[var(--color-hairline)]">
-            {activas.map((f) => {
-              const e = estadoWeb(f);
-              return (
-                <li key={f.id}>
-                  <Link
-                    href={`/farmacias/${f.id}`}
-                    className="flex items-center gap-3 min-h-14 py-2.5 -mx-2 px-2 rounded-[8px] hover:bg-[var(--color-surface-2)] transition-colors"
-                  >
-                    <FarmaciaAvatar farmacia={f} size={36} />
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-[14.5px] font-medium text-[var(--color-ink)] truncate">{f.nombre}</span>
-                      <span className="block text-[12.5px] text-[var(--color-muted)]">{e.texto}</span>
-                    </span>
-                    <NavIcon name="CaretRight" size={13} className="text-[var(--color-muted-2)] shrink-0" />
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <ListaFarmacias farmacias={activas} />
         </Tarjeta>
 
         <Tarjeta

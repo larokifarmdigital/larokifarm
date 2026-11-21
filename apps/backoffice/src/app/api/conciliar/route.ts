@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/core/auth';
+import { auth, farmaciasActualesDe } from '@/core/auth';
 import {
   GetBudgetStatusUseCase,
   getAiUsageRepository, getComparisonRepository,
@@ -20,7 +20,12 @@ interface ResolvedContext {
   esAdmin: boolean;
 }
 
-async function resolveContext(): Promise<
+/**
+ * Farmacia para la que se concilia: `?farmacia=<id>` (obligatoria si el
+ * usuario lleva varias). La pertenencia se comprueba contra la BD, no contra
+ * el JWT: el presupuesto y la clave de Gemini son los de ESA farmacia.
+ */
+async function resolveContext(req: Request): Promise<
   | { ok: true; ctx: ResolvedContext }
   | { ok: false; response: NextResponse }
 > {
@@ -32,7 +37,31 @@ async function resolveContext(): Promise<
     };
   }
 
-  if (!session.user.businessId) {
+  const esAdmin = session.user.role === 'SUPER_ADMIN';
+  const pedida = new URL(req.url).searchParams.get('farmacia')?.trim() || null;
+  let businessId: string | null;
+  if (esAdmin) {
+    businessId = pedida ?? session.user.businessId;
+  } else {
+    const mias = await farmaciasActualesDe(session.user.id);
+    if (mias.length === 0) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: 'El usuario no tiene un negocio asignado.' }, { status: 403 }),
+      };
+    }
+    if (pedida && !mias.includes(pedida)) {
+      return { ok: false, response: NextResponse.json({ error: 'No autorizado' }, { status: 403 }) };
+    }
+    if (!pedida && mias.length > 1) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: 'Elige para qué farmacia es la conciliación.' }, { status: 400 }),
+      };
+    }
+    businessId = pedida ?? mias[0];
+  }
+  if (!businessId) {
     return {
       ok: false,
       response: NextResponse.json(
@@ -43,7 +72,7 @@ async function resolveContext(): Promise<
   }
 
   const businessRepo = getBusinessRepository();
-  const business = await businessRepo.findById(session.user.businessId);
+  const business = await businessRepo.findById(businessId);
   if (!business) {
     return {
       ok: false,
@@ -84,7 +113,7 @@ async function resolveContext(): Promise<
       business: { id: business.id, slug: business.slug },
       userId: session.user.id,
       apiKey,
-      esAdmin: session.user.role === 'SUPER_ADMIN',
+      esAdmin,
     },
   };
 }
@@ -129,7 +158,7 @@ async function pairsFromForm(form: FormData): Promise<PairInput[]> {
 }
 
 export async function POST(req: Request) {
-  const ctxResult = await resolveContext();
+  const ctxResult = await resolveContext(req);
   if (!ctxResult.ok) return ctxResult.response;
   const { ctx } = ctxResult;
 

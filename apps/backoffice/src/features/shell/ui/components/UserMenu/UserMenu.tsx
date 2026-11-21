@@ -53,8 +53,10 @@ export function UserMenu({ shell }: { shell: ShellInfo }) {
             <div className="text-[12.5px] text-[var(--color-muted)] truncate">{shell.email}</div>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <span className="chip chip-neutral">{ROL_LABEL[shell.rol]}</span>
-              {shell.miFarmacia && (
-                <span className="text-[12.5px] text-[var(--color-ink-2)] truncate">{shell.miFarmacia.nombre}</span>
+              {(shell.miFarmacia || shell.misFarmacias?.length) && (
+                <span className="text-[12.5px] text-[var(--color-ink-2)] truncate">
+                  {shell.miFarmacia?.nombre ?? shell.misFarmacias?.join(', ')}
+                </span>
               )}
             </div>
           </div>

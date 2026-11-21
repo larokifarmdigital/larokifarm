@@ -152,11 +152,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-21T07:08:13Z).
+Actualizado automáticamente al hacer commit (2026-11-21T13:12:50Z).
 
+- `9acb687` 2026-11-21 — Feat(backoffice): idiomas por farmacia, historial en tabla y coste de traducciones
 - `2f2827f` 2026-11-21 — Feat(backoffice): rediseño fase 5 — gestión de usuarios y coherencia de la UI
 - `1677acd` 2026-11-20 — Feat(backoffice): rediseño fase 4 — gestión de contenidos de las landings
 - `587677a` 2026-11-20 — Feat(backoffice): rediseño fase 3 — historial de conciliaciones
 - `5a25dd0` 2026-11-20 — Feat(backoffice): rediseño fase 2 — nueva conciliación por envíos
-- `5d71ce9` 2026-11-20 — Feat(backoffice): rediseño fase 1 — login, Inicio y navegación
 <!-- auto:recent-commits:end -->

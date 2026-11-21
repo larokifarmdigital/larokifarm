@@ -16,7 +16,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const editor = new URL(req.url).searchParams.has('editor') ? await getCurrentUser() : null;
   const res = await new GetResenaAvatarUseCase(getResenaRepository(), getStorage()).execute(
     id,
-    editor ? { esAdmin: editor.rol === 'admin', farmaciaId: editor.farmaciaId } : undefined,
+    editor ? { esAdmin: editor.rol === 'admin', farmaciaIds: editor.farmaciaIds } : undefined,
   );
   if (!res.ok) {
     return NextResponse.json({ error: res.reason === 'not-found' ? 'Not found' : 'Storage read failed' }, {

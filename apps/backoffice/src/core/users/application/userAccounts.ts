@@ -38,10 +38,13 @@ const emailSchema = z
   .max(120, 'Máximo 120 caracteres')
   .pipe(z.email('Escribe un correo válido'));
 const rolSchema = z.enum(ROLES_CUENTA as [string, ...string[]], 'Elige un rol');
-const farmaciaSchema = z.string().trim().min(1).max(64).nullable();
+const farmaciasSchema = z
+  .array(z.string().trim().min(1).max(64))
+  .max(50, 'Demasiadas farmacias')
+  .transform((ids) => [...new Set(ids)]);
 
-const crearSchema = z.object({ nombre: nombreSchema, email: emailSchema, rol: rolSchema, farmaciaId: farmaciaSchema });
-const editarSchema = z.object({ nombre: nombreSchema, rol: rolSchema, farmaciaId: farmaciaSchema });
+const crearSchema = z.object({ nombre: nombreSchema, email: emailSchema, rol: rolSchema, farmaciaIds: farmaciasSchema });
+const editarSchema = z.object({ nombre: nombreSchema, rol: rolSchema, farmaciaIds: farmaciasSchema });
 
 function erroresDe(e: z.ZodError): SaveResult<never> {
   const fieldErrors: Record<string, string> = {};
@@ -58,7 +61,8 @@ function erroresDe(e: z.ZodError): SaveResult<never> {
  * - Solo SUPER_ADMIN gestiona usuarios.
  * - Nadie se desactiva ni se quita el rol de administrador a sí mismo.
  * - Siempre queda al menos un administrador activo.
- * - Responsable y Solo consulta necesitan farmacia; el administrador puede no tenerla.
+ * - Responsable y Solo consulta necesitan al menos una farmacia (mismo rol en
+ *   todas); el administrador puede no tener ninguna.
  * - Las contraseñas temporales se generan aquí y se devuelven una sola vez.
  */
 export class UserAccountsService {
@@ -84,9 +88,9 @@ export class UserAccountsService {
     return { cuentas, farmacias };
   }
 
-  private async validarFarmacia(rol: string, farmaciaId: string | null): Promise<Record<string, string> | null> {
-    if (rol !== 'admin' && !farmaciaId) return { farmaciaId: 'Elige la farmacia de esta persona' };
-    if (farmaciaId && !(await this.repo.farmaciaExists(farmaciaId))) return { farmaciaId: 'Esa farmacia no existe' };
+  private async validarFarmacias(rol: string, farmaciaIds: string[]): Promise<Record<string, string> | null> {
+    if (rol !== 'admin' && farmaciaIds.length === 0) return { farmaciaIds: 'Elige al menos una farmacia' };
+    if (!(await this.repo.farmaciasExisten(farmaciaIds))) return { farmaciaIds: 'Alguna de esas farmacias ya no existe' };
     return null;
   }
 
@@ -94,8 +98,8 @@ export class UserAccountsService {
     if (!this.esAdmin(actor) || !(await this.esAdminVigente(actor))) return { ok: false, error: SOLO_ADMIN };
     const p = crearSchema.safeParse(raw);
     if (!p.success) return erroresDe(p.error);
-    const { nombre, email, rol, farmaciaId } = p.data;
-    const errFarmacia = await this.validarFarmacia(rol, farmaciaId);
+    const { nombre, email, rol, farmaciaIds } = p.data;
+    const errFarmacia = await this.validarFarmacias(rol, farmaciaIds);
     if (errFarmacia) return { ok: false, error: 'Revisa los campos marcados', fieldErrors: errFarmacia };
     if (await this.repo.emailExists(email)) {
       return { ok: false, error: 'Revisa los campos marcados', fieldErrors: { email: 'Ya hay un usuario con ese correo' } };
@@ -106,7 +110,7 @@ export class UserAccountsService {
         nombre,
         email,
         rol: rol as UserAccount['rol'],
-        farmaciaId,
+        farmaciaIds,
         passwordHash: await hashContrasena(contrasenaTemporal),
       });
       registrar(actor.id, 'crear', cuenta.id);
@@ -127,19 +131,19 @@ export class UserAccountsService {
     if (!actual) return { ok: false, error: 'Ese usuario ya no existe.' };
     const p = editarSchema.safeParse(raw);
     if (!p.success) return erroresDe(p.error);
-    const { nombre, rol, farmaciaId } = p.data;
+    const { nombre, rol, farmaciaIds } = p.data;
     if (actual.id === actor.id && rol !== 'admin') {
       return { ok: false, error: 'No puedes quitarte a ti mismo el rol de administrador.', fieldErrors: { rol: 'No puedes quitarte tu propio rol de administrador' } };
     }
     if (actual.rol === 'admin' && rol !== 'admin' && actual.activo && (await this.repo.countActiveAdmins(id)) === 0) {
       return { ok: false, error: 'Tiene que quedar al menos un administrador activo.' };
     }
-    const errFarmacia = await this.validarFarmacia(rol, farmaciaId);
+    const errFarmacia = await this.validarFarmacias(rol, farmaciaIds);
     if (errFarmacia) return { ok: false, error: 'Revisa los campos marcados', fieldErrors: errFarmacia };
     try {
       const cuenta = await this.repo.update(
         id,
-        { nombre, rol: rol as UserAccount['rol'], farmaciaId },
+        { nombre, rol: rol as UserAccount['rol'], farmaciaIds },
         // Quitar el rol a un administrador: comprobación + escritura atómicas.
         { exigirOtroAdminActivo: actual.rol === 'admin' && rol !== 'admin' },
       );
