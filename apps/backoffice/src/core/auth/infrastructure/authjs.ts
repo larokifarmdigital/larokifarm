@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import NextAuth from 'next-auth';
+import NextAuth, { CredentialsSignin } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
@@ -13,7 +13,11 @@ const RECHECK_MS = Number(process.env.AUTH_RECHECK_MS) || 5 * 60 * 1000;
 /** bcrypt solo usa los primeros 72 bytes: más largo no se acepta (ni al cambiarla ni al entrar). */
 const MAX_BYTES_CONTRASENA = 72;
 
+/** Sin «Mantener la sesión iniciada»: la sesión caduca a las 12 h (una jornada). Marcada: 30 días (máximo del JWT). */
+const SESION_CORTA_MS = Number(process.env.AUTH_SESION_CORTA_MS) || 12 * 60 * 60 * 1000; // env solo para pruebas
+
 const credentialsSchema = z.object({
+  recordar: z.enum(['1', '']).optional(),
   email: z.string().email(),
   password: z.string().min(1).refine((p) => Buffer.byteLength(p, 'utf8') <= MAX_BYTES_CONTRASENA),
 });
@@ -66,6 +70,11 @@ async function releerUsuario(token: JWT, aceptarHuellaNueva: boolean): Promise<J
   return token;
 }
 
+/** Contraseña correcta pero cuenta desactivada (el `code` llega a la action de login). */
+export class CuentaDesactivadaError extends CredentialsSignin {
+  code = 'cuenta_desactivada';
+}
+
 export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   ...authConfig,
   providers: [
@@ -74,7 +83,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         const parsed = credentialsSchema.safeParse(rawCredentials);
         if (!parsed.success) return null;
 
-        const { email, password } = parsed.data;
+        const { email, password, recordar } = parsed.data;
 
         const user = await prisma.user.findUnique({
           where: { email: email.toLowerCase() },
@@ -83,13 +92,16 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
             farmacias: { select: { businessId: true } },
           },
         });
-        if (!user || !user.active) {
+        if (!user) {
           await bcrypt.compare(password, HASH_FICTICIO);
           return null;
         }
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
+        // Solo quien conoce la contraseña llega a saber que la cuenta está
+        // desactivada: con una contraseña mala el mensaje es el genérico.
+        if (!user.active) throw new CuentaDesactivadaError();
 
         return {
           id: user.id,
@@ -100,6 +112,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           businessSlug: user.business?.slug ?? null,
           businessIds: farmaciasDe(user.businessId, user.farmacias),
           pv: huellaContrasena(user.passwordHash),
+          recordar: recordar === '1',
         };
       },
     }),
@@ -114,8 +127,11 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         token.businessIds = user.businessIds;
         token.pv = user.pv;
         token.checkedAt = Date.now();
+        // Caducidad absoluta desde el login: no se alarga por usar la app.
+        token.expiraEn = user.recordar ? undefined : Date.now() + SESION_CORTA_MS;
         return token;
       }
+      if (typeof token.expiraEn === 'number' && Date.now() > token.expiraEn) return null;
       // "Cambiar mi contraseña" llama a unstable_update: la propia sesión adopta
       // la huella nueva (las demás sesiones abiertas de esa cuenta caen).
       if (trigger === 'update' && token.sub) return releerUsuario(token, true);

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 
@@ -8,7 +8,7 @@ import { NavIcon } from '@/shared/components/atoms/NavIcon';
  * Icono ⓘ discreto para colocar dentro del `hint` de un `Label`.
  * Al hover/focus muestra un tooltip con la ayuda extendida — reemplaza al
  * `<p className="help">…</p>` que suele ir debajo del input y ocupar espacio
- * vertical fijo.
+ * vertical fijo. En móvil (sin hover) se abre al tocarlo.
  */
 export function LabelHelpIcon({
   children,
@@ -19,12 +19,18 @@ export function LabelHelpIcon({
   ariaLabel?: string;
   side?: 'top' | 'bottom' | 'left' | 'right';
 }) {
+  const [abierto, setAbierto] = useState(false);
   return (
-    <Tooltip.Root delayDuration={200}>
+    <Tooltip.Root delayDuration={200} open={abierto} onOpenChange={setAbierto}>
       <Tooltip.Trigger asChild>
         <button
           type="button"
           aria-label={ariaLabel}
+          // Toque o clic: abre (Radix lo cierra en pointerdown; aquí se vuelve a abrir).
+          onClick={(e) => {
+            e.preventDefault();
+            setAbierto(true);
+          }}
           // Zona táctil de 44px en móvil y 24px en escritorio; márgenes negativos para no mover la etiqueta.
           className="inline-flex h-11 w-11 -my-3.5 -mx-3 sm:h-6 sm:w-6 sm:-my-1 sm:-mx-1 items-center justify-center rounded-full text-[var(--color-muted)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
         >

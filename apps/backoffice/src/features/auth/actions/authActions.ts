@@ -1,18 +1,33 @@
 'use server';
 
-import { AuthError } from 'next-auth';
-import { redirect } from 'next/navigation';
+import { AuthError, CredentialsSignin } from 'next-auth';
+import { redirect, unstable_rethrow } from 'next/navigation';
 import { z } from 'zod';
 import { signIn, signOut } from '@/core/auth';
 
 const loginSchema = z.object({
-  email: z.string().email('Introduce un correo válido'),
-  password: z.string().min(1, 'La contraseña no puede estar vacía'),
+  email: z.string().min(1, 'Escribe tu correo').email('Ese correo no parece válido. Ejemplo: nombre@farmacia.com'),
+  password: z.string().min(1, 'Escribe tu contraseña'),
 });
+
+/**
+ * Por qué no se ha podido entrar. Cada motivo tiene su mensaje en LoginForm:
+ * - campos: falta algo o el correo no tiene formato (errores bajo cada campo).
+ * - credenciales: correo o contraseña no coinciden (sin decir cuál, a propósito).
+ * - desactivada: contraseña correcta pero la cuenta está desactivada.
+ * - servidor: fallo inesperado; se puede reintentar.
+ */
+export type MotivoErrorLogin = 'campos' | 'credenciales' | 'desactivada' | 'servidor';
 
 export type LoginState =
   | { status: 'idle' }
-  | { status: 'error'; message: string; fieldErrors?: Record<string, string> }
+  | {
+      status: 'error';
+      motivo: MotivoErrorLogin;
+      /** Se devuelve para no obligar a escribirlo otra vez. */
+      email: string;
+      fieldErrors?: Record<string, string>;
+    }
   | { status: 'success' };
 
 export async function loginAction(_prev: LoginState, formData: FormData): Promise<LoginState> {
@@ -26,13 +41,15 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     const fieldErrors: Record<string, string> = {};
     for (const issue of parsed.error.issues) {
       const key = issue.path[0]?.toString();
-      if (key) fieldErrors[key] = issue.message;
+      // El primer problema de cada campo es el que importa (vacío antes que formato).
+      if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
     }
-    return { status: 'error', message: 'Revisa los campos marcados', fieldErrors };
+    return { status: 'error', motivo: 'campos', email: raw.email, fieldErrors };
   }
 
   try {
     await signIn('credentials', {
+      recordar: formData.get('recordar') === '1' ? '1' : '',
       email: parsed.data.email,
       password: parsed.data.password,
       redirectTo: safeReturnTo(formData.get('returnTo')),
@@ -40,15 +57,19 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
   } catch (err) {
     // NOTE: next-auth v5 lanza NEXT_REDIRECT internamente al redirigir tras
     // login OK — hay que dejarlo propagar.
-    if (err instanceof Error && err.message === 'NEXT_REDIRECT') throw err;
+    unstable_rethrow(err);
 
     if (err instanceof AuthError) {
-      if (err.type === 'CredentialsSignin') {
-        return { status: 'error', message: 'Correo o contraseña incorrectos' };
+      if (err instanceof CredentialsSignin || err.type === 'CredentialsSignin') {
+        const desactivada = (err as CredentialsSignin).code === 'cuenta_desactivada';
+        return { status: 'error', motivo: desactivada ? 'desactivada' : 'credenciales', email: raw.email };
       }
-      return { status: 'error', message: 'No se pudo iniciar sesión. Vuelve a intentarlo.' };
+      console.error('[login] error de autenticación', err.type);
+      return { status: 'error', motivo: 'servidor', email: raw.email };
     }
-    throw err;
+    // BD caída u otro fallo: mensaje claro en vez de la pantalla de error.
+    console.error('[login] error inesperado', (err as Error)?.name);
+    return { status: 'error', motivo: 'servidor', email: raw.email };
   }
 
   // No debería llegar aquí (signIn redirige), pero por seguridad:

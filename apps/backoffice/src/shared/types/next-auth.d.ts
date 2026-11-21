@@ -12,6 +12,8 @@ declare module 'next-auth' {
     businessIds: string[];
     /** Huella de la contraseña (solo viaja dentro del JWT cifrado). */
     pv?: string;
+    /** «Mantener la sesión iniciada» marcado en el login. */
+    recordar?: boolean;
   }
 
   interface Session {
@@ -36,5 +38,7 @@ declare module 'next-auth/jwt' {
     businessIds?: string[];
     pv?: string;
     checkedAt?: number;
+    /** Fin de la sesión corta (ms); sin valor = sesión de 30 días. */
+    expiraEn?: number;
   }
 }
