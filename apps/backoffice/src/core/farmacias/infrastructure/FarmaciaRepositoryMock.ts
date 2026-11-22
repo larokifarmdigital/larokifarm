@@ -1,6 +1,7 @@
 // Adapter en memoria (seed: farmaciasMock). Por defecto en dev hasta activar
 // USE_NEON_CONTENT=true — ver infrastructure/index.ts.
 import type { Farmacia, FarmaciaRepository, FarmaciaSummary } from '@/core/farmacias/domain';
+import { CHAT_POR_DEFECTO } from '@/core/farmacias/domain';
 import { MOCK_FARMACIAS } from './farmaciasMock';
 import { sleep } from '@/shared/lib/sleep';
 
@@ -109,6 +110,7 @@ export const farmaciaRepositoryMock: FarmaciaRepository = {
       resenas: [],
       mostrarResenas: true,
       resenasReglas: { minRating: 4, soloConComentario: true },
+      chat: { ...CHAT_POR_DEFECTO },
       createdAt: now,
       updatedAt: now,
     };

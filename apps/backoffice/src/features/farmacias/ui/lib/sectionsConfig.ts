@@ -14,6 +14,8 @@ export type SectionMeta = {
   icon: IconName;
   hint: string;
   multilang: boolean;
+  /** Solo la ve un SUPER_ADMIN (el servidor también lo comprueba). */
+  soloAdmin?: boolean;
 };
 
 export const SECTION_META: SectionMeta[] = [
@@ -39,6 +41,8 @@ export const SECTION_META: SectionMeta[] = [
     hint: 'Aviso legal y política de privacidad.', multilang: true },
   { key: 'seo', label: 'Google y redes sociales', icon: 'Globe',
     hint: 'Cómo aparece tu web en Google y al compartirla por WhatsApp o redes.', multilang: true },
+  { key: 'chat', label: 'Chat de medicamentos', icon: 'ChatCircleDots',
+    hint: 'El chat de consulta de medicamentos (CIMA) de la web: si sale y cómo se ve.', multilang: false, soloAdmin: true },
 ];
 
 export type GroupMeta = {
@@ -51,8 +55,21 @@ export const GROUPS: GroupMeta[] = [
   { key: 'farmacia', label: 'Tu farmacia', sectionKeys: ['horario', 'general', 'idiomas'] },
   { key: 'portada', label: 'Portada', sectionKeys: ['hero', 'features'] },
   { key: 'contenido', label: 'Contenido', sectionKeys: ['sobre', 'servicios', 'faqs', 'resenas'] },
-  { key: 'avanzado', label: 'Avanzado', sectionKeys: ['legal', 'seo'] },
+  { key: 'avanzado', label: 'Avanzado', sectionKeys: ['legal', 'seo', 'chat'] },
 ];
+
+/** Grupos con las secciones que puede ver este usuario. */
+export function gruposVisibles(esAdmin: boolean): GroupMeta[] {
+  return GROUPS.map((g) => ({
+    ...g,
+    sectionKeys: g.sectionKeys.filter((k) => esAdmin || !SECTION_BY_KEY[k]?.soloAdmin),
+  })).filter((g) => g.sectionKeys.length > 0);
+}
+
+export function puedeVerSeccion(key: string, esAdmin: boolean): boolean {
+  const s = SECTION_BY_KEY[key];
+  return Boolean(s) && (esAdmin || !s.soloAdmin);
+}
 
 export const DEFAULT_SECTION_KEY = 'horario';
 

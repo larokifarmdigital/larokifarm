@@ -99,6 +99,7 @@ en `ui/lib/sectionsConfig.ts`; i18n en `ui/lib/i18nStatus.ts`.
 | Contenido | Reseñas (`resenas`) | interruptor encima de los idiomas, reglas, mostrar/ocultar cada reseña, enlace Google (identificador GBP solo admin), cabecera plegada |
 | Avanzado | Textos legales (`legal`) | aviso legal + privacidad (Tiptap i18n) |
 | Avanzado | Google y redes sociales (`seo`) | título/descripción en Google + vista previa + imagen al compartir |
+| Avanzado | Chat de medicamentos (`chat`, **solo SUPER_ADMIN**) | widget cima-chat: mostrar sí/no, posición, color (aviso si el blanco no llega a 4,5:1), nombre y logo de la cabecera, «Disponible» del inventario + vista previa |
 
 Las claves no cambiaron: los hash antiguos (`#hero`, `#seo`…) siguen valiendo.
 
@@ -168,7 +169,9 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
   castellano); enlace del servicio en "Opciones avanzadas".
 
 ### Permisos en el servidor (`saveFarmaciaPatchAction`)
-- `slug`, `mapaUrl`, `googleLocationName`: solo SUPER_ADMIN.
+- `slug`, `mapaUrl`, `googleLocationName`, `chat`: solo SUPER_ADMIN.
+- Secciones con `soloAdmin` en `sectionsConfig.ts` (hoy `chat`): fuera de la
+  navegación (`gruposVisibles`) y el hash `#chat` no las abre (`puedeVerSeccion`).
 - `idiomasActivos`: solo con `activarIdiomaAction`.
 - Publicar valida en el servidor (`PublishFarmaciaUseCase`); el menú de la lista
   ya no publica: "Abrir para publicar" lleva al editor.
@@ -536,10 +539,18 @@ Diferencias schema vs UI documentadas:
   publicación, idiomas sin escrituras accidentales, listas con menú ⋯, 44 px
   en móvil, alta de farmacia en un paso con responsable opcional, lista con
   "Activas" y "Cambios sin publicar" ✅
+- **Chat de medicamentos 22-11-2026**: columna `businesses.chatConfig` (JSONB,
+  null = valores por defecto; migración `20261122200000_chat_config`, ya
+  ejecutada en Neon). Dominio `ChatConfig` + `CHAT_POR_DEFECTO` +
+  `contrasteConBlanco` (`Farmacia.ts`), lector tolerante `asChatConfig`
+  (mappers), API pública `chat`. Las landings lo leen en build
+  (`src/lib/chat.ts`, con su color de siempre por defecto) y pintan el widget
+  con `data-*`; `data-inventory="off"` apaga el «Disponible». Se aplica al
+  publicar ✅
 - **Pendientes**:
-  - **Coste de "Sugerir traducción"**: HECHO en código (21-11-2026), falta
-    que el usuario ejecute en Neon
-    `ALTER TYPE "UsageModule" ADD VALUE IF NOT EXISTS 'TRADUCCION';`
+  - **Coste de "Sugerir traducción"**: HECHO en código (21-11-2026); el
+    `ALTER TYPE "UsageModule" ADD VALUE IF NOT EXISTS 'TRADUCCION';` ya se
+    ejecutó en Neon (22-11-2026)
     (migración aditiva en
     `apps/conciliador-albaranes/prisma/migrations/20261121090000_usage_traduccion`;
     el esquema fuente es el del conciliador, `pnpm sync-schema` lo copia aquí;

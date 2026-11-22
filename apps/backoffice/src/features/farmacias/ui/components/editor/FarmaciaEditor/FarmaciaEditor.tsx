@@ -26,7 +26,7 @@ import { EditorSectionTitle } from '@/features/farmacias/ui/components/editor/na
 import { EditorSectionSwitcher } from '@/features/farmacias/ui/components/editor/navigation/EditorSectionSwitcher';
 import { EditorMobileActionBar } from '@/features/farmacias/ui/components/editor/navigation/EditorMobileActionBar';
 import { EstadoAnunciado } from '@/features/farmacias/ui/components/editor/status/EstadoAnunciado';
-import { DEFAULT_SECTION_KEY, SECTION_BY_KEY } from '@/features/farmacias/ui/lib/sectionsConfig';
+import { DEFAULT_SECTION_KEY, SECTION_BY_KEY, puedeVerSeccion } from '@/features/farmacias/ui/lib/sectionsConfig';
 import { HorarioTab } from '@/features/farmacias/ui/components/editor/sections/HorarioTab';
 import { GeneralTab } from '@/features/farmacias/ui/components/editor/sections/GeneralTab';
 import { HeroTab } from '@/features/farmacias/ui/components/editor/sections/HeroTab';
@@ -38,6 +38,7 @@ import { ResenasTab, ResenasVisibilidad } from '@/features/farmacias/ui/componen
 import { LegalTab } from '@/features/farmacias/ui/components/editor/sections/LegalTab';
 import { SeoTab } from '@/features/farmacias/ui/components/editor/sections/SeoTab';
 import { IdiomasTab } from '@/features/farmacias/ui/components/editor/sections/IdiomasTab';
+import { ChatTab } from '@/features/farmacias/ui/components/editor/sections/ChatTab';
 
 const COMPONENTS: Record<string, React.ComponentType> = {
   horario: HorarioTab,
@@ -51,6 +52,7 @@ const COMPONENTS: Record<string, React.ComponentType> = {
   resenas: ResenasTab,
   legal: LegalTab,
   seo: SeoTab,
+  chat: ChatTab,
 };
 
 export function FarmaciaEditor({
@@ -75,22 +77,24 @@ export function FarmaciaEditor({
 /** La sección activa vive en el contexto: el aviso de publicar y el chip de
  *  salud también navegan a una sección. */
 function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
-  const { activeSectionKey, goToSection, readOnly } = useFarmaciaEditor();
+  const { activeSectionKey, goToSection, readOnly, esAdmin } = useFarmaciaEditor();
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const activeSection = SECTION_BY_KEY[activeSectionKey] ?? SECTION_BY_KEY[DEFAULT_SECTION_KEY];
+  const activeSection = puedeVerSeccion(activeSectionKey, esAdmin)
+    ? SECTION_BY_KEY[activeSectionKey]
+    : SECTION_BY_KEY[DEFAULT_SECTION_KEY];
   const ActiveComponent = COMPONENTS[activeSection.key] ?? HorarioTab;
 
   // La sección vive en el hash (#hero, #seo…): al recargar se vuelve a ella.
   useEffect(() => {
     const syncFromHash = () => {
       const fromHash = window.location.hash.slice(1) || DEFAULT_SECTION_KEY;
-      if (SECTION_BY_KEY[fromHash]) goToSection(fromHash);
+      if (puedeVerSeccion(fromHash, esAdmin)) goToSection(fromHash);
     };
     syncFromHash();
     window.addEventListener('hashchange', syncFromHash);
     return () => window.removeEventListener('hashchange', syncFromHash);
-  }, [goToSection]);
+  }, [goToSection, esAdmin]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });

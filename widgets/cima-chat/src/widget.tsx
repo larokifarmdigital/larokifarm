@@ -39,6 +39,7 @@ export function Widget(props: MountOptions) {
           onClose={inline ? undefined : () => setOpen(false)}
           logoUrl={props.logoUrl}
           brandName={props.brandName}
+          inventory={props.inventory !== false}
         />
       )}
       {!inline && !open && (

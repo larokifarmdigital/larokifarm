@@ -8,7 +8,7 @@
 
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { countBySection, type SectionKey } from '@/features/farmacias/ui/lib/i18nStatus';
-import { GROUPS, SECTION_BY_KEY } from '@/features/farmacias/ui/lib/sectionsConfig';
+import { gruposVisibles, SECTION_BY_KEY } from '@/features/farmacias/ui/lib/sectionsConfig';
 import { cn } from '@/shared/lib/cn';
 
 export function EditorSectionSidebar({
@@ -18,7 +18,7 @@ export function EditorSectionSidebar({
   activeKey: string;
   onSelect: (key: string) => void;
 }) {
-  const { farmacia } = useFarmaciaEditor();
+  const { farmacia, esAdmin } = useFarmaciaEditor();
   const perSection = countBySection(farmacia);
   const missingByKey: Record<string, boolean> = perSection.reduce(
     (acc, s) => {
@@ -34,7 +34,7 @@ export function EditorSectionSidebar({
       aria-label="Secciones de la farmacia"
       className="sticky top-[56px] lg:top-[calc(3.5rem+56px)] self-start bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[12px] p-[10px_8px] max-h-[calc(100vh-10rem)] overflow-y-auto"
     >
-      {GROUPS.map((group) => (
+      {gruposVisibles(esAdmin).map((group) => (
         <div key={group.key} className="px-[4px] pb-[4px]">
           <div className="px-[10px] pt-[10px] pb-[6px] text-[12px] font-semibold text-[var(--color-muted)]">
             {group.label}

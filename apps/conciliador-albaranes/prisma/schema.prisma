@@ -67,6 +67,7 @@ model Business {
   textosResenas         Json? // TextosCabecera
   mostrarResenas        Boolean @default(true) // switch del editor: sección Reseñas visible en la landing
   resenasReglas         Json? // { minRating: number|null, soloConComentario: boolean } — reglas de publicación de reseñas
+  chatConfig            Json? // { activo, posicion, color?, nombre?, mostrarLogo, mostrarDisponible } — chat de medicamentos de la web (solo admin); null = valores por defecto
   googleLocationName    String? // ficha GBP para el worker de sync de reseñas
   lastEditedByUserId    String? // quién tocó la farmacia por última vez (no FK por simplicidad)
   lastPublishedAt       DateTime? // timestamp del último publish, para "publicada y al día"

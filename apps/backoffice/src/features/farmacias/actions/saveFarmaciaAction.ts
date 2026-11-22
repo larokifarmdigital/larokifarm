@@ -5,8 +5,8 @@ import { requireUser } from '@/core/auth';
 import { getFarmaciaRepository, parseFarmaciaPatch, type Farmacia } from '@/core/farmacias';
 import type { SaveResult } from '@/core/shared';
 
-/** Campos que solo cambia un SUPER_ADMIN: si cambian, la web deja de leer su contenido o el mapa/reseñas se rompen. */
-const SOLO_ADMIN: (keyof Farmacia)[] = ['slug', 'mapaUrl', 'googleLocationName'];
+/** Campos que solo cambia un SUPER_ADMIN: si cambian, la web deja de leer su contenido o el mapa/reseñas/chat se rompen. */
+const SOLO_ADMIN: (keyof Farmacia)[] = ['slug', 'mapaUrl', 'googleLocationName', 'chat'];
 
 /**
  * Autoguardado del editor. `patch` llega del cliente: se valida en el
@@ -27,7 +27,7 @@ export async function saveFarmaciaPatchAction(
     return { ok: false, error: 'Los idiomas se gestionan desde «Idiomas de la web».' };
   }
   if (user.rol !== 'admin' && SOLO_ADMIN.some((k) => parsed.data[k] !== undefined)) {
-    return { ok: false, error: 'Solo un administrador puede cambiar el identificador, el mapa o la conexión con Google.' };
+    return { ok: false, error: 'Solo un administrador puede cambiar el identificador, el mapa, la conexión con Google o el chat.' };
   }
   if (Object.keys(parsed.data).length === 0) {
     const current = await getFarmaciaRepository().getFarmacia(id);

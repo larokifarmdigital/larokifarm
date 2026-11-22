@@ -20,7 +20,7 @@ import { z } from 'zod';
 import { LOCALES, type MultilangText, type SaveResult } from '@/core/shared';
 import { isSafeHref } from '@/shared/lib/safeHref';
 import { sanitizeRichHtml } from '@/shared/lib/safeHtml';
-import type { Farmacia } from '../domain';
+import { COLOR_HEX_RE, type Farmacia } from '../domain';
 
 const LOCALE_SET = new Set<string>(LOCALES);
 const SLUG_RE = /^[a-z0-9-]{1,60}$/;
@@ -119,6 +119,24 @@ const patchSchema = z
     resenasReglas: z.object({
       minRating: z.number().int().min(1).max(5).nullable(),
       soloConComentario: z.boolean(),
+    }),
+    chat: z.object({
+      activo: z.boolean(),
+      posicion: z.enum(['derecha', 'izquierda']),
+      color: z
+        .string()
+        .trim()
+        .transform((c) => c.toLowerCase())
+        .refine((c) => c === '' || COLOR_HEX_RE.test(c), 'Escribe el color como #1265b5')
+        .transform((c) => c || undefined)
+        .nullish()
+        .transform((c) => c ?? undefined),
+      nombre: str(60)
+        .transform((n) => n.trim() || undefined)
+        .nullish()
+        .transform((n) => n ?? undefined),
+      mostrarLogo: z.boolean(),
+      mostrarDisponible: z.boolean(),
     }),
     descripcionCorta: ml(400),
     descripcionLarga: richMl,

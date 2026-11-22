@@ -209,6 +209,8 @@ export function toLandingFarmacia(f: Farmacia, baseUrl: string) {
     textosResenas: cabecera(f.textosResenas),
     mostrarResenas: f.mostrarResenas,
     resenasReglas: f.resenasReglas,
+    // Sin color/nombre la landing usa los suyos (los que tenía fijos).
+    chat: f.chat,
     avisoLegal: i18n(f.avisoLegal, { html: true }),
     politicaPrivacidad: i18n(f.politicaPrivacidad, { html: true }),
   };

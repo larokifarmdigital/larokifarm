@@ -9,7 +9,7 @@
 import { useEffect, useRef } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { countBySection, type SectionKey } from '@/features/farmacias/ui/lib/i18nStatus';
-import { GROUPS, SECTION_BY_KEY } from '@/features/farmacias/ui/lib/sectionsConfig';
+import { gruposVisibles, SECTION_BY_KEY } from '@/features/farmacias/ui/lib/sectionsConfig';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
 
@@ -25,7 +25,7 @@ export function EditorSectionSheet({
   onSelect: (key: string) => void;
 }) {
   const ref = useRef<HTMLDialogElement | null>(null);
-  const { farmacia } = useFarmaciaEditor();
+  const { farmacia, esAdmin } = useFarmaciaEditor();
   const perSection = countBySection(farmacia);
   const missingByKey: Record<string, boolean> = perSection.reduce(
     (acc, s) => {
@@ -74,7 +74,7 @@ export function EditorSectionSheet({
         </button>
       </div>
       <div className="py-[6px] px-[8px] overflow-y-auto" style={{ maxHeight: 'calc(min(70vh, 540px) - 48px)' }}>
-        {GROUPS.map((group) => (
+        {gruposVisibles(esAdmin).map((group) => (
           <div key={group.key}>
             <div className="px-[12px] pt-[12px] pb-[4px] text-[12.5px] font-semibold text-[var(--color-muted)]">
               {group.label}

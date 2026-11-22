@@ -41,6 +41,7 @@ interface Props {
   onClose?: () => void;
   logoUrl?: string;
   brandName?: string;
+  inventory?: boolean;
 }
 
 interface AnswerEntry {
@@ -60,7 +61,7 @@ const BUNDLED_CATALOG: CimaCatalog = {
   source: 'bundled',
 };
 
-export function ChatPanel({ onClose, logoUrl, brandName }: Props) {
+export function ChatPanel({ onClose, logoUrl, brandName, inventory: usarInventario = true }: Props) {
   const [entry, setEntry] = useState<EntryMode>('menu');
   const [heroInput, setHeroInput] = useState('');
   const [chatInitial, setChatInitial] = useState<string | undefined>(undefined);
@@ -134,6 +135,7 @@ export function ChatPanel({ onClose, logoUrl, brandName }: Props) {
   }, [query, otcOnly, debouncedSearch]);
 
   useEffect(() => {
+    if (!usarInventario) return;
     let cancelled = false;
     fetchInventory().then((inv) => {
       if (!cancelled) setInventory(inv);
@@ -141,7 +143,7 @@ export function ChatPanel({ onClose, logoUrl, brandName }: Props) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [usarInventario]);
 
   const loadMedicamento = useCallback((item: CimaMedicamentoListItem) => {
     detailAbort.current?.abort();

@@ -12,8 +12,8 @@ import type {
   Resena as PrismaResena,
   Servicio as PrismaServicio,
 } from '@prisma/client';
-import type { Direccion, Farmacia, FeatureTarjeta, Horario, HeroTarjetaFlotante, ImagenAsset, Redes, Resena, ResenasReglas, Servicio, SobreNosotros, TextosCabecera, Faq, SeoConfig, FarmaciaStatus } from '@/core/farmacias/domain';
-import { RESENAS_REGLAS_POR_DEFECTO } from '@/core/farmacias/domain';
+import type { ChatConfig, Direccion, Farmacia, FeatureTarjeta, Horario, HeroTarjetaFlotante, ImagenAsset, Redes, Resena, ResenasReglas, Servicio, SobreNosotros, TextosCabecera, Faq, SeoConfig, FarmaciaStatus } from '@/core/farmacias/domain';
+import { CHAT_POR_DEFECTO, COLOR_HEX_RE, RESENAS_REGLAS_POR_DEFECTO } from '@/core/farmacias/domain';
 import type { Locale, MultilangText } from '@/core/shared';
 import { LOCALES } from '@/core/shared';
 
@@ -59,6 +59,22 @@ function asResenasReglas(v: unknown): ResenasReglas {
   return {
     minRating: 'minRating' in o ? min : RESENAS_REGLAS_POR_DEFECTO.minRating,
     soloConComentario: typeof o.soloConComentario === 'boolean' ? o.soloConComentario : RESENAS_REGLAS_POR_DEFECTO.soloConComentario,
+  };
+}
+
+/** Columna `chatConfig` (null en las farmacias que nunca lo tocaron) → valores por defecto campo a campo. */
+export function asChatConfig(v: unknown): ChatConfig {
+  const o = v && typeof v === 'object' ? (v as Record<string, unknown>) : {};
+  const bool = (k: keyof ChatConfig) => (typeof o[k] === 'boolean' ? (o[k] as boolean) : (CHAT_POR_DEFECTO[k] as boolean));
+  const color = typeof o.color === 'string' && COLOR_HEX_RE.test(o.color) ? o.color.toLowerCase() : undefined;
+  const nombre = typeof o.nombre === 'string' && o.nombre.trim() ? o.nombre.trim() : undefined;
+  return {
+    activo: bool('activo'),
+    posicion: o.posicion === 'izquierda' ? 'izquierda' : 'derecha',
+    ...(color && { color }),
+    ...(nombre && { nombre }),
+    mostrarLogo: bool('mostrarLogo'),
+    mostrarDisponible: bool('mostrarDisponible'),
   };
 }
 
@@ -319,6 +335,7 @@ export function mapBusinessToFarmacia(b: BusinessWithContent): Farmacia {
     googleLocationName: b.googleLocationName ?? undefined,
     mostrarResenas: b.mostrarResenas ?? true,
     resenasReglas: asResenasReglas(b.resenasReglas),
+    chat: asChatConfig(b.chatConfig),
 
     seo: withOgImage(asSeoConfig(b.seoConfig), imagenesByRole.og?.[0]),
 
@@ -351,6 +368,7 @@ export type BusinessScalarPatch = {
   googleLocationName?: string | null;
   mostrarResenas?: boolean;
   resenasReglas?: unknown;
+  chatConfig?: unknown;
   publishedStatus?: string;
   lastEditedByUserId?: string | null;
   lastPublishedAt?: Date | null;
@@ -400,6 +418,7 @@ export function splitFarmaciaPatch(patch: Partial<Farmacia>): {
   if (patch.googleLocationName !== undefined) scalar.googleLocationName = patch.googleLocationName ?? null;
   if (patch.mostrarResenas !== undefined) scalar.mostrarResenas = patch.mostrarResenas;
   if (patch.resenasReglas !== undefined) scalar.resenasReglas = patch.resenasReglas;
+  if (patch.chat !== undefined) scalar.chatConfig = patch.chat;
 
   if (patch.status !== undefined) {
     scalar.publishedStatus = patch.status;

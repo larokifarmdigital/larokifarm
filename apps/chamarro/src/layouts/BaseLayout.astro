@@ -2,6 +2,7 @@
 import '@/styles/global.css';
 import { LOCALE_DEFECTO, OG_LOCALE, rutaConLocale, type Locale } from '@/lib/i18n';
 import { imagenSanity } from '@/lib/sanity';
+import { CHAT } from '@/lib/chat';
 import Analytics from '@vercel/analytics/astro';
 
 export interface Props {
@@ -205,17 +206,22 @@ const hrefDefault =
       }
     </script>
 
-    <div
-      data-cima-chat
-      data-theme='light'
-      data-primary-light='#12804a'
-      data-primary-dark='#6dc261'
-      data-position='bottom-right'
-      data-logo-url={logoChatUrl}
-      data-brand-name={nombreFarmacia}
-    >
-    </div>
-    <script is:inline async src='https://larokifarm-cima-chat-5f3.pages.dev/cima-chat.iife.js'>
-    </script>
+    {CHAT.activo && (
+      <Fragment>
+        <div
+          data-cima-chat
+          data-theme='light'
+          data-primary-light={CHAT.color}
+          data-primary-dark='#6dc261'
+          data-position={CHAT.posicion === 'izquierda' ? 'bottom-left' : 'bottom-right'}
+          data-logo-url={CHAT.mostrarLogo ? logoChatUrl : undefined}
+          data-brand-name={CHAT.nombre ?? nombreFarmacia}
+          data-inventory={CHAT.mostrarDisponible ? undefined : 'off'}
+        >
+        </div>
+        <script is:inline async src='https://larokifarm-cima-chat-5f3.pages.dev/cima-chat.iife.js'>
+        </script>
+      </Fragment>
+    )}
   </body>
 </html>

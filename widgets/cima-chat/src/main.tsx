@@ -9,6 +9,8 @@ export interface MountOptions {
   primaryDark?: string;
   logoUrl?: string;
   brandName?: string;
+  /** false = no descarga el inventario ni marca "Disponible" (data-inventory="off"). */
+  inventory?: boolean;
 }
 
 export interface CimaHandle {
@@ -23,7 +25,8 @@ function readOptions(el: HTMLElement): MountOptions {
     primaryLight: el.dataset.primaryLight || undefined,
     primaryDark: el.dataset.primaryDark || undefined,
     logoUrl: el.dataset.logoUrl || undefined,
-    brandName: el.dataset.brandName || undefined
+    brandName: el.dataset.brandName || undefined,
+    inventory: el.dataset.inventory !== 'off'
   };
 }
 

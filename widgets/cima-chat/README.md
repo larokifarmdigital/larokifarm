@@ -56,6 +56,11 @@ Produce dos formatos en `dist/`:
 | `data-position` | `bottom-right` \| `bottom-left` \| `inline` | `bottom-right` |
 | `data-primary-light` | cualquier color CSS (`#0a66c2`, `rebeccapurple`, `rgb(...)`) | verde por defecto |
 | `data-primary-dark` | cualquier color CSS | verde claro por defecto |
+| `data-logo-url` | URL de imagen | sin logo |
+| `data-brand-name` | texto de la cabecera | `CIMA` |
+| `data-inventory` | `off` | activo: marca «Disponible» con el inventario (`VITE_INVENTORY_URL` en el build; sin ella no hay inventario) |
+
+En las landings estos valores salen de la sección «Chat de medicamentos» del backoffice (solo administrador).
 
 Si pasas `data-primary-light` o `data-primary-dark`, las variantes (`hover`, `soft`, `strong`) se derivan automáticamente con `color-mix()`; si omites uno, el tema correspondiente conserva su default.
 

@@ -4,6 +4,7 @@ import gilroyRegular from '@/assets/fonts/Gilroy-Regular.ttf?url';
 import gilroyBlack from '@/assets/fonts/Gilroy-Black.ttf?url';
 import { LOCALE_DEFECTO, OG_LOCALE, rutaConLocale, t, type Locale } from '@/lib/i18n';
 import { SLUG_FARMACIA, imagenSanity } from '@/lib/sanity';
+import { CHAT } from '@/lib/chat';
 import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
 
@@ -203,17 +204,22 @@ const hrefDefault =
       }
     </script>
 
-    <div
-      data-cima-chat
-      data-theme='light'
-      data-primary-light='#1265b5'
-      data-primary-dark='#ff6b9d'
-      data-position='bottom-right'
-      data-logo-url={logoChatUrl}
-      data-brand-name={nombreFarmacia}
-    >
-    </div>
-    <script is:inline async src='https://larokifarm-cima-chat-5f3.pages.dev/cima-chat.iife.js'>
-    </script>
+    {CHAT.activo && (
+      <Fragment>
+        <div
+          data-cima-chat
+          data-theme='light'
+          data-primary-light={CHAT.color}
+          data-primary-dark='#ff6b9d'
+          data-position={CHAT.posicion === 'izquierda' ? 'bottom-left' : 'bottom-right'}
+          data-logo-url={CHAT.mostrarLogo ? logoChatUrl : undefined}
+          data-brand-name={CHAT.nombre ?? nombreFarmacia}
+          data-inventory={CHAT.mostrarDisponible ? undefined : 'off'}
+        >
+        </div>
+        <script is:inline async src='https://larokifarm-cima-chat-5f3.pages.dev/cima-chat.iife.js'>
+        </script>
+      </Fragment>
+    )}
   </body>
 </html>

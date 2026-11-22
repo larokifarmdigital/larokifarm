@@ -91,6 +91,45 @@ export type ResenasReglas = {
 /** Lo que tenía fijo la portada de las landings antes de ser configurable. */
 export const RESENAS_REGLAS_POR_DEFECTO: ResenasReglas = { minRating: 4, soloConComentario: true };
 
+/**
+ * Chat de medicamentos (widget cima-chat) en la web. Solo lo cambia el
+ * administrador. Los valores por defecto = lo que cada web tenía fijo: sin
+ * `color` ni `nombre`, la landing usa los suyos.
+ */
+export type ChatPosicion = 'derecha' | 'izquierda';
+
+export type ChatConfig = {
+  activo: boolean;
+  posicion: ChatPosicion;
+  /** `#rrggbb`. Vacío = el color de la web. */
+  color?: string;
+  /** Nombre en la cabecera del chat. Vacío = el nombre de la farmacia. */
+  nombre?: string;
+  mostrarLogo: boolean;
+  /** Etiqueta "Disponible" con el inventario (stock > 0 en el grupo). */
+  mostrarDisponible: boolean;
+};
+
+export const CHAT_POR_DEFECTO: ChatConfig = {
+  activo: true,
+  posicion: 'derecha',
+  mostrarLogo: true,
+  mostrarDisponible: true,
+};
+
+export const COLOR_HEX_RE = /^#[0-9a-f]{6}$/i;
+
+/** Contraste del texto blanco sobre `hex` (WCAG). El chat pone iconos y texto blancos sobre el color. */
+export function contrasteConBlanco(hex: string): number {
+  if (!COLOR_HEX_RE.test(hex)) return 0;
+  const canal = (i: number) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const l = 0.2126 * canal(1) + 0.7152 * canal(3) + 0.0722 * canal(5);
+  return 1.05 / (l + 0.05);
+}
+
 /** ¿Esta reseña sale en la web? (no oculta, no borrada en Google y cumple las reglas). */
 export function resenaEnWeb(r: Pick<Resena, 'oculta' | 'eliminadaEnGoogle' | 'puntuacion' | 'texto'>, reglas: ResenasReglas): boolean {
   if (r.oculta || r.eliminadaEnGoogle) return false;
@@ -233,6 +272,9 @@ export type Farmacia = {
   /** Qué reseñas salen en la web (además de las ocultas a mano). */
   resenasReglas: ResenasReglas;
   googleLocationName?: string;
+
+  /** Chat de medicamentos de la web (solo administrador). */
+  chat: ChatConfig;
 
   seo?: SeoConfig;
 

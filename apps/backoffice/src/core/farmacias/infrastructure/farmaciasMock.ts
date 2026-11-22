@@ -1,4 +1,4 @@
-import type { Farmacia } from '@/core/farmacias/domain';
+import { CHAT_POR_DEFECTO, type Farmacia } from '@/core/farmacias/domain';
 
 const img = (seed: string, w: number, h: number) =>
   `https://picsum.photos/seed/${seed}/${w}/${h}`;
@@ -112,6 +112,7 @@ export const MOCK_FARMACIAS: Farmacia[] = [
     ],
     mostrarResenas: true,
     resenasReglas: { minRating: 4, soloConComentario: true },
+    chat: { ...CHAT_POR_DEFECTO },
     resenas: [
       {
         id: 'res_1',
@@ -228,6 +229,7 @@ export const MOCK_FARMACIAS: Farmacia[] = [
     resenas: [],
     mostrarResenas: true,
     resenasReglas: { minRating: 4, soloConComentario: true },
+    chat: { ...CHAT_POR_DEFECTO },
     seo: {
       title: { es: 'Farmacia Chamarro · Huacho' },
       description: { es: 'Farmacia comunitaria en Huacho con delivery y precios accesibles.' },
@@ -254,6 +256,7 @@ export const MOCK_FARMACIAS: Farmacia[] = [
     resenas: [],
     mostrarResenas: true,
     resenasReglas: { minRating: 4, soloConComentario: true },
+    chat: { ...CHAT_POR_DEFECTO },
     createdAt: '2026-09-01T09:00:00.000Z',
     updatedAt: '2026-09-10T09:00:00.000Z',
   },

@@ -188,6 +188,8 @@ export type Farmacia = {
   textosResenas?: TextosCabecera;
   /** Solo backoffice: switch del editor. Sin valor → MOSTRAR_RESENAS_POR_DEFECTO. */
   mostrarResenas?: boolean;
+  /** Solo backoffice: ajustes del chat de medicamentos (ver lib/chat.ts). */
+  chat?: Partial<import('./chat').ChatWeb>;
   avisoLegal?: LegalTexto;
   politicaPrivacidad?: LegalTexto;
 };
