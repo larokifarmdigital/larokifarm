@@ -27,7 +27,9 @@ const DEFAULT: InventoryConfig = {
   url: (import.meta as any).env?.VITE_INVENTORY_URL,
   cacheKey: 'cima-chat:inventory:v1',
   ttlMs: 30 * 60 * 1000,
-  useMock: !(import.meta as any).env?.VITE_INVENTORY_URL,
+  // Solo en `pnpm dev`: en producción, sin URL no hay inventario y nunca se
+  // marca "Disponible" (antes el build publicado mostraba los 4 de prueba).
+  useMock: Boolean((import.meta as any).env?.DEV) && !(import.meta as any).env?.VITE_INVENTORY_URL,
 };
 
 const MOCK_INVENTORY: InventoryItem[] = [
@@ -126,7 +128,7 @@ export async function fetchInventory(
 ): Promise<Inventory> {
   const cfg = { ...DEFAULT, ...cfgOverride };
 
-  if (cfg.useMock) {
+  if (import.meta.env.DEV && cfg.useMock) {
     return indexInventory(MOCK_INVENTORY, 'mock');
   }
 
