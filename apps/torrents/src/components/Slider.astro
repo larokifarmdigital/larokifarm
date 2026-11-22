@@ -1,5 +1,6 @@
 ---
 import { imagenSanity } from '@/lib/sanity';
+import { t, type Locale } from '@/lib/i18n';
 
 export type SliderImagen = { url: string; alt?: string };
 
@@ -11,6 +12,7 @@ export interface Props {
   prioridad?: boolean;
   marcaAgua?: string;
   marcaAguaAlt?: string;
+  lang: Locale;
 }
 
 const {
@@ -20,7 +22,8 @@ const {
   autoplayMs = 3500,
   prioridad = false,
   marcaAgua,
-  marcaAguaAlt = ''
+  marcaAguaAlt = '',
+  lang
 } = Astro.props;
 
 const items = (imagenes ?? [])
@@ -74,12 +77,29 @@ const marcaAguaUrl = imagenSanity(marcaAgua, { w: 160, fit: 'max' });
         {items.map((_, i) => (
           <button
             type='button'
-            aria-label={`Ir a la imagen ${i + 1}`}
+            aria-label={t('slider.irA', lang, { n: String(i + 1) })}
             aria-current={i === 0 ? 'true' : 'false'}
             class='box-content h-2 w-2 rounded-full border-8 border-transparent bg-clip-content bg-[color-mix(in_oklch,var(--primary),transparent_75%)] transition-all duration-300 hover:bg-[color-mix(in_oklch,var(--primary),transparent_50%)] aria-[current=true]:w-7 aria-[current=true]:bg-[var(--primary)] aria-[current=true]:shadow-[0_0_10px_color-mix(in_oklch,var(--primary),transparent_55%)] aria-[current=true]:hover:bg-[var(--primary)]'
             data-dot={String(i)}
           />
         ))}
+        {/* WCAG 2.2.2: el pase automático se puede detener. */}
+        <button
+          type='button'
+          class='ml-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--primary)] hover:bg-[color-mix(in_oklch,var(--primary),transparent_88%)]'
+          aria-label={t('slider.pausar', lang)}
+          data-label-pausar={t('slider.pausar', lang)}
+          data-label-reanudar={t('slider.reanudar', lang)}
+          data-pausa
+          hidden
+        >
+          <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true' data-icono-pausa>
+            <rect x='6' y='5' width='4' height='14' rx='1' /><rect x='14' y='5' width='4' height='14' rx='1' />
+          </svg>
+          <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true' data-icono-play class='hidden'>
+            <path d='M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z' />
+          </svg>
+        </button>
       </div>
     )
   }
@@ -99,6 +119,9 @@ const marcaAguaUrl = imagenSanity(marcaAgua, { w: 160, fit: 'max' });
       const autoplayMs = Number(root.dataset.autoplayMs || 3500);
       let idx = 0;
       let timer: number | undefined;
+      // Pausado por la persona (botón o al elegir una foto): ya no se reanuda solo.
+      let pausadoUsuario = false;
+      const pausa = root.querySelector<HTMLButtonElement>('[data-pausa]');
 
       function mostrar(n: number) {
         const anterior = idx;
@@ -120,8 +143,15 @@ const marcaAguaUrl = imagenSanity(marcaAgua, { w: 160, fit: 'max' });
         dots[idx]?.setAttribute('aria-current', 'true');
       }
 
+      function pintarPausa() {
+        if (!pausa) return;
+        pausa.setAttribute('aria-label', (pausadoUsuario ? pausa.dataset.labelReanudar : pausa.dataset.labelPausar) ?? '');
+        pausa.querySelector('[data-icono-pausa]')?.classList.toggle('hidden', pausadoUsuario);
+        pausa.querySelector('[data-icono-play]')?.classList.toggle('hidden', !pausadoUsuario);
+      }
+
       function iniciar() {
-        if (reduceMotion) return;
+        if (reduceMotion || pausadoUsuario) return;
         detener();
         timer = window.setInterval(() => mostrar(idx + 1), autoplayMs);
       }
@@ -136,9 +166,22 @@ const marcaAguaUrl = imagenSanity(marcaAgua, { w: 160, fit: 'max' });
       dots.forEach((d, i) =>
         d.addEventListener('click', () => {
           mostrar(i);
-          iniciar();
+          pausadoUsuario = true;
+          detener();
+          pintarPausa();
         })
       );
+
+      // Sin pase automático (movimiento reducido) el botón no tiene sentido.
+      if (pausa && !reduceMotion) {
+        pausa.hidden = false;
+        pausa.addEventListener('click', () => {
+          pausadoUsuario = !pausadoUsuario;
+          if (pausadoUsuario) detener();
+          else iniciar();
+          pintarPausa();
+        });
+      }
 
       root.addEventListener('mouseenter', detener);
       root.addEventListener('mouseleave', iniciar);

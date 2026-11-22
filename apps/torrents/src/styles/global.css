@@ -198,7 +198,9 @@
   }
 }
 
-/* Reveal on-scroll · fade + translate + blur editorial. */
+/* Reveal on-scroll · fade + translate + blur editorial.
+ * Solo con JS: sin JS el contenido se ve tal cual (el observer no llegaría a mostrarlo). */
+@media (scripting: enabled) {
 [data-reveal] {
   --reveal-delay: 0ms;
   opacity: 0;
@@ -215,8 +217,10 @@
   transform: translateY(0);
   filter: blur(0);
 }
+}
 
-/* Reveal word · para word-by-word stagger en el hero. */
+/* Reveal word · para word-by-word stagger en el hero (solo con JS). */
+@media (scripting: enabled) {
 [data-reveal-word] {
   --reveal-delay: 0ms;
   display: inline-block;
@@ -234,6 +238,7 @@
   opacity: 1;
   transform: translateY(0);
   filter: blur(0);
+}
 }
 
 /* Float sutil permanente — imagen protagonista. */

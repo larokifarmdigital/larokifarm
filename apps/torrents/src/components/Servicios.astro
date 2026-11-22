@@ -183,16 +183,34 @@ function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): Enla
               </div>
             </div>
 
-            <div class='mt-4 flex justify-center gap-0'>
+            <div class='mt-4 flex items-center justify-center gap-0'>
               {serviciosLocalizados.map((_, i) => (
                 <button
                   type='button'
                   data-dot-mobile={i}
                   aria-label={t('servicios.btnSlide', lang, { n: i + 1 })}
+                  aria-current={i === 0 ? 'true' : 'false'}
                   class='box-content h-2 rounded-full border-8 border-transparent bg-clip-content transition-all'
                   style='width: 0.5rem; background: var(--border);'
                 />
               ))}
+              {/* WCAG 2.2.2: el pase automático se puede detener. */}
+              <button
+                type='button'
+                class='ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--primary)]'
+                aria-label={t('slider.pausar', lang)}
+                data-label-pausar={t('slider.pausar', lang)}
+                data-label-reanudar={t('slider.reanudar', lang)}
+                data-pausa-mobile
+                hidden
+              >
+                <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true' data-icono-pausa>
+                  <rect x='6' y='5' width='4' height='14' rx='1' /><rect x='14' y='5' width='4' height='14' rx='1' />
+                </svg>
+                <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true' data-icono-play class='hidden'>
+                  <path d='M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z' />
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -325,7 +343,18 @@ function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): Enla
     if (!track || total < 2) return;
 
     const primero = track.children[0];
-    if (primero) track.appendChild(primero.cloneNode(true));
+    if (primero) {
+      // Copia para el bucle infinito: invisible para lector y teclado.
+      const clon = primero.cloneNode(true) as HTMLElement;
+      clon.setAttribute('aria-hidden', 'true');
+      clon.inert = true;
+      track.appendChild(clon);
+    }
+    const slides = Array.from(track.children) as HTMLElement[];
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const pausaBtn = slider.querySelector<HTMLButtonElement>('[data-pausa-mobile]');
+    // La persona lo ha parado (botón, punto o arrastre): no se reanuda solo.
+    let pausadoUsuario = false;
 
     let actual = 0;
     let animando = false;
@@ -343,7 +372,28 @@ function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): Enla
       dots.forEach((d, i) => {
         d.style.width = i === real ? '1.75rem' : '0.5rem';
         d.style.background = i === real ? PRIMARY : BORDER;
+        d.setAttribute('aria-current', i === real ? 'true' : 'false');
       });
+      // Solo la tarjeta visible es enfocable; el resto queda fuera de la ventana.
+      slides.forEach((s, i) => {
+        if (i < total) s.inert = i !== real;
+      });
+    }
+
+    function pintarPausa() {
+      if (!pausaBtn) return;
+      pausaBtn.setAttribute(
+        'aria-label',
+        (pausadoUsuario ? pausaBtn.dataset.labelReanudar : pausaBtn.dataset.labelPausar) ?? ''
+      );
+      pausaBtn.querySelector('[data-icono-pausa]')?.classList.toggle('hidden', pausadoUsuario);
+      pausaBtn.querySelector('[data-icono-play]')?.classList.toggle('hidden', !pausadoUsuario);
+    }
+
+    function pararPorUsuario() {
+      pausadoUsuario = true;
+      pausar();
+      pintarPausa();
     }
 
     function irA(idx: number, animar = true) {
@@ -375,6 +425,7 @@ function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): Enla
 
     function arrancar() {
       pausar();
+      if (reduce || pausadoUsuario) return;
       intervalo = window.setInterval(siguiente, 4500);
     }
 
@@ -470,7 +521,7 @@ function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): Enla
       dragStartX = null;
       dragDelta = 0;
       arrastrando = false;
-      arrancar();
+      pararPorUsuario();
     }
 
     track.addEventListener('pointerdown', onDown);
@@ -482,14 +533,26 @@ function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): Enla
       dot.addEventListener('click', () => {
         if (animando) return;
         irA(i);
-        arrancar();
+        pararPorUsuario();
       });
     });
 
-    pintarDots();
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      arrancar();
+    // Con el foco dentro no se mueve (WCAG 2.2.2).
+    slider.addEventListener('focusin', pausar);
+    slider.addEventListener('focusout', () => arrancar());
+
+    if (pausaBtn && !reduce) {
+      pausaBtn.hidden = false;
+      pausaBtn.addEventListener('click', () => {
+        pausadoUsuario = !pausadoUsuario;
+        if (pausadoUsuario) pausar();
+        else arrancar();
+        pintarPausa();
+      });
     }
+
+    pintarDots();
+    arrancar();
   }
 
   function initDesktopSlider() {
@@ -606,6 +669,22 @@ function resolverEnlace(enlace?: { url?: string; nuevaPestana?: boolean }): Enla
     window.addEventListener('resize', () => {
       if (resizeTimeout) window.clearTimeout(resizeTimeout);
       resizeTimeout = window.setTimeout(() => irA(Math.min(actual, maxIdx()), false), 100);
+    });
+
+    // Tab a una tarjeta fuera de la ventana: el navegador desplazaría el contenedor
+    // (overflow:hidden) y descuadraría el carrusel. Se lleva el carrusel a esa
+    // tarjeta y se anula el desplazamiento nativo.
+    const ventana = track.parentElement;
+    ventana?.addEventListener('scroll', () => {
+      ventana.scrollLeft = 0;
+    });
+    track.addEventListener('focusin', e => {
+      const slide = (e.target as HTMLElement).closest<HTMLElement>('[data-track-desktop] > *');
+      if (!slide) return;
+      const i = Array.from(track.children).indexOf(slide);
+      if (i < actual) irA(i);
+      else if (i > actual + visibles() - 1) irA(i - visibles() + 1);
+      if (ventana) ventana.scrollLeft = 0;
     });
 
     pintarBotones();

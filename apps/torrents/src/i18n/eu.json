@@ -44,7 +44,8 @@
     },
     "ciudad": "Farmazia {ciudad}n",
     "btnLlamar": "Deitu orain",
-    "altInterior": "{nombre}(r)en barrualdea"
+    "altInterior": "{nombre}(r)en barrualdea",
+    "btnWhatsapp": "Idatzi iezaguzu WhatsAppez"
   },
   "about": {
     "chip": "Guri buruz",
@@ -173,7 +174,11 @@
     "metaDescripcion": "{nombre}(r)en Googleko iritzi egiaztatu guztiak. Bezeroen benetako iritziak.",
     "rangoNota": "{media} 5etik · {total} iritzi",
     "filtroTodas": "Guztiak",
-    "filtroEstrellas": "{n} izar"
+    "filtroEstrellas": "{n} izar",
+    "ariaFiltros": "Iragazi iritziak izarren arabera",
+    "mostrando": "{n} iritzi erakusten",
+    "ariaFila": "Iritziak, {n}. errenkada",
+    "pausarCinta": "Pausatu iritziak"
   },
   "p404": {
     "tituloMeta": "Ez da orria aurkitu · {nombre}",
@@ -184,5 +189,13 @@
     "texto": "Baliteke esteka hautsita egotea, orria lekuz aldatu izana edo URLa okerra izatea.",
     "btnInicio": "Itzuli hasierara",
     "buscas": "Zerbait zehatza bilatzen duzu?"
+  },
+  "comun": {
+    "saltarContenido": "Joan edukira"
+  },
+  "slider": {
+    "irA": "Joan {n}. irudira",
+    "pausar": "Pausatu irudien aurkezpena",
+    "reanudar": "Berrekin irudien aurkezpenari"
   }
 }

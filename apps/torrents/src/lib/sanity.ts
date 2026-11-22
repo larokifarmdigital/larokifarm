@@ -262,6 +262,12 @@ export type ResenaGoogle = {
   destacada?: boolean;
 };
 
+/** Idioma del comentario como atributo `lang` válido (WCAG 3.1.2), o undefined. */
+export function langComentario(r: Pick<ResenaGoogle, 'comentarioIdioma'>): string | undefined {
+  const l = r.comentarioIdioma?.trim();
+  return l && /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(l) ? l : undefined;
+}
+
 export type ResumenResenas = {
   total: number;
   media: number;

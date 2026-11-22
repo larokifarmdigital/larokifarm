@@ -141,7 +141,8 @@ const titulo = ciudad ? partirParaResaltar(tituloCiudad) : partirParaResaltar(ti
                 data-embed={embedUrl}
                 data-title={t('cta.ariaMapa', lang, { nombre })}
                 aria-label={t('cta.cargarMapa', lang)}
-                class='group relative flex h-full min-h-80 w-full cursor-pointer flex-col items-center justify-center gap-4 bg-[color-mix(in_oklch,var(--primary),transparent_94%)] p-6 text-center transition-colors hover:bg-[color-mix(in_oklch,var(--primary),transparent_90%)]'
+                aria-describedby='mapa-aviso'
+                class='mapa-facade group relative flex h-full min-h-80 w-full cursor-pointer flex-col items-center justify-center gap-4 bg-[color-mix(in_oklch,var(--primary),transparent_94%)] p-6 text-center transition-colors hover:bg-[color-mix(in_oklch,var(--primary),transparent_90%)]'
               >
                 <span class='dot-pattern absolute inset-0 opacity-40' aria-hidden='true' />
                 <span class='relative flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--primary)] text-white shadow-lg transition-transform duration-300 group-hover:scale-110'>
@@ -180,10 +181,21 @@ const titulo = ciudad ? partirParaResaltar(tituloCiudad) : partirParaResaltar(ti
                   </svg>
                   {t('cta.cargarMapa', lang)}
                 </span>
-                <span class='relative max-w-xs text-xs leading-relaxed text-muted-foreground'>
+                <span id='mapa-aviso' class='relative max-w-xs text-sm leading-relaxed text-muted-foreground'>
                   {t('cta.cargarMapaAviso', lang)}
                 </span>
               </button>
+              {/* Sin JS el mapa no puede cargarse: enlace directo a Google Maps. */}
+              <noscript>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccionLarga ?? nombre)}`}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  class='flex h-full min-h-80 w-full items-center justify-center p-6 text-center font-bold text-[var(--primary)] underline'
+                >
+                  {t('footer.comoLlegar', lang)} <span class='sr-only'> {t('footer.nuevaPestana', lang)}</span>
+                </a>
+              </noscript>
             </div>
           )
         }
@@ -380,6 +392,8 @@ const titulo = ciudad ? partirParaResaltar(tituloCiudad) : partirParaResaltar(ti
           iframe.className = 'block h-full min-h-80 w-full border-0';
           iframe.setAttribute('allowfullscreen', '');
           facade.replaceWith(iframe);
+          // El botón desaparece: el foco pasa al mapa para no perderse.
+          iframe.focus();
         },
         { once: true }
       );
@@ -392,3 +406,10 @@ const titulo = ciudad ? partirParaResaltar(tituloCiudad) : partirParaResaltar(ti
     initMapaFacade();
   }
 </script>
+
+<style>
+  /* Sin JS el botón no haría nada: se oculta y queda el enlace del noscript. */
+  @media (scripting: none) {
+    .mapa-facade { display: none !important; }
+  }
+</style>

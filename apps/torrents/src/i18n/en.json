@@ -44,7 +44,8 @@
     },
     "ciudad": "Pharmacy in {ciudad}",
     "btnLlamar": "Call now",
-    "altInterior": "Interior of {nombre}"
+    "altInterior": "Interior of {nombre}",
+    "btnWhatsapp": "Message us on WhatsApp"
   },
   "about": {
     "chip": "About us",
@@ -173,7 +174,11 @@
     "metaDescripcion": "All verified Google reviews of {nombre}. Real opinions from customers.",
     "rangoNota": "{media} out of 5 · {total} reviews",
     "filtroTodas": "All",
-    "filtroEstrellas": "{n} stars"
+    "filtroEstrellas": "{n} stars",
+    "ariaFiltros": "Filter reviews by stars",
+    "mostrando": "Showing {n} reviews",
+    "ariaFila": "Reviews, row {n}",
+    "pausarCinta": "Pause reviews"
   },
   "p404": {
     "tituloMeta": "Page not found · {nombre}",
@@ -184,5 +189,13 @@
     "texto": "The link may be broken, the page may have been moved, or the URL might be incorrect.",
     "btnInicio": "Back to home",
     "buscas": "Looking for something specific?"
+  },
+  "comun": {
+    "saltarContenido": "Skip to content"
+  },
+  "slider": {
+    "irA": "Go to image {n}",
+    "pausar": "Pause slideshow",
+    "reanudar": "Resume slideshow"
   }
 }

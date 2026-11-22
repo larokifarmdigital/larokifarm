@@ -13,6 +13,8 @@ export interface Props {
   puntos?: LocalizedString[];
   anyosExperiencia?: number;
   lang: Locale;
+  /** Para el texto alternativo por defecto de las fotos. */
+  nombre?: string;
   /** Chip editable. Si está vacío cae a i18n. */
   chip?: LocalizedString;
 }
@@ -25,8 +27,11 @@ const {
   puntos,
   anyosExperiencia,
   lang,
+  nombre,
   chip
 } = Astro.props;
+// Fotos sin alt en el CMS: mismo texto por defecto que el hero.
+const altFotos = nombre ? t('hero.altInterior', lang, { nombre }) : '';
 
 const chipTexto = localizar(chip, lang) ?? t('about.chip', lang);
 const tituloTexto = localizar(titulo, lang) || t('about.tituloDefecto', lang);
@@ -91,10 +96,11 @@ const imagenesParaSlider = imagenes.map(img => ({
               <div class='absolute inset-0'>
                 <Slider
                   imagenes={imagenesParaSlider}
-                  alt=''
+                  alt={altFotos}
                   ancho={800}
                   marcaAgua={logo}
                   marcaAguaAlt=''
+                  lang={lang}
                 />
               </div>
             ) : (

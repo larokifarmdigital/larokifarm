@@ -207,19 +207,27 @@ const subtitulo = localizar(textos?.subtitulo, lang) ?? t('faqs.subtitulo', lang
     }
 
     function cerrar(item: HTMLDetailsElement, contenido: HTMLElement) {
+      // Sin animación (movimiento reducido) no hay transitionend: cerrar ya.
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        item.open = false;
+        contenido.style.height = '';
+        return;
+      }
       const altura = contenido.scrollHeight;
       contenido.style.height = altura + 'px';
       requestAnimationFrame(() => {
         contenido.style.height = '0px';
       });
-      contenido.addEventListener(
-        'transitionend',
-        () => {
-          item.open = false;
-          contenido.style.height = '';
-        },
-        { once: true }
-      );
+      let hecho = false;
+      const terminar = () => {
+        if (hecho) return;
+        hecho = true;
+        item.open = false;
+        contenido.style.height = '';
+      };
+      contenido.addEventListener('transitionend', terminar, { once: true });
+      // Respaldo por si la transición no llega a dispararse.
+      window.setTimeout(terminar, 450);
     }
   }
 

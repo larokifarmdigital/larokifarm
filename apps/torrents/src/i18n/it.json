@@ -44,7 +44,8 @@
     },
     "ciudad": "Farmacia a {ciudad}",
     "btnLlamar": "Chiama ora",
-    "altInterior": "Interno di {nombre}"
+    "altInterior": "Interno di {nombre}",
+    "btnWhatsapp": "Scrivici su WhatsApp"
   },
   "about": {
     "chip": "Chi siamo",
@@ -173,7 +174,11 @@
     "metaDescripcion": "Tutte le recensioni verificate di Google di {nombre}. Opinioni reali dei clienti.",
     "rangoNota": "{media} su 5 · {total} recensioni",
     "filtroTodas": "Tutte",
-    "filtroEstrellas": "{n} stelle"
+    "filtroEstrellas": "{n} stelle",
+    "ariaFiltros": "Filtra le recensioni per stelle",
+    "mostrando": "{n} recensioni mostrate",
+    "ariaFila": "Recensioni, fila {n}",
+    "pausarCinta": "Metti in pausa le recensioni"
   },
   "p404": {
     "tituloMeta": "Pagina non trovata · {nombre}",
@@ -184,5 +189,13 @@
     "texto": "È possibile che il link non funzioni, che la pagina sia stata spostata o che l'URL non sia corretto.",
     "btnInicio": "Torna alla home",
     "buscas": "Cerchi qualcosa in particolare?"
+  },
+  "comun": {
+    "saltarContenido": "Vai al contenuto"
+  },
+  "slider": {
+    "irA": "Vai all'immagine {n}",
+    "pausar": "Metti in pausa la presentazione",
+    "reanudar": "Riprendi la presentazione"
   }
 }

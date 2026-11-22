@@ -44,7 +44,8 @@
     },
     "ciudad": "Farmàcia a {ciudad}",
     "btnLlamar": "Truca ara",
-    "altInterior": "Interior de {nombre}"
+    "altInterior": "Interior de {nombre}",
+    "btnWhatsapp": "Escriu-nos per WhatsApp"
   },
   "about": {
     "chip": "Sobre nosaltres",
@@ -173,7 +174,11 @@
     "metaDescripcion": "Totes les ressenyes verificades de Google de {nombre}. Opinions reals de clients.",
     "rangoNota": "{media} de 5 · {total} ressenyes",
     "filtroTodas": "Totes",
-    "filtroEstrellas": "{n} estrelles"
+    "filtroEstrellas": "{n} estrelles",
+    "ariaFiltros": "Filtra les ressenyes per estrelles",
+    "mostrando": "Es mostren {n} ressenyes",
+    "ariaFila": "Ressenyes, fila {n}",
+    "pausarCinta": "Atura les ressenyes"
   },
   "p404": {
     "tituloMeta": "Pàgina no trobada · {nombre}",
@@ -184,5 +189,13 @@
     "texto": "És possible que l'enllaç estigui trencat, que la pàgina s'hagi mogut o que l'URL no sigui correcta.",
     "btnInicio": "Tornar a l'inici",
     "buscas": "Cerques alguna cosa concreta?"
+  },
+  "comun": {
+    "saltarContenido": "Salta al contingut"
+  },
+  "slider": {
+    "irA": "Ves a la imatge {n}",
+    "pausar": "Atura el pas d'imatges",
+    "reanudar": "Reprèn el pas d'imatges"
   }
 }

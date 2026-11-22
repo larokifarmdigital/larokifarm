@@ -42,3 +42,24 @@ cliente). Mismo patrón que `apps/chamarro` (ver su CLAUDE.md).
   dirección: nada de mapas incrustados), contacto, enlaces de la web y barra
   inferior con titular, nº colegiado y textos legales. Columnas sin datos no se
   pintan. Prop `mapsUrl`.
+
+## Accesibilidad: patrones fijados (auditoría 22-11-2026)
+
+- **Reveal sin JS**: las reglas `[data-reveal]` / `[data-reveal-word]` de
+  `global.css` van dentro de `@media (scripting: enabled)`; sin JS todo se ve.
+- **Movimiento automático (WCAG 2.2.2)**: todo carrusel o cinta que se mueve
+  solo tiene botón de pausa (Slider del hero/About, Servicios móvil, cinta de
+  reseñas en escritorio). Si la persona interactúa (punto, arrastre, pausa) el
+  autoplay NO se reanuda solo. Con `prefers-reduced-motion` no hay autoplay ni
+  botón de pausa.
+- **Carruseles**: el clon del bucle infinito lleva `inert` + `aria-hidden`; en
+  móvil solo la tarjeta visible es enfocable; en escritorio, el foco por Tab
+  mueve el carrusel a la tarjeta y anula el scroll nativo del contenedor.
+- **FAQs**: con movimiento reducido se cierran sin esperar `transitionend`.
+- **Cabecera**: Escape cierra menú móvil e idioma y devuelve el foco al botón;
+  las etiquetas abrir/cerrar salen de i18n (`data-label-*`).
+- **Mapa clic-para-cargar**: aviso de cookies enlazado con `aria-describedby`,
+  foco al iframe tras cargarlo y `<noscript>` con enlace a Google Maps.
+- **Textos de la UI**: nada fijo en castellano en componentes (skip link,
+  CTAs, puntos del slider); todo por `t()`. Reseñas con `lang` por comentario
+  cuando la API trae `comentarioIdioma`.

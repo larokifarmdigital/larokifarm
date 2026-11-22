@@ -44,7 +44,8 @@
     },
     "ciudad": "Pharmacie à {ciudad}",
     "btnLlamar": "Appeler maintenant",
-    "altInterior": "Intérieur de {nombre}"
+    "altInterior": "Intérieur de {nombre}",
+    "btnWhatsapp": "Écrivez-nous sur WhatsApp"
   },
   "about": {
     "chip": "À propos",
@@ -173,7 +174,11 @@
     "metaDescripcion": "Tous les avis Google vérifiés de {nombre}. Des avis réels de clients.",
     "rangoNota": "{media} sur 5 · {total} avis",
     "filtroTodas": "Tous",
-    "filtroEstrellas": "{n} étoiles"
+    "filtroEstrellas": "{n} étoiles",
+    "ariaFiltros": "Filtrer les avis par étoiles",
+    "mostrando": "{n} avis affichés",
+    "ariaFila": "Avis, rangée {n}",
+    "pausarCinta": "Mettre les avis en pause"
   },
   "p404": {
     "tituloMeta": "Page introuvable · {nombre}",
@@ -184,5 +189,13 @@
     "texto": "Le lien est peut-être cassé, la page a peut-être été déplacée ou l'URL est incorrecte.",
     "btnInicio": "Retour à l'accueil",
     "buscas": "Vous cherchez quelque chose en particulier ?"
+  },
+  "comun": {
+    "saltarContenido": "Aller au contenu"
+  },
+  "slider": {
+    "irA": "Aller à l'image {n}",
+    "pausar": "Mettre le diaporama en pause",
+    "reanudar": "Reprendre le diaporama"
   }
 }
