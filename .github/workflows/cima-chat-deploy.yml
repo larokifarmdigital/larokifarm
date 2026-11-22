@@ -37,8 +37,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --filter cima-chat...
 
+      # Si el inventario no responde no se publica: mejor el chat de antes que uno
+      # apuntando a una dirección rota.
+      - name: Check inventory endpoint
+        run: |
+          curl -fsS --max-time 30 "$VITE_INVENTORY_URL" -o inventario.json
+          node -e 'const j=require("./inventario.json"); if(!Array.isArray(j.items)) throw new Error("respuesta sin items"); console.log("items:", j.items.length, "updatedAt:", j.updatedAt)'
+        env:
+          VITE_INVENTORY_URL: https://cima-inventory-sync.larokifarmdigital.workers.dev/inventory
+
       - name: Build widget
         run: pnpm --filter cima-chat build
+        env:
+          VITE_INVENTORY_URL: https://cima-inventory-sync.larokifarmdigital.workers.dev/inventory
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
