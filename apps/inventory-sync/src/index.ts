@@ -10,6 +10,7 @@ interface SnapshotMeta {
   itemsCount: number;
   notFoundCount: number;
   skippedMuerto: number;
+  skippedSinStock: number;
   skippedInvalidCn: number;
   totalDataRows: number;
   durationMs: number;
@@ -45,7 +46,7 @@ async function main() {
   console.log('[3/4] Parsing Excel…');
   const parsed = parseInventoryXlsx(buf);
   console.log(
-    `      → totalRows=${parsed.totalDataRows} muerto=${parsed.skippedMuerto} invalidCn=${parsed.skippedInvalidCn} candidates=${parsed.rows.length}`,
+    `      → totalRows=${parsed.totalDataRows} muerto=${parsed.skippedMuerto} sinStock=${parsed.skippedSinStock} invalidCn=${parsed.skippedInvalidCn} candidates=${parsed.rows.length}`,
   );
 
   if (dryRun) {
@@ -80,6 +81,7 @@ async function main() {
       itemsCount: enriched.items.length,
       notFoundCount: enriched.notFound.length,
       skippedMuerto: parsed.skippedMuerto,
+      skippedSinStock: parsed.skippedSinStock,
       skippedInvalidCn: parsed.skippedInvalidCn,
       totalDataRows: parsed.totalDataRows,
       durationMs: Date.now() - t0,

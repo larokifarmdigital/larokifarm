@@ -41,6 +41,7 @@ function toCn(v: unknown): string | null {
 export function parseInventoryXlsx(buf: ArrayBuffer): {
   rows: ParsedRow[];
   skippedMuerto: number;
+  skippedSinStock: number;
   skippedInvalidCn: number;
   totalDataRows: number;
 } {
@@ -64,7 +65,7 @@ export function parseInventoryXlsx(buf: ArrayBuffer): {
   }) as unknown[][];
 
   if (matrix.length < 2) {
-    return { rows: [], skippedMuerto: 0, skippedInvalidCn: 0, totalDataRows: 0 };
+    return { rows: [], skippedMuerto: 0, skippedSinStock: 0, skippedInvalidCn: 0, totalDataRows: 0 };
   }
 
   const header = matrix[0].map((h) => String(h ?? '').trim());
@@ -78,7 +79,9 @@ export function parseInventoryXlsx(buf: ArrayBuffer): {
     pvp: header.indexOf(HEADERS.pvp),
   };
 
-  if (idx.cn < 0 || idx.clasificacion < 0) {
+  // Sin la columna de stock no se puede decir "Disponible" de nada: mejor fallar
+  // que publicar todo el catálogo como disponible.
+  if (idx.cn < 0 || idx.clasificacion < 0 || idx.stockFarmaciasConso < 0) {
     throw new Error(
       `Missing required columns. Found headers: ${header.join(', ')}`,
     );
@@ -86,6 +89,7 @@ export function parseInventoryXlsx(buf: ArrayBuffer): {
 
   const rows: ParsedRow[] = [];
   let skippedMuerto = 0;
+  let skippedSinStock = 0;
   let skippedInvalidCn = 0;
   const totalDataRows = matrix.length - 1;
 
@@ -94,6 +98,12 @@ export function parseInventoryXlsx(buf: ArrayBuffer): {
     const clasificacion = String(r[idx.clasificacion] ?? '').trim();
     if (clasificacion.toLowerCase() === 'muerto') {
       skippedMuerto += 1;
+      continue;
+    }
+    // "Disponible" en el chat = stock > 0 sumando todas las farmacias.
+    const stockFarmaciasConso = toNumber(r[idx.stockFarmaciasConso]);
+    if (stockFarmaciasConso <= 0) {
+      skippedSinStock += 1;
       continue;
     }
     const cn = toCn(r[idx.cn]);
@@ -106,11 +116,11 @@ export function parseInventoryXlsx(buf: ArrayBuffer): {
       descripcion: idx.descripcion >= 0 ? String(r[idx.descripcion] ?? '').trim() : '',
       clasificacion: clasificacion || 'unknown',
       stockLaroki: idx.stockLaroki >= 0 ? toNumber(r[idx.stockLaroki]) : 0,
-      stockFarmaciasConso: idx.stockFarmaciasConso >= 0 ? toNumber(r[idx.stockFarmaciasConso]) : 0,
+      stockFarmaciasConso,
       ventasAnualesConso: idx.ventasAnualesConso >= 0 ? toNumber(r[idx.ventasAnualesConso]) : 0,
       pvp: idx.pvp >= 0 ? (toNumber(r[idx.pvp]) || undefined) : undefined,
     });
   }
 
-  return { rows, skippedMuerto, skippedInvalidCn, totalDataRows };
+  return { rows, skippedMuerto, skippedSinStock, skippedInvalidCn, totalDataRows };
 }
