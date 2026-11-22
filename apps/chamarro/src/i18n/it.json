@@ -109,8 +109,6 @@
   },
   "footer": {
     "servicios": "Servizi",
-    "informacion": "Informazioni",
-    "contactanos": "Contatti",
     "sobreNosotros": "La farmacia",
     "preguntasFrecuentes": "Domande",
     "resenas": "Recensioni",
@@ -118,14 +116,17 @@
     "avisoLegal": "Note legali",
     "politicaPrivacidad": "Informativa sulla privacy",
     "copyright": "© {anyo} {nombre}",
-    "titular": "Titolare",
-    "badgeColegiada": "Farmacia autorizzata · Spagna",
     "nCol": "N. iscr.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
     "ariaTiktok": "TikTok",
-    "ctaTitulo": "Hai bisogno di aiuto?",
-    "ctaEm": "Siamo qui."
+    "horario": "Orari",
+    "comoLlegar": "Come arrivare",
+    "nuevaPestana": "(si apre in una nuova scheda)",
+    "redes": "Seguici",
+    "legalAria": "Note legali",
+    "visitanos": "Dove siamo",
+    "explora": "Esplora il sito"
   },
   "features": {
     "atencionTitulo": "Assistenza personalizzata",
@@ -143,7 +144,16 @@
     "avisoTitulo": "Note legali",
     "privacidadTitulo": "Informativa sulla privacy",
     "avisoMeta": "Note legali e informazioni sul titolare di {nombre}.",
-    "privacidadMeta": "Informativa sulla privacy e trattamento dei dati personali di {nombre}."
+    "privacidadMeta": "Informativa sulla privacy e trattamento dei dati personali di {nombre}.",
+    "eyebrow": "Informazioni legali",
+    "intro": "Testi legali di {nombre}.",
+    "inicio": "Home",
+    "migaAria": "Sei qui",
+    "indice": "In questa pagina",
+    "otros": "Altri testi legali",
+    "volverArriba": "Torna su",
+    "dudas": "Hai dubbi su questi testi?",
+    "escribenos": "Scrivici"
   },
   "resenas": {
     "chip": "Recensioni",

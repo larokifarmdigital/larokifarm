@@ -1,23 +1,7 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import Header from '@/components/Header.astro';
-import Footer from '@/components/Footer.astro';
-import {
-  obtenerFarmaciaPorSlug,
-  agruparHorarios,
-  localizar,
-  portableTextAHtml,
-  SLUG_FARMACIA,
-  type Farmacia,
-  type DiasI18n,
-} from '@/lib/sanity';
-import {
-  esLocaleValido,
-  rutaConLocale,
-  t,
-  type Locale, localesActivos, DIAS_POR_IDIOMA, CERRADO_POR_IDIOMA } from '@/lib/i18n';
-import { legalPorDefecto } from '@/lib/legal';
-import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
+import LegalPage from '@/components/LegalPage.astro';
+import { obtenerFarmaciaPorSlug, SLUG_FARMACIA, type Farmacia } from '@/lib/sanity';
+import { esLocaleValido, type Locale } from '@/lib/i18n';
 
 export async function getStaticPaths() {
   const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
@@ -34,143 +18,11 @@ export async function getStaticPaths() {
 interface Props { farmacia: Farmacia | null; lang: Locale; }
 const { farmacia: farmaciaCargada, lang } = Astro.props as Props;
 
-const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
 const farmacia: Farmacia = farmaciaCargada ?? {
   _id: 'placeholder',
   nombre: 'Farmacia Torrents',
   slug: SLUG_FARMACIA,
 };
-
-const DIAS_POR_LANG = DIAS_POR_IDIOMA as Record<Locale, DiasI18n>;
-const CERRADO_LABEL: Record<Locale, string> = CERRADO_POR_IDIOMA;
-const horariosAgrupados = agruparHorarios(
-  farmacia.horarios,
-  DIAS_POR_LANG[lang],
-  CERRADO_LABEL[lang],
-);
-const mostrarFaqs = (farmacia.faqs ?? []).some(
-  (f) => localizar(f.pregunta, lang) && localizar(f.respuesta, lang),
-);
-
-const canonical = `${siteUrl}${rutaConLocale('/aviso-legal', lang)}`;
-const home = rutaConLocale('/', lang);
-
-// Todo el contenido visible procede de Sanity; si está vacío, del texto por
-// defecto validado y traducido (lib/legal.ts). El título va incluido en el texto.
-const avisoHtml =
-  portableTextAHtml(localizar(farmacia.avisoLegal, lang)) || legalPorDefecto(lang).avisoLegal;
 ---
 
-<BaseLayout
-  titulo={`${t('legal.avisoTitulo', lang)} · ${farmacia.nombre}`}
-  descripcion={t('legal.avisoMeta', lang, { nombre: farmacia.nombre })}
-  canonical={canonical}
-  lang={lang}
-  idiomas={localesActivos(farmacia.idiomasActivos)}
-  rutaActual='/aviso-legal'
-  nombreFarmacia={farmacia.nombre}
-  logoFarmacia={farmacia.logo}
->
-  <Header
-    nombre={farmacia.nombre}
-    whatsapp={farmacia.contacto?.whatsapp}
-    telefono={farmacia.contacto?.telefono}
-    logo={farmacia.logo}
-    mostrarFaqs={mostrarFaqs}
-    mostrarResenas={MOSTRAR_RESENAS}
-    lang={lang}
-    rutaActual='/aviso-legal'
-    idiomasActivos={farmacia.idiomasActivos}
-  />
-
-  <main id='contenido' class='container-app py-16 md:py-24'>
-    <article class='mx-auto max-w-3xl space-y-6'>
-      <a href={home} class='inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--primary)]'>
-        <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
-          <path d='m15 18-6-6 6-6' />
-        </svg>
-        {t('legal.volver', lang)}
-      </a>
-
-      <div class='legal-cms' set:html={avisoHtml} />
-    </article>
-  </main>
-
-  <Footer
-    nombre={farmacia.nombre}
-    titular={farmacia.titular}
-    numeroColegiado={farmacia.numeroColegiado}
-    logo={farmacia.logo}
-    contacto={farmacia.contacto}
-    redes={farmacia.redesSociales}
-    direccion={farmacia.direccion}
-    horarios={farmacia.horarios}
-    horariosAgrupados={horariosAgrupados}
-    servicios={farmacia.servicios}
-    descripcionCorta={farmacia.descripcionCorta}
-    mostrarFaqs={mostrarFaqs}
-    mostrarResenas={MOSTRAR_RESENAS}
-    lang={lang}
-    rutaActual='/aviso-legal'
-  />
-</BaseLayout>
-
-<style>
-  /* El contenido legal se inyecta con set:html (sin scope) → estilos globales. */
-  .legal-cms :global(h1) {
-    font-size: 2.25rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    margin: 0 0 0.75rem;
-  }
-  @media (min-width: 768px) {
-    .legal-cms :global(h1) {
-      font-size: 3rem;
-    }
-  }
-  .legal-cms :global(h2) {
-    margin-top: 2rem;
-    font-size: 1.5rem;
-    font-weight: 800;
-  }
-  .legal-cms :global(h3) {
-    margin-top: 1.5rem;
-    font-size: 1.25rem;
-    font-weight: 700;
-  }
-  .legal-cms :global(h4) {
-    margin-top: 1rem;
-    font-weight: 700;
-  }
-  .legal-cms :global(p),
-  .legal-cms :global(li) {
-    line-height: 1.7;
-    color: color-mix(in oklch, var(--foreground), transparent 15%);
-  }
-  .legal-cms :global(p) {
-    margin-top: 1rem;
-  }
-  .legal-cms :global(ul),
-  .legal-cms :global(ol) {
-    margin: 1rem 0;
-    padding-left: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-  .legal-cms :global(ul) {
-    list-style: disc;
-  }
-  .legal-cms :global(ol) {
-    list-style: decimal;
-  }
-  .legal-cms :global(a) {
-    color: var(--primary);
-    text-decoration: underline;
-    word-break: break-word;
-  }
-  .legal-cms :global(strong) {
-    color: var(--foreground);
-  }
-</style>
+<LegalPage farmacia={farmacia} lang={lang} tipo='aviso' />

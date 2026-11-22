@@ -103,7 +103,18 @@
     "nCol": "Elkargo-zk.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
-    "ariaTiktok": "TikTok"
+    "ariaTiktok": "TikTok",
+    "horario": "Ordutegia",
+    "visitanos": "Non gaude",
+    "comoLlegar": "Nola iritsi",
+    "abiertoAhora": "Irekita orain",
+    "cerradoAhora": "Itxita orain",
+    "cierraA": "{hora}etan ixten da",
+    "abreHoy": "gaur {hora}etan irekiko da",
+    "abreManana": "bihar {hora}etan irekiko da",
+    "sinCookies": "Cookierik eta jarraitzailerik gabeko webgunea",
+    "explora": "Arakatu webgunea",
+    "nuevaPestana": "(beste fitxa batean irekitzen da)"
   },
   "features": {
     "atencionTitulo": "Arreta pertsonalizatua",
@@ -123,7 +134,14 @@
     "avisoTitulo": "Lege-oharra",
     "privacidadTitulo": "Pribatutasun-politika",
     "avisoMeta": "{nombre}(r)en lege-oharra eta titularraren informazioa.",
-    "privacidadMeta": "{nombre}(r)en pribatutasun-politika eta datu pertsonalen tratamendua."
+    "privacidadMeta": "{nombre}(r)en pribatutasun-politika eta datu pertsonalen tratamendua.",
+    "inicio": "Hasiera",
+    "eyebrow": "Lege-informazioa",
+    "avisoIntro": "Webgune honen titularra nor den eta erabiltzeko baldintzak.",
+    "privacidadIntro": "Zure datu pertsonalak nola tratatzen ditugun eta zein diren zure eskubideak.",
+    "indice": "Orri honetan",
+    "otros": "Beste lege-testu batzuk",
+    "volverArriba": "Itzuli gora"
   },
   "resenas": {
     "chip": "Googleko iritziak",

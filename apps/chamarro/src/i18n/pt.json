@@ -109,8 +109,6 @@
   },
   "footer": {
     "servicios": "Serviços",
-    "informacion": "Informação",
-    "contactanos": "Contacto",
     "sobreNosotros": "A farmácia",
     "preguntasFrecuentes": "Perguntas",
     "resenas": "Opiniões",
@@ -118,14 +116,17 @@
     "avisoLegal": "Aviso legal",
     "politicaPrivacidad": "Política de privacidade",
     "copyright": "© {anyo} {nombre}",
-    "titular": "Titular",
-    "badgeColegiada": "Farmácia licenciada · Espanha",
     "nCol": "N.º de inscrição",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
     "ariaTiktok": "TikTok",
-    "ctaTitulo": "Precisa de ajuda?",
-    "ctaEm": "Estamos aqui."
+    "horario": "Horário",
+    "comoLlegar": "Como chegar",
+    "nuevaPestana": "(abre noutro separador)",
+    "redes": "Siga-nos",
+    "legalAria": "Textos legais",
+    "visitanos": "Onde estamos",
+    "explora": "Explorar o site"
   },
   "features": {
     "atencionTitulo": "Atendimento personalizado",
@@ -143,7 +144,16 @@
     "avisoTitulo": "Aviso legal",
     "privacidadTitulo": "Política de privacidade",
     "avisoMeta": "Aviso legal e informação sobre o titular de {nombre}.",
-    "privacidadMeta": "Política de privacidade e tratamento de dados pessoais de {nombre}."
+    "privacidadMeta": "Política de privacidade e tratamento de dados pessoais de {nombre}.",
+    "eyebrow": "Informação legal",
+    "intro": "Textos legais de {nombre}.",
+    "inicio": "Início",
+    "migaAria": "Está aqui",
+    "indice": "Nesta página",
+    "otros": "Outros textos legais",
+    "volverArriba": "Voltar ao topo",
+    "dudas": "Tem alguma dúvida sobre estes textos?",
+    "escribenos": "Escreva-nos"
   },
   "resenas": {
     "chip": "Opiniões",

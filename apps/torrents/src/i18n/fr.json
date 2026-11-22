@@ -103,7 +103,18 @@
     "nCol": "N° d'inscription",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
-    "ariaTiktok": "TikTok"
+    "ariaTiktok": "TikTok",
+    "horario": "Horaires",
+    "visitanos": "Où nous trouver",
+    "comoLlegar": "Itinéraire",
+    "abiertoAhora": "Ouvert maintenant",
+    "cerradoAhora": "Fermé maintenant",
+    "cierraA": "ferme à {hora}",
+    "abreHoy": "ouvre aujourd'hui à {hora}",
+    "abreManana": "ouvre demain à {hora}",
+    "sinCookies": "Site sans cookies ni traceurs",
+    "explora": "Explorer le site",
+    "nuevaPestana": "(s'ouvre dans un nouvel onglet)"
   },
   "features": {
     "atencionTitulo": "Accueil personnalisé",
@@ -123,7 +134,14 @@
     "avisoTitulo": "Mentions légales",
     "privacidadTitulo": "Politique de confidentialité",
     "avisoMeta": "Mentions légales et informations sur le titulaire de {nombre}.",
-    "privacidadMeta": "Politique de confidentialité et traitement des données personnelles de {nombre}."
+    "privacidadMeta": "Politique de confidentialité et traitement des données personnelles de {nombre}.",
+    "inicio": "Accueil",
+    "eyebrow": "Informations légales",
+    "avisoIntro": "Qui est le titulaire de ce site et les conditions d'utilisation.",
+    "privacidadIntro": "Comment nous traitons vos données personnelles et quels sont vos droits.",
+    "indice": "Sur cette page",
+    "otros": "Autres textes légaux",
+    "volverArriba": "Retour en haut"
   },
   "resenas": {
     "chip": "Avis Google",

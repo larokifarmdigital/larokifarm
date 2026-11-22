@@ -122,3 +122,29 @@ Toda la motion vive en `src/styles/global.css`:
 - `.motion-magnetic` — lift sutil al hover.
 
 Todo respeta `prefers-reduced-motion: reduce`.
+
+## Navegación, páginas legales y pie (22-11-2026)
+
+- **Transición entre páginas**: View Transitions entre documentos solo con CSS
+  (`@view-transition { navigation: auto }` en `global.css`), sin ClientRouter.
+  La cabecera tiene `view-transition-name`; el footer NO (cambia de posición
+  entre páginas y "volaría"). Desactivada con `prefers-reduced-motion`.
+- **`LegalPage.astro`**: componente común de aviso legal y privacidad. Quita el
+  `<h1>` del CMS (el título sale de i18n), da id a cada `<h2>` y monta el
+  índice "En esta página" (sticky ≥960px, `<details>` en móvil). Sin fecha de
+  actualización (no hay dato fiable). Funciona sin JS.
+- **Horario compartido**: `src/lib/estadoHorario.ts` (cálculo en navegador,
+  hora de Madrid) + `estadoHorarioDatos.ts` (datos del build). Lo usan Hero y
+  Footer; no duplicar la lógica.
+- **Footer** (22-11-2026, misma distribución que el de Torrents con la
+  identidad de Chamarro): fondo `--ink`, texto blanco / `--on-green-muted`,
+  líneas `--green-line`, lima de acento, títulos de columna en mono pequeño.
+  4 columnas (1.1fr 1.3fr 1fr 1fr ≥1024px; 2 columnas ≥768px; apiladas en
+  móvil): Marca (logo, nombre, descripción corta, redes si hay) · Horario
+  (pastilla "Abierto ahora" con `estadoHorario.ts` + días ↔ horas con línea
+  discontinua) · Dónde estamos (dirección sin repetir ciudad/provincia +
+  botón píldora "Cómo llegar") · Contacto (teléfono, WhatsApp, email con
+  iconos; el email solo se parte tras la @) → línea "Explora la web" →
+  barra inferior (©, titular · nº col., legales). SIN "Web sin cookies"
+  (Chamarro usa Vercel Analytics y el chat). Sin URL de la propia web.
+  Foco lima por `.footer :focus-visible` en `global.css`.

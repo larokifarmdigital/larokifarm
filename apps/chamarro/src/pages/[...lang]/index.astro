@@ -152,16 +152,5 @@ const claim = localizar(farmacia.descripcionCorta, lang);
     />
   </main>
 
-  <Footer
-    nombre={farmacia.nombre}
-    titular={farmacia.titular}
-    numeroColegiado={farmacia.numeroColegiado}
-    logo={farmacia.logo}
-    contacto={farmacia.contacto}
-    redes={farmacia.redesSociales}
-    direccion={farmacia.direccion}
-    mostrarFaqs={mostrarFaqs}
-    lang={lang}
-    rutaActual='/'
-  />
+  <Footer farmacia={farmacia} mostrarFaqs={mostrarFaqs} lang={lang} rutaActual='/' />
 </BaseLayout>

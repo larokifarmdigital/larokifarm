@@ -103,7 +103,18 @@
     "nCol": "Reg. no.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
-    "ariaTiktok": "TikTok"
+    "ariaTiktok": "TikTok",
+    "horario": "Opening hours",
+    "visitanos": "Find us",
+    "comoLlegar": "Get directions",
+    "abiertoAhora": "Open now",
+    "cerradoAhora": "Closed now",
+    "cierraA": "closes at {hora}",
+    "abreHoy": "opens today at {hora}",
+    "abreManana": "opens tomorrow at {hora}",
+    "sinCookies": "No cookies or trackers on this site",
+    "explora": "Explore the site",
+    "nuevaPestana": "(opens in a new tab)"
   },
   "features": {
     "atencionTitulo": "Personalised care",
@@ -123,7 +134,14 @@
     "avisoTitulo": "Legal notice",
     "privacidadTitulo": "Privacy policy",
     "avisoMeta": "Legal notice and owner information for {nombre}.",
-    "privacidadMeta": "Privacy policy and personal data processing for {nombre}."
+    "privacidadMeta": "Privacy policy and personal data processing for {nombre}.",
+    "inicio": "Home",
+    "eyebrow": "Legal information",
+    "avisoIntro": "Who owns this website and the terms for using it.",
+    "privacidadIntro": "How we handle your personal data and what your rights are.",
+    "indice": "On this page",
+    "otros": "Other legal texts",
+    "volverArriba": "Back to top"
   },
   "resenas": {
     "chip": "Google Reviews",

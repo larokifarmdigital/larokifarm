@@ -216,18 +216,7 @@ const filtros = [5, 4, 3, 2, 1];
     )}
   </main>
 
-  <Footer
-    nombre={farmacia.nombre}
-    titular={farmacia.titular}
-    numeroColegiado={farmacia.numeroColegiado}
-    logo={farmacia.logo}
-    contacto={farmacia.contacto}
-    redes={farmacia.redesSociales}
-    direccion={farmacia.direccion}
-    mostrarFaqs={mostrarFaqs}
-    lang={lang}
-    rutaActual='/resenas'
-  />
+  <Footer farmacia={farmacia} mostrarFaqs={mostrarFaqs} lang={lang} rutaActual='/resenas' />
 </BaseLayout>
 
 <style>

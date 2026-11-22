@@ -1,4 +1,5 @@
 ---
+import { horariosParaEstado, textosEstado } from '@/lib/estadoHorarioDatos';
 import { localizar, type HorarioDia, type ImagenConAlt, type LocalizedString, type TarjetaFlotante } from '@/lib/sanity';
 import { t, type Locale } from '@/lib/i18n';
 import IconoServicio from '@/components/IconoServicio.astro';
@@ -42,19 +43,8 @@ const tarjetas = tarjetasBackoffice.length > 0 ? tarjetasBackoffice : tarjetasDe
 
 /* Estado "abierto/cerrado" real: se calcula en el navegador con la hora de
    Madrid (la web es estática). Sin horarios la tarjeta no se muestra. */
-const horariosLimpios = (horarios ?? []).map((h) => ({
-  dia: h.dia,
-  cerrado: Boolean(h.cerrado),
-  tramos: (h.tramos?.length ? h.tramos : h.apertura && h.cierre ? [{ apertura: h.apertura, cierre: h.cierre }] : [])
-    .filter((tr) => tr?.apertura && tr?.cierre),
-}));
-const textosEstado = JSON.stringify({
-  abierto: t('hero.estado.abierto', lang),
-  cerrado: t('hero.estado.cerrado', lang),
-  cierra: t('hero.estado.cierra', lang, { hora: '{hora}' }),
-  abreHoy: t('hero.estado.abreHoy', lang, { hora: '{hora}' }),
-  abreManana: t('hero.estado.abreManana', lang, { hora: '{hora}' }),
-});
+const horariosLimpios = horariosParaEstado(horarios);
+const textosEstadoJson = JSON.stringify(textosEstado(lang));
 ---
 
 <section class='hero' aria-label={t('hero.altInterior', lang, { nombre })}>
@@ -148,7 +138,7 @@ const textosEstado = JSON.stringify({
 
       <!-- Estado de apertura en tiempo real -->
       {horariosLimpios.length > 0 && (
-        <a href='#contacto' class='tile tile-soft hero-estado' data-hero-estado data-horarios={JSON.stringify(horariosLimpios)} data-textos={textosEstado}
+        <a href='#contacto' class='tile tile-soft hero-estado' data-hero-estado data-horarios={JSON.stringify(horariosLimpios)} data-textos={textosEstadoJson}
            style='--reveal-delay:240ms' data-reveal>
           <span class='flex items-center gap-3'>
             <span class='hero-estado-dot' aria-hidden='true'></span>
@@ -332,6 +322,7 @@ const textosEstado = JSON.stringify({
 </style>
 
 <script>
+  import { calcularEstado } from '@/lib/estadoHorario';
   /* Carrusel de la foto. */
   const slider = document.querySelector<HTMLElement>('[data-hero-slider]');
   if (slider) {
@@ -385,38 +376,11 @@ const textosEstado = JSON.stringify({
   /* Abierto / cerrado con la hora de Madrid. */
   const estado = document.querySelector<HTMLElement>('[data-hero-estado]');
   if (estado) {
-    type Tramo = { apertura: string; cierre: string };
-    type Dia = { dia: string; cerrado: boolean; tramos: Tramo[] };
     try {
-      const horarios: Dia[] = JSON.parse(estado.dataset.horarios ?? '[]');
-      const tx = JSON.parse(estado.dataset.textos ?? '{}');
-      const partes = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'Europe/Madrid', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
-      }).formatToParts(new Date());
-      const get = (k: string) => partes.find((p) => p.type === k)?.value ?? '';
-      const codigos = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-      const hoy = codigos.indexOf(get('weekday').slice(0, 2));
-      const ahora = (Number(get('hour')) % 24) * 60 + Number(get('minute'));
-      const min = (h: string) => { const [a, b] = h.split(':').map(Number); return a * 60 + (b || 0); };
-      const tramosDe = (i: number) => {
-        const d = horarios.find((h) => h.dia === codigos[(i + 7) % 7]);
-        return d && !d.cerrado ? d.tramos : [];
-      };
-      const titulo = estado.querySelector<HTMLElement>('[data-estado-titulo]')!;
-      const detalle = estado.querySelector<HTMLElement>('[data-estado-detalle]')!;
-      const actual = tramosDe(hoy).find((tr) => ahora >= min(tr.apertura) && ahora < min(tr.cierre));
-      if (actual) {
-        titulo.textContent = tx.abierto;
-        detalle.textContent = tx.cierra.replace('{hora}', actual.cierre);
-      } else {
-        estado.classList.add('is-closed');
-        titulo.textContent = tx.cerrado;
-        const luego = tramosDe(hoy).find((tr) => min(tr.apertura) > ahora);
-        const manana = tramosDe(hoy + 1)[0];
-        detalle.textContent = luego
-          ? tx.abreHoy.replace('{hora}', luego.apertura)
-          : manana ? tx.abreManana.replace('{hora}', manana.apertura) : '';
-      }
+      const r = calcularEstado(JSON.parse(estado.dataset.horarios ?? '[]'), JSON.parse(estado.dataset.textos ?? '{}'));
+      estado.classList.toggle('is-closed', !r.abierto);
+      estado.querySelector<HTMLElement>('[data-estado-titulo]')!.textContent = r.titulo;
+      estado.querySelector<HTMLElement>('[data-estado-detalle]')!.textContent = r.detalle;
     } catch {
       estado.hidden = true;
     }

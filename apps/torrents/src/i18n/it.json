@@ -103,7 +103,18 @@
     "nCol": "N. iscr.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
-    "ariaTiktok": "TikTok"
+    "ariaTiktok": "TikTok",
+    "horario": "Orari",
+    "visitanos": "Dove siamo",
+    "comoLlegar": "Indicazioni",
+    "abiertoAhora": "Aperto ora",
+    "cerradoAhora": "Chiuso ora",
+    "cierraA": "chiude alle {hora}",
+    "abreHoy": "apre oggi alle {hora}",
+    "abreManana": "apre domani alle {hora}",
+    "sinCookies": "Sito senza cookie né tracciamento",
+    "explora": "Esplora il sito",
+    "nuevaPestana": "(si apre in una nuova scheda)"
   },
   "features": {
     "atencionTitulo": "Assistenza personalizzata",
@@ -123,7 +134,14 @@
     "avisoTitulo": "Note legali",
     "privacidadTitulo": "Informativa sulla privacy",
     "avisoMeta": "Note legali e informazioni sul titolare di {nombre}.",
-    "privacidadMeta": "Informativa sulla privacy e trattamento dei dati personali di {nombre}."
+    "privacidadMeta": "Informativa sulla privacy e trattamento dei dati personali di {nombre}.",
+    "inicio": "Home",
+    "eyebrow": "Informazioni legali",
+    "avisoIntro": "Chi è il titolare di questo sito e le condizioni per utilizzarlo.",
+    "privacidadIntro": "Come trattiamo i tuoi dati personali e quali sono i tuoi diritti.",
+    "indice": "In questa pagina",
+    "otros": "Altri testi legali",
+    "volverArriba": "Torna su"
   },
   "resenas": {
     "chip": "Recensioni Google",

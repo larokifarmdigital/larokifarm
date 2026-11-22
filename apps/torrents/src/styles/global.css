@@ -126,6 +126,11 @@
   a {
     transition: color 150ms ease;
   }
+  button:not(:disabled),
+  summary,
+  [role='button'] {
+    cursor: pointer;
+  }
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
@@ -323,4 +328,38 @@
   }
   .motion-float, .motion-pulse { animation: none !important; }
   .motion-magnetic:hover { transform: none !important; }
+}
+
+/* ============================================================
+ * Transición entre páginas (View Transitions entre documentos, sin JS).
+ * El contenido se funde y sube un poco; la cabecera no se mueve.
+ * El pie NO lleva nombre propio: entre páginas cambia de posición y,
+ * con nombre, "volaría" por la pantalla en vez de fundirse.
+ * Navegadores sin soporte: navegación normal.
+ * ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+  ::view-transition-old(root) {
+    animation: vt-salida 160ms ease-in both;
+  }
+  ::view-transition-new(root) {
+    animation: vt-entrada 340ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  ::view-transition-group(cabecera) {
+    animation-duration: 0s;
+  }
+}
+@keyframes vt-salida {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+@keyframes vt-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
 }

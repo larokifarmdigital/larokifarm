@@ -109,8 +109,6 @@
   },
   "footer": {
     "servicios": "Serveis",
-    "informacion": "Informació",
-    "contactanos": "Contacte",
     "sobreNosotros": "La farmàcia",
     "preguntasFrecuentes": "Preguntes",
     "resenas": "Opinions",
@@ -118,14 +116,17 @@
     "avisoLegal": "Avís legal",
     "politicaPrivacidad": "Política de privacitat",
     "copyright": "© {anyo} {nombre}",
-    "titular": "Titular",
-    "badgeColegiada": "Farmàcia col·legiada · Espanya",
     "nCol": "Núm. col.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
     "ariaTiktok": "TikTok",
-    "ctaTitulo": "Necessites ajuda?",
-    "ctaEm": "Som aquí."
+    "horario": "Horari",
+    "comoLlegar": "Com arribar-hi",
+    "nuevaPestana": "(s'obre en una altra pestanya)",
+    "redes": "Segueix-nos",
+    "legalAria": "Textos legals",
+    "visitanos": "On som",
+    "explora": "Explora el web"
   },
   "features": {
     "atencionTitulo": "Atenció personalitzada",
@@ -143,7 +144,16 @@
     "avisoTitulo": "Avís legal",
     "privacidadTitulo": "Política de privacitat",
     "avisoMeta": "Avís legal i informació del titular de {nombre}.",
-    "privacidadMeta": "Política de privacitat i tractament de dades personals de {nombre}."
+    "privacidadMeta": "Política de privacitat i tractament de dades personals de {nombre}.",
+    "eyebrow": "Informació legal",
+    "intro": "Textos legals de {nombre}.",
+    "inicio": "Inici",
+    "migaAria": "Ets aquí",
+    "indice": "En aquesta pàgina",
+    "otros": "Altres textos legals",
+    "volverArriba": "Tornar a dalt",
+    "dudas": "Tens algun dubte sobre aquests textos?",
+    "escribenos": "Escriu-nos"
   },
   "resenas": {
     "chip": "Opinions",

@@ -1,0 +1,444 @@
+---
+/**
+ * Página legal común (aviso legal y política de privacidad).
+ * - El h1 es siempre el nombre de la página (el `<h1>` del texto del CMS se
+ *   quita para no duplicarlo; suele venir en mayúsculas).
+ * - Los h2 del texto reciben un id y forman el índice "En esta página"
+ *   (fijo a la izquierda en escritorio; plegable con <details> en móvil).
+ * - Todo funciona sin JS.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import { localizar, type Farmacia } from '@/lib/sanity';
+import { localesActivos, rutaConLocale, t, type Locale } from '@/lib/i18n';
+import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
+
+type Tipo = 'aviso' | 'privacidad';
+
+interface Props {
+  farmacia: Farmacia;
+  lang: Locale;
+  tipo: Tipo;
+  html: string;
+}
+
+const { farmacia, lang, tipo, html } = Astro.props;
+
+const PAGINAS: Record<Tipo, { ruta: string; titulo: string; meta: string }> = {
+  aviso: { ruta: '/aviso-legal', titulo: 'legal.avisoTitulo', meta: 'legal.avisoMeta' },
+  privacidad: { ruta: '/politica-privacidad', titulo: 'legal.privacidadTitulo', meta: 'legal.privacidadMeta' },
+};
+const pagina = PAGINAS[tipo];
+const otra = PAGINAS[tipo === 'aviso' ? 'privacidad' : 'aviso'];
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const rutaActual = pagina.ruta;
+const canonical = `${siteUrl}${rutaConLocale(rutaActual, lang)}`;
+const home = rutaConLocale('/', lang);
+const titulo = t(pagina.titulo, lang);
+
+const mostrarFaqs = (farmacia.faqs ?? []).some(
+  (f) => localizar(f.pregunta, lang) && localizar(f.respuesta, lang),
+);
+
+/* ---------- Texto del CMS: quitar el h1 y numerar los h2 ---------- */
+const sinEtiquetas = (s: string) =>
+  s
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const aSlug = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+
+const secciones: { id: string; texto: string }[] = [];
+const usados = new Set<string>();
+const cuerpo = html
+  .replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, '')
+  .replace(/<h2([^>]*)>([\s\S]*?)<\/h2>/gi, (completo, attrs: string, interior: string) => {
+    const texto = sinEtiquetas(interior);
+    if (!texto) return completo;
+    const idExistente = attrs.match(/\sid=["']([^"']+)["']/)?.[1];
+    let id = idExistente ?? (aSlug(texto) || 'seccion');
+    if (!idExistente) {
+      let n = 2;
+      const base = id;
+      while (usados.has(id)) id = `${base}-${n++}`;
+    }
+    usados.add(id);
+    secciones.push({ id, texto });
+    return idExistente ? completo : `<h2 id="${id}"${attrs}>${interior}</h2>`;
+  });
+
+const conIndice = secciones.length >= 2;
+const email = farmacia.contacto?.email;
+---
+
+<BaseLayout
+  titulo={`${titulo} · ${farmacia.nombre}`}
+  descripcion={t(pagina.meta, lang, { nombre: farmacia.nombre })}
+  canonical={canonical}
+  lang={lang}
+  idiomas={localesActivos(farmacia.idiomasActivos)}
+  rutaActual={rutaActual}
+  nombreFarmacia={farmacia.nombre}
+  logoFarmacia={farmacia.logo}
+>
+  <Header
+    nombre={farmacia.nombre}
+    telefono={farmacia.contacto?.telefono}
+    logo={farmacia.logo}
+    mostrarFaqs={mostrarFaqs}
+    mostrarResenas={MOSTRAR_RESENAS}
+    lang={lang}
+    rutaActual={rutaActual}
+    idiomasActivos={farmacia.idiomasActivos}
+  />
+
+  <main id='contenido' class='legal'>
+    {/* ---------- Cabecera ---------- */}
+    <header id='legal-inicio' class='legal-cabecera'>
+      <div class='container-app'>
+        <nav aria-label={t('legal.migaAria', lang)} class='legal-miga'>
+          <ol>
+            <li><a href={home}>{t('legal.inicio', lang)}</a></li>
+            <li aria-hidden='true' class='legal-miga__sep'>
+              <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m9 18 6-6-6-6' /></svg>
+            </li>
+            <li><a href={rutaConLocale(rutaActual, lang)} aria-current='page'>{titulo}</a></li>
+          </ol>
+        </nav>
+
+        <span class='section-eyebrow mt-6'>{t('legal.eyebrow', lang)}</span>
+        <h1 class='legal-titulo'>{titulo}</h1>
+        <p class='legal-intro'>{t('legal.intro', lang, { nombre: farmacia.nombre })}</p>
+      </div>
+    </header>
+
+    {/* ---------- Cuerpo ---------- */}
+    <div class='container-app legal-cuerpo'>
+      <div class:list={['legal-grid', { 'legal-grid--indice': conIndice }]}>
+        {conIndice && (
+          <>
+            {/* Escritorio: índice fijo */}
+            <nav aria-label={t('legal.indice', lang)} class='legal-indice'>
+              <p class='legal-indice__titulo'>{t('legal.indice', lang)}</p>
+              <ol>
+                {secciones.map((s) => (
+                  <li><a href={`#${s.id}`}>{s.texto}</a></li>
+                ))}
+              </ol>
+            </nav>
+
+            {/* Móvil: índice plegable */}
+            <details class='legal-indice-movil'>
+              <summary>
+                {t('legal.indice', lang)}
+                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m6 9 6 6 6-6' /></svg>
+              </summary>
+              <ol>
+                {secciones.map((s) => (
+                  <li><a href={`#${s.id}`}>{s.texto}</a></li>
+                ))}
+              </ol>
+            </details>
+          </>
+        )}
+
+        <div class='legal-columna'>
+          <article class='legal-texto' set:html={cuerpo} />
+
+          {/* Al final: el otro texto legal y volver */}
+          <section class='legal-final' aria-labelledby='legal-otros'>
+            <h2 id='legal-otros' class='legal-final__titulo'>{t('legal.otros', lang)}</h2>
+            <a href={rutaConLocale(otra.ruta, lang)} class='legal-final__enlace'>
+              <span>{t(otra.titulo, lang)}</span>
+              <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 12h14' /><path d='m12 5 7 7-7 7' /></svg>
+            </a>
+            {email && (
+              <p class='legal-final__dudas'>
+                {t('legal.dudas', lang)}{' '}
+                <a href={`mailto:${email}`}>{t('legal.escribenos', lang)}</a>
+              </p>
+            )}
+            <div class='legal-final__acciones'>
+              <a href={home} class='btn btn-primary'>
+                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m15 18-6-6 6-6' /></svg>
+                {t('legal.volver', lang)}
+              </a>
+              <a href='#legal-inicio' class='legal-arriba'>
+                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m18 15-6-6-6 6' /></svg>
+                {t('legal.volverArriba', lang)}
+              </a>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer farmacia={farmacia} mostrarFaqs={mostrarFaqs} lang={lang} rutaActual={rutaActual} />
+</BaseLayout>
+
+<style>
+  /* ---------- Cabecera ---------- */
+  .legal-cabecera {
+    background: var(--canvas-alt);
+    border-bottom: 1px solid var(--border);
+    padding-block: clamp(1.5rem, 3vw, 2.25rem) clamp(2.5rem, 5vw, 3.75rem);
+  }
+  .legal-miga ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.875rem;
+  }
+  .legal-miga a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding-inline: 0.15rem;
+    color: var(--muted-foreground);
+    text-decoration: none;
+  }
+  .legal-miga a:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
+  .legal-miga a[aria-current='page'] { color: var(--foreground); font-weight: 600; }
+  .legal-miga__sep { display: inline-flex; color: var(--muted); }
+
+  .legal-titulo {
+    margin: 0.85rem 0 0;
+    font-size: clamp(2.1rem, 3.5vw + 0.6rem, 3.25rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    color: var(--foreground-strong);
+  }
+  .legal-intro {
+    margin: 0.85rem 0 0;
+    max-width: 60ch;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--muted-foreground);
+  }
+
+  /* ---------- Cuerpo ---------- */
+  .legal-cuerpo { padding-block: clamp(2rem, 4vw, 3.5rem) clamp(4rem, 7vw, 6rem); }
+  .legal-grid { display: grid; gap: 1.5rem; max-width: 760px; }
+  .legal-grid--indice { max-width: none; }
+  @media (min-width: 960px) {
+    .legal-grid--indice {
+      grid-template-columns: 240px minmax(0, 760px);
+      gap: clamp(2.5rem, 4vw, 4rem);
+      align-items: start;
+    }
+  }
+  .legal-columna { min-width: 0; display: flex; flex-direction: column; gap: 1.5rem; }
+
+  /* Índice escritorio */
+  .legal-indice { display: none; }
+  @media (min-width: 960px) {
+    .legal-indice {
+      display: block;
+      position: sticky;
+      top: 96px;
+      max-height: calc(100dvh - 120px);
+      overflow-y: auto;
+    }
+  }
+  .legal-indice__titulo,
+  .legal-indice-movil summary {
+    margin: 0 0 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+  .legal-indice ol,
+  .legal-indice-movil ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    border-left: 2px solid var(--border);
+  }
+  .legal-indice a,
+  .legal-indice-movil a {
+    display: block;
+    padding: 0.4rem 0 0.4rem 0.9rem;
+    margin-left: -2px;
+    border-left: 2px solid transparent;
+    color: var(--muted-foreground);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    text-decoration: none;
+  }
+  .legal-indice a:hover,
+  .legal-indice-movil a:hover {
+    color: var(--primary);
+    border-left-color: var(--primary);
+  }
+
+  /* Índice móvil */
+  .legal-indice-movil {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 0 1.1rem;
+  }
+  @media (min-width: 960px) { .legal-indice-movil { display: none; } }
+  .legal-indice-movil summary {
+    margin: 0;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    list-style: none;
+  }
+  .legal-indice-movil summary::-webkit-details-marker { display: none; }
+  .legal-indice-movil summary svg { transition: transform var(--dur) var(--ease-out); }
+  .legal-indice-movil[open] summary svg { transform: rotate(180deg); }
+  .legal-indice-movil[open] ol { margin-bottom: 1rem; }
+
+  /* Texto */
+  .legal-texto {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: clamp(1.5rem, 4vw, 3rem);
+    box-shadow: var(--shadow-xs);
+  }
+  .legal-texto :global(> :first-child) { margin-top: 0; }
+  .legal-texto :global(h2) {
+    font-size: clamp(1.25rem, 1vw + 0.9rem, 1.5rem);
+    margin: 2.5rem 0 0.85rem;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    font-weight: 800;
+    color: var(--foreground-strong);
+    scroll-margin-top: 96px;
+  }
+  .legal-texto :global(h3) {
+    font-size: 1.05rem;
+    margin: 1.75rem 0 0.5rem;
+    font-weight: 700;
+    color: var(--foreground);
+  }
+  .legal-texto :global(p),
+  .legal-texto :global(li) {
+    max-width: 70ch;
+    line-height: 1.75;
+    color: var(--muted-foreground);
+    font-size: 1rem;
+  }
+  .legal-texto :global(p) { margin: 0 0 1rem; }
+  .legal-texto :global(ul),
+  .legal-texto :global(ol) {
+    margin: 1rem 0;
+    padding-left: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .legal-texto :global(ul) { list-style: disc; }
+  .legal-texto :global(ol) { list-style: decimal; }
+  .legal-texto :global(li::marker) { color: var(--primary); }
+  .legal-texto :global(a) {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    word-break: break-word;
+  }
+  .legal-texto :global(a:hover) { color: var(--accent-hover); }
+  .legal-texto :global(strong) { color: var(--foreground); font-weight: 700; }
+
+  /* Final */
+  .legal-final {
+    background: var(--canvas-alt);
+    border-radius: var(--radius-xl);
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .legal-final__titulo {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+  .legal-final__enlace {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 56px;
+    padding: 0.9rem 1.15rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    color: var(--foreground-strong);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    text-decoration: none;
+    transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+  }
+  .legal-final__enlace svg { color: var(--primary); transition: transform var(--dur) var(--ease-magnetic); }
+  .legal-final__enlace:hover { border-color: var(--primary); color: var(--primary); }
+  .legal-final__enlace:hover svg { transform: translateX(3px); }
+  .legal-final__dudas { margin: 0; color: var(--muted-foreground); font-size: 0.95rem; }
+  .legal-final__dudas a {
+    display: inline-block;
+    padding-block: 0.25rem;
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .legal-final__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.25rem;
+    margin-top: 0.25rem;
+  }
+  .legal-arriba {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    color: var(--muted-foreground);
+    font-size: 0.925rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .legal-arriba:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .legal-final__enlace:hover svg { transform: none; }
+  }
+</style>

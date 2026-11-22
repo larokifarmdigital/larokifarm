@@ -109,8 +109,6 @@
   },
   "footer": {
     "servicios": "Services",
-    "informacion": "Informations",
-    "contactanos": "Contact",
     "sobreNosotros": "La pharmacie",
     "preguntasFrecuentes": "Questions",
     "resenas": "Avis",
@@ -118,14 +116,17 @@
     "avisoLegal": "Mentions légales",
     "politicaPrivacidad": "Politique de confidentialité",
     "copyright": "© {anyo} {nombre}",
-    "titular": "Titulaire",
-    "badgeColegiada": "Pharmacie agréée · Espagne",
     "nCol": "N° d'inscription",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
     "ariaTiktok": "TikTok",
-    "ctaTitulo": "Besoin d'aide ?",
-    "ctaEm": "Nous sommes là."
+    "horario": "Horaires",
+    "comoLlegar": "Itinéraire",
+    "nuevaPestana": "(s’ouvre dans un nouvel onglet)",
+    "redes": "Suivez-nous",
+    "legalAria": "Mentions légales",
+    "visitanos": "Où nous trouver",
+    "explora": "Explorer le site"
   },
   "features": {
     "atencionTitulo": "Accueil personnalisé",
@@ -143,7 +144,16 @@
     "avisoTitulo": "Mentions légales",
     "privacidadTitulo": "Politique de confidentialité",
     "avisoMeta": "Mentions légales et informations sur le titulaire de {nombre}.",
-    "privacidadMeta": "Politique de confidentialité et traitement des données personnelles de {nombre}."
+    "privacidadMeta": "Politique de confidentialité et traitement des données personnelles de {nombre}.",
+    "eyebrow": "Informations légales",
+    "intro": "Textes légaux de {nombre}.",
+    "inicio": "Accueil",
+    "migaAria": "Vous êtes ici",
+    "indice": "Sur cette page",
+    "otros": "Autres textes légaux",
+    "volverArriba": "Retour en haut",
+    "dudas": "Une question sur ces textes ?",
+    "escribenos": "Écrivez-nous"
   },
   "resenas": {
     "chip": "Avis",

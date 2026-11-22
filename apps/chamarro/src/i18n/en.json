@@ -109,8 +109,6 @@
   },
   "footer": {
     "servicios": "Services",
-    "informacion": "Info",
-    "contactanos": "Contact",
     "sobreNosotros": "About",
     "preguntasFrecuentes": "FAQs",
     "resenas": "Reviews",
@@ -118,14 +116,17 @@
     "avisoLegal": "Legal notice",
     "politicaPrivacidad": "Privacy policy",
     "copyright": "© {anyo} {nombre}",
-    "titular": "Owner",
-    "badgeColegiada": "Registered pharmacy · Spain",
     "nCol": "Reg. no.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
     "ariaTiktok": "TikTok",
-    "ctaTitulo": "Need a hand?",
-    "ctaEm": "We're here."
+    "horario": "Opening hours",
+    "comoLlegar": "Get directions",
+    "nuevaPestana": "(opens in a new tab)",
+    "redes": "Follow us",
+    "legalAria": "Legal information",
+    "visitanos": "Find us",
+    "explora": "Explore the site"
   },
   "features": {
     "atencionTitulo": "Personal attention",
@@ -143,7 +144,16 @@
     "avisoTitulo": "Legal notice",
     "privacidadTitulo": "Privacy policy",
     "avisoMeta": "Legal notice and owner details of {nombre}.",
-    "privacidadMeta": "Privacy policy and personal data processing of {nombre}."
+    "privacidadMeta": "Privacy policy and personal data processing of {nombre}.",
+    "eyebrow": "Legal information",
+    "intro": "Legal texts of {nombre}.",
+    "inicio": "Home",
+    "migaAria": "You are here",
+    "indice": "On this page",
+    "otros": "Other legal texts",
+    "volverArriba": "Back to top",
+    "dudas": "Any questions about these texts?",
+    "escribenos": "Write to us"
   },
   "resenas": {
     "chip": "Reviews",

@@ -103,7 +103,18 @@
     "nCol": "Nº col.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
-    "ariaTiktok": "TikTok"
+    "ariaTiktok": "TikTok",
+    "horario": "Horario",
+    "visitanos": "Dónde estamos",
+    "comoLlegar": "Cómo llegar",
+    "abiertoAhora": "Abierto ahora",
+    "cerradoAhora": "Cerrado ahora",
+    "cierraA": "cierra a las {hora}",
+    "abreHoy": "abre hoy a las {hora}",
+    "abreManana": "abre mañana a las {hora}",
+    "sinCookies": "Web sin cookies ni rastreadores",
+    "explora": "Explora la web",
+    "nuevaPestana": "(se abre en otra pestaña)"
   },
   "features": {
     "atencionTitulo": "Atención personalizada",
@@ -123,7 +134,14 @@
     "avisoTitulo": "Aviso legal",
     "privacidadTitulo": "Política de privacidad",
     "avisoMeta": "Aviso legal e información del titular de {nombre}.",
-    "privacidadMeta": "Política de privacidad y tratamiento de datos personales de {nombre}."
+    "privacidadMeta": "Política de privacidad y tratamiento de datos personales de {nombre}.",
+    "inicio": "Inicio",
+    "eyebrow": "Información legal",
+    "avisoIntro": "Quién es el titular de esta web y las condiciones para usarla.",
+    "privacidadIntro": "Cómo tratamos tus datos personales y cuáles son tus derechos.",
+    "indice": "En esta página",
+    "otros": "Otros textos legales",
+    "volverArriba": "Volver arriba"
   },
   "resenas": {
     "chip": "Reseñas Google",

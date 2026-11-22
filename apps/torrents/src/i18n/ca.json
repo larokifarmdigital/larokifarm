@@ -103,7 +103,18 @@
     "nCol": "Nº col.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
-    "ariaTiktok": "TikTok"
+    "ariaTiktok": "TikTok",
+    "horario": "Horari",
+    "visitanos": "On som",
+    "comoLlegar": "Com arribar-hi",
+    "abiertoAhora": "Obert ara",
+    "cerradoAhora": "Tancat ara",
+    "cierraA": "tanca a les {hora}",
+    "abreHoy": "obre avui a les {hora}",
+    "abreManana": "obre demà a les {hora}",
+    "sinCookies": "Web sense galetes ni rastrejadors",
+    "explora": "Explora el web",
+    "nuevaPestana": "(s'obre en una altra pestanya)"
   },
   "features": {
     "atencionTitulo": "Atenció personalitzada",
@@ -123,7 +134,14 @@
     "avisoTitulo": "Avís legal",
     "privacidadTitulo": "Política de privacitat",
     "avisoMeta": "Avís legal i informació del titular de {nombre}.",
-    "privacidadMeta": "Política de privacitat i tractament de dades personals de {nombre}."
+    "privacidadMeta": "Política de privacitat i tractament de dades personals de {nombre}.",
+    "inicio": "Inici",
+    "eyebrow": "Informació legal",
+    "avisoIntro": "Qui és el titular d'aquest web i les condicions per fer-lo servir.",
+    "privacidadIntro": "Com tractem les teves dades personals i quins són els teus drets.",
+    "indice": "En aquesta pàgina",
+    "otros": "Altres textos legals",
+    "volverArriba": "Torna a dalt"
   },
   "resenas": {
     "chip": "Ressenyes Google",

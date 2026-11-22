@@ -595,3 +595,35 @@ body {
   .motion-magnetic:hover { transform: none !important; }
   .btn:active { transform: none !important; }
 }
+
+/* ============================================================
+ * Transición entre páginas (View Transitions entre documentos).
+ * Sin JS: el navegador funde la página saliente y la nueva entra
+ * con un desplazamiento corto. La cabecera lleva nombre propio para
+ * quedarse quieta y no "parpadear". Navegadores sin soporte navegan
+ * como siempre. Con movimiento reducido no hay transición.
+ * ============================================================ */
+@view-transition { navigation: auto; }
+
+.corp-header { view-transition-name: cabecera; }
+
+::view-transition-group(cabecera) { animation: none; }
+::view-transition-old(cabecera),
+::view-transition-new(cabecera) { animation: none; }
+
+::view-transition-old(root) {
+  animation: vt-salida 180ms var(--ease-out) both;
+}
+::view-transition-new(root) {
+  animation: vt-entrada 380ms var(--ease-out) 60ms both;
+}
+@keyframes vt-salida {
+  to { opacity: 0; transform: translateY(-6px); }
+}
+@keyframes vt-entrada {
+  from { opacity: 0; transform: translateY(14px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+}

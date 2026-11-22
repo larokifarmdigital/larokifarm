@@ -109,8 +109,6 @@
   },
   "footer": {
     "servicios": "Servicios",
-    "informacion": "Información",
-    "contactanos": "Contacto",
     "sobreNosotros": "La farmacia",
     "preguntasFrecuentes": "Preguntas",
     "resenas": "Opiniones",
@@ -118,14 +116,17 @@
     "avisoLegal": "Aviso legal",
     "politicaPrivacidad": "Política de privacidad",
     "copyright": "© {anyo} {nombre}",
-    "titular": "Titular",
-    "badgeColegiada": "Farmacia colegiada · España",
     "nCol": "Nº col.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
     "ariaTiktok": "TikTok",
-    "ctaTitulo": "¿Necesitas ayuda?",
-    "ctaEm": "Estamos aquí."
+    "horario": "Horario",
+    "comoLlegar": "Cómo llegar",
+    "nuevaPestana": "(se abre en otra pestaña)",
+    "redes": "Síguenos",
+    "legalAria": "Textos legales",
+    "visitanos": "Dónde estamos",
+    "explora": "Explora la web"
   },
   "features": {
     "atencionTitulo": "Atención personalizada",
@@ -143,7 +144,16 @@
     "avisoTitulo": "Aviso legal",
     "privacidadTitulo": "Política de privacidad",
     "avisoMeta": "Aviso legal e información del titular de {nombre}.",
-    "privacidadMeta": "Política de privacidad y tratamiento de datos personales de {nombre}."
+    "privacidadMeta": "Política de privacidad y tratamiento de datos personales de {nombre}.",
+    "eyebrow": "Información legal",
+    "intro": "Textos legales de {nombre}.",
+    "inicio": "Inicio",
+    "migaAria": "Estás aquí",
+    "indice": "En esta página",
+    "otros": "Otros textos legales",
+    "volverArriba": "Volver arriba",
+    "dudas": "¿Tienes alguna duda sobre estos textos?",
+    "escribenos": "Escríbenos"
   },
   "resenas": {
     "chip": "Opiniones",

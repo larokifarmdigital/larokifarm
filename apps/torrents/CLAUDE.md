@@ -23,3 +23,22 @@ cliente). Mismo patrón que `apps/chamarro` (ver su CLAUDE.md).
 - `DIAS_POR_IDIOMA` / `CERRADO_POR_IDIOMA` (en `src/lib/i18n.ts`) para los
   horarios; textos legales por defecto solo en es/en/ca, el resto cae al
   castellano (`legalPorDefecto`).
+
+## Navegación, páginas legales y pie (22-11-2026)
+
+- **Transición entre páginas**: View Transitions entre documentos solo con CSS
+  (`@view-transition` en `global.css`, sin ClientRouter ni JS). El contenido se
+  funde y sube; la cabecera (`view-transition-name: cabecera`) no se mueve. El
+  pie NO lleva nombre: cambia de posición entre páginas y "volaría". Sin
+  animación con `prefers-reduced-motion`.
+- **Páginas legales**: `components/LegalPage.astro` (las dos rutas son finas).
+  Cabecera con miga de pan + título traducido; el `<h1>` del CMS se quita
+  (`prepararTextoLegal` en `lib/legal.ts`, que también pone `id` a los `<h2>`
+  para el índice: fijo en escritorio, `<details>` en móvil). Al final, tarjeta
+  al otro texto legal, "Volver al inicio" y "Volver arriba". Sin JS.
+- **Pie**: marca + "Web sin cookies ni rastreadores", horario con estado
+  "Abierto ahora / Cerrado" (hora de Madrid, en el navegador; oculto sin JS),
+  dirección con "Cómo llegar" (enlace externo a `googleMapsUrl` o búsqueda por
+  dirección: nada de mapas incrustados), contacto, enlaces de la web y barra
+  inferior con titular, nº colegiado y textos legales. Columnas sin datos no se
+  pintan. Prop `mapsUrl`.

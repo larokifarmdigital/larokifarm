@@ -1,11 +1,16 @@
 ---
+/**
+ * Pie de página: marca, horario (con "Abierto ahora" calculado en el
+ * navegador con la hora de Madrid), cómo llegar, contacto, enlaces y textos
+ * legales. Columnas sin datos no se pintan. Sin mapas ni nada que ponga
+ * cookies: "Cómo llegar" es un enlace externo.
+ */
 import { imagenSanity, agruparHorarios, localizar } from '@/lib/sanity';
 import type {
   Contacto,
   RedesSociales,
   Direccion,
   HorarioDia,
-  Servicio,
   GrupoHorario,
   LocalizedText,
   DiasI18n
@@ -21,17 +26,16 @@ export interface Props {
   contacto?: Contacto;
   redes?: RedesSociales;
   direccion?: Direccion;
+  /** Enlace de Google Maps de la farmacia; si falta se busca por la dirección. */
+  mapsUrl?: string;
   horarios?: HorarioDia[];
   horariosAgrupados?: GrupoHorario[];
-  servicios?: Servicio[];
   descripcionCorta?: LocalizedText;
   mostrarFaqs?: boolean;
-  /** Si false, omite el enlace "Reseñas" de la columna de información. */
+  /** Si false, omite el enlace "Reseñas". */
   mostrarResenas?: boolean;
   lang: Locale;
   rutaActual?: string;
-  /** Footer reducido (sin columnas de servicios/info/contacto extendido) para páginas internas. */
-  compacto?: boolean;
 }
 
 const {
@@ -42,458 +46,415 @@ const {
   contacto,
   redes,
   direccion,
+  mapsUrl,
   horarios,
   horariosAgrupados,
   descripcionCorta,
   mostrarFaqs = false,
   mostrarResenas = true,
-  lang,
-  compacto = false
+  lang
 } = Astro.props;
-const servicios = Astro.props.servicios ?? [];
 
 const logoOpt = imagenSanity(logo, { w: 96, h: 96, fit: 'crop' });
 const anyo = new Date().getFullYear();
 const limpiarTel = (s?: string) => s?.replace(/\s+/g, '');
-
-const direccionCorta = direccion
-  ? [direccion.calle, direccion.codigoPostal, direccion.ciudad].filter(Boolean).join(', ')
-  : null;
-
-const serviciosTop = servicios.slice(0, 6).map(s => ({
-  ...s,
-  nombreTxt: localizar(s.nombre, lang) ?? ''
-}));
-
 const descripcionTxt = localizar(descripcionCorta, lang);
-
-const DIAS_POR_LANG = DIAS_POR_IDIOMA as Record<Locale, DiasI18n>;
-const cerradoLabel: Record<Locale, string> = CERRADO_POR_IDIOMA;
-const grupos =
-  horariosAgrupados ?? agruparHorarios(horarios, DIAS_POR_LANG[lang], cerradoLabel[lang]);
-
 const home = rutaConLocale('/', lang);
 
-const enlacesInfo = [
+const DIAS_POR_LANG = DIAS_POR_IDIOMA as Record<Locale, DiasI18n>;
+const grupos = horariosAgrupados ?? agruparHorarios(horarios, DIAS_POR_LANG[lang], CERRADO_POR_IDIOMA[lang]);
+
+const lineasDireccion = [
+  direccion?.calle,
+  [direccion?.codigoPostal, direccion?.ciudad].filter(Boolean).join(' '),
+  direccion?.provincia && direccion.provincia !== direccion.ciudad ? direccion.provincia : undefined
+].filter((s): s is string => Boolean(s?.trim()));
+
+const comoLlegar =
+  mapsUrl ||
+  (lineasDireccion.length
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${nombre}, ${lineasDireccion.join(', ')}`)}`
+    : undefined);
+
+const hayContacto = !!(contacto?.telefono || contacto?.whatsapp || contacto?.email);
+const hayRedes = !!(redes && (redes.instagram || redes.facebook || redes.tiktok));
+
+// Para el estado "Abierto ahora" en el navegador (la web es estática).
+const horariosEstado = (horarios ?? []).map((h) => ({
+  dia: h.dia,
+  cerrado: !!h.cerrado,
+  tramos: h.tramos?.length ? h.tramos : h.apertura && h.cierre ? [{ apertura: h.apertura, cierre: h.cierre }] : []
+}));
+const textosEstado = {
+  abierto: t('footer.abiertoAhora', lang),
+  cerrado: t('footer.cerradoAhora', lang),
+  cierra: t('footer.cierraA', lang),
+  abreHoy: t('footer.abreHoy', lang),
+  abreManana: t('footer.abreManana', lang)
+};
+
+const enlaces = [
   { label: t('footer.sobreNosotros', lang), href: `${home}#sobre` },
   { label: t('footer.servicios', lang), href: `${home}#servicios` },
-  ...(mostrarResenas
-    ? [{ label: t('footer.resenas', lang), href: `${home}#resenas` }]
-    : []),
-  ...(mostrarFaqs
-    ? [{ label: t('footer.preguntasFrecuentes', lang), href: `${home}#faqs` }]
-    : []),
-  { label: t('footer.contacto', lang), href: `${home}#contacto` },
-  { label: t('footer.avisoLegal', lang), href: rutaConLocale('/aviso-legal', lang) },
-  { label: t('footer.politicaPrivacidad', lang), href: rutaConLocale('/politica-privacidad', lang) }
+  ...(mostrarResenas ? [{ label: t('footer.resenas', lang), href: `${home}#resenas` }] : []),
+  ...(mostrarFaqs ? [{ label: t('footer.preguntasFrecuentes', lang), href: `${home}#faqs` }] : []),
+  { label: t('footer.contacto', lang), href: `${home}#contacto` }
 ];
 
-const hayContacto = !!(
-  contacto?.telefono ||
-  contacto?.whatsapp ||
-  contacto?.email ||
-  direccionCorta ||
-  grupos.length
-);
+const nuevaPestana = t('footer.nuevaPestana', lang);
 ---
 
-<footer
-  id='contacto-footer'
-  class='relative overflow-hidden border-t border-[var(--border)] bg-[var(--card)]'
->
-  {
-    !compacto && (
-      <>
-        <MarcaAgua
-          logo={logo}
-          class='top-10 right-6 md:right-24'
-          tamano={60}
-          opacidad={0.05}
-          rotacion={-10}
-        />
-        <MarcaAgua
-          logo={logo}
-          class='bottom-16 left-6 md:left-20'
-          tamano={56}
-          opacidad={0.05}
-          rotacion={14}
-        />
-        <MarcaAgua
-          logo={logo}
-          class='top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
-          tamano={90}
-          opacidad={0.04}
-          rotacion={-6}
-        />
-      </>
-    )
-  }
+<footer id='contacto-footer' class='site-footer relative overflow-hidden border-t border-[var(--border)] bg-[var(--card)]'>
+  <MarcaAgua logo={logo} class='top-10 right-6 md:right-24' tamano={60} opacidad={0.05} rotacion={-10} />
+  <MarcaAgua logo={logo} class='bottom-24 left-6 md:left-20' tamano={56} opacidad={0.05} rotacion={14} />
 
-  {compacto && (
-    <div class='container-app relative py-10'>
-      <div class='flex flex-col items-start justify-between gap-6 md:flex-row md:items-center'>
-        <a href={home} class='group flex items-center gap-2.5'>
-          {logoOpt && (
-            <img
-              src={logoOpt}
-              alt=''
-              width='40'
-              height='40'
-              class='h-10 w-10 object-contain transition-transform duration-300 group-hover:scale-105'
-            />
-          )}
-          <span class='text-xl font-extrabold tracking-tight text-[var(--primary)]'>
-            {nombre}
-          </span>
+  <div class='container-app relative pt-14 pb-10 md:pt-16'>
+    <div class='grid gap-10 md:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1fr_1fr] lg:gap-12'>
+      {/* Marca */}
+      <div class='space-y-5' data-reveal>
+        <a href={home} class='inline-flex items-center gap-2.5'>
+          {logoOpt && <img src={logoOpt} alt='' width='40' height='40' class='h-10 w-10 object-contain' />}
+          <span class='text-xl font-extrabold tracking-tight text-[var(--primary)]'>{nombre}</span>
         </a>
 
-        {redes && (redes.instagram || redes.facebook || redes.tiktok) && (
+        {descripcionTxt && <p class='max-w-sm leading-relaxed text-[var(--muted-foreground)]'>{descripcionTxt}</p>}
+
+        {hayRedes && (
           <div class='flex items-center gap-2.5'>
-            {redes.instagram && (
-              <a
-                href={redes.instagram}
-                target='_blank'
-                rel='noopener noreferrer'
-                aria-label={t('footer.ariaInstagram', lang)}
-                class='flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--secondary)] transition-all duration-200 hover:scale-110 hover:bg-[var(--primary)] hover:text-white'
-              >
-                <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+            {redes!.instagram && (
+              <a href={redes!.instagram} target='_blank' rel='noopener noreferrer' aria-label={`${t('footer.ariaInstagram', lang)} ${nuevaPestana}`} class='footer-red'>
+                <svg width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
                   <rect x='2' y='2' width='20' height='20' rx='5' />
                   <path d='M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z' />
                   <line x1='17.5' y1='6.5' x2='17.51' y2='6.5' />
                 </svg>
               </a>
             )}
-            {redes.facebook && (
-              <a
-                href={redes.facebook}
-                target='_blank'
-                rel='noopener noreferrer'
-                aria-label={t('footer.ariaFacebook', lang)}
-                class='flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--secondary)] transition-all duration-200 hover:scale-110 hover:bg-[var(--primary)] hover:text-white'
-              >
-                <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+            {redes!.facebook && (
+              <a href={redes!.facebook} target='_blank' rel='noopener noreferrer' aria-label={`${t('footer.ariaFacebook', lang)} ${nuevaPestana}`} class='footer-red'>
+                <svg width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
                   <path d='M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z' />
                 </svg>
               </a>
             )}
-            {redes.tiktok && (
-              <a
-                href={redes.tiktok}
-                target='_blank'
-                rel='noopener noreferrer'
-                aria-label={t('footer.ariaTiktok', lang)}
-                class='flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--secondary)] transition-all duration-200 hover:scale-110 hover:bg-[var(--primary)] hover:text-white'
-              >
-                <svg width='18' height='18' viewBox='0 0 24 24' fill='currentColor'>
+            {redes!.tiktok && (
+              <a href={redes!.tiktok} target='_blank' rel='noopener noreferrer' aria-label={`${t('footer.ariaTiktok', lang)} ${nuevaPestana}`} class='footer-red'>
+                <svg width='19' height='19' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
                   <path d='M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.66a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.09z' />
                 </svg>
               </a>
             )}
           </div>
         )}
-      </div>
-    </div>
-  )}
 
-  {!compacto && (
-  <div class='container-app relative py-16'>
-    <div class='grid gap-10 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr]'>
-      <div class='space-y-6' data-reveal>
-        <a href={home} class='flex items-center gap-2.5'>
-          {
-            logoOpt && (
-              <img src={logoOpt} alt='' width='40' height='40' class='h-10 w-10 object-contain' />
-            )
-          }
-          <span class='text-xl font-extrabold tracking-tight text-[var(--primary)]'>{nombre}</span>
-        </a>
-
-        {
-          descripcionTxt && (
-            <p class='max-w-sm leading-relaxed text-[var(--muted-foreground)]'>{descripcionTxt}</p>
-          )
-        }
-
-        {
-          redes && (redes.instagram || redes.facebook || redes.tiktok) && (
-            <div class='flex items-center gap-3 pt-2'>
-              {redes.instagram && (
-                <a
-                  href={redes.instagram}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  aria-label={t('footer.ariaInstagram', lang)}
-                  class='flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--secondary)] transition-colors hover:bg-[var(--primary)] hover:text-white'
-                >
-                  <svg
-                    width='20'
-                    height='20'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    stroke-width='2'
-                    stroke-linecap='round'
-                    stroke-linejoin='round'
-                  >
-                    <rect x='2' y='2' width='20' height='20' rx='5' />
-                    <path d='M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z' />
-                    <line x1='17.5' y1='6.5' x2='17.51' y2='6.5' />
-                  </svg>
-                </a>
-              )}
-              {redes.facebook && (
-                <a
-                  href={redes.facebook}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  aria-label={t('footer.ariaFacebook', lang)}
-                  class='flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--secondary)] transition-colors hover:bg-[var(--primary)] hover:text-white'
-                >
-                  <svg
-                    width='20'
-                    height='20'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    stroke-width='2'
-                    stroke-linecap='round'
-                    stroke-linejoin='round'
-                  >
-                    <path d='M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z' />
-                  </svg>
-                </a>
-              )}
-              {redes.tiktok && (
-                <a
-                  href={redes.tiktok}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  aria-label={t('footer.ariaTiktok', lang)}
-                  class='flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--secondary)] transition-colors hover:bg-[var(--primary)] hover:text-white'
-                >
-                  <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
-                    <path d='M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.66a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.09z' />
-                  </svg>
-                </a>
-              )}
-            </div>
-          )
-        }
+        <p class='footer-sin-cookies'>
+          <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+            <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' />
+            <path d='m9 12 2 2 4-4' />
+          </svg>
+          {t('footer.sinCookies', lang)}
+        </p>
       </div>
 
-      {
-        serviciosTop.length > 0 && (
-          <div style='--reveal-delay:80ms' data-reveal>
-            <h4 class='mb-4 font-extrabold'>{t('footer.servicios', lang)}</h4>
-            <ul class='space-y-3'>
-              {serviciosTop.map(s => (
-                <li>
-                  <a
-                    href={`${home}#servicios`}
-                    class='link-anim inline-block text-sm text-[var(--muted-foreground)] hover:text-[var(--primary)]'
-                  >
-                    {s.nombreTxt}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )
-      }
+      {/* Horario */}
+      {grupos.length > 0 && (
+        <div style='--reveal-delay:80ms' data-reveal>
+          <h2 class='footer-titulo'>{t('footer.horario', lang)}</h2>
+          <p
+            class='footer-estado'
+            data-footer-estado
+            data-horarios={JSON.stringify(horariosEstado)}
+            data-textos={JSON.stringify(textosEstado)}
+            hidden
+          >
+            <span class='footer-estado__punto' aria-hidden='true'></span>
+            <span><strong data-estado-titulo></strong> <span data-estado-detalle></span></span>
+          </p>
+          <dl class='mt-3 space-y-2 text-sm'>
+            {grupos.map((g) => (
+              <div class='flex flex-wrap justify-between gap-x-3 border-b border-dashed border-[var(--border)] pb-2'>
+                <dt class='font-semibold text-[var(--foreground)]'>{g.etiqueta}</dt>
+                <dd class='m-0 tabular-nums text-[var(--muted-foreground)]'>{g.horario}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
 
-      <div style='--reveal-delay:160ms' data-reveal>
-        <h4 class='mb-4 font-extrabold'>{t('footer.informacion', lang)}</h4>
-        <ul class='space-y-3'>
-          {
-            enlacesInfo.map(l => (
+      {/* Cómo llegar */}
+      {lineasDireccion.length > 0 && (
+        <div style='--reveal-delay:160ms' data-reveal>
+          <h2 class='footer-titulo'>{t('footer.visitanos', lang)}</h2>
+          <address class='not-italic leading-relaxed text-[var(--muted-foreground)]'>
+            {lineasDireccion.map((l) => <span class='block'>{l}</span>)}
+          </address>
+          {comoLlegar && (
+            <a href={comoLlegar} target='_blank' rel='noopener noreferrer' class='footer-boton mt-4'>
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                <polygon points='3 11 22 2 13 21 11 13 3 11' />
+              </svg>
+              {t('footer.comoLlegar', lang)}
+              <span class='sr-only'>{nuevaPestana}</span>
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Contacto */}
+      {hayContacto && (
+        <div style='--reveal-delay:240ms' data-reveal>
+          <h2 class='footer-titulo'>{t('footer.contactanos', lang)}</h2>
+          <ul class='m-0 list-none space-y-1 p-0'>
+            {contacto?.telefono && (
               <li>
-                <a
-                  href={l.href}
-                  class='link-anim inline-block text-sm text-[var(--muted-foreground)] hover:text-[var(--primary)]'
-                >
-                  {l.label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-
-      {
-        hayContacto && (
-          <div style='--reveal-delay:240ms' data-reveal>
-            <h4 class='mb-4 font-extrabold'>{t('footer.contactanos', lang)}</h4>
-            <ul class='space-y-3 text-sm'>
-              {direccionCorta && (
-                <li class='flex items-start gap-2.5 text-[var(--muted-foreground)]'>
-                  <svg
-                    width='18'
-                    height='18'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    stroke-width='2.2'
-                    stroke-linecap='round'
-                    stroke-linejoin='round'
-                    aria-hidden='true'
-                    class='mt-0.5 shrink-0 text-[var(--primary)]'
-                  >
-                    <path d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' />
-                    <circle cx='12' cy='10' r='3' />
-                  </svg>
-                  <span>{direccionCorta}</span>
-                </li>
-              )}
-              {contacto?.telefono && (
-                <li>
-                  <a
-                    href={`tel:${limpiarTel(contacto.telefono)}`}
-                    class='flex items-start gap-2.5 text-[var(--muted-foreground)] transition-colors hover:text-[var(--primary)]'
-                  >
-                    <svg
-                      width='18'
-                      height='18'
-                      viewBox='0 0 24 24'
-                      fill='none'
-                      stroke='currentColor'
-                      stroke-width='2.2'
-                      stroke-linecap='round'
-                      stroke-linejoin='round'
-                      aria-hidden='true'
-                      class='mt-0.5 shrink-0 text-[var(--primary)]'
-                    >
+                <a href={`tel:${limpiarTel(contacto.telefono)}`} class='footer-contacto'>
+                  <span class='footer-contacto__icono' aria-hidden='true'>
+                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>
                       <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
                     </svg>
-                    <span>{contacto.telefono}</span>
-                  </a>
-                </li>
-              )}
-              {contacto?.whatsapp && (
-                <li>
-                  <a
-                    href={`https://wa.me/${limpiarTel(contacto.whatsapp)?.replace(/^\+/, '')}`}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    class='flex items-start gap-2.5 text-[var(--muted-foreground)] transition-colors hover:text-[var(--primary)]'
-                  >
-                    <svg
-                      width='18'
-                      height='18'
-                      viewBox='0 0 24 24'
-                      fill='currentColor'
-                      aria-hidden='true'
-                      class='mt-0.5 shrink-0 text-[var(--primary)]'
-                    >
+                  </span>
+                  <span class='tabular-nums'>{contacto.telefono}</span>
+                </a>
+              </li>
+            )}
+            {contacto?.whatsapp && (
+              <li>
+                <a href={`https://wa.me/${limpiarTel(contacto.whatsapp)?.replace(/^\+/, '')}`} target='_blank' rel='noopener noreferrer' class='footer-contacto'>
+                  <span class='footer-contacto__icono' aria-hidden='true'>
+                    <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
                       <path d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0 0 20.464 3.488' />
                     </svg>
-                    <span>WhatsApp</span>
-                  </a>
-                </li>
-              )}
-              {contacto?.email && (
-                <li>
-                  <a
-                    href={`mailto:${contacto.email}`}
-                    class='flex items-start gap-2.5 text-[var(--muted-foreground)] transition-colors hover:text-[var(--primary)]'
-                  >
-                    <svg
-                      width='18'
-                      height='18'
-                      viewBox='0 0 24 24'
-                      fill='none'
-                      stroke='currentColor'
-                      stroke-width='2.2'
-                      stroke-linecap='round'
-                      stroke-linejoin='round'
-                      aria-hidden='true'
-                      class='mt-0.5 shrink-0 text-[var(--primary)]'
-                    >
+                  </span>
+                  <span>WhatsApp</span>
+                  <span class='sr-only'>{nuevaPestana}</span>
+                </a>
+              </li>
+            )}
+            {contacto?.email && (
+              <li>
+                <a href={`mailto:${contacto.email}`} class='footer-contacto'>
+                  <span class='footer-contacto__icono' aria-hidden='true'>
+                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>
                       <path d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z' />
                       <polyline points='22,6 12,13 2,6' />
                     </svg>
-                    <span class='break-all'>{contacto.email}</span>
-                  </a>
-                </li>
-              )}
-              {grupos.length > 0 && (
-                <li class='flex items-start gap-2.5 text-[var(--muted-foreground)]'>
-                  <svg
-                    width='18'
-                    height='18'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    stroke-width='2.2'
-                    stroke-linecap='round'
-                    stroke-linejoin='round'
-                    aria-hidden='true'
-                    class='mt-0.5 shrink-0 text-[var(--primary)]'
-                  >
-                    <circle cx='12' cy='12' r='10' />
-                    <path d='M12 6v6l4 2' />
-                  </svg>
-                  <ul class='space-y-0.5'>
-                    {grupos.map(h => (
-                      <li class='leading-snug'>
-                        <span class='font-semibold text-[var(--foreground)]'>{h.etiqueta}:</span>{' '}
-                        <span>{h.horario}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              )}
-            </ul>
-          </div>
-        )
-      }
-    </div>
-  </div>
-  )}
-
-  <div class='border-t border-[var(--border)]'>
-    <div class='container-app py-6'>
-      <div
-        class='flex flex-col items-center justify-between gap-4 text-sm text-[var(--muted-foreground)] md:flex-row'
-      >
-        <p class='m-0'>{t('footer.copyright', lang, { anyo, nombre })}</p>
-
-        {compacto && (
-          <ul class='flex flex-wrap items-center justify-center gap-x-4 gap-y-1'>
-            <li>
-              <a
-                href={rutaConLocale('/aviso-legal', lang)}
-                class='transition-colors hover:text-[var(--primary)] hover:underline underline-offset-4'
-              >
-                {t('footer.avisoLegal', lang)}
-              </a>
-            </li>
-            <li aria-hidden='true' class='select-none text-[var(--border)]'>·</li>
-            <li>
-              <a
-                href={rutaConLocale('/politica-privacidad', lang)}
-                class='transition-colors hover:text-[var(--primary)] hover:underline underline-offset-4'
-              >
-                {t('footer.politicaPrivacidad', lang)}
-              </a>
-            </li>
+                  </span>
+                  <span class='min-w-0'>{contacto.email.split('@')[0]}@<wbr />{contacto.email.split('@').slice(1).join('@')}</span>
+                </a>
+              </li>
+            )}
           </ul>
-        )}
+        </div>
+      )}
+    </div>
 
-        {
-          (titular || numeroColegiado) && (
-            <p class='m-0'>
-              {titular && <span>{titular}</span>}
-              {titular && numeroColegiado && <span> · </span>}
-              {numeroColegiado && (
-                <span>
-                  {t('footer.nCol', lang)} {numeroColegiado}
-                </span>
-              )}
-            </p>
-          )
-        }
+    {/* Enlaces de la web */}
+    <nav aria-label={t('footer.explora', lang)} class='mt-12 border-t border-[var(--border)] pt-6'>
+      <ul class='m-0 flex list-none flex-wrap gap-x-6 gap-y-1 p-0 text-sm'>
+        {enlaces.map((l) => (
+          <li>
+            <a href={l.href} class='footer-enlace'>{l.label}</a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+
+  {/* Barra inferior */}
+  <div class='relative border-t border-[var(--border)] bg-[color-mix(in_oklch,var(--secondary),var(--card)_40%)]'>
+    <div class='container-app flex flex-col gap-3 py-5 text-sm text-[var(--muted-foreground)] md:flex-row md:items-center md:justify-between'>
+      <div class='flex flex-col gap-1 md:flex-row md:flex-wrap md:items-center md:gap-x-3'>
+        <p class='m-0'>{t('footer.copyright', lang, { anyo, nombre })}</p>
+        {(titular || numeroColegiado) && (
+          <p class='m-0'>
+            {titular && <span>{titular}</span>}
+            {titular && numeroColegiado && <span aria-hidden='true'> · </span>}
+            {numeroColegiado && <span class='tabular-nums'>{t('footer.nCol', lang)} {numeroColegiado}</span>}
+          </p>
+        )}
       </div>
+      <ul class='m-0 flex list-none flex-wrap items-center gap-x-5 p-0'>
+        <li><a href={rutaConLocale('/aviso-legal', lang)} class='footer-enlace'>{t('footer.avisoLegal', lang)}</a></li>
+        <li><a href={rutaConLocale('/politica-privacidad', lang)} class='footer-enlace'>{t('footer.politicaPrivacidad', lang)}</a></li>
+      </ul>
     </div>
   </div>
 </footer>
+
+<style>
+  .footer-titulo {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .footer-red {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    background: var(--secondary);
+    color: var(--foreground);
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+  .footer-red:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .footer-sin-cookies {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--muted-foreground);
+  }
+  .footer-sin-cookies svg {
+    color: var(--primary);
+  }
+
+  .footer-estado {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    background: color-mix(in oklch, #15803d, transparent 90%);
+    color: #166534;
+    font-size: 0.875rem;
+  }
+  .footer-estado[hidden] {
+    display: none;
+  }
+  .footer-estado__punto {
+    width: 0.5rem;
+    height: 0.5rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: #16a34a;
+  }
+  .footer-estado.is-closed {
+    background: var(--secondary);
+    color: var(--foreground);
+  }
+  .footer-estado.is-closed .footer-estado__punto {
+    background: var(--muted-foreground);
+  }
+
+  .footer-boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0 1rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--primary);
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition:
+      border-color 150ms ease,
+      background-color 150ms ease;
+  }
+  .footer-boton:hover {
+    border-color: var(--primary);
+    background: var(--secondary);
+  }
+
+  .footer-contacto {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 44px;
+    color: var(--muted-foreground);
+    font-size: 0.95rem;
+  }
+  .footer-contacto:hover {
+    color: var(--primary);
+  }
+  .footer-contacto__icono {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border-radius: 0.6rem;
+    background: var(--secondary);
+    color: var(--primary);
+  }
+
+  .footer-enlace {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    color: var(--muted-foreground);
+    text-underline-offset: 4px;
+  }
+  .footer-enlace:hover {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+</style>
+
+<script>
+  /* "Abierto ahora / Cerrado" con la hora de Madrid (la web es estática). */
+  const estado = document.querySelector<HTMLElement>('[data-footer-estado]');
+  if (estado) {
+    type Tramo = { apertura: string; cierre: string };
+    type Dia = { dia: string; cerrado: boolean; tramos: Tramo[] };
+    try {
+      const horarios: Dia[] = JSON.parse(estado.dataset.horarios ?? '[]');
+      const tx = JSON.parse(estado.dataset.textos ?? '{}');
+      if (horarios.length) {
+        const partes = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Europe/Madrid',
+          weekday: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).formatToParts(new Date());
+        const get = (k: string) => partes.find((p) => p.type === k)?.value ?? '';
+        const codigos = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        const hoy = codigos.indexOf(get('weekday').slice(0, 2));
+        const ahora = (Number(get('hour')) % 24) * 60 + Number(get('minute'));
+        const min = (h: string) => {
+          const [a, b] = h.split(':').map(Number);
+          return a * 60 + (b || 0);
+        };
+        const tramosDe = (i: number) => {
+          const d = horarios.find((h) => h.dia === codigos[(i + 7) % 7]);
+          return d && !d.cerrado ? d.tramos : [];
+        };
+        const titulo = estado.querySelector<HTMLElement>('[data-estado-titulo]')!;
+        const detalle = estado.querySelector<HTMLElement>('[data-estado-detalle]')!;
+        const actual = tramosDe(hoy).find((tr) => ahora >= min(tr.apertura) && ahora < min(tr.cierre));
+        if (actual) {
+          titulo.textContent = tx.abierto;
+          detalle.textContent = `· ${tx.cierra.replace('{hora}', actual.cierre)}`;
+        } else {
+          estado.classList.add('is-closed');
+          titulo.textContent = tx.cerrado;
+          const luego = tramosDe(hoy).find((tr) => min(tr.apertura) > ahora);
+          const manana = tramosDe(hoy + 1)[0];
+          const txt = luego
+            ? tx.abreHoy.replace('{hora}', luego.apertura)
+            : manana
+              ? tx.abreManana.replace('{hora}', manana.apertura)
+              : '';
+          detalle.textContent = txt ? `· ${txt}` : '';
+        }
+        estado.hidden = false;
+      }
+    } catch {
+      estado.hidden = true;
+    }
+  }
+</script>

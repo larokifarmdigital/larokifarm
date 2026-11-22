@@ -1,239 +1,364 @@
 ---
-import { rutaConLocale, t, type Locale } from '@/lib/i18n';
+/**
+ * Footer con la misma distribución que el de Torrents, en la identidad de
+ * Chamarro (fondo `--ink`, texto blanco / `--on-green-muted`, lima de acento,
+ * títulos de columna en mono pequeño):
+ * 1. 4 columnas: Marca (logo, nombre, descripción, redes) · Horario (estado
+ *    "Abierto ahora" + días ↔ horas) · Dónde estamos (dirección + Cómo
+ *    llegar) · Contacto (teléfono, WhatsApp, email).
+ * 2. Línea de enlaces de la web.
+ * 3. Barra inferior: ©, titular · nº col. y textos legales.
+ * Columnas sin datos no se pintan. Sin mención "sin cookies": Chamarro usa
+ * Vercel Analytics y el chat. Estado del horario con `estadoHorario.ts`.
+ */
+import { CERRADO_POR_IDIOMA, DIAS_POR_IDIOMA, rutaConLocale, t, type Locale } from '@/lib/i18n';
 import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
-import type { Contacto, Direccion, RedesSociales } from '@/lib/sanity';
-import WhatsappIcon from '@/assets/svg/whatsapp.svg';
+import { agruparHorarios, localizar, type DiasI18n, type Farmacia } from '@/lib/sanity';
+import { horariosParaEstado, textosEstado } from '@/lib/estadoHorarioDatos';
 
 interface Props {
-  nombre: string;
-  titular?: string;
-  numeroColegiado?: string;
-  logo?: string;
-  contacto?: Contacto;
-  redes?: RedesSociales;
-  direccion?: Direccion;
+  farmacia: Farmacia;
   mostrarFaqs?: boolean;
   lang: Locale;
   rutaActual: string;
 }
 
-const {
-  nombre,
-  titular,
-  numeroColegiado,
-  logo,
-  contacto,
-  redes,
-  direccion,
-  mostrarFaqs = true,
-  lang,
-} = Astro.props;
+const { farmacia, mostrarFaqs = true, lang } = Astro.props;
+const { nombre, titular, numeroColegiado, logo, contacto, direccion } = farmacia;
+const redes = farmacia.redesSociales;
 
 const logoUrl = logo || '/logo.png';
 const anyo = new Date().getFullYear();
 const home = rutaConLocale('/', lang);
+const nuevaPestana = t('footer.nuevaPestana', lang);
+const descripcion = localizar(farmacia.descripcionCorta, lang)?.trim();
 
+/* Dirección sin duplicados: la provincia solo si no coincide con la ciudad. */
+const mismo = (a?: string, b?: string) =>
+  Boolean(a && b && a.trim().toLowerCase() === b.trim().toLowerCase());
 const lineasDireccion = [
   direccion?.calle,
-  direccion?.codigoPostal && direccion?.ciudad
-    ? `${direccion.codigoPostal} ${direccion.ciudad}`
-    : direccion?.ciudad,
-  direccion?.provincia,
+  [direccion?.codigoPostal, direccion?.ciudad].filter(Boolean).join(' '),
+  mismo(direccion?.provincia, direccion?.ciudad) ? undefined : direccion?.provincia,
 ].filter((s): s is string => Boolean(s?.trim()));
 
-const tieneRedes = redes && (redes.instagram || redes.facebook || redes.tiktok);
+/* Mismo criterio que Contacto: enlace de Google Maps o búsqueda por dirección. */
+const comoLlegar = farmacia.googleMapsUrl
+  || (lineasDireccion.length > 0
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${nombre}, ${lineasDireccion.join(', ')}`)}`
+    : undefined);
 
-const grupos = [
-  {
-    label: t('footer.informacion', lang),
-    links: [
-      { href: `${home}#servicios`, label: t('footer.servicios', lang) },
-      { href: `${home}#sobre`, label: t('footer.sobreNosotros', lang) },
-      mostrarFaqs ? { href: `${home}#faqs`, label: t('footer.preguntasFrecuentes', lang) } : null,
-      MOSTRAR_RESENAS ? { href: rutaConLocale('/resenas', lang), label: t('footer.resenas', lang) } : null,
-    ].filter((e): e is { href: string; label: string } => e !== null),
-  },
-  {
-    label: t('footer.contactanos', lang),
-    links: [
-      contacto?.telefono ? { href: `tel:${contacto.telefono.replace(/\s+/g, '')}`, label: contacto.telefono, mono: true } : null,
-      contacto?.email ? { href: `mailto:${contacto.email}`, label: contacto.email } : null,
-      contacto?.web ? {
-        href: contacto.web,
-        label: contacto.web.replace(/^https?:\/\//, '').replace(/\/$/, ''),
-        external: true,
-      } : null,
-    ].filter(<T,>(e: T | null): e is T => e !== null),
-  },
-  {
-    label: 'Legal',
-    links: [
-      { href: rutaConLocale('/aviso-legal', lang), label: t('footer.avisoLegal', lang) },
-      { href: rutaConLocale('/politica-privacidad', lang), label: t('footer.politicaPrivacidad', lang) },
-    ],
-  },
-];
+const grupos = agruparHorarios(
+  farmacia.horarios,
+  (DIAS_POR_IDIOMA as Record<Locale, DiasI18n>)[lang],
+  CERRADO_POR_IDIOMA[lang],
+);
+const horariosEstado = horariosParaEstado(farmacia.horarios);
+
+const telefono = contacto?.telefono;
+const whatsapp = contacto?.whatsapp?.replace(/[^0-9]/g, '');
+const email = contacto?.email;
+const hayContacto = Boolean(telefono || whatsapp || email);
+const hayRedes = Boolean(redes && (redes.instagram || redes.facebook || redes.tiktok));
+
+type Enlace = { href: string; label: string };
+const enlaces: Enlace[] = [
+  { href: `${home}#sobre`, label: t('footer.sobreNosotros', lang) },
+  { href: `${home}#servicios`, label: t('footer.servicios', lang) },
+  MOSTRAR_RESENAS ? { href: rutaConLocale('/resenas', lang), label: t('footer.resenas', lang) } : null,
+  mostrarFaqs ? { href: `${home}#faqs`, label: t('footer.preguntasFrecuentes', lang) } : null,
+  { href: `${home}#contacto`, label: t('footer.contacto', lang) },
+].filter((e): e is Enlace => e !== null);
 ---
 
-<footer class='footer relative bg-[color:var(--ink)]'>
-  <div class='container-app pt-[clamp(4rem,7vw,6rem)] pb-8'>
+<footer class='footer bg-[color:var(--ink)] text-white'>
+  <div class='container-app pt-14 pb-10 min-[768px]:pt-16'>
+    <div class='grid gap-10 min-[768px]:grid-cols-2 min-[1024px]:grid-cols-[1.1fr_1.3fr_1fr_1fr] min-[1024px]:gap-12'>
 
-    {/* CTA hero superior con serif italic y underline animation */}
-    <div class='footer-cta flex flex-col min-[720px]:flex-row min-[720px]:items-end min-[720px]:justify-between gap-8 pb-[clamp(3rem,5vw,4rem)] border-b border-[color:var(--green-line)]'
-         data-reveal>
-      <div class='flex flex-col gap-4 max-w-[34rem]'>
-        <span class='inline-flex items-center gap-2 text-[color:var(--on-green-muted)] text-[0.7rem] tracking-[0.06em]'
-              style='font-family: var(--font-mono);'>
-          <span class='w-1.5 h-1.5 rounded-full bg-[color:var(--brand-lime)] motion-pulse'></span>
-          {t('footer.badgeColegiada', lang)}
-        </span>
-        <h2 class='m-0'
-            style='font-weight: 800; font-size: clamp(1.9rem, 3vw + 0.6rem, 2.9rem); letter-spacing: -0.04em; line-height: 1.05; color: #fff;'>
-          {t('footer.ctaTitulo', lang)} <span class='text-[color:var(--brand-lime)]'>{t('footer.ctaEm', lang)}</span>
-        </h2>
-      </div>
-      <div class='inline-flex gap-2.5 flex-wrap'>
-        {contacto?.telefono && (
-          <a href={`tel:${contacto.telefono.replace(/\s+/g, '')}`} class='btn btn-light'>
-            <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
-              <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
-            </svg>
-            <span class='tabular-nums'>{contacto.telefono}</span>
-          </a>
-        )}
-        {contacto?.whatsapp && (
-          <a href={`https://wa.me/${contacto.whatsapp.replace(/[^0-9]/g, '')}`}
-             target='_blank'
-             rel='noopener noreferrer'
-             class='btn btn-outline-light'>
-            <WhatsappIcon width='19' height='19' aria-hidden='true' />
-            WhatsApp
-          </a>
-        )}
-      </div>
-    </div>
-
-    {/* GRID · brand + 3 columnas con stagger reveal */}
-    <div class='grid grid-cols-1 min-[720px]:grid-cols-[1.4fr_1fr_1fr_1fr] gap-x-10 gap-y-10 pt-[clamp(3rem,5vw,4rem)]'>
-
-      <div class='footer-col flex flex-col gap-5' data-reveal>
-        <a href={home} class='inline-flex items-center gap-2.5 no-underline text-white' aria-label={nombre}>
-          <img
-            src={logoUrl}
-            alt=''
-            class='block w-11 h-11 object-contain rounded-[var(--radius)] bg-white p-1.5'
-            width='72'
-            height='72'
-            loading='lazy'
-          />
-          <span class='font-medium text-[1rem] tracking-[-0.015em] leading-tight'>{nombre}</span>
+      {/* Marca */}
+      <div class='flex flex-col gap-5' data-reveal>
+        <a href={home} class='inline-flex items-center gap-3 no-underline text-white self-start' aria-label={nombre}>
+          <img src={logoUrl} alt='' width='44' height='44' class='block w-11 h-11 object-contain rounded-[var(--radius)] bg-white p-1.5' loading='lazy' />
+          <span class='text-[1.2rem] font-extrabold tracking-[-0.02em] leading-tight'>{nombre}</span>
         </a>
 
-        {lineasDireccion.length > 0 && (
-          <address class='not-italic flex flex-col gap-0.5 text-[color:var(--on-green-muted)] text-[0.85rem] leading-[1.55]'>
-            {lineasDireccion.map((l) => <span>{l}</span>)}
-          </address>
-        )}
+        {descripcion && <p class='m-0 max-w-sm text-[0.93rem] leading-[1.6] text-[color:var(--on-green-muted)]'>{descripcion}</p>}
 
-        {tieneRedes && (
-          <div class='footer-redes inline-flex gap-2 mt-1'>
+        {hayRedes && redes && (
+          <ul class='list-none p-0 m-0 flex items-center gap-2.5' aria-label={t('footer.redes', lang)}>
             {redes.instagram && (
-              <a href={redes.instagram} target='_blank' rel='noopener noreferrer'
-                 aria-label={t('footer.ariaInstagram', lang)}
-                 class='footer-social inline-flex items-center justify-center w-9 h-9 text-[color:var(--on-green-muted)] border border-[color:var(--green-line)] bg-transparent'
-                 style='border-radius: var(--radius-xs);'>
-                <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>
-                  <rect x='2' y='2' width='20' height='20' rx='5' />
-                  <path d='M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z' />
-                  <line x1='17.5' y1='6.5' x2='17.51' y2='6.5' />
-                </svg>
-              </a>
+              <li>
+                <a href={redes.instagram} target='_blank' rel='noopener noreferrer' aria-label={`${t('footer.ariaInstagram', lang)} ${nuevaPestana}`} class='footer-red'>
+                  <svg width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                    <rect x='2' y='2' width='20' height='20' rx='5' />
+                    <path d='M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z' />
+                    <line x1='17.5' y1='6.5' x2='17.51' y2='6.5' />
+                  </svg>
+                </a>
+              </li>
             )}
             {redes.facebook && (
-              <a href={redes.facebook} target='_blank' rel='noopener noreferrer'
-                 aria-label={t('footer.ariaFacebook', lang)}
-                 class='footer-social inline-flex items-center justify-center w-9 h-9 text-[color:var(--on-green-muted)] border border-[color:var(--green-line)] bg-transparent'
-                 style='border-radius: var(--radius-xs);'>
-                <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>
-                  <path d='M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z' />
-                </svg>
-              </a>
+              <li>
+                <a href={redes.facebook} target='_blank' rel='noopener noreferrer' aria-label={`${t('footer.ariaFacebook', lang)} ${nuevaPestana}`} class='footer-red'>
+                  <svg width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                    <path d='M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z' />
+                  </svg>
+                </a>
+              </li>
             )}
             {redes.tiktok && (
-              <a href={redes.tiktok} target='_blank' rel='noopener noreferrer'
-                 aria-label={t('footer.ariaTiktok', lang)}
-                 class='footer-social inline-flex items-center justify-center w-9 h-9 text-[color:var(--on-green-muted)] border border-[color:var(--green-line)] bg-transparent'
-                 style='border-radius: var(--radius-xs);'>
-                <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>
-                  <path d='M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5' />
-                </svg>
-              </a>
+              <li>
+                <a href={redes.tiktok} target='_blank' rel='noopener noreferrer' aria-label={`${t('footer.ariaTiktok', lang)} ${nuevaPestana}`} class='footer-red'>
+                  <svg width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                    <path d='M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5' />
+                  </svg>
+                </a>
+              </li>
             )}
-          </div>
+          </ul>
         )}
       </div>
 
-      {grupos.map((g, gi) => (
-        <div class='footer-col flex flex-col gap-4' style={`--reveal-delay:${(gi + 1) * 100}ms`} data-reveal>
-          <h3 class='m-0 text-[color:var(--on-green-muted)] text-[0.72rem] font-normal tracking-[0.06em]'
-              style='font-family: var(--font-mono);'>
-            {g.label}
-          </h3>
-          <ul class='list-none p-0 m-0 flex flex-col gap-2.5'>
-            {g.links.map((l: any) => (
-              <li>
-                <a href={l.href}
-                   {...(l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                   class={`footer-link link-anim inline-block py-1 text-white no-underline text-[0.9rem] ${l.mono ? 'tabular-nums' : ''}`}>
-                  {l.label}
-                </a>
-              </li>
+      {/* Horario */}
+      {grupos.length > 0 && (
+        <div style='--reveal-delay:80ms' data-reveal>
+          <h2 class='footer-titulo'>{t('footer.horario', lang)}</h2>
+          <p class='footer-estado' data-footer-estado data-horarios={JSON.stringify(horariosEstado)} data-textos={JSON.stringify(textosEstado(lang))} hidden>
+            <span class='footer-estado__punto' aria-hidden='true'></span>
+            <span><strong data-estado-titulo></strong> <span data-estado-detalle></span></span>
+          </p>
+          <dl class='mt-3 m-0 flex flex-col gap-2 text-[0.9rem]'>
+            {grupos.map((g) => (
+              <div class='flex flex-wrap justify-between gap-x-3 border-b border-dashed border-[color:var(--green-line)] pb-2'>
+                <dt class='font-semibold text-white'>{g.etiqueta}</dt>
+                <dd class='m-0 tabular-nums text-[color:var(--on-green-muted)]'>{g.horario}</dd>
+              </div>
             ))}
-          </ul>
+          </dl>
         </div>
-      ))}
-    </div>
+      )}
 
-    {/* BOTTOM BAR */}
-    <div class='pt-8 mt-[clamp(3rem,5vw,4rem)] border-t border-[color:var(--green-line)] flex flex-col-reverse min-[720px]:flex-row min-[720px]:items-center min-[720px]:justify-between gap-4'>
-      <p class='m-0 text-[color:var(--on-green-muted)] text-[0.78rem]'>
-        {t('footer.copyright', lang, { anyo, nombre })}
-      </p>
-
-      {(titular || numeroColegiado) && (
-        <div class='flex flex-col min-[720px]:text-right text-[color:var(--on-green-muted)] text-[0.72rem] leading-[1.5]'>
-          {titular && <span>{titular}</span>}
-          {numeroColegiado && (
-            <span class='tabular-nums' style='font-family: var(--font-mono);'>
-              {t('footer.nCol', lang)} {numeroColegiado}
-            </span>
+      {/* Dónde estamos */}
+      {lineasDireccion.length > 0 && (
+        <div style='--reveal-delay:160ms' data-reveal>
+          <h2 class='footer-titulo'>{t('footer.visitanos', lang)}</h2>
+          <address class='not-italic leading-[1.6] text-[0.93rem] text-[color:var(--on-green-muted)]'>
+            {lineasDireccion.map((l) => <span class='block'>{l}</span>)}
+          </address>
+          {comoLlegar && (
+            <a href={comoLlegar} target='_blank' rel='noopener noreferrer' class='footer-boton mt-4'>
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                <polygon points='3 11 22 2 13 21 11 13 3 11' />
+              </svg>
+              {t('footer.comoLlegar', lang)}
+              <span class='sr-only'>{nuevaPestana}</span>
+            </a>
           )}
         </div>
       )}
+
+      {/* Contacto */}
+      {hayContacto && (
+        <div style='--reveal-delay:240ms' data-reveal>
+          <h2 class='footer-titulo'>{t('footer.contacto', lang)}</h2>
+          <ul class='m-0 list-none flex flex-col gap-1 p-0'>
+            {telefono && (
+              <li>
+                <a href={`tel:${telefono.replace(/\s+/g, '')}`} class='footer-contacto'>
+                  <span class='footer-contacto__icono' aria-hidden='true'>
+                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>
+                      <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
+                    </svg>
+                  </span>
+                  <span class='tabular-nums'>{telefono}</span>
+                </a>
+              </li>
+            )}
+            {whatsapp && (
+              <li>
+                <a href={`https://wa.me/${whatsapp}`} target='_blank' rel='noopener noreferrer' class='footer-contacto'>
+                  <span class='footer-contacto__icono' aria-hidden='true'>
+                    <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+                      <path d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0 0 20.464 3.488' />
+                    </svg>
+                  </span>
+                  <span>WhatsApp</span>
+                  <span class='sr-only'>{nuevaPestana}</span>
+                </a>
+              </li>
+            )}
+            {email && (
+              <li>
+                <a href={`mailto:${email}`} class='footer-contacto'>
+                  <span class='footer-contacto__icono' aria-hidden='true'>
+                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>
+                      <path d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z' />
+                      <polyline points='22,6 12,13 2,6' />
+                    </svg>
+                  </span>
+                  {/* Solo se parte tras la arroba, nunca a mitad de palabra. */}
+                  <span class='min-w-0'>{email.split('@')[0]}@<wbr />{email.split('@').slice(1).join('@')}</span>
+                </a>
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+
+    {/* Enlaces de la web */}
+    <nav aria-label={t('footer.explora', lang)} class='mt-12 border-t border-[color:var(--green-line)] pt-6'>
+      <ul class='m-0 flex list-none flex-wrap gap-x-6 gap-y-1 p-0 text-[0.9rem]'>
+        {enlaces.map((l) => (
+          <li><a href={l.href} class='footer-enlace'>{l.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+
+  {/* Barra inferior */}
+  <div class='border-t border-[color:var(--green-line)] bg-[rgba(255,255,255,0.03)]'>
+    <div class='container-app flex flex-col gap-3 py-5 text-[0.85rem] text-[color:var(--on-green-muted)] min-[768px]:flex-row min-[768px]:items-center min-[768px]:justify-between'>
+      <div class='flex flex-col gap-1 min-[768px]:flex-row min-[768px]:flex-wrap min-[768px]:items-center min-[768px]:gap-x-3'>
+        <p class='m-0'>{t('footer.copyright', lang, { anyo, nombre })}</p>
+        {(titular || numeroColegiado) && (
+          <p class='m-0'>
+            {titular && <span>{titular}</span>}
+            {titular && numeroColegiado && <span aria-hidden='true'> · </span>}
+            {numeroColegiado && <span class='tabular-nums'>{t('footer.nCol', lang)} {numeroColegiado}</span>}
+          </p>
+        )}
+      </div>
+      <nav aria-label={t('footer.legalAria', lang)}>
+        <ul class='m-0 flex list-none flex-wrap items-center gap-x-5 p-0'>
+          <li><a href={rutaConLocale('/aviso-legal', lang)} class='footer-enlace'>{t('footer.avisoLegal', lang)}</a></li>
+          <li><a href={rutaConLocale('/politica-privacidad', lang)} class='footer-enlace'>{t('footer.politicaPrivacidad', lang)}</a></li>
+        </ul>
+      </nav>
     </div>
   </div>
 </footer>
 
+<script>
+  import { calcularEstado } from '@/lib/estadoHorario';
+
+  const el = document.querySelector<HTMLElement>('[data-footer-estado]');
+  if (el && el.dataset.horarios && el.dataset.horarios !== '[]') {
+    try {
+      const r = calcularEstado(JSON.parse(el.dataset.horarios), JSON.parse(el.dataset.textos ?? '{}'));
+      el.querySelector<HTMLElement>('[data-estado-titulo]')!.textContent = r.titulo;
+      el.querySelector<HTMLElement>('[data-estado-detalle]')!.textContent = r.detalle ? `· ${r.detalle}` : '';
+      el.classList.toggle('is-closed', !r.abierto);
+      el.hidden = false;
+    } catch {
+      el.hidden = true;
+    }
+  }
+</script>
+
 <style>
-  /* Hover en redes: bordes se rellenan + lift con magnetic */
+  .footer-titulo {
+    margin: 0 0 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--on-green-muted);
+  }
+
+  .footer-red {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--green-line);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+  }
+
+  .footer-estado {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    background: rgba(200, 232, 69, 0.12);
+    color: #fff;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  .footer-estado strong { font-weight: 700; }
+  .footer-estado[hidden] { display: none; }
+  .footer-estado__punto {
+    width: 0.5rem;
+    height: 0.5rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--brand-lime);
+  }
+  .footer-estado.is-closed { background: rgba(255, 255, 255, 0.06); }
+  .footer-estado.is-closed .footer-estado__punto { background: #F2A7A1; }
+
+  .footer-boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0 1rem;
+    border: 1px solid var(--green-line);
+    border-radius: 999px;
+    color: var(--brand-lime);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .footer-contacto {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 44px;
+    color: #fff;
+    font-size: 0.95rem;
+    text-decoration: none;
+  }
+  .footer-contacto__icono {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border-radius: 0.6rem;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--brand-lime);
+  }
+
+  .footer-enlace {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    color: var(--on-green-muted);
+    text-decoration: none;
+    text-underline-offset: 4px;
+  }
+
   @media (hover: hover) and (pointer: fine) {
-    .footer-social {
+    .footer-red,
+    .footer-boton,
+    .footer-contacto,
+    .footer-enlace {
       transition:
         color var(--dur-fast) var(--ease-out),
         background-color var(--dur-fast) var(--ease-out),
-        border-color var(--dur-fast) var(--ease-out),
-        transform var(--dur) var(--ease-magnetic);
+        border-color var(--dur-fast) var(--ease-out);
     }
-    .footer-social:hover {
-      color: var(--ink);
-      background: var(--brand-lime);
-      border-color: var(--brand-lime);
-      transform: translateY(-2px);
-    }
-    .footer-link:hover { color: var(--brand-lime); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .footer-social:hover { transform: none; }
+    .footer-red:hover { background: var(--brand-lime); border-color: var(--brand-lime); color: var(--ink); }
+    .footer-boton:hover { border-color: var(--brand-lime); background: rgba(200, 232, 69, 0.1); }
+    .footer-contacto:hover { color: var(--brand-lime); }
+    .footer-enlace:hover { color: var(--brand-lime); text-decoration: underline; }
   }
 </style>

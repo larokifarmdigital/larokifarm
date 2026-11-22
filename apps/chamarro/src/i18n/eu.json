@@ -109,8 +109,6 @@
   },
   "footer": {
     "servicios": "Zerbitzuak",
-    "informacion": "Informazioa",
-    "contactanos": "Kontaktua",
     "sobreNosotros": "Farmazia",
     "preguntasFrecuentes": "Galderak",
     "resenas": "Iritziak",
@@ -118,14 +116,17 @@
     "avisoLegal": "Lege-oharra",
     "politicaPrivacidad": "Pribatutasun-politika",
     "copyright": "© {anyo} {nombre}",
-    "titular": "Titularra",
-    "badgeColegiada": "Elkargoko farmazia · Espainia",
     "nCol": "Elkargo-zk.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
     "ariaTiktok": "TikTok",
-    "ctaTitulo": "Laguntza behar duzu?",
-    "ctaEm": "Hemen gaude."
+    "horario": "Ordutegia",
+    "comoLlegar": "Nola iritsi",
+    "nuevaPestana": "(beste fitxa batean irekitzen da)",
+    "redes": "Jarrai gaitzazu",
+    "legalAria": "Lege-testuak",
+    "visitanos": "Non gaude",
+    "explora": "Arakatu webgunea"
   },
   "features": {
     "atencionTitulo": "Arreta pertsonalizatua",
@@ -143,7 +144,16 @@
     "avisoTitulo": "Lege-oharra",
     "privacidadTitulo": "Pribatutasun-politika",
     "avisoMeta": "{nombre}(r)en lege-oharra eta titularraren informazioa.",
-    "privacidadMeta": "{nombre}(r)en pribatutasun-politika eta datu pertsonalen tratamendua."
+    "privacidadMeta": "{nombre}(r)en pribatutasun-politika eta datu pertsonalen tratamendua.",
+    "eyebrow": "Lege-informazioa",
+    "intro": "{nombre}(r)en lege-testuak.",
+    "inicio": "Hasiera",
+    "migaAria": "Hemen zaude",
+    "indice": "Orri honetan",
+    "otros": "Beste lege-testu batzuk",
+    "volverArriba": "Gora itzuli",
+    "dudas": "Zalantzarik testu hauei buruz?",
+    "escribenos": "Idatzi iezaguzu"
   },
   "resenas": {
     "chip": "Iritziak",

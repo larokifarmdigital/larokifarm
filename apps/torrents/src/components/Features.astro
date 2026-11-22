@@ -99,13 +99,12 @@ const features = defectoSiVacio(lista, featuresFallback);
         features.map((f, i) => (
           <div class='feature-item flex items-center gap-4 rounded-2xl p-3 -m-3'
                style={`--reveal-delay:${i * 90}ms`}
-               data-reveal
-               data-spotlight>
+               data-reveal>
             <div class='feature-icon flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_oklch,var(--primary),transparent_90%)] text-[var(--primary)]'>
               <IconoServicio nombre={f.icono} size={28} />
             </div>
             <div class='min-w-0'>
-              <h3 class='font-extrabold'>{f.titulo}</h3>
+              <p class='m-0 font-extrabold leading-tight text-[var(--foreground)]'>{f.titulo}</p>
               {f.descripcion && (
                 <p class='m-0 text-sm text-[var(--muted-foreground)]'>{f.descripcion}</p>
               )}
@@ -127,17 +126,5 @@ const features = defectoSiVacio(lista, featuresFallback);
       color var(--dur-fast) var(--ease-out),
       transform var(--dur) var(--ease-magnetic);
   }
-  @media (hover: hover) and (pointer: fine) {
-    .feature-item:hover {
-      background: color-mix(in oklch, var(--primary), transparent 96%);
-    }
-    .feature-item:hover .feature-icon {
-      background: var(--primary);
-      color: var(--primary-foreground);
-      transform: scale(1.06) rotate(-4deg);
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .feature-item:hover .feature-icon { transform: none; }
-  }
+  /* Sin efecto hover: no son enlaces (falsa señal de clic). */
 </style>

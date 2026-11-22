@@ -94,7 +94,7 @@ const verTodasHref = rutaConLocale('/resenas', lang);
 
       {/* ── Versión móvil: scroll horizontal con snap, sin animación ─────── */}
       <div class='resenas-mobile' aria-label={t('resenas.ariaSlider', lang)}>
-        <ul class='resenas-mobile__pista'>
+        <ul class='resenas-mobile__pista' tabindex='0' aria-label={t('resenas.ariaSlider', lang)}>
           {tarjetas.map((r) => {
             const estrellas = Math.max(0, Math.min(5, r.rating ?? 0));
             return (
@@ -223,7 +223,7 @@ const verTodasHref = rutaConLocale('/resenas', lang);
               href={urlGoogleMaps}
               target='_blank'
               rel='noopener noreferrer'
-              class='inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline'
+              class='inline-flex min-h-6 items-center gap-2 text-sm font-medium text-primary hover:underline'
             >
               {t('resenas.verEnGoogle', lang)}
               <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>

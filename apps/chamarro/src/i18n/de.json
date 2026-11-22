@@ -109,8 +109,6 @@
   },
   "footer": {
     "servicios": "Leistungen",
-    "informacion": "Informationen",
-    "contactanos": "Kontakt",
     "sobreNosotros": "Die Apotheke",
     "preguntasFrecuentes": "Fragen",
     "resenas": "Bewertungen",
@@ -118,14 +116,17 @@
     "avisoLegal": "Impressum",
     "politicaPrivacidad": "Datenschutzerklärung",
     "copyright": "© {anyo} {nombre}",
-    "titular": "Inhaber",
-    "badgeColegiada": "Zugelassene Apotheke · Spanien",
     "nCol": "Kammer-Nr.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
     "ariaTiktok": "TikTok",
-    "ctaTitulo": "Brauchen Sie Hilfe?",
-    "ctaEm": "Wir sind für Sie da."
+    "horario": "Öffnungszeiten",
+    "comoLlegar": "Route planen",
+    "nuevaPestana": "(öffnet in neuem Tab)",
+    "redes": "Folgen Sie uns",
+    "legalAria": "Rechtliche Hinweise",
+    "visitanos": "So finden Sie uns",
+    "explora": "Website erkunden"
   },
   "features": {
     "atencionTitulo": "Persönliche Betreuung",
@@ -143,7 +144,16 @@
     "avisoTitulo": "Impressum",
     "privacidadTitulo": "Datenschutzerklärung",
     "avisoMeta": "Impressum und Angaben zum Inhaber von {nombre}.",
-    "privacidadMeta": "Datenschutzerklärung und Verarbeitung personenbezogener Daten von {nombre}."
+    "privacidadMeta": "Datenschutzerklärung und Verarbeitung personenbezogener Daten von {nombre}.",
+    "eyebrow": "Rechtliche Hinweise",
+    "intro": "Rechtstexte von {nombre}.",
+    "inicio": "Startseite",
+    "migaAria": "Sie sind hier",
+    "indice": "Auf dieser Seite",
+    "otros": "Weitere Rechtstexte",
+    "volverArriba": "Nach oben",
+    "dudas": "Fragen zu diesen Texten?",
+    "escribenos": "Schreiben Sie uns"
   },
   "resenas": {
     "chip": "Bewertungen",

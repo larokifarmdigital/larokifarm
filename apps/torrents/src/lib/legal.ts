@@ -227,3 +227,48 @@ export const LEGAL: Partial<Record<Locale, LegalTextos>> & { es: LegalTextos } =
 export function legalPorDefecto(lang: Locale): LegalTextos {
   return LEGAL[lang] ?? LEGAL.es;
 }
+
+export interface SeccionLegal {
+  id: string;
+  titulo: string;
+}
+
+const sinEtiquetas = (html: string) =>
+  html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const aAncla = (texto: string) =>
+  texto
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+
+/**
+ * Prepara el HTML legal (CMS o por defecto) para la página:
+ * - quita el primer `<h1>`: el título lo pinta la cabecera de la página
+ *   (traducido y con el formato de la web, aunque en el CMS esté en MAYÚSCULAS);
+ * - añade `id` a cada `<h2>` y devuelve la lista para el índice.
+ */
+export function prepararTextoLegal(html: string): { html: string; secciones: SeccionLegal[] } {
+  const usados = new Set<string>();
+  const secciones: SeccionLegal[] = [];
+  const sinTitulo = html.replace(/<h1\b[^>]*>[\s\S]*?<\/h1>/i, '');
+  const conAnclas = sinTitulo.replace(/<h2\b([^>]*)>([\s\S]*?)<\/h2>/gi, (_m, attrs: string, inner: string) => {
+    const titulo = sinEtiquetas(inner);
+    if (!titulo) return `<h2${attrs}>${inner}</h2>`;
+    let id = aAncla(titulo) || 'seccion';
+    for (let n = 2; usados.has(id); n++) id = `${aAncla(titulo) || 'seccion'}-${n}`;
+    usados.add(id);
+    secciones.push({ id, titulo });
+    const attrsSinId = attrs.replace(/\sid=("[^"]*"|'[^']*')/i, '');
+    return `<h2${attrsSinId} id="${id}">${inner}</h2>`;
+  });
+  return { html: conAnclas, secciones };
+}

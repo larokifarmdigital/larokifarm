@@ -103,7 +103,18 @@
     "nCol": "Kammer-Nr.",
     "ariaInstagram": "Instagram",
     "ariaFacebook": "Facebook",
-    "ariaTiktok": "TikTok"
+    "ariaTiktok": "TikTok",
+    "horario": "Öffnungszeiten",
+    "visitanos": "So finden Sie uns",
+    "comoLlegar": "Route planen",
+    "abiertoAhora": "Jetzt geöffnet",
+    "cerradoAhora": "Jetzt geschlossen",
+    "cierraA": "schließt um {hora}",
+    "abreHoy": "öffnet heute um {hora}",
+    "abreManana": "öffnet morgen um {hora}",
+    "sinCookies": "Website ohne Cookies und Tracker",
+    "explora": "Website erkunden",
+    "nuevaPestana": "(öffnet in neuem Tab)"
   },
   "features": {
     "atencionTitulo": "Persönliche Betreuung",
@@ -123,7 +134,14 @@
     "avisoTitulo": "Impressum",
     "privacidadTitulo": "Datenschutzerklärung",
     "avisoMeta": "Impressum und Angaben zum Inhaber von {nombre}.",
-    "privacidadMeta": "Datenschutzerklärung und Verarbeitung personenbezogener Daten von {nombre}."
+    "privacidadMeta": "Datenschutzerklärung und Verarbeitung personenbezogener Daten von {nombre}.",
+    "inicio": "Startseite",
+    "eyebrow": "Rechtliche Hinweise",
+    "avisoIntro": "Wer diese Website betreibt und die Bedingungen für ihre Nutzung.",
+    "privacidadIntro": "Wie wir Ihre personenbezogenen Daten verarbeiten und welche Rechte Sie haben.",
+    "indice": "Auf dieser Seite",
+    "otros": "Weitere rechtliche Texte",
+    "volverArriba": "Nach oben"
   },
   "resenas": {
     "chip": "Google-Bewertungen",
