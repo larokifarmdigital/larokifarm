@@ -6,16 +6,23 @@ import { Label } from '@/shared/components/atoms/Label';
 import { cn } from '@/shared/lib/cn';
 import { IndicadorEleccion } from '@/shared/components/atoms/IndicadorEleccion';
 import type { FarmaciaOpcion, RolCuenta, UserAccount } from '@/core/users/domain';
+import { MODULOS, MODULO_LABEL, type Modulo } from '@/core/shared';
 import { DESCRIPCION_ROL, ETIQUETA_ROL } from '../../lib/roles';
 
-export type DatosCuenta = { nombre: string; email: string; rol: RolCuenta; farmaciaIds: string[] };
+export type DatosCuenta = { nombre: string; email: string; rol: RolCuenta; farmaciaIds: string[]; modulos: Modulo[] };
+
+const DESCRIPCION_MODULO: Record<Modulo, string> = {
+  conciliador: 'Subir albaranes y pedidos, conciliarlos y ver el historial.',
+  comparador: 'Buscar precios de otras farmacias online.',
+};
 
 type Resultado = { ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
 /**
  * Crear o editar una cuenta. El correo solo se escribe al crear (es el usuario
  * de acceso). Responsable y Solo consulta necesitan al menos una farmacia (el
- * mismo permiso en todas); el administrador no.
+ * mismo permiso en todas); el administrador no. Los módulos se marcan uno a
+ * uno (un usuario nuevo empieza sin ninguno); el administrador los tiene todos.
  */
 export function CuentaDialog({
   open,
@@ -38,6 +45,7 @@ export function CuentaDialog({
   const [email, setEmail] = useState(cuenta?.email ?? '');
   const [rol, setRol] = useState<RolCuenta>(cuenta?.rol ?? 'manager');
   const [farmaciaIds, setFarmaciaIds] = useState<string[]>(cuenta?.farmacias.map((f) => f.id) ?? []);
+  const [modulos, setModulos] = useState<Modulo[]>(cuenta?.modulos ?? []);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [pendiente, startTransition] = useTransition();
@@ -47,7 +55,7 @@ export function CuentaDialog({
     e.preventDefault();
     setErrorGeneral(null);
     startTransition(async () => {
-      const res = await onGuardar({ nombre, email, rol, farmaciaIds });
+      const res = await onGuardar({ nombre, email, rol, farmaciaIds, modulos });
       if (res.ok) return;
       setErrores(res.fieldErrors ?? {});
       setErrorGeneral(res.fieldErrors && Object.keys(res.fieldErrors).length ? null : res.error);
@@ -59,6 +67,10 @@ export function CuentaDialog({
 
   function alternarFarmacia(fid: string) {
     setFarmaciaIds((ids) => (ids.includes(fid) ? ids.filter((x) => x !== fid) : [...ids, fid]));
+  }
+
+  function alternarModulo(m: Modulo) {
+    setModulos((ms) => (ms.includes(m) ? ms.filter((x) => x !== m) : [...ms, m]));
   }
 
   const err = (k: string) => errores[k];
@@ -244,6 +256,51 @@ export function CuentaDialog({
               : 'Puede llevar varias; tendrá el mismo permiso en todas.'}
           </p>
           {errorCampo('farmaciaIds')}
+        </fieldset>
+
+        <fieldset className="m-0 min-w-0 border-0 p-0" aria-describedby={describe('modulos', `${id}-modulos-ayuda`)}>
+          <legend className="label mb-2">Módulos que puede usar</legend>
+          {rol === 'admin' ? (
+            <p id={`${id}-modulos-ayuda`} className="m-0 text-[13.5px] text-[var(--color-ink-2)]">
+              El administrador puede usar todos los módulos.
+            </p>
+          ) : (
+            <>
+              <div className="flex flex-col gap-2">
+                {MODULOS.map((m, i) => {
+                  const marcado = modulos.includes(m);
+                  return (
+                    <label
+                      key={m}
+                      className={cn(
+                        'flex items-start gap-3 rounded-[10px] border px-3.5 py-3 min-h-11 cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--color-accent)] has-[:focus-visible]:outline-offset-2',
+                        marcado
+                          ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
+                          : 'border-[var(--color-control-border)] bg-[var(--color-surface)]',
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        id={i === 0 ? `${id}-modulos` : undefined}
+                        checked={marcado}
+                        onChange={() => alternarModulo(m)}
+                        className="sr-only cursor-pointer"
+                      />
+                      <IndicadorEleccion tipo="checkbox" marcado={marcado} />
+                      <span className="min-w-0">
+                        <span className="block text-[14.5px] font-semibold text-[var(--color-ink)]">{MODULO_LABEL[m]}</span>
+                        <span className="block text-[13.5px] leading-[1.45] text-[var(--color-ink-2)]">{DESCRIPCION_MODULO[m]}</span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p id={`${id}-modulos-ayuda`} className="m-0 mt-1.5 text-[13px] text-[var(--color-muted)]">
+                Sin ninguno marcado, solo verá la web de su farmacia.
+              </p>
+            </>
+          )}
+          {errorCampo('modulos')}
         </fieldset>
       </form>
     </Modal>

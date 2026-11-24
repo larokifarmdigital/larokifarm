@@ -1,1 +1,1 @@
-export { getCurrentUser, requireUser } from './session';
+export { getCurrentUser, requireModulo, requireUser } from './session';

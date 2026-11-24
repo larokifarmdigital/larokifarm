@@ -1,3 +1,5 @@
+import { tieneModulo, type Modulo } from '@/core/shared';
+
 export type Usuario = {
   id: string;
   email: string;
@@ -7,6 +9,8 @@ export type Usuario = {
   farmaciaId?: string;
   /** Todas las farmacias que lleva, la principal incluida. */
   farmaciaIds: string[];
+  /** Módulos activados por el administrador. Para decidir, usa `usuarioTieneModulo`. */
+  modulos: Modulo[];
   createdAt: string;
 };
 
@@ -24,4 +28,8 @@ export function puedeAccederFarmaciaUsuario(
 ): boolean {
   if (!businessId) return false;
   return u.rol === 'admin' || u.farmaciaIds.includes(businessId);
+}
+
+export function usuarioTieneModulo(u: Pick<Usuario, 'rol' | 'modulos'>, m: Modulo): boolean {
+  return tieneModulo({ esAdmin: u.rol === 'admin', modulos: u.modulos }, m);
 }

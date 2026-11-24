@@ -153,7 +153,12 @@ export function UsuariosGestion({
       return { ok: true as const };
     }
     if (!editando) return { ok: true as const };
-    const res = await editarUsuarioAction(editando.id, { nombre: datos.nombre, rol: datos.rol, farmaciaIds: datos.farmaciaIds });
+    const res = await editarUsuarioAction(editando.id, {
+      nombre: datos.nombre,
+      rol: datos.rol,
+      farmaciaIds: datos.farmaciaIds,
+      modulos: datos.modulos,
+    });
     if (!res.ok) return res;
     setEditando(undefined);
     toast.success('Cambios guardados', { description: 'Se aplican en su próximo acceso o en unos minutos.' });

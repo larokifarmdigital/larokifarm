@@ -21,6 +21,12 @@ enum Role {
   USER
 }
 
+// Módulos del backoffice que puede usar cada usuario (SUPER_ADMIN los tiene todos).
+enum AppModule {
+  CONCILIADOR
+  COMPARADOR
+}
+
 model Business {
   id               String   @id @default(cuid())
   slug             String   @unique
@@ -106,6 +112,8 @@ model User {
   role         Role
   businessId   String?
   active       Boolean  @default(true)
+  // Los usuarios nuevos empiezan sin módulos; los que ya existían recibieron CONCILIADOR.
+  modules      AppModule[] @default([])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

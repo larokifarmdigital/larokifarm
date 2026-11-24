@@ -52,6 +52,7 @@ async function releerUsuario(token: JWT, aceptarHuellaNueva: boolean): Promise<J
       role: true,
       businessId: true,
       passwordHash: true,
+      modules: true,
       business: { select: { slug: true } },
       farmacias: { select: { businessId: true } },
     },
@@ -66,6 +67,7 @@ async function releerUsuario(token: JWT, aceptarHuellaNueva: boolean): Promise<J
   token.businessId = fresh.businessId;
   token.businessSlug = fresh.business?.slug ?? null;
   token.businessIds = farmaciasDe(fresh.businessId, fresh.farmacias);
+  token.modules = fresh.modules;
   token.checkedAt = Date.now();
   return token;
 }
@@ -111,6 +113,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           businessId: user.businessId,
           businessSlug: user.business?.slug ?? null,
           businessIds: farmaciasDe(user.businessId, user.farmacias),
+          modules: user.modules,
           pv: huellaContrasena(user.passwordHash),
           recordar: recordar === '1',
         };
@@ -125,6 +128,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         token.businessId = user.businessId;
         token.businessSlug = user.businessSlug;
         token.businessIds = user.businessIds;
+        token.modules = user.modules;
         token.pv = user.pv;
         token.checkedAt = Date.now();
         // Caducidad absoluta desde el login: no se alarga por usar la app.
@@ -138,8 +142,10 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
       // La sesión es un JWT de 30 días: cada pocos minutos se re-lee el
       // usuario para que desactivarlo o cambiarle el rol/negocio surta efecto
       // sin esperar a que caduque.
-      // Tokens emitidos antes de las farmacias múltiples: se releen ya.
-      if (token.sub && !Array.isArray(token.businessIds)) return releerUsuario(token, false);
+      // Tokens emitidos antes de las farmacias múltiples o de los módulos: se releen ya.
+      if (token.sub && (!Array.isArray(token.businessIds) || !Array.isArray(token.modules))) {
+        return releerUsuario(token, false);
+      }
       if (token.sub && Date.now() - ((token.checkedAt as number | undefined) ?? 0) > RECHECK_MS) {
         return releerUsuario(token, false);
       }
@@ -152,6 +158,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         session.user.businessId = token.businessId;
         session.user.businessSlug = token.businessSlug;
         session.user.businessIds = token.businessIds ?? [];
+        session.user.modules = token.modules ?? [];
       }
       return session;
     },

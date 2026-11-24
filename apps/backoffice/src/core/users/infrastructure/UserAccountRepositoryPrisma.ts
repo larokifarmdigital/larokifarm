@@ -1,5 +1,6 @@
 import { Prisma, type Role } from '@prisma/client';
 import { prisma } from '@/shared/lib/prisma';
+import { modulosADb, modulosDeDb } from '@/core/shared';
 import {
   CuentaConHistorialError,
   UltimoAdminError,
@@ -20,6 +21,7 @@ const SELECT = {
   role: true,
   businessId: true,
   active: true,
+  modules: true,
   createdAt: true,
   business: { select: { id: true, name: true } },
   farmacias: { select: { business: { select: { id: true, name: true } } } },
@@ -78,6 +80,7 @@ function mapRow(r: Row): UserAccount {
     farmacias: [...new Map([...(r.business ? [r.business] : []), ...r.farmacias.map((f) => f.business)].map((b) => [b.id, b])).values()]
       .map((b) => ({ id: b.id, nombre: b.name }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
+    modulos: modulosDeDb(r.modules),
     activo: r.active,
     tieneHistorial: Object.values(r._count).some((n) => n > 0),
     createdAt: r.createdAt.toISOString(),
@@ -117,6 +120,7 @@ export class UserAccountRepositoryPrisma implements UserAccountRepository {
           role: A_DB[input.rol],
           businessId: input.farmaciaIds[0] ?? null,
           passwordHash: input.passwordHash,
+          modules: modulosADb(input.modulos),
         },
         select: { id: true },
       });
@@ -133,6 +137,7 @@ export class UserAccountRepositoryPrisma implements UserAccountRepository {
         data: {
           ...(input.nombre !== undefined ? { name: input.nombre } : {}),
           ...(input.rol !== undefined ? { role: A_DB[input.rol] } : {}),
+          ...(input.modulos !== undefined ? { modules: modulosADb(input.modulos) } : {}),
         },
         select: { businessId: true },
       });

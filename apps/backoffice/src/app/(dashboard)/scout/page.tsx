@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation';
-import { requireUser } from '@/core/auth';
+import { requireModulo } from '@/core/auth';
 import { ScoutDashboardView, getScoutDashboard } from '@/features/scout';
 
 export const metadata = { title: 'Scout · Backoffice' };
@@ -12,9 +11,7 @@ const DEFAULT_STANDALONE_URL =
     : 'http://localhost:3002';
 
 export default async function ScoutPage() {
-  const user = await requireUser();
-  // Módulo sin terminar (oculto del menú): solo el administrador, también por URL.
-  if (user.rol !== 'admin') redirect('/inicio');
+  const user = await requireModulo('comparador');
   const businessId = user.farmaciaId ?? null;
 
   const data = await getScoutDashboard(businessId);

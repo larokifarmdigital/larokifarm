@@ -15,7 +15,7 @@ import { cn } from '@/shared/lib/cn';
 export function AppSidebar({ shell }: { shell: ShellInfo }) {
   const pathname = usePathname();
   const { collapsed } = useSidebar();
-  const items = buildNav({ role: shell.rol, miFarmaciaId: shell.miFarmacia?.id, variasFarmacias: (shell.misFarmacias?.length ?? 0) > 1 });
+  const items = buildNav({ role: shell.rol, miFarmaciaId: shell.miFarmacia?.id, variasFarmacias: (shell.misFarmacias?.length ?? 0) > 1, modulos: shell.modulos });
   const ayuda = supportMailto('Ayuda con el backoffice');
 
   return (

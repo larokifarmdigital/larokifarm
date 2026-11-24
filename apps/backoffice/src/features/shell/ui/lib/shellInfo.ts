@@ -1,3 +1,4 @@
+import type { Modulo } from '@/core/shared';
 import type { NavRole } from './navConfig';
 
 /** Lo que el marco de la app (sidebar, topbar, menús) sabe del usuario. */
@@ -9,4 +10,6 @@ export type ShellInfo = {
   miFarmacia?: { id: string; nombre: string; web?: string };
   /** Personal que lleva varias farmacias: sus nombres (sin `miFarmacia`). */
   misFarmacias?: string[];
+  /** Módulos que puede usar (el administrador, todos). */
+  modulos: Modulo[];
 };

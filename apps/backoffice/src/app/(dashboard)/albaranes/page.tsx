@@ -1,4 +1,4 @@
-import { requireUser, auth } from '@/core/auth';
+import { requireModulo, auth } from '@/core/auth';
 import { GetBudgetStatusUseCase, getAiUsageRepository, getComparisonRepository } from '@/core/comparisons';
 import { getBusinessRepository } from '@/core/businesses';
 import { getFarmaciaRepository } from '@/core/farmacias';
@@ -8,7 +8,7 @@ export const metadata = { title: 'Conciliador · Backoffice' };
 export const dynamic = 'force-dynamic';
 
 export default async function ConciliadorPage() {
-  const user = await requireUser();
+  const user = await requireModulo('conciliador');
   const session = await auth();
   const presupuesto = new GetBudgetStatusUseCase(getBusinessRepository(), getComparisonRepository(), getAiUsageRepository());
   const currentUser = session?.user ? { id: session.user.id, role: session.user.role } : null;

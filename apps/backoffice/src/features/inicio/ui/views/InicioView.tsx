@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { auth, getCurrentUser } from '@/core/auth';
+import { auth, getCurrentUser, usuarioTieneModulo } from '@/core/auth';
 import { canEditContent } from '@/core/auth/domain';
 import { getFarmaciaRepository, type FarmaciaSummary } from '@/core/farmacias';
 import { getComparisonRepository, type ComparisonRow } from '@/core/comparisons';
@@ -165,10 +165,13 @@ export async function InicioView() {
   if (!session?.user || !user) redirect('/login');
 
   const esAdmin = user.rol === 'admin';
+  const conConciliador = usuarioTieneModulo(user, 'conciliador');
   const scope = scopeFromSession(session);
   const [farmacias, conciliaciones, informes] = await Promise.all([
     getFarmaciaRepository().listFarmacias(),
-    getComparisonRepository().list(scope, {}, { page: 1, pageSize: esAdmin ? 5 : 3 }),
+    conConciliador
+      ? getComparisonRepository().list(scope, {}, { page: 1, pageSize: esAdmin ? 5 : 3 })
+      : Promise.resolve({ items: [] as ComparisonRow[] }),
     esAdmin ? getReportRepository().listOpen(5) : Promise.resolve([] as OpenReportItem[]),
   ]);
   const nombre = user.nombre.split(/\s+/)[0];
@@ -190,6 +193,7 @@ export async function InicioView() {
         <InicioFarmacia
           farmacias={farmacias}
           conciliaciones={conciliaciones.items}
+          conConciliador={conConciliador}
           puedeEditar={canEditContent(user)}
         />
       )}
@@ -222,9 +226,10 @@ function ListaFarmacias({ farmacias }: { farmacias: FarmaciaSummary[] }) {
   );
 }
 
-function InicioFarmacia({ farmacias, conciliaciones, puedeEditar }: {
+function InicioFarmacia({ farmacias, conciliaciones, conConciliador, puedeEditar }: {
   farmacias: FarmaciaSummary[];
   conciliaciones: ComparisonRow[];
+  conConciliador: boolean;
   puedeEditar: boolean;
 }) {
   // Lleva varias farmacias: lista de sus webs (como el administrador) en vez de la tarjeta de una.
@@ -232,7 +237,7 @@ function InicioFarmacia({ farmacias, conciliaciones, puedeEditar }: {
   const farmacia = varias ? undefined : farmacias[0];
   const web = farmacia ? landingUrl(farmacia.web) : undefined;
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-4 sm:gap-5 items-start">
+    <div className={cn('grid grid-cols-1 gap-4 sm:gap-5 items-start', conConciliador && 'lg:grid-cols-[1.15fr_1fr]')}>
       {varias ? (
         <Tarjeta titulo="Tus webs" accion={<Link href="/farmacias" className={ENLACE}>Ver todas</Link>}>
           {/* Todas, también las archivadas: son pocas y el estado sale en cada fila. */}
@@ -293,16 +298,18 @@ function InicioFarmacia({ farmacias, conciliaciones, puedeEditar }: {
       </Tarjeta>
       )}
 
-      <Tarjeta
-        titulo="Albaranes"
-        accion={<Link href="/albaranes/historial" className={ENLACE}>Ver historial</Link>}
-      >
-        <Link href="/albaranes" className={cn(BTN_PRIMARIO, 'w-full mb-3')}>
-          <NavIcon name="Plus" size={16} />
-          Nueva conciliación
-        </Link>
-        <ListaConciliaciones items={conciliaciones} conFarmacia={varias} />
-      </Tarjeta>
+      {conConciliador && (
+        <Tarjeta
+          titulo="Albaranes"
+          accion={<Link href="/albaranes/historial" className={ENLACE}>Ver historial</Link>}
+        >
+          <Link href="/albaranes" className={cn(BTN_PRIMARIO, 'w-full mb-3')}>
+            <NavIcon name="Plus" size={16} />
+            Nueva conciliación
+          </Link>
+          <ListaConciliaciones items={conciliaciones} conFarmacia={varias} />
+        </Tarjeta>
+      )}
     </div>
   );
 }

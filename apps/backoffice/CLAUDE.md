@@ -178,10 +178,24 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
 - Rutas por rol (QA 20-11-2026): `/farmacias` es la lista del admin; el
   personal con UNA farmacia va a SU editor y con VARIAS ve la lista de las
   suyas ("Mis webs", sin archivar/eliminar/duplicar); `/farmacias/nueva`,
-  `/admin/uso`, `/ajustes`, `/scout` e `/inventario` redirigen a `/inicio` si
-  no eres SUPER_ADMIN.
+  `/admin/uso`, `/ajustes` e `/inventario` redirigen a `/inicio` si no eres
+  SUPER_ADMIN. `/scout` va por módulo (abajo).
 - Solo consulta (USER): `fieldset disabled` + Tiptap no editable
   (`aria-readonly`, sin barra) + sin "Empezar con un horario típico".
+
+### Módulos por usuario (24-11-2026)
+- Columna `users.modules` (`AppModule[]`: CONCILIADOR, COMPARADOR; migración
+  `20261124100000_user_modules`, ya ejecutada en Neon). Los usuarios que había
+  recibieron CONCILIADOR; los nuevos empiezan sin ninguno.
+- SUPER_ADMIN los tiene TODOS sin casillas. Decisión única:
+  `tieneModulo` (`core/shared/domain/modulos.ts`) / `usuarioTieneModulo(user, m)`.
+- Servidor, leyendo la BD (efecto inmediato): pages con
+  `requireModulo('conciliador'|'comparador')` (en cada page, no en el layout);
+  APIs con `puedeUsarModulo(userId, m)` → 403 (`/api/conciliar`, `/api/files`,
+  reportes). Menú (`requiresModulo` en `navConfig`) e Inicio usan la sesión
+  (JWT con `modules`, se relee cada 5 min).
+- Ajustes → Usuarios: casillas "Módulos que puede usar" en `CuentaDialog`
+  (con rol Administrador, solo un texto). El log de `editar` anota los cambios.
 
 ### Usuarios con varias farmacias (21-11-2026)
 - Tabla `user_businesses` (PK userId+businessId). Mismo rol en todas.
@@ -547,6 +561,10 @@ Diferencias schema vs UI documentadas:
   (`src/lib/chat.ts`, con su color de siempre por defecto) y pintan el widget
   con `data-*`; `data-inventory="off"` apaga el «Disponible». Se aplica al
   publicar ✅
+- **Comparador de precios (rehacer Scout)**: Fase 0 hecha 24-11-2026 —
+  prueba de concepto en `docs/scout-fase0/` (5 farmacias que verifican por CN;
+  trampas para la Fase 2 en su README). Fase 1 hecha: módulos por usuario
+  (ver "Módulos por usuario"). Siguiente: Fase 2, "Comparar precio" en `/scout`.
 - **Pendientes**:
   - **Coste de "Sugerir traducción"**: HECHO en código (21-11-2026); el
     `ALTER TYPE "UsageModule" ADD VALUE IF NOT EXISTS 'TRADUCCION';` ya se

@@ -1,3 +1,5 @@
+import type { Modulo } from '@/core/shared';
+
 export type NavRole = 'admin' | 'manager' | 'viewer';
 
 export type NavChild = { href: string; label: string };
@@ -9,6 +11,8 @@ export type NavItem = {
   badge?: 'nuevo' | 'wip';
   /** Si se define, solo los usuarios con ese rol ven el item. */
   requiresRole?: NavRole;
+  /** Si se define, solo lo ven quienes tienen ese módulo activado. */
+  requiresModulo?: Modulo;
   /** Sub-apartados (se muestran siempre debajo del item, sin desplegable). */
   children?: NavChild[];
   /**
@@ -25,6 +29,8 @@ export type NavContext = {
   miFarmaciaId?: string;
   /** Personal con varias farmacias: "Mis webs" lleva a su lista. */
   variasFarmacias?: boolean;
+  /** Módulos que puede usar (el administrador, todos). */
+  modulos: readonly Modulo[];
 };
 
 /**
@@ -33,7 +39,7 @@ export type NavContext = {
  * - Personal de farmacia: "Mi web" (directo al editor de su farmacia).
  * - "Albaranes" (antes "Conciliador": es la palabra del mostrador).
  */
-export function buildNav({ role, miFarmaciaId, variasFarmacias }: NavContext): NavItem[] {
+export function buildNav({ role, miFarmaciaId, variasFarmacias, modulos }: NavContext): NavItem[] {
   const web: NavItem =
     role !== 'admin' && miFarmaciaId
       ? { href: `/farmacias/${miFarmaciaId}`, label: 'Mi web', icon: 'Storefront' }
@@ -48,19 +54,25 @@ export function buildNav({ role, miFarmaciaId, variasFarmacias }: NavContext): N
       href: '/albaranes',
       label: 'Albaranes',
       icon: 'Receipt',
+      requiresModulo: 'conciliador',
       children: [
         { href: '/albaranes', label: 'Nueva conciliación' },
         { href: '/albaranes/historial', label: 'Historial' },
       ],
     },
     // En obra: ocultos hasta que estén listos (siguen accesibles por URL).
-    { href: '/scout', label: 'Scout precios', icon: 'MagnifyingGlass', badge: 'nuevo', hidden: true },
+    { href: '/scout', label: 'Comparador de precios', icon: 'MagnifyingGlass', badge: 'nuevo', requiresModulo: 'comparador', hidden: true },
     { href: '/inventario', label: 'Inventario', icon: 'Package', badge: 'wip', hidden: true },
     { href: '/admin/uso', label: 'Uso', icon: 'Scales', requiresRole: 'admin', badge: 'nuevo', hidden: true },
     { href: '/ajustes/usuarios', label: 'Usuarios', icon: 'UsersThree', requiresRole: 'admin' },
   ];
 
-  return items.filter((i) => !i.hidden && (!i.requiresRole || i.requiresRole === role));
+  return items.filter(
+    (i) =>
+      !i.hidden &&
+      (!i.requiresRole || i.requiresRole === role) &&
+      (!i.requiresModulo || modulos.includes(i.requiresModulo)),
+  );
 }
 
 /** Todas las rutas del menú (items + sub-apartados) para resolver el activo. */

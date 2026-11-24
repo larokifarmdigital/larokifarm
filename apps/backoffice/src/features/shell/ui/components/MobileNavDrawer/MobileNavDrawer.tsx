@@ -23,7 +23,7 @@ export function MobileNavDrawer({
   /** El botón que abre el drawer no es un Dialog.Trigger: hay que devolverle el foco a mano. */
   devolverFocoA?: RefObject<HTMLButtonElement | null>;
 }) {
-  const items = buildNav({ role: shell.rol, miFarmaciaId: shell.miFarmacia?.id, variasFarmacias: (shell.misFarmacias?.length ?? 0) > 1 });
+  const items = buildNav({ role: shell.rol, miFarmaciaId: shell.miFarmacia?.id, variasFarmacias: (shell.misFarmacias?.length ?? 0) > 1, modulos: shell.modulos });
   const pathname = usePathname();
   const ayuda = supportMailto('Ayuda con el backoffice');
 

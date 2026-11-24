@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/core/auth';
+import { getCurrentUser, usuarioTieneModulo } from '@/core/auth';
+import { MODULOS } from '@/core/shared';
 import { getFarmaciaRepository } from '@/core/farmacias';
 import { AppSidebar, AppTopbar, SidebarProvider } from '@/features/shell';
 import type { ShellInfo } from '@/features/shell/ui/lib/shellInfo';
@@ -21,7 +22,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
       misFarmacias = farmacias.map((f) => f.nombre).sort((a, b) => a.localeCompare(b, 'es'));
     }
   }
-  const shell: ShellInfo = { nombre: user.nombre, email: user.email, rol: user.rol, miFarmacia, misFarmacias };
+  const shell: ShellInfo = {
+    nombre: user.nombre,
+    email: user.email,
+    rol: user.rol,
+    miFarmacia,
+    misFarmacias,
+    modulos: MODULOS.filter((m) => usuarioTieneModulo(user, m)),
+  };
 
   return (
     <SidebarProvider>

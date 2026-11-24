@@ -1,11 +1,13 @@
 // NOTE: acceso = sesión válida + scoping por primer segmento del key (businessSlug); SUPER_ADMIN puede leer cualquier negocio.
 import { NextResponse, type NextRequest } from 'next/server';
-import { auth } from '@/core/auth';
+import { auth, puedeUsarModulo } from '@/core/auth';
 import { prisma } from '@/shared/lib/prisma';
 import { getStorage } from '@/core/storage';
 import { farmaciasDeSesion } from '@/core/shared';
 
 export const runtime = 'nodejs';
+const SIN_CONCILIADOR = 'No tienes activado el conciliador de albaranes.';
+
 
 export async function GET(
   _req: NextRequest,
@@ -14,6 +16,9 @@ export async function GET(
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  }
+  if (!(await puedeUsarModulo(session.user.id, 'conciliador'))) {
+    return NextResponse.json({ error: SIN_CONCILIADOR }, { status: 403 });
   }
 
   const { key: keyParts } = await params;

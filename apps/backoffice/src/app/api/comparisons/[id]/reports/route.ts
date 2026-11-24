@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/core/auth';
+import { auth, puedeUsarModulo } from '@/core/auth';
 import { scopeFromSession, ForbiddenError, ValidationError } from '@/core/shared';
 import { getComparisonRepository } from '@/core/comparisons';
 import {
@@ -9,6 +9,8 @@ import {
 } from '@/core/reports';
 
 export const runtime = 'nodejs';
+const SIN_CONCILIADOR = 'No tienes activado el conciliador de albaranes.';
+
 
 export async function GET(
   _req: Request,
@@ -17,6 +19,9 @@ export async function GET(
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  }
+  if (!(await puedeUsarModulo(session.user.id, 'conciliador'))) {
+    return NextResponse.json({ error: SIN_CONCILIADOR }, { status: 403 });
   }
   const { id } = await params;
   const useCase = new ListReportsByComparisonUseCase(
@@ -44,6 +49,9 @@ export async function POST(
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  }
+  if (!(await puedeUsarModulo(session.user.id, 'conciliador'))) {
+    return NextResponse.json({ error: SIN_CONCILIADOR }, { status: 403 });
   }
   const { id } = await params;
   const body = await req.json().catch(() => null);

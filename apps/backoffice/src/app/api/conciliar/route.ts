@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth, farmaciasActualesDe } from '@/core/auth';
+import { auth, farmaciasActualesDe, puedeUsarModulo } from '@/core/auth';
 import {
   GetBudgetStatusUseCase,
   getAiUsageRepository, getComparisonRepository,
@@ -34,6 +34,12 @@ async function resolveContext(req: Request): Promise<
     return {
       ok: false,
       response: NextResponse.json({ error: 'No autenticado' }, { status: 401 }),
+    };
+  }
+  if (!(await puedeUsarModulo(session.user.id, 'conciliador'))) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: 'No tienes activado el conciliador de albaranes.' }, { status: 403 }),
     };
   }
 

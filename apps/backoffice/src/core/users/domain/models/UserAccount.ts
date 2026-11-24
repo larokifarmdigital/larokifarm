@@ -1,3 +1,5 @@
+import type { Modulo } from '@/core/shared';
+
 /** Rol de una cuenta, con los mismos nombres que `Usuario.rol` (core/auth). */
 export type RolCuenta = 'admin' | 'manager' | 'viewer';
 
@@ -13,6 +15,8 @@ export interface UserAccount {
   farmaciaId: string | null;
   /** Todas las farmacias que lleva, ordenadas por nombre. Mismo rol en todas. */
   farmacias: FarmaciaOpcion[];
+  /** Módulos activados (el administrador los tiene todos aunque la lista esté vacía). */
+  modulos: Modulo[];
   activo: boolean;
   /** Tiene conciliaciones, reportes o uso de IA a su nombre: no se puede eliminar, solo desactivar. */
   tieneHistorial: boolean;
@@ -29,6 +33,7 @@ export interface CreateUserAccountInput {
   email: string;
   rol: RolCuenta;
   farmaciaIds: string[];
+  modulos: Modulo[];
   passwordHash: string;
 }
 
@@ -37,6 +42,7 @@ export interface UpdateUserAccountInput {
   rol?: RolCuenta;
   /** Sustituye la lista completa de farmacias. */
   farmaciaIds?: string[];
+  modulos?: Modulo[];
 }
 
 /** Quien hace la operación (sesión). */

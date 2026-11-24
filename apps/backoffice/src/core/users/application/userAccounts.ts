@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { SaveResult } from '@/core/shared';
+import { MODULOS, type Modulo, type SaveResult } from '@/core/shared';
 import {
   CuentaConHistorialError,
   ROLES_CUENTA,
@@ -44,8 +44,14 @@ const farmaciasSchema = z
   .max(50, 'Demasiadas farmacias')
   .transform((ids) => [...new Set(ids)]);
 
-const crearSchema = z.object({ nombre: nombreSchema, email: emailSchema, rol: rolSchema, farmaciaIds: farmaciasSchema });
-const editarSchema = z.object({ nombre: nombreSchema, rol: rolSchema, farmaciaIds: farmaciasSchema });
+const modulosSchema = z
+  .array(z.enum(MODULOS as [Modulo, ...Modulo[]], 'Módulo no válido'))
+  .max(MODULOS.length)
+  .default([])
+  .transform((ms) => [...new Set(ms)]);
+
+const crearSchema = z.object({ nombre: nombreSchema, email: emailSchema, rol: rolSchema, farmaciaIds: farmaciasSchema, modulos: modulosSchema });
+const editarSchema = z.object({ nombre: nombreSchema, rol: rolSchema, farmaciaIds: farmaciasSchema, modulos: modulosSchema });
 
 function erroresDe(e: z.ZodError): SaveResult<never> {
   const fieldErrors: Record<string, string> = {};
@@ -62,6 +68,8 @@ function erroresDe(e: z.ZodError): SaveResult<never> {
  * - Solo SUPER_ADMIN gestiona usuarios.
  * - Nadie se desactiva ni se quita el rol de administrador a sí mismo.
  * - Siempre queda al menos un administrador activo.
+ * - Los módulos (conciliador, comparador) los marca el administrador; él los
+ *   tiene todos sin marcarlos. Los usuarios nuevos empiezan sin ninguno.
  * - Responsable y Solo consulta necesitan al menos una farmacia (mismo rol en
  *   todas); el administrador puede no tener ninguna.
  * - Las contraseñas temporales se generan aquí y se devuelven una sola vez.
@@ -100,7 +108,7 @@ export class UserAccountsService {
     if (!this.esAdmin(actor) || !(await this.esAdminVigente(actor))) return { ok: false, error: SOLO_ADMIN };
     const p = crearSchema.safeParse(raw);
     if (!p.success) return erroresDe(p.error);
-    const { nombre, email, rol, farmaciaIds } = p.data;
+    const { nombre, email, rol, farmaciaIds, modulos } = p.data;
     const errFarmacia = await this.validarFarmacias(rol, farmaciaIds);
     if (errFarmacia) return { ok: false, error: 'Revisa los campos marcados', fieldErrors: errFarmacia };
     if (await this.repo.emailExists(email)) {
@@ -113,6 +121,7 @@ export class UserAccountsService {
         email,
         rol: rol as UserAccount['rol'],
         farmaciaIds,
+        modulos,
         passwordHash: await hashContrasena(contrasenaTemporal),
       });
       registrar(actor.id, 'crear', cuenta.id);
@@ -133,7 +142,7 @@ export class UserAccountsService {
     if (!actual) return { ok: false, error: 'Ese usuario ya no existe.' };
     const p = editarSchema.safeParse(raw);
     if (!p.success) return erroresDe(p.error);
-    const { nombre, rol, farmaciaIds } = p.data;
+    const { nombre, rol, farmaciaIds, modulos } = p.data;
     if (actual.id === actor.id && rol !== 'admin') {
       return { ok: false, error: 'No puedes quitarte a ti mismo el rol de administrador.', fieldErrors: { rol: 'No puedes quitarte tu propio rol de administrador' } };
     }
@@ -145,11 +154,15 @@ export class UserAccountsService {
     try {
       const cuenta = await this.repo.update(
         id,
-        { nombre, rol: rol as UserAccount['rol'], farmaciaIds },
+        { nombre, rol: rol as UserAccount['rol'], farmaciaIds, modulos },
         // Quitar el rol a un administrador: comprobación + escritura atómicas.
         { exigirOtroAdminActivo: actual.rol === 'admin' && rol !== 'admin' },
       );
-      registrar(actor.id, actual.rol !== rol ? `editar(rol:${actual.rol}→${rol})` : 'editar', id);
+      const cambios = [
+        actual.rol !== rol ? `rol:${actual.rol}→${rol}` : null,
+        [...actual.modulos].sort().join(',') !== [...modulos].sort().join(',') ? `modulos:${modulos.join(',') || '-'}` : null,
+      ].filter(Boolean);
+      registrar(actor.id, cambios.length ? `editar(${cambios.join(';')})` : 'editar', id);
       return { ok: true, data: cuenta };
     } catch (e) {
       if (e instanceof UltimoAdminError) return { ok: false, error: e.message };
