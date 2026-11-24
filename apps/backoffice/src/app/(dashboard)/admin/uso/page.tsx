@@ -1,17 +1,14 @@
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/core/auth';
-import { UsoView, getUsoData } from '@/features/admin';
+import { UsoView, getUsoIaData } from '@/features/admin';
 
-export const metadata = { title: 'Uso · Backoffice' };
+export const metadata = { title: 'Uso de IA · Backoffice' };
 export const dynamic = 'force-dynamic';
 
-export default async function UsoPage() {
+export default async function UsoPage({ searchParams }: { searchParams: Promise<{ mes?: string | string[] }> }) {
   const user = await requireUser();
-  // Doble guard: el sidebar oculta el link, pero si el user teclea la URL
-  // manualmente le redirigimos. SUPER_ADMIN mapea a 'admin' en el adapter
-  // de session.ts.
+  // Solo la cuenta de administración (el menú tampoco lo enseña al resto).
   if (user.rol !== 'admin') redirect('/inicio');
-
-  const data = await getUsoData();
-  return <UsoView data={data} />;
+  const { mes } = await searchParams;
+  return <UsoView data={await getUsoIaData(typeof mes === 'string' ? mes : undefined)} />;
 }

@@ -577,7 +577,7 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
   BO en globals.css). Un solo item «Conciliador» en el sidebar; dentro,
   pestañas «Nueva conciliación · Historial» (`albaranes/layout.tsx` +
   `ConciliadorTabs`). Envs: `GEMINI_API_KEY` y `ENCRYPTION_KEY` (claves Gemini
-  por negocio). Usuarios: hechos en la fase 5 (decisión 18); negocios/uso: pendientes ✅
+  por negocio). Usuarios: hechos en la fase 5 (decisión 18); límites y claves: «Uso de IA» ✅
 - **Rediseño 20-11-2026**: fase 1 login + Inicio + navegación; fase 2 nueva
   conciliación por envíos; fase 3 historial (ver decisión 15-17); fase 4
   gestión de contenidos: secciones por tareas en lenguaje llano, estado de
@@ -670,6 +670,22 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
   - Pendiente de diseño (revisión 24-11-2026, fuera del comparador): el anillo
     de foco de `IconInput` choca con el borde al enfocar por código; usar
     `tabular-nums` (no `font-mono-tabular`) para importes y horas.
+- **Uso de IA 24-11-2026** (`/admin/uso`, menú «Uso de IA», solo admin):
+  gasto de Gemini del mes por farmacia (conciliaciones + traducciones), límite
+  mensual y clave propia (BYOK) en el menú ⋯ de cada fila. Límite vacío = sin
+  límite (máx. 1.000 $, coma decimal). La clave se comprueba con Google
+  (listar modelos, sin coste) antes de guardarla, se guarda cifrada
+  (`ENCRYPTION_KEY`) y solo se enseñan sus 4 últimas letras. Reglas en
+  `core/businesses/application/configurarIa.ts`; datos en
+  `features/admin/data/usoData.ts`. Avisos en la página si faltan
+  `GEMINI_API_KEY` o `ENCRYPTION_KEY` en el servidor. Sin migración.
+  Trae lo que tenía la pantalla de uso del conciliador antiguo: selector de
+  mes (`?mes=AAAA-MM`, últimos 12), gráfico de 12 meses (`GraficoMeses`: cada
+  barra es un enlace al mes, valor al pasar/enfocar y "Ver como tabla"), tabla
+  por farmacia (con PDF) y **Por persona** (`UsoPorPersona`: conciliaciones,
+  PDF, traducciones y gasto, de más a menos). `getUsoIaData(mes)` lee 12 meses
+  de `comparisons` + `usage_entries` (TRADUCCION) una vez y agrupa en memoria.
+  En meses pasados no se pinta la barra del límite (el límite es el actual).
 - **Pendientes**:
   - **Coste de "Sugerir traducción"**: HECHO en código (21-11-2026); el
     `ALTER TYPE "UsageModule" ADD VALUE IF NOT EXISTS 'TRADUCCION';` ya se

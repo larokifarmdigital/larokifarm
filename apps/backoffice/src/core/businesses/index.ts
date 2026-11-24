@@ -1,3 +1,3 @@
 export * from './domain';
-export { getBusinessRepository } from './infrastructure';
+export { getBusinessRepository, probarClaveGemini, type PruebaClaveGemini } from './infrastructure';
 export * from './application';

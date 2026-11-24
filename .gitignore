@@ -79,3 +79,6 @@ tutorial/
 # Documentación para el cliente (contiene emails de cuentas)
 documentacion-cliente/
 pdf-conciliador
+
+# Notas locales con pasos de credenciales (no se suben: el repo es público)
+LLAVE-GOOGLE-RESENAS.md

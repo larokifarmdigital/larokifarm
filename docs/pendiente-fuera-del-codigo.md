@@ -31,6 +31,12 @@ Después de que estén desplegadas las landings sin Sanity (ya subidas a `main`)
 
 ## 3. Vercel
 
+- [ ] **Urgente — `larokifarm`** (backoffice): copiar `GEMINI_API_KEY` y
+  `ENCRYPTION_KEY` desde el proyecto `larokifarm-conciliador-albaranes`
+  (mismos valores; la `ENCRYPTION_KEY` tiene que ser la misma) → Production →
+  Redeploy. Sin ellas no funcionan en producción la conciliación, «Sugerir
+  traducción» ni las claves propias de «Uso de IA».
+
 - [ ] **`larokifarm-torrents`** y **`larokifarm-chamarro`** → Settings →
   Environment Variables: borrar `CONTENT_SOURCE`, `PUBLIC_SANITY_PROJECT_ID` y
   `PUBLIC_SANITY_DATASET` (ya no se leen).

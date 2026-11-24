@@ -74,7 +74,7 @@ export function buildNav({ role, miFarmaciaId, variasFarmacias, modulos }: NavCo
       ],
     },
     { href: '/inventario', label: 'Inventario', icon: 'Package', badge: 'wip', hidden: true },
-    { href: '/admin/uso', label: 'Uso', icon: 'Scales', requiresRole: 'admin', badge: 'nuevo', hidden: true },
+    { href: '/admin/uso', label: 'Uso de IA', icon: 'Sparkle', requiresRole: 'admin' },
     { href: '/ajustes/usuarios', label: 'Usuarios', icon: 'UsersThree', requiresRole: 'admin' },
   ];
 
