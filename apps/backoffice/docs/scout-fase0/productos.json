@@ -1,0 +1,182 @@
+[
+ {
+  "cn": "214192",
+  "ean": "",
+  "nombre": "CINFA @ OPTIBEN OJOS SECOS 15 ML",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "202660",
+  "ean": "",
+  "nombre": "FAES @ PROFAES4 PROBIOTICOS ATB 10CAPS",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "169695",
+  "ean": "",
+  "nombre": "FAES @ PRO FAES4 PROBIOTICOS 30CAPS",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "238444",
+  "ean": "",
+  "nombre": "EUCERIN @ !!! PROTECTOR LABIAL",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "173398",
+  "ean": "",
+  "nombre": "RICOLA @ CARAM S/A 50G LIMON MELISA",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "173403",
+  "ean": "",
+  "nombre": "RICOLA @ CARAM S/A 50G ARANDANO",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "166701",
+  "ean": "",
+  "nombre": "THEALOZ @ DUO 10ML COLIRIO",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "241000",
+  "ean": "",
+  "nombre": "XHEKPON @! CREMA 40 ML",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "153335",
+  "ean": "",
+  "nombre": "FISIOCREM @ CREMA 60ML",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "229831",
+  "ean": "",
+  "nombre": "COMPEED @ AMPOLLAS MED 5U",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "180465",
+  "ean": "",
+  "nombre": "ABOCA @ GRINTUSS PEDIATRIC JBE 180G",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "180466",
+  "ean": "",
+  "nombre": "ABOCA @ GRINTUSS ADULT JBE 180ML",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "165892",
+  "ean": "",
+  "nombre": "HYLO @! GEL 10ML",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "152050",
+  "ean": "",
+  "nombre": "ITALO @ ALOCLAIR PLUS GEL 8ML",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "385641",
+  "ean": "",
+  "nombre": "LACER @ CLORHEXIDINA COLUTORIO 200",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "179072",
+  "ean": "",
+  "nombre": "CASEN @! REUTERI GOTAS 10ML",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "190120",
+  "ean": "",
+  "nombre": "ISDIN @ REPARADOR LABIAL STICK 4GR",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "159188",
+  "ean": "",
+  "nombre": "ROCHE-POSAY @ CICAPLAST BAUME 40 ML",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "183881",
+  "ean": "",
+  "nombre": "NESTLE @ NAN SUPREME 2 800GR",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "232357",
+  "ean": "",
+  "nombre": "COMPEED @ CALENTURAS 15 PARCHES",
+  "tipo": "parafarmacia"
+ },
+ {
+  "cn": "760017",
+  "ean": "8470007600176",
+  "nombre": "FRENADOL @ COMPLEX 10 SOBRES",
+  "tipo": "sin_receta"
+ },
+ {
+  "cn": "681817",
+  "ean": "8470006818176",
+  "nombre": "FRENADOL @ FORTE 10 SOBRES",
+  "tipo": "sin_receta"
+ },
+ {
+  "cn": "715240",
+  "ean": "8470007152408",
+  "nombre": "GELOCATIL @ 1GR 10COMP",
+  "tipo": "sin_receta"
+ },
+ {
+  "cn": "961664",
+  "ean": "8470009616649",
+  "nombre": "STREPSILS @ MIEL Y LIMON 24 PASTILLAS",
+  "tipo": "sin_receta"
+ },
+ {
+  "cn": "701285",
+  "ean": "8470007012856",
+  "nombre": "VOLTADOL @ FORTE 23.2MG/G 50G GEL",
+  "tipo": "sin_receta"
+ },
+ {
+  "cn": "726161",
+  "ean": "8470007261612",
+  "nombre": "VOLTADOL @ FORTE 100GR GEL",
+  "tipo": "sin_receta"
+ },
+ {
+  "cn": "846287",
+  "ean": "8470008462872",
+  "nombre": "VICKS @ VAPORUB 50GR",
+  "tipo": "sin_receta"
+ },
+ {
+  "cn": "672294",
+  "ean": "8470006722947",
+  "nombre": "NUROFEN @ RAPID 400MG 20CAPS BLANDAS",
+  "tipo": "sin_receta"
+ },
+ {
+  "cn": "711185",
+  "ean": "8470007111856",
+  "nombre": "ALMAX FORTE 1.5GR 12SOBRES",
+  "tipo": "sin_receta"
+ },
+ {
+  "cn": "966812",
+  "ean": "8470009668129",
+  "nombre": "GINE CANESTEN @ 2% CREMA 20 G",
+  "tipo": "sin_receta"
+ }
+]
