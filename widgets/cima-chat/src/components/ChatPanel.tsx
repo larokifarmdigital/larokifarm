@@ -11,7 +11,6 @@ import { ChatIA } from './ChatIA';
 import { AlternativesChat } from './AlternativesChat';
 import { InteractionsInline } from './InteractionsInline';
 import { IA_LIBRE_ENABLED } from '../lib/features';
-import { fetchCatalog, type CimaCatalog } from '../api/sanity';
 import { fetchInventory, type Inventory } from '../api/inventory';
 import { SYMPTOMS } from '../lib/symptoms';
 import { PROFILES } from '../lib/profiles';
@@ -55,19 +54,11 @@ interface AnswerEntry {
 
 type EntryMode = 'menu' | 'search' | 'wizard' | 'chat';
 
-const BUNDLED_CATALOG: CimaCatalog = {
-  symptoms: SYMPTOMS,
-  profiles: PROFILES,
-  source: 'bundled',
-};
 
 export function ChatPanel({ onClose, logoUrl, brandName, inventory: usarInventario = true }: Props) {
   const [entry, setEntry] = useState<EntryMode>('menu');
   const [heroInput, setHeroInput] = useState('');
   const [chatInitial, setChatInitial] = useState<string | undefined>(undefined);
-  const [catalog, setCatalog] = useState<CimaCatalog>(BUNDLED_CATALOG);
-  const [catalogLoading, setCatalogLoading] = useState(false);
-  const catalogFetched = useRef(false);
   const [inventory, setInventory] = useState<Inventory | null>(null);
   const [query, setQuery] = useState('');
   const [otcOnly, setOtcOnly] = useState(false);
@@ -336,16 +327,7 @@ export function ChatPanel({ onClose, logoUrl, brandName, inventory: usarInventar
                   type="button"
                   role="listitem"
                   class="cima-hero__quick-item"
-                  onClick={() => {
-                    setEntry('wizard');
-                    if (!catalogFetched.current) {
-                      catalogFetched.current = true;
-                      setCatalogLoading(true);
-                      fetchCatalog(BUNDLED_CATALOG)
-                        .then((c) => setCatalog(c))
-                        .finally(() => setCatalogLoading(false));
-                    }
-                  }}
+                  onClick={() => setEntry('wizard')}
                 >
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="9"/>
@@ -391,16 +373,7 @@ export function ChatPanel({ onClose, logoUrl, brandName, inventory: usarInventar
                     type="button"
                     role="listitem"
                     class="cima-menu__card"
-                    onClick={() => {
-                      setEntry('wizard');
-                      if (!catalogFetched.current) {
-                        catalogFetched.current = true;
-                        setCatalogLoading(true);
-                        fetchCatalog(BUNDLED_CATALOG)
-                          .then((c) => setCatalog(c))
-                          .finally(() => setCatalogLoading(false));
-                      }
-                    }}
+                    onClick={() => setEntry('wizard')}
                   >
                     <span class="cima-menu__card-icon" aria-hidden="true">
                       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
@@ -493,9 +466,11 @@ export function ChatPanel({ onClose, logoUrl, brandName, inventory: usarInventar
 
         {!selected && entry === 'wizard' && (
           <SymptomWizard
-            symptoms={catalog.symptoms}
-            profiles={catalog.profiles}
-            loadingCatalog={catalogLoading && catalog.source === 'bundled'}
+            // Catálogo de síntomas y perfiles del propio widget (antes intentaba
+            // leerlo de Sanity, que lo bloqueaba por CORS; el contenido era el mismo).
+            symptoms={SYMPTOMS}
+            profiles={PROFILES}
+            loadingCatalog={false}
             onPick={loadMedicamento}
             onExit={() => setEntry('menu')}
             inventory={inventory}

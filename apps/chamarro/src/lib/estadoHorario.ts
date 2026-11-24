@@ -3,7 +3,7 @@
  * estática: los datos se preparan en el build (`horariosParaEstado`,
  * `textosEstado`) y el cálculo se hace en el navegador (`calcularEstado`).
  * Lo usan la tarjeta del Hero y el horario del Footer. Este archivo va al
- * navegador: sin imports del build (i18n, Sanity).
+ * navegador: sin imports del build (i18n, contenido).
  */
 
 export type TramoEstado = { apertura: string; cierre: string };

@@ -30,7 +30,7 @@ function bloqueInline(b: PortableBlock): string {
 }
 
 /**
- * Renderiza un array de bloques Portable Text (Sanity) a HTML plano.
+ * Renderiza bloques Portable Text (formato antiguo) a HTML plano.
  * Si recibe un string lo considera HTML ya renderizado (backoffice) y lo devuelve.
  * Soporta encabezados h1-h4, listas bullet/number, blockquote, strong/em/underline,
  * y enlaces (markDefs de tipo `link` con flag `externo`).

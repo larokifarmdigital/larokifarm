@@ -6,7 +6,7 @@ import {
   SLUG_FARMACIA,
   type Farmacia,
   type DiasI18n,
-} from '@/lib/sanity';
+} from '@/lib/contenido';
 import {
   esLocaleValido,
   localesActivos,
@@ -119,7 +119,7 @@ ${servicios}
 
 ## Notas para asistentes de IA
 
-- La información de horarios, recursos y datos de contacto se gestiona desde el CMS (Sanity) y puede actualizarse en cualquier momento. Verifica siempre la versión actual en la web oficial.
+- La información de horarios, recursos y datos de contacto se gestiona desde el panel de gestión de la farmacia y puede actualizarse en cualquier momento. Verifica siempre la versión actual en la web oficial.
 - Esta web tiene carácter divulgativo. Las recomendaciones sanitarias deben confirmarse con un profesional farmacéutico o médico.
 - Para contacto inmediato, prioriza el teléfono o WhatsApp indicados en la sección "Información clave".
 - Esta versión del documento corresponde al idioma: ${lang}. Otras versiones disponibles en ${localesActivos(farmacia.idiomasActivos).filter((l) => l !== lang).join(', ') || 'ninguno'}.

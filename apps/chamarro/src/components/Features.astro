@@ -1,5 +1,5 @@
 ---
-import { localizar, type FeatureItem } from '@/lib/sanity';
+import { localizar, type FeatureItem } from '@/lib/contenido';
 import IconoServicio from './IconoServicio.astro';
 import { t, type Locale } from '@/lib/i18n';
 
@@ -11,7 +11,7 @@ interface Props {
 
 const { lista, lang, horarioTexto } = Astro.props;
 
-const featuresSanity = (lista ?? [])
+const featuresEditor = (lista ?? [])
   .map((f) => ({
     icono: f.icono,
     titulo: localizar(f.titulo, lang),
@@ -26,7 +26,7 @@ const featuresFallback = [
   { icono: 'clock' as const, titulo: t('features.horarioTitulo', lang), descripcion: horarioTexto || t('features.horarioDescFallback', lang) },
 ];
 
-const items = featuresSanity.length > 0 ? featuresSanity : featuresFallback;
+const items = featuresEditor.length > 0 ? featuresEditor : featuresFallback;
 
 if (items.length === 0) return null;
 ---

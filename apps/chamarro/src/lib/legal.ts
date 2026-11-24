@@ -1,6 +1,6 @@
 import type { Locale } from '@/lib/i18n';
 
-// NOTE: Fallback usado solo cuando el campo correspondiente en Sanity está vacío para el idioma. Rellenar avisoLegal/politicaPrivacidad en Sanity cuando el cliente pase el texto definitivo. Placeholder neutro hasta entonces.
+// NOTE: Fallback usado solo cuando el campo correspondiente del backoffice está vacío para el idioma. Rellenar avisoLegal/politicaPrivacidad en Sanity cuando el cliente pase el texto definitivo. Placeholder neutro hasta entonces.
 
 export type LegalTextos = { avisoLegal: string; politicaPrivacidad: string };
 

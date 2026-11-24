@@ -10,7 +10,6 @@ Carpetas planas independientes según su naturaleza:
 - **`apps/`** — apps standalone (Next.js, Astro). Cada una con su package.json.
 - **`widgets/`** — widgets embebibles en sitios externos (Preact + Vite library
   + Shadow DOM).
-- **`studio/`** — Sanity Studio. Contiene los schemas fuente de verdad.
 - **`workers/`** — Cloudflare Workers (cron, APIs).
 - **`packages/`** — solo si necesitas código compartido de verdad. Preferimos
   duplicar poco a acoplar mucho.
@@ -29,12 +28,12 @@ Backoffice Next.js para gestión de farmacias.
 - Contexto completo: `apps/backoffice/CLAUDE.md`
 
 ### `apps/torrents/`
-Landing pública de Farmacia Torrents (Barcelona) en Astro + Sanity workspace
-`farmacias`. Sin GA, sin publicidad, sin cookies. Mapa con patrón "click para
+Landing pública de Farmacia Torrents (Barcelona) en Astro. Contenido en build
+desde la API pública del backoffice. Sin GA, sin publicidad, sin cookies. Mapa con patrón "click para
 cargar" para no requerir consentimiento.
 
 ### `apps/chamarro/`
-Landing pública de Farmacia Chamarro en Astro + Sanity workspace `farmacias`.
+Landing pública de Farmacia Chamarro en Astro (contenido del backoffice).
 Fuente única Manrope, paleta verde del logo del cliente (#44A460 → #6DC261 →
 #C8E845) + blanco. PWA completa (favicon.svg + apple-touch-icon + icon-192/512
 + maskable). Chat widget `cima-chat` embebido. i18n: es, ca, en.
@@ -42,11 +41,13 @@ Contexto: `apps/chamarro/CLAUDE.md`.
 
 ### `widgets/cima-chat/`
 Widget embebible (Preact + Vite library + Shadow DOM). Cliente real:
-farmacia en Barcelona. Sin LLM en MVP.
+farmacia en Barcelona. Sin LLM en MVP. Catálogo de síntomas/perfiles en el
+propio código (`src/lib/symptoms.ts`, `profiles.ts`); su configuración por
+farmacia sale del backoffice.
 
-### `widgets/calendario-vacunas/`
-Mini-app Astro SSG + Sanity CMS — calendarios de vacunación por CCAA
-editables por el cliente farmacia.
+### `apps/inventory-sync/`
+Script (GitHub Actions cada 6 h) que lee el inventario de SharePoint y lo deja
+en Cloudflare KV para el «Disponible» del chat.
 
 ### `apps/conciliador-albaranes/`
 Herramienta interna. Soporta **N PDFs del proveedor + M Excels del pedido**
@@ -67,16 +68,18 @@ Casos reales NESTLE/PEROX. Mapeo completo + decisiones en
   `nextjs-conventions` (para las apps Next), `astro-conventions` (para
   Astro), `tailwind-styling`.
 
-## Contexto Sanity (source of truth de contenido)
+## Contenido de las farmacias (fuente de verdad)
 
-El schema real de Farmacia vive en `studio/schemas/farmacias/farmacia.ts`.
-10 grupos: Identidad · Hero · Features · Sobre nosotros · Servicios · FAQs
-· Reseñas · Contacto · Legal · SEO. El backoffice mapea 1:1 estos campos
-(ver `apps/backoffice/CLAUDE.md` para detalle).
+Todo el contenido vive en el **backoffice** (Neon + R2). El modelo de Farmacia
+es `apps/backoffice/src/core/farmacias/domain/models/Farmacia.ts` y las landings
+lo leen en build de `GET /api/public/farmacias/:slug` (`BACKOFFICE_URL`).
+Utilidades compartidas de las landings en `packages/contenido` (i18n de campos,
+texto enriquecido, horarios, URL de imagen).
 
-**Project ID**: `yovi040n`. Workspaces del studio: `cima-chat` (dataset
-`cima`), `farmacias` (dataset `production` o el que tengan en el .env), y
-`calendario-vacunas` (dataset `calendario`).
+**Sanity retirado (24-11-2026)**: se borraron `studio/`,
+`workers/sanity-fanout` y el camino Sanity de las landings y del chat. La base
+de datos ya no referencia nada de Sanity. Queda borrar el proyecto `yovi040n`
+en sanity.io (cuenta del usuario).
 
 ## Infra: alojamiento y deploy
 
@@ -84,30 +87,17 @@ Qué recurso vive en qué cuenta y cómo se redeployan los sitios públicos.
 
 | Recurso | Hosting | Cuenta | Notas |
 |---|---|---|---|
-| `apps/torrents/` | Cloudflare Pages | Cuenta empresa | Dominio personal (de Erick) |
-| `apps/torrents/` | Vercel | Cuenta cliente | Dominio del cliente |
-| `apps/backoffice/` | — | — | Local todavía, pendiente deploy |
-| `workers/sanity-fanout/` | Cloudflare Workers | **Cuenta empresa** (`larokifarmdigital@gmail.com`, account ID `b541c31a1626d80fb24641caa2ce9d15`) | Recibe el único webhook de Sanity y hace fan-out a N deploy hooks en paralelo |
-| `workers/google-resenas/` | Cloudflare Workers | — | Pendiente de activar cuando Google apruebe la API |
+| `apps/torrents/` | Vercel | `larokifarm-torrents` | www.farmaciapediatrica.com (la copia antigua en Cloudflare Pages con `torrentsfarmacia.com` ya no responde) |
+| `apps/backoffice/` | Vercel | `larokifarm` (larokifarm.vercel.app) | Next 16 |
+| `apps/chamarro/` | Vercel | `larokifarm-chamarro` | farmaciachamarro.es |
+| `widgets/cima-chat/` | Cloudflare Pages | **Cuenta empresa** (`larokifarmdigital@gmail.com`, account ID `b541c31a1626d80fb24641caa2ce9d15`) | `larokifarm-cima-chat` |
+| `workers/google-resenas/` | Cloudflare Workers | — | Pendiente: rehacer para escribir en Neon (ver Reseñas Google) |
 
-### Flujo de deploy al editar Sanity
+### Flujo de deploy al publicar
 
-```
-Cliente publica en Sanity Studio
-         ↓
-Sanity webhook (único, plan free) → POST a workers/sanity-fanout
-         ↓
-Worker verifica firma HMAC-SHA256 + hace fan-out en paralelo a:
-  ├─ Cloudflare Pages Torrents (dominio Erick)
-  ├─ Vercel Torrents (dominio cliente)
-  └─ Cloudflare Pages Calendario-vacunas
-         ↓
-Cada hosting re-builda su sitio en ~1-2 min
-```
-
-Para añadir un nuevo sitio al fan-out: `workers/sanity-fanout/README.md` →
-sección "Añadir un sitio nuevo". Soporta cualquier hosting con deploy hook
-tipo `POST sin auth` (CF Pages, Vercel, Netlify).
+El backoffice publica (`PublishFarmaciaUseCase`) y lanza directamente los
+deploy hooks de la farmacia (`DEPLOY_HOOKS_<SLUG>`, varias URLs separadas por
+coma). Cada hosting re-builda su landing en ~1-2 min leyendo del backoffice.
 
 ### `CLOUDFLARE_ACCOUNT_ID` en tu shell
 
@@ -125,10 +115,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 - Solicitud a Google Business Profile API rechazada 2026-06-15 por usar
   rol admin + Gmail personal. Al reintentar: cuenta Propietario + email
   de dominio.
-- Worker de sincronización → Sanity (planificado en `project_torrents_resenas`
-  de memoria auto).
-- Al montarlo: re-alojar fotos de autores en Sanity para no romper el
-  "cero cookies" de Torrents (`project_torrents_avatares_reseñas`).
+- Las reseñas viven en Neon (`content_resenas`, copiadas una vez de Sanity) y
+  las fotos de autores ya están re-alojadas en R2 ("cero cookies").
+- Pendiente: sincronización periódica desde la Google Business Profile API →
+  Neon (Torrents ahora, Chamarro cuando se active). Plan en
+  `docs/plan-resenas-google.md`.
 
 ## Al empezar una sesión nueva
 
@@ -152,11 +143,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-21T13:12:50Z).
+Actualizado automáticamente al hacer commit (2026-11-24T12:29:09Z).
 
-- `9acb687` 2026-11-21 — Feat(backoffice): idiomas por farmacia, historial en tabla y coste de traducciones
-- `2f2827f` 2026-11-21 — Feat(backoffice): rediseño fase 5 — gestión de usuarios y coherencia de la UI
-- `1677acd` 2026-11-20 — Feat(backoffice): rediseño fase 4 — gestión de contenidos de las landings
-- `587677a` 2026-11-20 — Feat(backoffice): rediseño fase 3 — historial de conciliaciones
-- `5a25dd0` 2026-11-20 — Feat(backoffice): rediseño fase 2 — nueva conciliación por envíos
+- `c5303de` 2026-11-24 — Chore: remove Sanity, content now comes only from the backoffice
+- `ef70a1b` 2026-11-24 — Feat(backoffice): simpler user permissions and calmer modals
+- `7c50572` 2026-11-24 — Fix(backoffice): simpler list flow, upload and compare in one step
+- `004a350` 2026-11-24 — Chore: remove the old standalone Scout app and its worker
+- `9039329` 2026-11-24 — Feat(backoffice): bulk price comparison from Excel lists
 <!-- auto:recent-commits:end -->

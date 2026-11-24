@@ -6,10 +6,11 @@ export type ImagenOpciones = {
 };
 
 /**
- * Añade parámetros de transformación a una URL de imagen de Sanity (asset CDN).
+ * Añade parámetros de transformación (w, h, fit, q, auto=format) a la URL de una
+ * imagen del backoffice (`/api/content-images/:id` acepta los mismos que el CDN de Sanity).
  * Devuelve `undefined` si la URL no existe (cómodo para encadenar en plantillas).
  */
-export function imagenSanity(
+export function urlImagen(
   url: string | undefined,
   opts: ImagenOpciones = {},
 ): string | undefined {

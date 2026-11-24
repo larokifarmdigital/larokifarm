@@ -1,5 +1,5 @@
 ---
-import { imagenSanity } from '@/lib/sanity';
+import { urlImagen } from '@/lib/contenido';
 import { t, type Locale } from '@/lib/i18n';
 
 export type SliderImagen = { url: string; alt?: string };
@@ -28,13 +28,13 @@ const {
 
 const items = (imagenes ?? [])
   .map((i) => ({
-    src: imagenSanity(i.url, { w: ancho, fit: 'crop' }),
+    src: urlImagen(i.url, { w: ancho, fit: 'crop' }),
     alt: i.alt && i.alt.trim() ? i.alt : alt,
   }))
   .filter((i): i is { src: string; alt: string } => Boolean(i.src));
 
 const esGaleria = items.length > 1;
-const marcaAguaUrl = imagenSanity(marcaAgua, { w: 160, fit: 'max' });
+const marcaAguaUrl = urlImagen(marcaAgua, { w: 160, fit: 'max' });
 ---
 
 <div

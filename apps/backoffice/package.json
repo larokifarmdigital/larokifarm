@@ -9,10 +9,6 @@
     "lint": "eslint",
     "check": "tsc --noEmit",
     "sync-schema": "cp ../conciliador-albaranes/prisma/schema.prisma prisma/schema.prisma && prisma generate",
-    "migrate:sanity": "../conciliador-albaranes/node_modules/.bin/tsx scripts/migrate-sanity-to-neon.ts",
-    "migrate:resenas": "../conciliador-albaranes/node_modules/.bin/tsx --env-file=.env.local scripts/migrate-resenas-sanity-to-neon.ts",
-    "migrate:media": "../conciliador-albaranes/node_modules/.bin/tsx --env-file=.env.local scripts/migrate-sanity-media-to-r2.ts",
-    "migrate:richtext": "../conciliador-albaranes/node_modules/.bin/tsx --env-file=.env.local scripts/migrate-sanity-richtext.ts",
     "migrate:r2": "../conciliador-albaranes/node_modules/.bin/tsx --env-file=.env.local scripts/migrate-r2-bucket.ts",
     "precios:lista": "tsx --env-file-if-exists=.env.local scripts/procesar-lista.ts",
     "postinstall": "prisma generate"

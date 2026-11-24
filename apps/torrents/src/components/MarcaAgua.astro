@@ -1,5 +1,5 @@
 ---
-import { imagenSanity } from '@/lib/sanity';
+import { urlImagen } from '@/lib/contenido';
 
 export interface Props {
   logo?: string;
@@ -17,7 +17,7 @@ const {
   rotacion = 0,
 } = Astro.props;
 
-const logoOpt = imagenSanity(logo, { w: tamano * 2, fit: 'max' });
+const logoOpt = urlImagen(logo, { w: tamano * 2, fit: 'max' });
 ---
 
 {

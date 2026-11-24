@@ -6,8 +6,8 @@ Landing pública de **Farmacia Chamarro** (cliente real). Mismo patrón que
 ## Stack
 
 - **Astro** (SSG + islas), Tailwind v4
-- **Sanity** workspace `farmacias` (schema compartido con Torrents, source of
-  truth en `studio/schemas/farmacias/farmacia.ts`)
+- **Backoffice**: contenido en build desde su API pública (`BACKOFFICE_URL`;
+  `src/lib/contenido.ts` → `src/lib/backoffice.ts`). Sanity retirado 24-11-2026.
 - **Vercel** (analytics + hosting)
 - **cima-chat** embebido vía `<script src="…pages.dev/cima-chat.iife.js">`
 - **i18n**: catálogo de 9 idiomas, `es` por defecto; solo los activos de la farmacia generan rutas `[...lang]` (ver «Idiomas»)
@@ -69,7 +69,7 @@ Archivos en `public/`:
 - `icon-512-maskable.png` — fondo blanco + ~20% safe zone (Android adaptativo).
 - `manifest.webmanifest` — `theme_color: #44A460`, 4 íconos declarados.
 - `logo.png` 400×400 — **NO es favicon**; es el logo visible en Header/Footer
-  cuando Sanity no entrega uno (fallback de `logoUrl` en Header.astro:30 y
+  cuando el backoffice no entrega uno (fallback de `logoUrl` en Header.astro:30 y
   Footer.astro:31).
 
 El `BaseLayout.astro` enlaza: `favicon.svg`, `favicon-32.png`,

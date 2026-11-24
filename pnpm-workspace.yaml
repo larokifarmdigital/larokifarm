@@ -5,7 +5,6 @@ packages:
   - "widgets/cima-chat/worker"
   - "widgets/cima-chat/worker-llm"
   - "workers/*"
-  - "studio"
 
 ignoredBuiltDependencies:
   - sharp

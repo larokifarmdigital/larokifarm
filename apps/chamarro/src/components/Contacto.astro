@@ -1,5 +1,5 @@
 ---
-import type { Contacto, Direccion, GrupoHorario } from '@/lib/sanity';
+import type { Contacto, Direccion, GrupoHorario } from '@/lib/contenido';
 import WhatsappIcon from '@/assets/svg/whatsapp.svg';
 import { t, type Locale } from '@/lib/i18n';
 
@@ -32,7 +32,7 @@ const partesDireccion = [
   direccion?.provincia,
 ].filter((p): p is string => Boolean(p));
 
-/* Fallback: si no hay urlGoogleMaps definido en Sanity, generamos uno a partir
+/* Fallback: si no hay urlGoogleMaps definido en el backoffice, generamos uno a partir
    de la dirección textual, para que el botón "Cómo llegar" siempre funcione. */
 const googleMapsQuery = urlGoogleMaps
   || (partesDireccion.length > 0

@@ -5,7 +5,7 @@
  * legales. Columnas sin datos no se pintan. Sin mapas ni nada que ponga
  * cookies: "Cómo llegar" es un enlace externo.
  */
-import { imagenSanity, agruparHorarios, localizar } from '@/lib/sanity';
+import { urlImagen, agruparHorarios, localizar } from '@/lib/contenido';
 import type {
   Contacto,
   RedesSociales,
@@ -14,7 +14,7 @@ import type {
   GrupoHorario,
   LocalizedText,
   DiasI18n
-} from '@/lib/sanity';
+} from '@/lib/contenido';
 import MarcaAgua from '@/components/MarcaAgua.astro';
 import { t, rutaConLocale, type Locale, DIAS_POR_IDIOMA, CERRADO_POR_IDIOMA } from '@/lib/i18n';
 
@@ -55,7 +55,7 @@ const {
   lang
 } = Astro.props;
 
-const logoOpt = imagenSanity(logo, { w: 96, h: 96, fit: 'crop' });
+const logoOpt = urlImagen(logo, { w: 96, h: 96, fit: 'crop' });
 const anyo = new Date().getFullYear();
 const limpiarTel = (s?: string) => s?.replace(/\s+/g, '');
 const descripcionTxt = localizar(descripcionCorta, lang);

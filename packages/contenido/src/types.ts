@@ -23,8 +23,8 @@ export type PortableBlock = {
 };
 
 /**
- * Entrada de un campo internacionalizado (sanity-plugin-internationalized-array).
- * Persistido en Sanity como `[{ _key, language, value }]`.
+ * Entrada de un campo internacionalizado: `[{ language, value }]` (API pública
+ * del backoffice; es el formato que usaba Sanity).
  */
 export type EntradaI18n<T> = {
   _key?: string;
@@ -34,5 +34,5 @@ export type EntradaI18n<T> = {
 
 export type LocalizedString = EntradaI18n<string>[];
 export type LocalizedText = EntradaI18n<string>[];
-/** Portable Text (Sanity) o HTML ya renderizado (backoffice). */
+/** Portable Text (formato antiguo) o HTML ya renderizado (backoffice). */
 export type LocalizedPortableText = EntradaI18n<PortableBlock[] | string>[];

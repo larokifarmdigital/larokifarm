@@ -12,9 +12,8 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.2.0",
+    "@larokifarm/contenido": "workspace:*",
     "@larokifarm/i18n-utils": "workspace:*",
-    "@larokifarm/sanity-client": "workspace:*",
-    "@sanity/client": "^6.22.0",
     "@vercel/analytics": "^2.0.1",
     "astro": "^5.1.0"
   },

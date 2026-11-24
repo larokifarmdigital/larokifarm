@@ -1,19 +1,15 @@
 {
-  "name": "@larokifarm/sanity-client",
+  "name": "@larokifarm/contenido",
   "version": "0.0.1",
   "private": true,
-  "description": "Cliente Sanity compartido y utilidades comunes (i18n de campos, Portable Text, horarios, imágenes) para apps y paquetes Larokifarm.",
+  "description": "Utilidades de contenido compartidas por las landings (i18n de campos, texto enriquecido, horarios, URLs de imagen).",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./client": "./src/client.ts",
     "./i18n": "./src/i18n.ts",
     "./portable-text": "./src/portable-text.ts",
     "./image": "./src/image.ts",
     "./horarios": "./src/horarios.ts",
     "./types": "./src/types.ts"
-  },
-  "peerDependencies": {
-    "@sanity/client": "^6.22.0"
   }
 }

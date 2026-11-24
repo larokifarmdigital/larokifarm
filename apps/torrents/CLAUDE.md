@@ -1,9 +1,9 @@
 # apps/torrents — contexto para Claude Code
 
 Landing pública de **Farmàcia Pediàtrica Torrents** (Astro SSG + Tailwind v4).
-Contenido desde el backoffice (`CONTENT_SOURCE=backoffice`) o Sanity. Se
-despliega en Cloudflare Pages (dominio personal) y Vercel (dominio del
-cliente). Mismo patrón que `apps/chamarro` (ver su CLAUDE.md).
+Contenido en build desde la API pública del backoffice (`BACKOFFICE_URL`;
+`src/lib/contenido.ts` → `src/lib/backoffice.ts`). Se despliega en Vercel
+(`larokifarm-torrents`, www.farmaciapediatrica.com). Mismo patrón que `apps/chamarro` (ver su CLAUDE.md).
 
 ## Idiomas (catálogo cerrado, 21-11-2026)
 

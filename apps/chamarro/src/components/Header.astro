@@ -1,6 +1,6 @@
 ---
 import { localesActivos, NOMBRE_IDIOMA, rutaConLocale, t, type Locale } from '@/lib/i18n';
-import type { IdiomaActivo } from '@/lib/sanity';
+import type { IdiomaActivo } from '@/lib/contenido';
 
 interface Props {
   nombre: string;
@@ -26,7 +26,7 @@ const {
   idiomasActivos,
 } = Astro.props;
 
-// Sanity trae logo si el cliente lo subió al CMS; si no, cae al logo local /logo.png que el equipo puso en public/.
+// El backoffice trae logo si el cliente lo subió; si no, cae al logo local /logo.png que el equipo puso en public/.
 const logoUrl = logo || '/logo.png';
 
 const home = rutaConLocale('/', lang);

@@ -1,5 +1,5 @@
 /**
- * Catálogo de iconos para servicios y features · portado de studio/schemas/lib/iconosCatalogo.ts.
+ * Catálogo de iconos para servicios y features (portado del antiguo Sanity Studio).
  * Las paths SVG son las mismas que renderiza la landing pública — lo que ves en el editor
  * es exactamente lo que se ve en la web.
  */

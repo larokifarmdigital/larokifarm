@@ -71,7 +71,7 @@ Reglas:
   o `@/core/shared`. NUNCA `@/core/farmacias` (barrel server-only, arrastra Prisma).
 - **Use cases solo donde hay lógica**. Listar/obtener/guardar/publicar/duplicar/
   archivar llaman directo a `getFarmaciaRepository()` (flag `USE_NEON_CONTENT`).
-- **Naming**: dominio en español (calca los fields de Sanity — excepción del
+- **Naming**: dominio en español (calca los fields del antiguo Sanity — excepción del
   skill `naming-conventions`); carpetas estructurales y utils en inglés.
 
 ## Arquitectura del editor de farmacia
@@ -357,17 +357,19 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
   un horario típico" solo si está vacío; si no, "Copiar el lunes a
   martes–viernes" (con confirmación). Festivos/cierres: fase aparte.
 
-## Cobertura Sanity actual: 100%
+## Modelo de contenido (fuente de verdad)
 
-Todos los campos editables del schema `studio/schemas/farmacias/farmacia.ts`
-tienen UI en el backoffice. Tipos en `src/core/farmacias/domain/models/Farmacia.ts`
-(+ i18n en `src/core/shared/domain/i18n.ts`).
+Desde el 24-11-2026 Sanity está retirado: el modelo de Farmacia es
+`src/core/farmacias/domain/models/Farmacia.ts` (+ i18n en
+`src/core/shared/domain/i18n.ts`) y la API pública
+(`core/farmacias/application/publicContent.ts`) mantiene el formato que
+leían las landings (i18n `[{language,value}]`, horarios `Mo..Su` + `tramos`).
 
-Diferencias schema vs UI documentadas:
+Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
 - **Redes sociales** — backoffice tiene `x` y `youtube` extra (Sanity solo
   ig/fb/tiktok). Mantener por si el cliente las quiere en el futuro.
 - **Horarios** — backoffice permite 2 tramos por día (Sanity 1). La API
-  pública manda `tramos` y `agruparHorarios()` (packages/sanity-client) los
+  pública manda `tramos` y `agruparHorarios()` (packages/contenido) los
   pinta "09:00 - 14:00 / 17:00 - 20:30".
 
 ## Decisiones UI/UX acordadas (usar en cualquier iteración)
@@ -396,7 +398,7 @@ Diferencias schema vs UI documentadas:
    `browser_snapshot` (accessibility tree, text) o `browser_evaluate`.
 10. **Publicar con traducciones pendientes = confirmar, no bloquear**
     (`PublishMissingDialog`). "missing" es heurístico y la landing cae al
-    castellano vía `localizar()` (packages/sanity-client). Lista por sección
+    castellano vía `localizar()` (packages/contenido). Lista por sección
     con chips por idioma; cada fila navega a sección + idioma. Footer apilado
     en móvil con el naranja abajo.
 11. **Módulos WIP ocultos del sidebar** con `hidden: true` en
@@ -501,7 +503,13 @@ Diferencias schema vs UI documentadas:
   y el submit del paso 3 llegaba vacío (no se podía crear ninguna farmacia) →
   pasos siempre montados con `hidden`. Errores del server vuelven al paso del
   campo + foco + toast. "Continuar" secondary, "Crear farmacia" accent ✅
-- **Landings leen del backoffice 12-11-2026** (en local; Sanity sigue siendo
+- **Sanity retirado 24-11-2026**: las landings solo leen del backoffice
+  (`src/lib/contenido.ts` + `src/lib/backoffice.ts`, sin `CONTENT_SOURCE` ni
+  `PUBLIC_SANITY_*`); `packages/sanity-client` → `packages/contenido`; el chat
+  usa su catálogo del código; borrados `studio/`, `workers/sanity-fanout` y los
+  scripts `migrate:sanity|resenas|media|richtext`. Build de Torrents y Chamarro
+  comparado antes/después: HTML idéntico (salvo una frase del llms.txt).
+- **Landings leen del backoffice 12-11-2026** (histórico; en local; Sanity sigue siendo
   la fuente por defecto de los deploys):
   - API pública sin sesión (`src/proxy.ts` no cubre `/api`), solo farmacias
     `published` (`getPublishedFarmaciaBySlug`, sin filtro de tenant):
@@ -694,11 +702,10 @@ Diferencias schema vs UI documentadas:
     landings)
   - Descripción SEO de Torrents (es) cortada a 160 caracteres: corregir el
     texto a mano en «Google y redes sociales»
-  - Quitar Sanity de las landings (y `CONTENT_SOURCE`) cuando estén todas
-    en backoffice; retirar el webhook de Sanity de `workers/sanity-fanout`
   - Imágenes servidas en runtime desde el backoffice: valorar optimizarlas en
     build (astro:assets) para no depender del backoffice en producción
-  - Worker de sincronización de reseñas Google → escribir en Neon, no Sanity
+  - Sincronización de reseñas Google → Neon: plan en
+    `docs/plan-resenas-google.md` (raíz del repo)
 
 ## Cómo trabajar en este proyecto
 
@@ -719,16 +726,16 @@ Diferencias schema vs UI documentadas:
 - Nunca commit/push sin permiso explícito del user.
 - Español peninsular (no rioplatense).
 - Comentarios: por defecto NO. Solo cuando el WHY es no obvio.
-- Types en `src/core/farmacias/domain/models/Farmacia.ts` — hay que mantenerlos sincronizados con
-  el schema Sanity real (`studio/schemas/farmacias/farmacia.ts`).
+- Types en `src/core/farmacias/domain/models/Farmacia.ts`: son la fuente de
+  verdad del contenido (Sanity retirado el 24-11-2026).
 
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-24T12:05:47Z).
+Actualizado automáticamente al hacer commit (2026-11-24T12:06:04Z).
 
-- `5c23626` 2026-11-24 — Feat(backoffice): simpler user permissions and calmer modals
-- `8214e0b` 2026-11-24 — Fix(backoffice): simpler list flow, upload and compare in one step
+- `ef70a1b` 2026-11-24 — Feat(backoffice): simpler user permissions and calmer modals
+- `7c50572` 2026-11-24 — Fix(backoffice): simpler list flow, upload and compare in one step
 - `004a350` 2026-11-24 — Chore: remove the old standalone Scout app and its worker
 - `9039329` 2026-11-24 — Feat(backoffice): bulk price comparison from Excel lists
 - `3b5849d` 2026-11-24 — Feat(backoffice): price comparator with verified prices

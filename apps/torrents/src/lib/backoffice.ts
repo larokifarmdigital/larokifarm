@@ -1,15 +1,15 @@
 /**
  * Fuente de contenido: API pública del backoffice (Neon + R2).
  *
- * Activa con `CONTENT_SOURCE=backoffice` (ver `lib/sanity.ts`). El backoffice
- * devuelve el MISMO formato que la proyección GROQ de Sanity, así que los
+ * Única fuente de contenido de la web (Sanity se retiró el 24-11-2026). El
+ * backoffice devuelve el mismo formato que usaba Sanity, así que los
  * componentes no cambian. Contrato:
  * apps/backoffice/src/core/farmacias/application/publicContent.ts
  *
  * Se lee en build (SSG): el backoffice tiene que estar levantado
  * (`pnpm --filter backoffice dev` → http://localhost:3001 en local).
  */
-import type { Farmacia, ResenaGoogle, ResumenResenas } from './sanity';
+import type { Farmacia, ResenaGoogle, ResumenResenas } from './contenido';
 
 const BACKOFFICE_URL = (import.meta.env.BACKOFFICE_URL?.trim() || 'http://localhost:3001').replace(/\/$/, '');
 

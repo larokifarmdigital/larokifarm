@@ -8,11 +8,11 @@
  *  - aggregateRating + review del JSON-LD de SEO
  *  - la ruta /resenas devuelve 404
  *
- * Con CONTENT_SOURCE=backoffice lo decide el switch "Mostrar reseñas en la
- * web" del editor (campo `mostrarResenas`). Con Sanity, o si el campo no
+ * Lo decide el switch "Mostrar reseñas en la
+ * web" del editor (campo `mostrarResenas`). Si el campo no
  * viene, se usa el valor por defecto de esta landing.
  */
-import { obtenerFarmaciaPorSlug, SLUG_FARMACIA } from './sanity';
+import { obtenerFarmaciaPorSlug, SLUG_FARMACIA } from './contenido';
 
 const MOSTRAR_RESENAS_POR_DEFECTO = true;
 

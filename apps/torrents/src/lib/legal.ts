@@ -3,9 +3,9 @@ import type { Locale } from '@/lib/i18n';
 /**
  * Textos legales por defecto (aviso legal y política de privacidad).
  *
- * Se usan cuando el campo correspondiente de Sanity está vacío para ese idioma.
+ * Se usan cuando el campo correspondiente del backoffice está vacío para ese idioma.
  * El contenido ya incluye el título (h1), porque la página no pinta título propio:
- * todo lo visible procede de aquí o de Sanity.
+ * todo lo visible procede de aquí o del backoffice.
  *
  * Versión corregida y ajustada a la web real (sin analítica ni publicidad; el mapa
  * de Google se carga solo bajo clic). Traducciones CA/EN pendientes de revisión

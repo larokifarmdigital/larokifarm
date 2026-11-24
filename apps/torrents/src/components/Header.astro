@@ -1,6 +1,6 @@
 ---
-import { imagenSanity } from '@/lib/sanity';
-import type { IdiomaActivo } from '@/lib/sanity';
+import { urlImagen } from '@/lib/contenido';
+import type { IdiomaActivo } from '@/lib/contenido';
 import { t, rutaConLocale, localesActivos, NOMBRE_IDIOMA, type Locale } from '@/lib/i18n';
 
 export interface BreadcrumbItem {
@@ -44,7 +44,7 @@ const {
 // Solo los idiomas activos de la farmacia (los demás no tienen web)
 const idiomasSelector: Locale[] = localesActivos(idiomasActivos);
 
-const logoOpt = imagenSanity(logo, { w: 96, h: 96, fit: 'crop' });
+const logoOpt = urlImagen(logo, { w: 96, h: 96, fit: 'crop' });
 const limpiarTel = (t?: string) => t?.replace(/\s+/g, '');
 const telLimpio = limpiarTel(telefono);
 const waUrl = whatsapp ? `https://wa.me/${limpiarTel(whatsapp)?.replace(/^\+/, '')}` : null;

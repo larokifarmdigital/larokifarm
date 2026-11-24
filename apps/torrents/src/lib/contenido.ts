@@ -1,4 +1,3 @@
-import { crearSanityClient } from '@larokifarm/sanity-client';
 import {
   listarResenasBackoffice,
   obtenerFarmaciaBackoffice,
@@ -14,17 +13,17 @@ import type {
   HorarioDia,
   GrupoHorario,
   DiasI18n,
-} from '@larokifarm/sanity-client';
+} from '@larokifarm/contenido';
 
 // Re-exportamos las utilidades compartidas para que el resto de la app las
-// importe desde `@/lib/sanity` sin saber del package interno.
+// importe desde `@/lib/contenido` sin saber del package interno.
 export {
   localizar,
-  imagenSanity,
+  urlImagen,
   portableTextAHtml,
   agruparHorarios,
   rangoDiasAbiertos,
-} from '@larokifarm/sanity-client';
+} from '@larokifarm/contenido';
 export type {
   EntradaI18n,
   LocalizedString,
@@ -46,25 +45,6 @@ function requerirEnv(nombre: string, valor: string | undefined): string {
   }
   return valor;
 }
-
-const projectId = requerirEnv(
-  'PUBLIC_SANITY_PROJECT_ID',
-  import.meta.env.PUBLIC_SANITY_PROJECT_ID,
-);
-const dataset = requerirEnv(
-  'PUBLIC_SANITY_DATASET',
-  import.meta.env.PUBLIC_SANITY_DATASET,
-);
-
-export const sanity = crearSanityClient({ projectId, dataset });
-
-/**
- * De dónde sale el contenido en build: `sanity` (por defecto, lo que usan los
- * deploys actuales) o `backoffice` (API pública del backoffice → Neon + R2).
- * Ver `lib/backoffice.ts`.
- */
-const CONTENT_SOURCE: 'sanity' | 'backoffice' =
-  import.meta.env.CONTENT_SOURCE === 'backoffice' ? 'backoffice' : 'sanity';
 
 export type IconoNombre =
   | 'heart' | 'heart-pulse' | 'pill' | 'syringe' | 'stethoscope'
@@ -194,55 +174,10 @@ export type Farmacia = {
   politicaPrivacidad?: LegalTexto;
 };
 
-const FARMACIA_PROJECTION = `
-  _id,
-  nombre,
-  "slug": slug.current,
-  "idiomasActivos": coalesce(idiomasActivos[]->{ _id, codigo, nombre }, []),
-  "logo": logo.asset->url,
-  "imagenes": coalesce(imagenes[]{ "url": asset->url, alt }, []),
-  "imagenesSobre": coalesce(imagenesSobre[]{ "url": asset->url, alt }, []),
-  titular,
-  numeroColegiado,
-  descripcionCorta,
-  descripcionLarga,
-  sobreNosotros,
-  "faqs": coalesce(faqs, []),
-  direccion,
-  mapaUrl,
-  contacto,
-  "horarios": coalesce(horarios, []),
-  "servicios": coalesce(servicios[]{ nombre, descripcion, icono, enlace }, []),
-  redesSociales,
-  seo {
-    titulo,
-    imagenOg { asset->{ url } }
-  },
-  googleLocationName,
-  googleMapsUrl,
-  heroChip,
-  heroSubtitulo,
-  "heroTarjetasFlotantes": coalesce(heroTarjetasFlotantes[]{ icono, titulo, subtitulo }, []),
-  "featuresLista": coalesce(featuresLista[]{ icono, titulo, descripcion }, []),
-  textosServicios,
-  textosFaqs,
-  textosResenas,
-  avisoLegal,
-  politicaPrivacidad
-`;
 
-export async function obtenerFarmaciaPorSlug(slug: string): Promise<Farmacia | null> {
-  if (CONTENT_SOURCE === 'backoffice') return obtenerFarmaciaBackoffice(slug);
-  try {
-    return await sanity.fetch(
-      `*[_type == "farmacia" && slug.current == $slug][0] { ${FARMACIA_PROJECTION} }`,
-      { slug },
-    );
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.warn(`[sanity] no se pudo cargar la farmacia "${slug}": ${msg}`);
-    return null;
-  }
+/** Farmacia de la web (API pública del backoffice: Neon + R2). */
+export function obtenerFarmaciaPorSlug(slug: string): Promise<Farmacia | null> {
+  return obtenerFarmaciaBackoffice(slug);
 }
 
 export const SLUG_FARMACIA: string = requerirEnv(
@@ -277,37 +212,9 @@ export type ResumenResenas = {
   recientes: ResenaGoogle[];
 };
 
-const RESENA_PROJECTION = `
-  _id,
-  googleReviewId,
-  autorNombre,
-  "autorFotoUrl": autorFoto.asset->url,
-  rating,
-  comentario,
-  comentarioIdioma,
-  respuestaOwner,
-  respuestaOwnerFecha,
-  fechaPublicacion,
-  destacada
-`;
-
 /** Lista TODAS las reseñas visibles de una farmacia, ordenadas por fecha desc. */
-export async function listarResenasGoogle(farmaciaSlug: string): Promise<ResenaGoogle[]> {
-  if (CONTENT_SOURCE === 'backoffice') return listarResenasBackoffice(farmaciaSlug);
-  try {
-    return await sanity.fetch<ResenaGoogle[]>(
-      `*[_type == "resenaGoogle"
-        && farmacia->slug.current == $slug
-        && oculta != true
-        && eliminadaEnGoogle != true]
-        | order(fechaPublicacion desc) { ${RESENA_PROJECTION} }`,
-      { slug: farmaciaSlug },
-    );
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.warn(`[sanity] no se pudieron listar reseñas de "${farmaciaSlug}": ${msg}`);
-    return [];
-  }
+export function listarResenasGoogle(farmaciaSlug: string): Promise<ResenaGoogle[]> {
+  return listarResenasBackoffice(farmaciaSlug);
 }
 
 /**
@@ -320,66 +227,11 @@ export async function listarResenasGoogle(farmaciaSlug: string): Promise<ResenaG
  * `soloConComentario`: si true, excluye reseñas que solo tienen estrellas sin
  * texto. Útil para la home, donde un slot vacío con solo estrellas queda pobre.
  */
-export async function obtenerResenasGoogle(
+export function obtenerResenasGoogle(
   farmaciaSlug: string,
   limite = 6,
   minRating = 0,
   soloConComentario = false,
 ): Promise<ResumenResenas> {
-  if (CONTENT_SOURCE === 'backoffice') {
-    return obtenerResenasBackoffice(farmaciaSlug, limite, minRating, soloConComentario);
-  }
-  try {
-    const filtroComentario = soloConComentario
-      ? '&& defined(comentario) && comentario != ""'
-      : '';
-    const data = await sanity.fetch<{
-      total: number;
-      media: number;
-      destacadas: ResenaGoogle[];
-      recientes: ResenaGoogle[];
-    }>(
-      `{
-        "total": count(*[_type == "resenaGoogle"
-          && farmacia->slug.current == $slug
-          && oculta != true
-          && eliminadaEnGoogle != true
-          && rating >= $minRating
-          ${filtroComentario}]),
-        "media": math::avg(*[_type == "resenaGoogle"
-          && farmacia->slug.current == $slug
-          && oculta != true
-          && eliminadaEnGoogle != true
-          && rating >= $minRating
-          ${filtroComentario}].rating),
-        "destacadas": *[_type == "resenaGoogle"
-          && farmacia->slug.current == $slug
-          && destacada == true
-          && oculta != true
-          && eliminadaEnGoogle != true
-          && rating >= $minRating
-          ${filtroComentario}]
-          | order(fechaPublicacion desc) { ${RESENA_PROJECTION} },
-        "recientes": *[_type == "resenaGoogle"
-          && farmacia->slug.current == $slug
-          && destacada != true
-          && oculta != true
-          && eliminadaEnGoogle != true
-          && rating >= $minRating
-          ${filtroComentario}]
-          | order(fechaPublicacion desc)[0...$limite] { ${RESENA_PROJECTION} }
-      }`,
-      { slug: farmaciaSlug, limite, minRating },
-    );
-    return {
-      total: data?.total ?? 0,
-      media: typeof data?.media === 'number' ? data.media : 0,
-      destacadas: data?.destacadas ?? [],
-      recientes: data?.recientes ?? [],
-    };
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.warn(`[sanity] no se pudieron cargar reseñas de "${farmaciaSlug}": ${msg}`);
-    return { total: 0, media: 0, destacadas: [], recientes: [] };
-  }
+  return obtenerResenasBackoffice(farmaciaSlug, limite, minRating, soloConComentario);
 }

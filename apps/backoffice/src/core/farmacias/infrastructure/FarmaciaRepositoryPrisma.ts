@@ -385,7 +385,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
     const storageKeys = [
       ...b.imagenes.map((i) => i.storageKey),
       ...b.resenas.map((r) => r.avatarStorageKey).filter((k): k is string => Boolean(k)),
-    ].filter((k) => !k.startsWith('sanity:'));
+    ];
     return { ok: true, data: { storageKeys } };
   },
 

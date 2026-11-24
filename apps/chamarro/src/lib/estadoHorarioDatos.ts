@@ -1,5 +1,5 @@
 /** Datos para `calcularEstado` (estadoHorario.ts), preparados en el build. */
-import type { HorarioDia } from '@/lib/sanity';
+import type { HorarioDia } from '@/lib/contenido';
 import { t, type Locale } from '@/lib/i18n';
 import type { DiaEstado, TextosEstado } from './estadoHorario';
 

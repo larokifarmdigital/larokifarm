@@ -1,8 +1,8 @@
 ---
 import MarcaAgua from '@/components/MarcaAgua.astro';
 import IconoServicio from '@/components/IconoServicio.astro';
-import type { FeatureItem, IconoNombre } from '@/lib/sanity';
-import { localizar } from '@/lib/sanity';
+import type { FeatureItem, IconoNombre } from '@/lib/contenido';
+import { localizar } from '@/lib/contenido';
 import { t, type Locale } from '@/lib/i18n';
 
 interface FeatureRender {
@@ -16,7 +16,7 @@ export interface Props {
   logo?: string;
   lang: Locale;
   /**
-   * Lista editable desde Sanity. Si está vacía, se renderizan las 4 features
+   * Lista editable desde el backoffice. Si está vacía, se renderizan las 4 features
    * de fábrica (atención, calidad, equipo, horario) traducidas con i18n.
    *
    * Caso especial: una feature con `icono === 'clock'` y descripción vacía cae

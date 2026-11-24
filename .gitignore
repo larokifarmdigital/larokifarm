@@ -44,8 +44,6 @@ Thumbs.db
 npm-debug.log*
 pnpm-debug.log*
 
-# Sanity studio dist
-studio/dist/
 
 # Skills CLI (skills se instalan globalmente en ~/.claude/skills; el lock local queda vacío)
 skills-lock.json

@@ -29,7 +29,7 @@ function capitalizar(t: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-/** Tramos del día: los del backoffice si vienen, si no la jornada única de Sanity. */
+/** Tramos del día: los del backoffice si vienen; si no, la jornada única (formato antiguo). */
 function tramosDe(h: HorarioDia): { apertura: string; cierre: string }[] {
   if (h.tramos?.length) return h.tramos;
   return h.apertura && h.cierre ? [{ apertura: h.apertura, cierre: h.cierre }] : [];

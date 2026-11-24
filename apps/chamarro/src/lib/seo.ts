@@ -1,5 +1,5 @@
-import type { Farmacia, HorarioDia, ResumenResenas } from './sanity';
-import { localizar } from './sanity';
+import type { Farmacia, HorarioDia, ResumenResenas } from './contenido';
+import { localizar } from './contenido';
 import { LOCALE_DEFECTO, type Locale } from './i18n';
 
 const DIA_A_SCHEMA: Record<HorarioDia['dia'], string> = {
