@@ -167,14 +167,18 @@ export function ejecucionParada(e: Pick<Ejecucion, 'estado' | 'latidoEn' | 'empe
 /** Segundos por producto que no se reutiliza (10 webs a 1 petición/s, ~3 peticiones por producto y web). */
 const SEGUNDOS_POR_PRODUCTO = 3.5;
 
+/** Arranque fijo (abrir las webs, primer producto) además de lo que cuesta cada producto. */
+const SEGUNDOS_ARRANQUE = 40;
+
 export function estimarSegundos(productosPorBuscar: number): number {
-  return Math.round(productosPorBuscar * SEGUNDOS_POR_PRODUCTO);
+  return productosPorBuscar <= 0 ? 0 : Math.round(SEGUNDOS_ARRANQUE + productosPorBuscar * SEGUNDOS_POR_PRODUCTO);
 }
 
-/** "unos 25 minutos", "unas 2 horas y media", "Ya casi está". */
+/** "menos de un minuto", "unos 25 minutos", "unas 2 horas y media". */
 export function textoDuracion(segundos: number): string {
-  if (segundos < 60) return 'Ya casi está';
+  if (segundos < 60) return 'menos de un minuto';
   const min = segundos / 60;
+  if (min < 3) return 'un par de minutos';
   if (min < 60) return `unos ${Math.max(5, Math.round(min / 5) * 5)} minutos`;
   const medias = Math.round((min / 60) * 2) / 2;
   const h = Math.floor(medias);

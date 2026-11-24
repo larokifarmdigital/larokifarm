@@ -35,7 +35,7 @@ export function SubirListaBoton() {
 }
 
 function EstadoUltima({ l }: { l: ListaResumen }) {
-  if (!l.ultima) return <span className="text-[var(--color-muted)]">Sin comparar</span>;
+  if (!l.ultima) return <span className="text-[var(--color-muted)]">Sin comparar · ábrela para compararla</span>;
   const v = estadoVisible(l.ultima);
   return (
     <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -45,10 +45,20 @@ function EstadoUltima({ l }: { l: ListaResumen }) {
   );
 }
 
-const excelDe = (l: ListaResumen) => (l.ultima && l.ultima.hechos > 0 ? l.ultima.id : null);
+const excelDe = (l: ListaResumen) => (l.ultima && l.ultima.hechos > 0 && !activa(l.ultima) ? l.ultima.id : null);
 
 export function ListasTabla({ listas, esAdmin }: { listas: ListaResumen[]; esAdmin: boolean }) {
   const [texto, setTexto] = useState('');
+  const router = useRouter();
+  const hayActivas = listas.some((l) => activa(l.ultima));
+  // Mientras alguna lista compara, la tabla se refresca sola (como la tarjeta de la lista).
+  useEffect(() => {
+    if (!hayActivas) return;
+    const t = window.setInterval(() => {
+      if (document.visibilityState === 'visible') router.refresh();
+    }, 3000);
+    return () => window.clearInterval(t);
+  }, [hayActivas, router]);
   const visibles = useMemo(() => {
     const t = sinAcentos(texto.trim());
     return t ? listas.filter((l) => sinAcentos(`${l.nombre} ${l.archivo}`).includes(t)) : listas;
@@ -64,9 +74,7 @@ export function ListasTabla({ listas, esAdmin }: { listas: ListaResumen[]; esAdm
         <p className="m-0 max-w-md text-[14.5px] leading-[1.5] text-[var(--color-muted)]">
           Sube un Excel con una columna de códigos nacionales. Antes de guardarla te enseñamos qué filas valen.
         </p>
-        <Button asChild variant="accent">
-          <Link href="/scout/listas?nueva=1">Subir lista</Link>
-        </Button>
+        <SubirListaBoton />
       </div>
     );
   }

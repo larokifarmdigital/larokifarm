@@ -194,6 +194,11 @@ export class PriceListRepositoryPrisma {
     );
   }
 
+  /** No se pudo poner en marcha: queda "con error" con el motivo (se ve en la tarjeta). */
+  async fallar(runId: string, motivo: string): Promise<void> {
+    await prisma.priceListRun.update({ where: { id: runId }, data: { status: 'FAILED', errorReason: motivo.slice(0, 300), finishedAt: new Date() } });
+  }
+
   async cancelar(runId: string): Promise<boolean> {
     const r = await prisma.priceListRun.updateMany({
       where: { id: runId, status: { in: ['QUEUED', 'RUNNING'] } },

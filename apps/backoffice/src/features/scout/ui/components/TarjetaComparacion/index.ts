@@ -1,1 +1,1 @@
-export { TarjetaComparacion, AccionPrincipalLista } from './TarjetaComparacion';
+export { TarjetaComparacion } from './TarjetaComparacion';

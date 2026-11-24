@@ -20,3 +20,4 @@ export function getPriceListRepository(): PriceListRepositoryPrisma {
 }
 export { ListaActivaError, type PriceListRepositoryPrisma } from './PriceListRepositoryPrisma';
 export { lanzarEjecucion } from './lanzador';
+export { procesarComparacion } from './proceso';

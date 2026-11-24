@@ -3,6 +3,8 @@ import { getPriceListRepository } from '@/core/precios';
 import { ListaView, type ListaParams } from '@/features/scout';
 
 export const dynamic = 'force-dynamic';
+// Las listas pequeñas se comparan aquí mismo, después de responder (after()).
+export const maxDuration = 300;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const u = await getCurrentUser();

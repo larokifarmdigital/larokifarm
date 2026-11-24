@@ -92,7 +92,8 @@ export function SubirListaDialog({ open, onOpenChange }: { open: boolean; onOpen
         } else setErrorGeneral(r.error);
         return;
       }
-      toast.success('Lista guardada');
+      if (r.error) toast.error(r.error);
+      else toast.success('Lista subida. Ya la estamos comparando.');
       onOpenChange(false);
       reiniciar();
       try {
@@ -115,9 +116,9 @@ export function SubirListaDialog({ open, onOpenChange }: { open: boolean; onOpen
         if (!o) reiniciar();
       }}
       title="Subir lista"
-      description="Un Excel o CSV con los códigos nacionales de los productos que quieres comparar."
+      description="Un Excel o CSV con los códigos nacionales de los productos. Al subirlo, compararemos sus precios en 10 farmacias online."
       maxWidth="lg"
-      footer={<ModalAcciones onCancelar={() => onOpenChange(false)} textoPrincipal="Guardar lista" textoEnviando="Guardando…" enviando={guardando} form={`${id}-form`} />}
+      footer={<ModalAcciones onCancelar={() => onOpenChange(false)} textoPrincipal="Subir y comparar" textoEnviando="Subiendo…" enviando={guardando} form={`${id}-form`} />}
     >
       <form id={`${id}-form`} onSubmit={guardar} noValidate className="flex flex-col gap-4">
         <input
@@ -188,9 +189,12 @@ export function SubirListaDialog({ open, onOpenChange }: { open: boolean; onOpen
         )}
 
         {!conVista && (
-          <details className="text-[13.5px] text-[var(--color-ink-2)]">
-            <summary className="cursor-pointer min-h-11 sm:min-h-6 flex items-center font-medium text-[var(--color-ink)]">¿Cómo tiene que ser el archivo?</summary>
-            <div className="mt-2 flex flex-col gap-2">
+          <details className="group/det text-[13.5px] text-[var(--color-ink-2)]">
+            <summary className="group/des -mx-2 inline-flex min-h-11 sm:min-h-8 cursor-pointer list-none items-center gap-1.5 rounded-[8px] px-2 font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] [&::-webkit-details-marker]:hidden">
+              <NavIcon name="CaretRight" size={14} className="shrink-0 transition-transform group-open/det:rotate-90 motion-reduce:transition-none" />
+              ¿Cómo tiene que ser el archivo?
+            </summary>
+            <div className="mt-2 flex flex-col gap-2 rounded-[10px] bg-[var(--color-surface-2)] p-3">
               <table className="text-[13px] border-collapse w-full max-w-md">
                 <caption className="sr-only">Ejemplo de archivo</caption>
                 <thead>
@@ -257,8 +261,9 @@ export function SubirListaDialog({ open, onOpenChange }: { open: boolean; onOpen
               </p>
             </div>
             {conVista.totalDescartadas > 0 && (
-              <details className="text-[13.5px]">
-                <summary className="cursor-pointer min-h-11 sm:min-h-6 flex items-center font-medium text-[var(--color-ink)]">
+              <details className="group/det text-[13.5px]">
+                <summary className="group/des -mx-2 inline-flex min-h-11 sm:min-h-8 cursor-pointer list-none items-center gap-1.5 rounded-[8px] px-2 font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] [&::-webkit-details-marker]:hidden">
+                  <NavIcon name="CaretRight" size={14} className="shrink-0 transition-transform group-open/det:rotate-90 motion-reduce:transition-none" />
                   Ver {conVista.totalDescartadas === 1 ? 'la fila que no se usa' : `las ${numero(conVista.totalDescartadas)} filas que no se usan`}
                 </summary>
                 <p className="m-0 mt-2 text-[var(--color-ink-2)]">{conVista.motivos.map((m) => `${m.n} · ${m.motivo.toLowerCase()}`).join(' — ')}</p>
@@ -266,7 +271,7 @@ export function SubirListaDialog({ open, onOpenChange }: { open: boolean; onOpen
               </details>
             )}
             <p className="m-0 text-[13.5px] text-[var(--color-muted)]">
-              Comparar esta lista tardará {textoDuracion(conVista.segundos)}. Lo harás desde la página de la lista y no hará falta tenerla abierta.
+              Al pulsar «Subir y comparar» empezamos a buscar los precios: tardará {textoDuracion(conVista.segundos)} y no hace falta que tengas la página abierta.
             </p>
           </>
         )}

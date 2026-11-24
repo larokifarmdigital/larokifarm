@@ -2,14 +2,14 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
-import { ANCHO_PAGINA, PageHeader } from '@/shared/components/molecules/PageHeader';
+import { ANCHO_PAGINA } from '@/shared/components/molecules/PageHeader';
 import { cn } from '@/shared/lib/cn';
 import { REUTILIZAR_MS, getPriceListRepository, type FiltroResultado } from '@/core/precios';
 import { Pagination } from '@/features/conciliador/ui/components/Pagination';
 import { AccionesLista } from '../../components/AccionesLista';
 import { EnfocarTitulo } from '../../components/EnfocarTitulo';
 import { QuitarFiltrosResultados, ResultadosFiltros, ResultadosLista, textoRecuento } from '../../components/ResultadosLista';
-import { AccionPrincipalLista, TarjetaComparacion } from '../../components/TarjetaComparacion';
+import { TarjetaComparacion } from '../../components/TarjetaComparacion';
 import { OPCIONES_RESULTADO_LISTA, valido } from '../../lib/historialPrecios';
 import { activa, numero } from '../../lib/listas';
 import { cuando } from '../../lib/precios';
@@ -29,9 +29,12 @@ export async function ListaView({ id, params, esAdmin }: { id: string; params: L
   const filtro = valido(params.resultado, OPCIONES_RESULTADO_LISTA) as FiltroResultado | undefined;
   const q = params.q?.trim().slice(0, 80) || undefined;
   const pagina = Math.max(1, Number.parseInt(params.page ?? '1', 10) || 1);
-  const [resultados, recientes] = await Promise.all([
+  const [resultados, recientes, sinPrecio, receta] = await Promise.all([
     ejecucion ? repo.resultados(ejecucion.id, { pagina, porPagina: POR_PAGINA, texto: q, filtro }) : null,
     ejecucion ? 0 : repo.cuantosRecientes(await repo.cnsDeLista(id), REUTILIZAR_MS),
+    // Para el resumen: los de receta no se buscan online y no cuentan como "sin precio".
+    ejecucion ? repo.resultados(ejecucion.id, { pagina: 1, porPagina: 1, filtro: 'sin_precio' }).then((r) => r.total) : 0,
+    ejecucion ? repo.resultados(ejecucion.id, { pagina: 1, porPagina: 1, filtro: 'receta' }).then((r) => r.total) : 0,
   ]);
   const hayFiltros = !!(q || filtro);
   const hrefPagina = (p: number) => {
@@ -51,25 +54,27 @@ export async function ListaView({ id, params, esAdmin }: { id: string; params: L
         <NavIcon name="ArrowLeft" size={15} />
         Listas
       </Link>
-      <PageHeader
-        titulo={lista.nombre}
-        descripcion={`${numero(lista.productos)} productos · subida ${cuando(lista.creadaEn).replace(/ a las \d\d:\d\d$/, '')}${esAdmin && lista.autor ? ` por ${lista.autor}` : ''} · ${lista.archivo}`}
-        accion={
-          <div className="flex items-center gap-2">
-            <AccionPrincipalLista listaId={id} ejecucion={ejecucion} esLaUltima={esLaUltima} />
-            <AccionesLista
-              lista={lista}
-              excelRunId={ejecucion && ejecucion.hechos > 0 ? ejecucion.id : null}
-              activa={ejecuciones.some((e) => activa(e))}
-              ejecuciones={ejecuciones.length}
-              trasEliminar="listas"
-            />
-          </div>
-        }
-      />
+      <header className="mb-5 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="m-0 break-words text-[24px] sm:text-[28px] font-bold tracking-[-0.02em] text-[var(--color-ink)]">{lista.nombre}</h1>
+          <p className="m-0 mt-1 text-[15px] leading-[1.5] text-[var(--color-muted)]">
+            {`${numero(lista.productos)} productos · subida ${cuando(lista.creadaEn).replace(/ a las \d\d:\d\d$/, '')}${esAdmin && lista.autor ? ` por ${lista.autor}` : ''} · ${lista.archivo}`}
+          </p>
+        </div>
+        <div className="shrink-0 pt-1">
+          <AccionesLista
+            lista={lista}
+            // Mientras compara no se ofrece un Excel a medias: se descarga en la tarjeta al terminar.
+            excelRunId={ejecucion && ejecucion.hechos > 0 && !activa(ejecucion) ? ejecucion.id : null}
+            activa={ejecuciones.some((e) => activa(e))}
+            ejecuciones={ejecuciones.length}
+            trasEliminar="listas"
+          />
+        </div>
+      </header>
 
       <div className="flex flex-col gap-4 sm:gap-5">
-        <TarjetaComparacion listaId={id} ejecucion={ejecucion} ejecuciones={ejecuciones} esLaUltima={esLaUltima} productos={lista.productos} recientes={recientes} />
+        <TarjetaComparacion listaId={id} ejecucion={ejecucion} ejecuciones={ejecuciones} esLaUltima={esLaUltima} productos={lista.productos} recientes={recientes} sinPrecio={sinPrecio} receta={receta} />
 
         {ejecucion && resultados && (
           <section className="card p-5 sm:p-6" aria-labelledby="resultados-titulo">

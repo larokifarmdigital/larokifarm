@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import * as XLSX from 'xlsx';
 import { getCurrentUser, puedeUsarModulo } from '@/core/auth';
 import {
@@ -11,6 +12,7 @@ import {
   estimarSegundos,
   getPriceListRepository,
   lanzarEjecucion,
+  procesarComparacion,
   validarLista,
   type FilaDescartada,
   type ListaValidada,
@@ -85,7 +87,10 @@ export async function previsualizarListaAction(fd: FormData): Promise<VistaPrevi
   }
 }
 
-export async function guardarListaAction(fd: FormData): Promise<{ ok: true; id: string } | { ok: false; error: string; campo?: 'nombre' }> {
+/** "Subir y comparar": guarda la lista y pone en marcha su primera comparación. */
+export async function guardarListaAction(
+  fd: FormData,
+): Promise<{ ok: true; id: string; error?: string } | { ok: false; error: string; campo?: 'nombre' }> {
   const u = await usuarioConModulo();
   if (!u) return { ok: false, error: SIN_PERMISO };
   const nombre = String(fd.get('nombre') ?? '').trim();
@@ -97,8 +102,12 @@ export async function guardarListaAction(fd: FormData): Promise<{ ok: true; id: 
     if (v.validas.length === 0) return { ok: false, error: 'Ninguna fila tiene un código nacional válido.' };
     const id = await getPriceListRepository().crear({ userId: u.id, nombre, archivo: nombreArchivo, filas: v.validas });
     console.info(JSON.stringify({ evento: 'precios-lista', accion: 'crear', actorId: u.id, listaId: id, productos: v.validas.length }));
+    const repo = getPriceListRepository();
+    const runId = await repo.crearEjecucion(id, u.id, () => false);
+    const r = await ponerEnMarcha(runId, v.validas.length);
     revalidatePath('/scout/listas');
-    return { ok: true, id };
+    // La lista queda guardada aunque no arranque: el error se ve en su página.
+    return { ok: true, id, ...(r.ok ? {} : { error: r.error }) };
   } catch (e) {
     if (e instanceof ListaInvalidaError) return { ok: false, error: e.message };
     console.error('[precios] guardar lista', (e as Error).name);
@@ -106,14 +115,35 @@ export async function guardarListaAction(fd: FormData): Promise<{ ok: true; id: 
   }
 }
 
-export type ResultadoLanzar = { ok: true; aviso?: string } | { ok: false; error: string };
+export type ResultadoLanzar = { ok: true } | { ok: false; error: string };
 
 const NO_ARRANCA = 'No hemos podido poner en marcha la comparación. Vuelve a intentarlo en unos minutos.';
 
-function avisoLanzamiento(l: Awaited<ReturnType<typeof lanzarEjecucion>>): ResultadoLanzar {
+/** Hasta aquí se compara en el propio backoffice (cabe en los 5 min de Vercel: ~32 productos/min). */
+const LIMITE_DIRECTO = 50;
+
+/**
+ * Pone a trabajar una comparación ya creada:
+ * - Lista pequeña (o en local sin token): en el propio servidor, después de
+ *   responder (`after`), así el usuario ve el progreso al momento.
+ * - Lista grande: GitHub Actions (puede tardar más de una hora).
+ */
+async function ponerEnMarcha(runId: string, total: number): Promise<ResultadoLanzar> {
+  const enLocal = process.env.NODE_ENV !== 'production' && !process.env.GITHUB_DISPATCH_TOKEN;
+  if (total <= LIMITE_DIRECTO || enLocal) {
+    after(() =>
+      procesarComparacion(runId).catch((e) => console.error('[precios] comparación directa', (e as Error).name)),
+    );
+    return { ok: true };
+  }
+  const l = await lanzarEjecucion(runId);
   if (l === 'lanzada') return { ok: true };
-  if (l === 'sin_configurar') return { ok: true, aviso: 'En cola. En este entorno no se arranca sola: ejecuta «pnpm --filter backoffice precios:lista».' };
-  return { ok: false, error: NO_ARRANCA };
+  const error =
+    l === 'sin_configurar'
+      ? `Las listas de más de ${LIMITE_DIRECTO} productos se comparan en segundo plano y eso todavía no está activado (falta el token de GitHub). Divide la lista o avisa al administrador.`
+      : NO_ARRANCA;
+  await getPriceListRepository().fallar(runId, error);
+  return { ok: false, error };
 }
 
 export async function compararListaAction(listId: unknown): Promise<ResultadoLanzar> {
@@ -124,8 +154,8 @@ export async function compararListaAction(listId: unknown): Promise<ResultadoLan
   try {
     const runId = await repo.crearEjecucion(listId, u.id, (e) => !ejecucionParada(e));
     console.info(JSON.stringify({ evento: 'precios-lista', accion: 'comparar', actorId: u.id, listaId: listId, runId }));
-    const r = avisoLanzamiento(await lanzarEjecucion(runId));
-    if (!r.ok) await repo.cancelar(runId);
+    const total = (await repo.ejecucion(runId))?.total ?? 0;
+    const r = await ponerEnMarcha(runId, total);
     revalidatePath(`/scout/listas/${listId}`);
     return r;
   } catch (e) {
@@ -156,7 +186,7 @@ export async function reanudarComparacionAction(runId: unknown): Promise<Resulta
   if (!e || (e.estado !== 'con_error' && !ejecucionParada(e))) return { ok: false, error: 'Esta comparación no se puede reanudar.' };
   const repo = getPriceListRepository();
   if (!(await repo.reanudar(e.id))) return { ok: false, error: 'Esta comparación no se puede reanudar.' };
-  const r = avisoLanzamiento(await lanzarEjecucion(e.id));
+  const r = await ponerEnMarcha(e.id, e.total - e.hechos);
   revalidatePath(`/scout/listas/${e.listaId}`);
   return r;
 }

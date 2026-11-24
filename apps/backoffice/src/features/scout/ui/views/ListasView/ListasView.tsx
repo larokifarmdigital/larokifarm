@@ -12,9 +12,12 @@ export async function ListasView({ esAdmin }: { esAdmin: boolean }) {
         titulo="Listas de productos"
         descripcion="Sube un Excel con códigos nacionales y compara los precios de todos sus productos de una vez."
         accion={
-          <Suspense>
-            <SubirListaBoton />
-          </Suspense>
+          // Sin listas, el único botón es el del estado vacío.
+          listas.length > 0 ? (
+            <Suspense>
+              <SubirListaBoton />
+            </Suspense>
+          ) : undefined
         }
       />
       <ListasTabla listas={listas} esAdmin={esAdmin} />

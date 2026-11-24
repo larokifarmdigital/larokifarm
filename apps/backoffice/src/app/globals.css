@@ -740,3 +740,18 @@ dialog.editor-section-sheet::backdrop {
   cursor: not-allowed;
 }
 
+
+/* Comparador de precios: barra "empezando" (sin % todavía). Quieta con movimiento reducido. */
+@keyframes barra-indeterminada {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+.barra-indeterminada {
+  animation: barra-indeterminada 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .barra-indeterminada {
+    animation: none;
+    left: 33%;
+  }
+}
