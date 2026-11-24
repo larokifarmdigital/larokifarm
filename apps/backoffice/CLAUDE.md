@@ -564,7 +564,45 @@ Diferencias schema vs UI documentadas:
 - **Comparador de precios (rehacer Scout)**: Fase 0 hecha 24-11-2026 —
   prueba de concepto en `docs/scout-fase0/` (5 farmacias que verifican por CN;
   trampas para la Fase 2 en su README). Fase 1 hecha: módulos por usuario
-  (ver "Módulos por usuario"). Siguiente: Fase 2, "Comparar precio" en `/scout`.
+  (ver "Módulos por usuario"). Fase 2 hecha (24-11-2026): "Comparar precio".
+  Siguiente: Fase 3 (listas masivas desde Excel, fuera de Vercel).
+  - Tablas `price_checks` + `price_offers` (migración
+    `20261124120000_price_checks`, ya ejecutada en Neon). Uso en
+    `usage_entries` módulo SCOUT, coste 0, apuntado a la farmacia
+    `COMPARADOR_FARMACIA_USO` (por defecto larokifarm; en local, laguna).
+  - `core/precios`: dominio (`codigos.ts`: CN/EAN estrictos — "165892-6" es un
+    pack —, `interpretarBusqueda`), `identificarProducto` (CN/EAN nacional →
+    CIMA o parafarmacia de Farmavázquez; nombre → candidatos CIMA +
+    Farmavázquez; EAN de fabricante → se pide CN o nombre, nunca se adivina),
+    10 adaptadores en `infrastructure/farmacias/` (lista en su `index.ts`;
+    5 de la Fase 0 + Farma2go, Farmacia Market, Farmacia Senante, OKFarma y
+    Tedin, añadidas el 24-11-2026; descartadas y por qué en el mismo archivo)
+    con `ClienteWeb` (1 petición/s
+    por web, cookies, retos anti-bot → "bloquea", lista blanca de dominios),
+    `comprobarFicha` = LA regla (mismo CN/EAN en la ficha), precio de 1 unidad
+    (`precioUnidad`: nunca `lowPrice` de un AggregateOffer), Nomenclátor
+    (`nomenclator.ts`, CSV del Ministerio en memoria 12 h) para el precio
+    oficial de los medicamentos con receta (no se buscan en webs).
+  - UI `features/scout`: `/scout` (ComparadorView: buscador → candidatos →
+    TarjetaProducto + TablaPrecios; una server action por farmacia en
+    paralelo, filas progresivas, orden y "Más barato" solo al terminar, un
+    único `role=status`), `/scout/historial` (filtros q/periodo/resultado),
+    `/scout/historial/[id]` (solo lectura + "Volver a consultar" →
+    `/scout?cn=…&auto=1`, que se limpia con `history.replaceState`).
+  - Cada farmacia se consulta con `POST /api/precios/[checkId]/[farmacia]`
+    (ruta de API, no server action: las server actions de Next van en cola y
+    aquí hacen falta en paralelo). 4–13 s por búsqueda con 10 farmacias.
+  - `cnDeCodigo` exige que el 7º dígito sea el de control (= el del EAN
+    847000+CN): "165892.1" es un duplo en Farmacia Market, no el CN.
+  - "Precio muy distinto al resto" (`esAtipico`, ≥4 precios, >1,5× o <0,6× la
+    mediana): algunas webs ponen el CN de la unidad a un duplo (Tedin, Eucerin
+    238444). Solo avisa; la regla del código no lo puede detectar.
+  - Menú "Precios" (Comparar precio · Historial), `requiresModulo: 'comparador'`.
+  - `shared/lib/fechasMadrid.ts`: utilidades de fecha de los historiales
+    (antes en `features/conciliador/ui/lib/historial.ts`, que las reexporta).
+  - Pendiente de diseño (revisión 24-11-2026, fuera del comparador): el anillo
+    de foco de `IconInput` choca con el borde al enfocar por código; usar
+    `tabular-nums` (no `font-mono-tabular`) para importes y horas.
 - **Pendientes**:
   - **Coste de "Sugerir traducción"**: HECHO en código (21-11-2026); el
     `ALTER TYPE "UsageModule" ADD VALUE IF NOT EXISTS 'TRADUCCION';` ya se

@@ -1,28 +1,14 @@
 import { requireModulo } from '@/core/auth';
-import { ScoutDashboardView, getScoutDashboard } from '@/features/scout';
+import { ComparadorView } from '@/features/scout';
 
-export const metadata = { title: 'Scout · Backoffice' };
-
+export const metadata = { title: 'Comparar precio · Backoffice' };
 export const dynamic = 'force-dynamic';
+// Las acciones de esta página consultan webs externas (una farmacia por llamada).
+export const maxDuration = 60;
 
-const DEFAULT_STANDALONE_URL =
-  process.env.NODE_ENV === 'production'
-    ? 'https://scout.larokifarm.com'
-    : 'http://localhost:3002';
-
-export default async function ScoutPage() {
-  const user = await requireModulo('comparador');
-  const businessId = user.farmaciaId ?? null;
-
-  const data = await getScoutDashboard(businessId);
-  const standaloneUrl = process.env.SCOUT_STANDALONE_URL ?? DEFAULT_STANDALONE_URL;
-
-  return (
-    <ScoutDashboardView
-      standaloneUrl={standaloneUrl}
-      totalBatches={data.totalBatches}
-      runningBatches={data.runningBatches}
-      totalQueriesHistoric={data.totalQueriesHistoric}
-    />
-  );
+export default async function ComparadorPage({ searchParams }: { searchParams: Promise<{ cn?: string; auto?: string }> }) {
+  await requireModulo('comparador');
+  const { cn, auto } = await searchParams;
+  const cnValido = cn && /^\d{6}$/.test(cn) ? cn : undefined;
+  return <ComparadorView cnInicial={cnValido} autoConsultar={auto === '1' && !!cnValido} />;
 }

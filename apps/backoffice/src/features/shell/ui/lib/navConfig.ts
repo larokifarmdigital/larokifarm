@@ -38,6 +38,7 @@ export type NavContext = {
  * - Admin: "Farmacias" (listado de todas).
  * - Personal de farmacia: "Mi web" (directo al editor de su farmacia).
  * - "Albaranes" (antes "Conciliador": es la palabra del mostrador).
+ * - "Precios": comparador de precios (módulo `comparador`).
  */
 export function buildNav({ role, miFarmaciaId, variasFarmacias, modulos }: NavContext): NavItem[] {
   const web: NavItem =
@@ -61,7 +62,16 @@ export function buildNav({ role, miFarmaciaId, variasFarmacias, modulos }: NavCo
       ],
     },
     // En obra: ocultos hasta que estén listos (siguen accesibles por URL).
-    { href: '/scout', label: 'Comparador de precios', icon: 'MagnifyingGlass', badge: 'nuevo', requiresModulo: 'comparador', hidden: true },
+    {
+      href: '/scout',
+      label: 'Precios',
+      icon: 'Tag',
+      requiresModulo: 'comparador',
+      children: [
+        { href: '/scout', label: 'Comparar precio' },
+        { href: '/scout/historial', label: 'Historial' },
+      ],
+    },
     { href: '/inventario', label: 'Inventario', icon: 'Package', badge: 'wip', hidden: true },
     { href: '/admin/uso', label: 'Uso', icon: 'Scales', requiresRole: 'admin', badge: 'nuevo', hidden: true },
     { href: '/ajustes/usuarios', label: 'Usuarios', icon: 'UsersThree', requiresRole: 'admin' },

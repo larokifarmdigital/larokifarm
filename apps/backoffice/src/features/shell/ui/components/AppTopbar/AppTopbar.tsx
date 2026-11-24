@@ -45,6 +45,18 @@ function buildCrumbs(pathname: string, shell: ShellInfo): Crumb[] {
             ];
       }
       break;
+    case 'scout':
+      if (s.length === 1) return [{ label: 'Precios', href: '/scout' }, { label: 'Comparar precio' }];
+      if (s[1] === 'historial') {
+        return s.length === 2
+          ? [{ label: 'Precios', href: '/scout' }, { label: 'Historial' }]
+          : [
+              { label: 'Precios', href: '/scout' },
+              { label: 'Historial', href: '/scout/historial' },
+              { label: 'Detalle' },
+            ];
+      }
+      break;
   }
   return s.map((seg, i) => ({
     label: decodeURIComponent(seg),

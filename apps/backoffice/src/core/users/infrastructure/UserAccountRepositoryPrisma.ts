@@ -25,7 +25,7 @@ const SELECT = {
   createdAt: true,
   business: { select: { id: true, name: true } },
   farmacias: { select: { business: { select: { id: true, name: true } } } },
-  _count: { select: { comparisons: true, reportsCreated: true, reportsResolved: true, batchJobs: true, usage: true } },
+  _count: { select: { comparisons: true, reportsCreated: true, reportsResolved: true, batchJobs: true, usage: true, priceChecks: true } },
 } satisfies Prisma.UserSelect;
 
 type Row = Prisma.UserGetPayload<{ select: typeof SELECT }>;

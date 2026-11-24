@@ -153,7 +153,7 @@ export function UsoView({ data }: { data: UsoData }) {
         <h2 className="text-[14px] leading-tight tracking-[-0.02em] font-medium text-[var(--color-ink)] m-0 mb-3">
           Este mes · global
         </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <KpiCard
             eyebrow="Coste IA"
             value={formatUsd(data.kpis.totalCostUsdMonth)}
@@ -164,6 +164,11 @@ export function UsoView({ data }: { data: UsoData }) {
             eyebrow="Comparaciones"
             value={String(data.kpis.totalComparisonsMonth)}
             hint="Ejecutadas este mes"
+          />
+          <KpiCard
+            eyebrow="Consultas de precios"
+            value={String(data.kpis.totalPriceChecksMonth)}
+            hint="Comparador · sin coste"
           />
           <KpiCard
             eyebrow="Con discrepancias"

@@ -1,0 +1,1 @@
+export { ConsultaPrecioView } from './ConsultaPrecioView';

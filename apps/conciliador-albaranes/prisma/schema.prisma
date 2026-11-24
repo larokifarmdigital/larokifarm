@@ -126,6 +126,9 @@ model User {
   batchJobs ScoutBatchJob[]
   usage     UsageEntry[]
 
+  // Comparador de precios (backoffice /scout)
+  priceChecks PriceCheck[]
+
   // Farmacias que lleva (puede ser más de una). `businessId` se mantiene como
   // farmacia principal para el conciliador antiguo, que solo entiende una.
   farmacias UserBusiness[]
@@ -410,4 +413,62 @@ model ContentFeature {
 
   @@index([businessId, orden])
   @@map("content_features")
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Comparador de precios (backoffice /scout, 24-11-2026)
+// ══════════════════════════════════════════════════════════════════
+// Una consulta = un producto identificado (CN/EAN) + el resultado de cada
+// farmacia online. Un precio solo es VERIFIED si la ficha muestra el mismo
+// CN/EAN. Los medicamentos con receta no se buscan online: precio oficial.
+
+enum PriceProductType {
+  RECETA
+  SIN_RECETA
+  PARAFARMACIA
+}
+
+enum PriceOfferStatus {
+  VERIFIED // la ficha muestra el mismo CN/EAN
+  NO_CODE // hay ficha pero no muestra código: precio no verificado
+  NOT_FOUND
+  BLOCKED // la web bloquea el acceso automático
+  ERROR
+}
+
+model PriceCheck {
+  id            String           @id @default(cuid())
+  userId        String
+  query         String // lo que se escribió en el buscador
+  cn            String
+  ean           String?
+  productName   String
+  productType   PriceProductType
+  officialPrice Decimal?         @db.Decimal(10, 2) // Nomenclátor (solo financiados)
+  createdAt     DateTime         @default(now())
+
+  user   User         @relation(fields: [userId], references: [id])
+  offers PriceOffer[]
+
+  @@index([createdAt])
+  @@index([cn])
+  @@map("price_checks")
+}
+
+model PriceOffer {
+  id            String           @id @default(cuid())
+  checkId       String
+  pharmacy      String // clave del adaptador: farmaciabarata, farmavazquez...
+  status        PriceOfferStatus
+  price         Decimal?         @db.Decimal(10, 2) // precio de 1 unidad en la ficha
+  previousPrice Decimal?         @db.Decimal(10, 2) // precio tachado, si lo hay
+  url           String? // enlace real a la ficha
+  productName   String? // nombre en la ficha
+  note          String?
+  checkedAt     DateTime         @default(now())
+
+  check PriceCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+
+  @@unique([checkId, pharmacy])
+  @@map("price_offers")
 }

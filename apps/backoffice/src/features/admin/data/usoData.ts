@@ -16,6 +16,8 @@ async function costeTraduccionesPorNegocio(desde: Date): Promise<Map<string, num
 
 export type UsoGlobalKpis = {
   totalCostUsdMonth: number;
+  /** Consultas del comparador de precios (usage_entries SCOUT, coste 0). */
+  totalPriceChecksMonth: number;
   totalComparisonsMonth: number;
   totalDiscrepanciesMonth: number;
   totalReportsOpen: number;
@@ -66,6 +68,7 @@ export async function getUsoData(): Promise<UsoData> {
     prisma.comparisonReport.count({ where: { status: 'OPEN' } }),
     costeTraduccionesPorNegocio(startOfMonth),
   ]);
+  const consultasPrecios = await prisma.usageEntry.count({ where: { module: 'SCOUT', createdAt: { gte: startOfMonth } } });
 
   const perBiz: UsoPerBusiness[] = await Promise.all(
     businesses.map(async (b) => {
@@ -109,6 +112,7 @@ export async function getUsoData(): Promise<UsoData> {
       totalCostUsdMonth:
         Number(monthAgg._sum.geminiCostUsd ?? 0) + [...traducciones.values()].reduce((a, b) => a + b, 0),
       totalComparisonsMonth: monthCount,
+      totalPriceChecksMonth: consultasPrecios,
       totalDiscrepanciesMonth: monthDiscrep,
       totalReportsOpen: reportsOpen,
     },
