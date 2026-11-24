@@ -8,7 +8,7 @@ import type { Producto } from '../../domain/models';
 import type { AdaptadorFarmacia, ResultadoFarmacia } from '../../domain/ports';
 import { ClienteWeb } from '../web/clienteWeb';
 import { texto } from '../web/ficha';
-import { NO_ENCONTRADO, comprobarFicha, conErrores, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
+import { NO_ENCONTRADO, comprobarFicha, conErrores, conBusquedaPorNombre, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
 
 const HOME = 'https://farma2go.com/';
 const web = new ClienteWeb(['farma2go.com', 'doofinder.com']);
@@ -84,7 +84,7 @@ async function leerFichas(link: string): Promise<DatosFicha[]> {
 }
 
 async function buscar(p: Producto): Promise<ResultadoFarmacia> {
-  const vias = [p.cn, ...(p.ean ? [p.ean] : []), nombreParaBuscar(p.nombre)];
+  const vias = [p.cn, ...(p.ean ? [p.ean] : []), ...(conBusquedaPorNombre() ? [nombreParaBuscar(p.nombre)] : [])];
   const abiertas = new Set<string>();
   let primera: ResultadoFarmacia | null = null;
   for (const q of vias) {

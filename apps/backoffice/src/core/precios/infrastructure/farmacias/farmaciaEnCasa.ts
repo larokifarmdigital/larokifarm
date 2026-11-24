@@ -9,7 +9,7 @@ import type { AdaptadorFarmacia, ResultadoFarmacia } from '../../domain/ports';
 import { parsePrecio } from '../../domain/codigos';
 import { ClienteWeb } from '../web/clienteWeb';
 import { precioUnidad, productoJsonLd, texto } from '../web/ficha';
-import { NO_ENCONTRADO, comprobarFicha, conErrores, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
+import { NO_ENCONTRADO, comprobarFicha, conErrores, conBusquedaPorNombre, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
 
 const BASE = 'https://www.farmaciaencasaonline.es';
 const web = new ClienteWeb(['farmaciaencasaonline.es']);
@@ -51,6 +51,7 @@ async function buscar(p: Producto): Promise<ResultadoFarmacia> {
     const f = await leerFicha(it.url);
     if (f && comprobarFicha(p, f) === 'verificado') return resultadoDeFicha(p, f);
   }
+  if (!conBusquedaPorNombre()) return NO_ENCONTRADO;
   // Por nombre: solo fichas cuyo título comparta palabras clave (el buscador es difuso).
   const claves = sinAcentos(nombreParaBuscar(p.nombre)).split(/\s+/).filter((w) => w.length >= 4 && !/\d/.test(w));
   const minimo = Math.max(1, Math.min(2, claves.length));

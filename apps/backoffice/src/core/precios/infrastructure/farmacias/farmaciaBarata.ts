@@ -7,7 +7,7 @@ import type { AdaptadorFarmacia, ResultadoFarmacia } from '../../domain/ports';
 import { parsePrecio } from '../../domain/codigos';
 import { ClienteWeb } from '../web/clienteWeb';
 import { precioUnidad, productoJsonLd, texto } from '../web/ficha';
-import { NO_ENCONTRADO, comprobarFicha, conErrores, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
+import { NO_ENCONTRADO, comprobarFicha, conErrores, conBusquedaPorNombre, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
 
 const BASE = 'https://www.farmaciabarata.es';
 const web = new ClienteWeb(['farmaciabarata.es']);
@@ -37,7 +37,7 @@ async function leerFicha(url: string): Promise<DatosFicha | null> {
 }
 
 async function buscar(p: Producto): Promise<ResultadoFarmacia> {
-  const vias: string[] = [p.cn, ...(p.ean ? [p.ean] : []), ...(p.tipo === 'parafarmacia' ? [nombreParaBuscar(p.nombre)] : [])];
+  const vias: string[] = [p.cn, ...(p.ean ? [p.ean] : []), ...(p.tipo === 'parafarmacia' && conBusquedaPorNombre() ? [nombreParaBuscar(p.nombre)] : [])];
   let sinCodigo: ResultadoFarmacia | null = null;
   for (const [i, q] of vias.entries()) {
     const urls = await buscarAjax(q);

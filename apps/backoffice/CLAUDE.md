@@ -565,7 +565,31 @@ Diferencias schema vs UI documentadas:
   prueba de concepto en `docs/scout-fase0/` (5 farmacias que verifican por CN;
   trampas para la Fase 2 en su README). Fase 1 hecha: módulos por usuario
   (ver "Módulos por usuario"). Fase 2 hecha (24-11-2026): "Comparar precio".
-  Siguiente: Fase 3 (listas masivas desde Excel, fuera de Vercel).
+  Fase 3 hecha (24-11-2026): listas desde Excel (ver abajo). Siguiente:
+  Fase 4 (retirar `apps/scout` y su worker).
+  - **Listas** (`/scout/listas`, `/scout/listas/[id]`): tablas `price_lists`,
+    `price_list_items`, `price_list_runs`, `price_list_run_items` (migración
+    `20261124180000_price_lists`, ya ejecutada) + `price_checks.fromList`
+    (las consultas de listas no salen en el historial). Validación pura en
+    `core/precios/domain/lista.ts` (CN 5/6/7 cifras con control, EAN nacional,
+    repetidos; máx. 5.000). "Comparación" en la UI = ejecución (`run`).
+  - Proceso de fondo: `scripts/procesar-lista.ts` (`pnpm precios:lista`, lee
+    `RUN_ID`) → `procesarEjecucion`: cola continua con 20 productos a la vez y
+    UNA sola recarga (antes cada trabajador metía el mismo lote = productos
+    repetidos), cancelación en ≤5 s, `recontar` al empezar y al terminar,
+    reutiliza consultas completas de las últimas 24 h, sin búsqueda por nombre
+    (`sinBusquedaPorNombre`: 1 de 267 verificados, duplicaba peticiones). Se
+    reanuda solo con lo PENDIENTE. Log solo con contadores (repo público).
+  - `ClienteWeb`: 1 petición NUEVA/s por web y hasta 4 abiertas (antes en
+    serie: una web lenta, Farmavázquez, frenaba todo). Piloto de 200: ~32
+    productos/min, 0 bloqueos → 2.500 ≈ 1 h 15 min.
+  - Arranque: `lanzarEjecucion` (workflow_dispatch con
+    `GITHUB_DISPATCH_TOKEN`); sin token, queda en cola (local). Workflow
+    `.github/workflows/precios-lista.yml` (secret `DATABASE_URL`, variable
+    `COMPARADOR_FARMACIA_USO`, `concurrency` = una lista detrás de otra).
+  - "Interrumpida" = FAILED o RUNNING sin latido > 5 min (`ejecucionParada`)
+    → "Reanudar". Excel: `GET /api/precios/comparaciones/[runId]/excel`
+    (se genera al momento, no caduca).
   - Tablas `price_checks` + `price_offers` (migración
     `20261124120000_price_checks`, ya ejecutada en Neon). Uso en
     `usage_entries` módulo SCOUT, coste 0, apuntado a la farmacia

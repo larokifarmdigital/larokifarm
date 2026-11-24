@@ -59,6 +59,7 @@ export class PriceCheckRepositoryPrisma implements PriceCheckRepository {
         productName: c.producto.nombre.slice(0, 300),
         productType: TIPO_A_DB[c.producto.tipo],
         officialPrice: c.precioOficial,
+        fromList: c.desdeLista ?? false,
       },
       select: { id: true },
     });
@@ -100,6 +101,7 @@ export class PriceCheckRepositoryPrisma implements PriceCheckRepository {
     const t = texto?.trim();
     const verificada = { status: 'VERIFIED' as const, price: { not: null } };
     const where: Prisma.PriceCheckWhereInput = {
+      fromList: false,
       ...(t ? { OR: [{ productName: { contains: t, mode: 'insensitive' } }, { cn: { startsWith: t } }, { ean: { startsWith: t } }] } : {}),
       ...(desde || hasta ? { createdAt: { ...(desde ? { gte: desde } : {}), ...(hasta ? { lt: hasta } : {}) } } : {}),
       ...(resultado === 'con_precio' ? { offers: { some: verificada } } : {}),

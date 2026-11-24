@@ -29,6 +29,8 @@ export interface NuevaConsulta {
   consulta: string;
   producto: Producto;
   precioOficial: number | null;
+  /** Hecha por una lista (no sale en el historial de "Comparar precio"). */
+  desdeLista?: boolean;
 }
 
 export interface PriceCheckRepository {

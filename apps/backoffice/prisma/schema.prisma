@@ -127,7 +127,9 @@ model User {
   usage     UsageEntry[]
 
   // Comparador de precios (backoffice /scout)
-  priceChecks PriceCheck[]
+  priceChecks   PriceCheck[]
+  priceLists    PriceList[]
+  priceListRuns PriceListRun[]
 
   // Farmacias que lleva (puede ser más de una). `businessId` se mantiene como
   // farmacia principal para el conciliador antiguo, que solo entiende una.
@@ -445,10 +447,12 @@ model PriceCheck {
   productName   String
   productType   PriceProductType
   officialPrice Decimal?         @db.Decimal(10, 2) // Nomenclátor (solo financiados)
+  fromList      Boolean          @default(false) // hecha por una lista: no sale en el historial
   createdAt     DateTime         @default(now())
 
-  user   User         @relation(fields: [userId], references: [id])
-  offers PriceOffer[]
+  user     User               @relation(fields: [userId], references: [id])
+  offers   PriceOffer[]
+  runItems PriceListRunItem[]
 
   @@index([createdAt])
   @@index([cn])
@@ -471,4 +475,95 @@ model PriceOffer {
 
   @@unique([checkId, pharmacy])
   @@map("price_offers")
+}
+
+// Fase 3 (24-11-2026): listas subidas en Excel y su comparación masiva, que
+// procesa un workflow de GitHub Actions (fuera de Vercel) escribiendo aquí.
+
+enum PriceListRunStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+  CANCELLED
+}
+
+enum PriceListRunItemStatus {
+  PENDING
+  DONE // tiene consulta (nueva o reutilizada de las últimas 24 h)
+  ERROR
+}
+
+model PriceList {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  fileName  String
+  itemCount Int
+  createdAt DateTime @default(now())
+
+  user  User            @relation(fields: [userId], references: [id])
+  items PriceListItem[]
+  runs  PriceListRun[]
+
+  @@index([createdAt])
+  @@map("price_lists")
+}
+
+model PriceListItem {
+  id       String  @id @default(cuid())
+  listId   String
+  position Int // orden en el Excel
+  cn       String
+  ean      String?
+  name     String? // como venía en el Excel
+
+  list     PriceList          @relation(fields: [listId], references: [id], onDelete: Cascade)
+  runItems PriceListRunItem[]
+
+  @@unique([listId, cn])
+  @@index([listId, position])
+  @@map("price_list_items")
+}
+
+model PriceListRun {
+  id          String             @id @default(cuid())
+  listId      String
+  userId      String
+  status      PriceListRunStatus @default(QUEUED)
+  total       Int
+  done        Int                @default(0)
+  verified    Int                @default(0) // productos con al menos un precio verificado
+  errorReason String?
+  createdAt   DateTime           @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  heartbeatAt DateTime? // el proceso lo actualiza mientras trabaja
+
+  list  PriceList          @relation(fields: [listId], references: [id], onDelete: Cascade)
+  user  User               @relation(fields: [userId], references: [id])
+  items PriceListRunItem[]
+
+  @@index([listId, createdAt])
+  @@index([status])
+  @@map("price_list_runs")
+}
+
+model PriceListRunItem {
+  id       String                 @id @default(cuid())
+  runId    String
+  itemId   String
+  status   PriceListRunItemStatus @default(PENDING)
+  checkId  String?
+  reused   Boolean                @default(false)
+  error    String?
+
+  run   PriceListRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  item  PriceListItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  check PriceCheck?   @relation(fields: [checkId], references: [id], onDelete: SetNull)
+
+  @@unique([runId, itemId])
+  @@index([runId, status])
+  @@index([checkId])
+  @@map("price_list_run_items")
 }

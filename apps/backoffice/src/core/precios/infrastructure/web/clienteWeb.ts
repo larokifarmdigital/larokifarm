@@ -1,11 +1,13 @@
 // Cliente HTTP para las farmacias online: navegador de escritorio, como mucho
-// una petición por segundo a cada web (cola por web), cookies por dominio y
-// detección de retos anti-bot. Sin proxies ni ScraperAPI (decisión de gestión).
+// una petición NUEVA por segundo a cada web (y 4 abiertas a la vez como mucho,
+// para que una web lenta no frene la cola), cookies por dominio y detección de
+// retos anti-bot. Sin proxies ni ScraperAPI (decisión de gestión).
 
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 const TIMEOUT_MS = 12_000;
 const INTERVALO_MS = 1_100;
+const MAX_ABIERTAS = 4;
 
 export class WebBloqueaError extends Error {
   constructor(detalle: string) {
@@ -45,21 +47,29 @@ export class ClienteWeb {
    */
   constructor(private readonly dominios: readonly string[]) {}
 
-  private cola: Promise<unknown> = Promise.resolve();
-  private ultima = 0;
+  private proximo = 0;
+  private abiertas = 0;
+  private esperando: (() => void)[] = [];
   private cookies = new Map<string, Map<string, string>>();
 
+  /** Reserva el siguiente hueco (1 por INTERVALO_MS) y espera a que llegue. */
   private async turno() {
-    const espera = this.ultima + INTERVALO_MS - Date.now();
-    if (espera > 0) await new Promise((r) => setTimeout(r, espera));
-    this.ultima = Date.now();
+    const ahora = Date.now();
+    const hueco = Math.max(ahora, this.proximo);
+    this.proximo = hueco + INTERVALO_MS;
+    if (hueco > ahora) await new Promise((r) => setTimeout(r, hueco - ahora));
   }
 
-  /** Peticiones en serie por web: varias consultas a la vez no la saturan. */
-  get(url: string, opts: OpcionesGet = {}): Promise<Respuesta> {
-    const tarea = this.cola.then(() => this.ejecutar(url, opts));
-    this.cola = tarea.catch(() => undefined);
-    return tarea;
+  /** Varias consultas a la vez no saturan la web: ritmo y abiertas limitados. */
+  async get(url: string, opts: OpcionesGet = {}): Promise<Respuesta> {
+    if (this.abiertas >= MAX_ABIERTAS) await new Promise<void>((r) => this.esperando.push(r));
+    this.abiertas++;
+    try {
+      return await this.ejecutar(url, opts);
+    } finally {
+      this.abiertas--;
+      this.esperando.shift()?.();
+    }
   }
 
   private async ejecutar(url: string, opts: OpcionesGet): Promise<Respuesta> {

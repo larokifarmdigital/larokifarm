@@ -9,7 +9,7 @@ import type { AdaptadorFarmacia, ResultadoFarmacia } from '../../domain/ports';
 import { parsePrecio } from '../../domain/codigos';
 import { ClienteWeb } from '../web/clienteWeb';
 import { precioUnidad, productoJsonLd, texto } from '../web/ficha';
-import { NO_ENCONTRADO, comprobarFicha, conErrores, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
+import { NO_ENCONTRADO, comprobarFicha, conErrores, conBusquedaPorNombre, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
 
 const HOME = 'https://okfarma.es/';
 const web = new ClienteWeb(['okfarma.es', 'doofinder.com']);
@@ -72,7 +72,7 @@ async function leerFicha(url: string): Promise<DatosFicha | null> {
 }
 
 async function buscar(p: Producto): Promise<ResultadoFarmacia> {
-  const vias = [p.cn, ...(p.ean ? [p.ean] : []), nombreParaBuscar(p.nombre)];
+  const vias = [p.cn, ...(p.ean ? [p.ean] : []), ...(conBusquedaPorNombre() ? [nombreParaBuscar(p.nombre)] : [])];
   const abiertas = new Set<string>();
   let primera: ResultadoFarmacia | null = null;
   for (const q of vias) {

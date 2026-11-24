@@ -10,7 +10,7 @@ import { AvisoReceta, TarjetaProducto } from '../../components/TarjetaProducto';
 import { TablaPrecios } from '../../components/TablaPrecios';
 
 /** Una consulta guardada, en solo lectura, con "Volver a consultar". */
-export async function ConsultaPrecioView({ id }: { id: string }) {
+export async function ConsultaPrecioView({ id, volverA }: { id: string; volverA?: { href: string; texto: string } }) {
   const c = await getPriceCheckRepository().obtener(id);
   if (!c) notFound();
   const nombres = Object.fromEntries(FARMACIAS.map((f) => [f.clave, f.nombre]));
@@ -31,11 +31,11 @@ export async function ConsultaPrecioView({ id }: { id: string }) {
   return (
     <div className={cn(ANCHO_PAGINA, 'pt-6 pb-10')}>
       <Link
-        href="/scout/historial"
+        href={volverA?.href ?? '/scout/historial'}
         className="mb-4 inline-flex min-h-11 sm:min-h-8 items-center gap-1.5 text-[14px] font-medium text-[var(--color-ink-2)] hover:text-[var(--color-ink)]"
       >
         <NavIcon name="ArrowLeft" size={15} />
-        Historial
+        {volverA?.texto ?? 'Historial'}
       </Link>
       <div className="flex flex-col gap-4 sm:gap-5">
         <TarjetaProducto

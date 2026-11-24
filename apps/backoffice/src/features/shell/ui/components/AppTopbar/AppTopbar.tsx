@@ -56,6 +56,15 @@ function buildCrumbs(pathname: string, shell: ShellInfo): Crumb[] {
               { label: 'Detalle' },
             ];
       }
+      if (s[1] === 'listas') {
+        return s.length === 2
+          ? [{ label: 'Precios', href: '/scout' }, { label: 'Listas' }]
+          : [
+              { label: 'Precios', href: '/scout' },
+              { label: 'Listas', href: '/scout/listas' },
+              { label: 'Lista' },
+            ];
+      }
       break;
   }
   return s.map((seg, i) => ({

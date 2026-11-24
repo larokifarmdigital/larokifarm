@@ -9,7 +9,7 @@ import type { AdaptadorFarmacia, CatalogoParafarmacia, ResultadoFarmacia } from 
 import { cnDeCodigo, parsePrecio } from '../../domain/codigos';
 import { ClienteWeb } from '../web/clienteWeb';
 import { texto } from '../web/ficha';
-import { NO_ENCONTRADO, comprobarFicha, conErrores, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
+import { NO_ENCONTRADO, comprobarFicha, conErrores, conBusquedaPorNombre, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
 
 const HOME = 'https://www.farmavazquez.com/';
 const web = new ClienteWeb(['farmavazquez.com', 'farma-vazquez.com', 'doofinder.com']);
@@ -78,6 +78,7 @@ async function buscar(p: Producto): Promise<ResultadoFarmacia> {
     // Doofinder puede traer el precio sin el descuento del día: manda la ficha.
     if (f) return resultadoDeFicha(p, f);
   }
+  if (!conBusquedaPorNombre()) return NO_ENCONTRADO;
   for (const h of (await buscarDoofinder(nombreParaBuscar(p.nombre))).slice(0, 3)) {
     if (!h.link) continue;
     const f = await leerFicha(h.link.trim());

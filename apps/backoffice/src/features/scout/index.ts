@@ -1,3 +1,5 @@
 export * from './ui/views/ComparadorView';
 export * from './ui/views/HistorialPreciosView';
 export * from './ui/views/ConsultaPrecioView';
+export * from './ui/views/ListasView';
+export * from './ui/views/ListaView';

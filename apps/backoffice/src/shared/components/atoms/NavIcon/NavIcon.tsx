@@ -9,6 +9,7 @@ import {
   UserCheckIcon,
   TagIcon,
   ProhibitIcon,
+  ListChecksIcon,
   StorefrontIcon,
   MagnifyingGlassIcon,
   ReceiptIcon,
@@ -150,6 +151,7 @@ const ICONS = {
   UserCheck: UserCheckIcon,
   Tag: TagIcon,
   Prohibit: ProhibitIcon,
+  ListChecks: ListChecksIcon,
 } as const;
 
 export type IconName = keyof typeof ICONS;

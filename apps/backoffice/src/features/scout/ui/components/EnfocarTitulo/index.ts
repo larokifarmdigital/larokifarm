@@ -1,0 +1,1 @@
+export { EnfocarTitulo } from './EnfocarTitulo';

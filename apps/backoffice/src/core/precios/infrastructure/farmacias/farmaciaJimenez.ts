@@ -8,7 +8,7 @@ import type { AdaptadorFarmacia, ResultadoFarmacia } from '../../domain/ports';
 import { cnDeCodigo } from '../../domain/codigos';
 import { ClienteWeb } from '../web/clienteWeb';
 import { precioUnidad, productoJsonLd, texto } from '../web/ficha';
-import { NO_ENCONTRADO, conErrores, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
+import { NO_ENCONTRADO, conErrores, conBusquedaPorNombre, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
 
 const BASE = 'https://farmaciajimenez.com';
 const web = new ClienteWeb(['farmaciajimenez.com']);
@@ -51,7 +51,7 @@ async function buscar(p: Producto): Promise<ResultadoFarmacia> {
     if (hit) break;
   }
   // Por nombre solo vale un resultado cuyo sku sea exactamente el CN.
-  hit ??= (await catalogo(nombreParaBuscar(p.nombre), cats[0])).find((h) => cnDeCodigo(h.sku) === p.cn);
+  if (!hit && conBusquedaPorNombre()) hit = (await catalogo(nombreParaBuscar(p.nombre), cats[0])).find((h) => cnDeCodigo(h.sku) === p.cn);
   if (!hit) return NO_ENCONTRADO;
   const url = hit.url ?? (hit.canonical ? BASE + hit.canonical : `${BASE}/${hit.slug}`);
   const f = await leerFicha(url);

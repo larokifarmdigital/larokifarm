@@ -1,0 +1,10 @@
+import { requireModulo } from '@/core/auth';
+import { ListasView } from '@/features/scout';
+
+export const metadata = { title: 'Listas · Backoffice' };
+export const dynamic = 'force-dynamic';
+
+export default async function ListasPage() {
+  const user = await requireModulo('comparador');
+  return <ListasView esAdmin={user.rol === 'admin'} />;
+}

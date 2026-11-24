@@ -70,6 +70,7 @@ export function buildNav({ role, miFarmaciaId, variasFarmacias, modulos }: NavCo
       children: [
         { href: '/scout', label: 'Comparar precio' },
         { href: '/scout/historial', label: 'Historial' },
+        { href: '/scout/listas', label: 'Listas' },
       ],
     },
     { href: '/inventario', label: 'Inventario', icon: 'Package', badge: 'wip', hidden: true },

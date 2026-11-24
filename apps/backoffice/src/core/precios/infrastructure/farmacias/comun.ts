@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { cnDeCodigo, cnDeEanNacional, soloDigitos } from '../../domain/codigos';
 import type { Producto } from '../../domain/models';
 import type { ResultadoFarmacia } from '../../domain/ports';
@@ -78,4 +79,14 @@ export async function conErrores(fn: () => Promise<ResultadoFarmacia>): Promise<
 /** Nombre limpio para buscar ("FAES @ PRO FAES4 30CAPS" → "PRO FAES4 30CAPS"). */
 export function nombreParaBuscar(nombre: string): string {
   return nombre.replace(/[@!]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// La búsqueda por nombre (último recurso de cada adaptador) dio 1 de 267 precios
+// verificados en las pruebas y casi duplica las peticiones cuando el producto
+// no está. En las listas (miles de productos) se desactiva; en "Comparar precio"
+// se mantiene.
+const sinNombre = new AsyncLocalStorage<true>();
+export const conBusquedaPorNombre = () => !sinNombre.getStore();
+export function sinBusquedaPorNombre<T>(fn: () => Promise<T>): Promise<T> {
+  return sinNombre.run(true, fn);
 }

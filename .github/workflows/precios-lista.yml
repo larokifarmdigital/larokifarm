@@ -1,0 +1,46 @@
+name: precios-lista
+
+# Comparación masiva de una lista del comparador de precios (backoffice /scout/listas).
+# La lanza el backoffice (workflow_dispatch con el id de la ejecución) y escribe en Neon.
+# El repo es público: el log solo lleva contadores, nunca productos ni precios.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Id de la ejecución (price_list_runs.id)'
+        required: true
+        type: string
+
+# Una lista detrás de otra: dos a la vez duplicarían la carga en las webs.
+concurrency:
+  group: precios-lista
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  procesar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile --filter backoffice...
+
+      - name: Procesar lista
+        working-directory: apps/backoffice
+        env:
+          # Por variable de entorno, no interpolado en el comando (evita inyección).
+          RUN_ID: ${{ inputs.run_id }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          COMPARADOR_FARMACIA_USO: ${{ vars.COMPARADOR_FARMACIA_USO }}
+        run: pnpm precios:lista

@@ -9,7 +9,7 @@ import type { AdaptadorFarmacia, ResultadoFarmacia } from '../../domain/ports';
 import { cnDeCodigo, eanDeCn, parsePrecio } from '../../domain/codigos';
 import { ClienteWeb } from '../web/clienteWeb';
 import { precioUnidad, productoJsonLd, texto } from '../web/ficha';
-import { NO_ENCONTRADO, conErrores, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
+import { NO_ENCONTRADO, conErrores, conBusquedaPorNombre, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
 
 const BASE = 'https://farmaciasenante.com';
 const web = new ClienteWeb(['farmaciasenante.com']);
@@ -63,7 +63,7 @@ async function buscar(p: Producto): Promise<ResultadoFarmacia> {
   const esCn = (h: HitPresta) => cnDeCodigo(referencia(h.reference)) === p.cn;
   let hit = (await buscador(p.cn)).find(esCn);
   let nota: string | undefined;
-  if (!hit) {
+  if (!hit && conBusquedaPorNombre()) {
     hit = (await buscador(nombreParaBuscar(p.nombre).split(' ').slice(0, 3).join(' '))).find(esCn);
     nota = 'encontrado por nombre';
   }

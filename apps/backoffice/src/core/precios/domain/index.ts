@@ -2,3 +2,4 @@
 export * from './models';
 export * from './codigos';
 export type * from './ports';
+export * from './lista';

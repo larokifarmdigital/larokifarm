@@ -6,7 +6,7 @@ import type { AdaptadorFarmacia, ResultadoFarmacia } from '../../domain/ports';
 import { cnDeCodigo } from '../../domain/codigos';
 import { ClienteWeb } from '../web/clienteWeb';
 import { precioUnidad, productoJsonLd, texto } from '../web/ficha';
-import { NO_ENCONTRADO, comprobarFicha, conErrores, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
+import { NO_ENCONTRADO, comprobarFicha, conErrores, conBusquedaPorNombre, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
 
 const BASE = 'https://www.farmaciasdirect.es';
 const web = new ClienteWeb(['farmaciasdirect.es', 'farmaciasdirect.com', 'api.empathy.co']);
@@ -63,6 +63,7 @@ async function buscar(p: Producto): Promise<ResultadoFarmacia> {
     const f = await leerFicha(hit.link);
     if (f) return resultadoDeFicha(p, f);
   }
+  if (!conBusquedaPorNombre()) return NO_ENCONTRADO;
   let sinCodigo: ResultadoFarmacia | null = null;
   for (const h of (await buscarEmpathy(nombreParaBuscar(p.nombre))).slice(0, 3)) {
     if (!h.link) continue;
