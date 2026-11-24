@@ -146,8 +146,8 @@ function FormularioNuevaFarmacia({
       open
       onOpenChange={(o) => !o && !pending && onCerrar()}
       title="Nueva farmacia"
-      maxWidth="lg"
-      description="Solo lo esencial. Se crea como borrador y después completas horario, servicios y fotos."
+      maxWidth="md"
+      description="Se crea como borrador. Horario, servicios y fotos los completas después."
       footer={
         <ModalAcciones
           onCancelar={onCerrar}
@@ -171,6 +171,8 @@ function FormularioNuevaFarmacia({
           }
         }}
       >
+        {/* Bloque 1: datos (en una fila desde sm) */}
+        <div className="grid gap-4 sm:grid-cols-[3fr_2fr]">
         <div>
           <Label htmlFor="nombre" required>
             Nombre de la farmacia
@@ -209,20 +211,59 @@ function FormularioNuevaFarmacia({
             </p>
           )}
         </div>
+        </div>
 
+        <div className="border-t border-[var(--color-hairline)] pt-5">
         <LanguagePicker value={idiomas} onToggle={toggleIdioma} error={fieldError('idiomas')} />
+        </div>
 
+        <div className="border-t border-[var(--color-hairline)] pt-5">
+        {responsables.length > 0 ? (
+          <div>
+            <Label htmlFor="responsable">Quién la gestiona (opcional)</Label>
+            <Select
+              id="responsable"
+              name="responsable"
+              defaultValue=""
+              aria-describedby={fieldError('responsable') ? 'responsable-ayuda responsable-error' : 'responsable-ayuda'}
+              aria-invalid={Boolean(fieldError('responsable'))}
+              options={[
+                { value: '', label: 'Nadie por ahora' },
+                ...responsables.map((u) => ({
+                  value: u.id,
+                  label: u.nombre,
+                  description: u.farmacias.length > 0 ? `${u.email} · ya lleva ${u.farmacias.join(', ')}` : u.email,
+                })),
+              ]}
+            />
+            <p id="responsable-ayuda" className="mt-1.5 mb-0 text-[13px] text-[var(--color-muted)]">
+              Si ya lleva otras farmacias, esta se le suma a las que tiene.
+            </p>
+            {fieldError('responsable') && (
+              <p id="responsable-error" className="help help-error" role="alert">
+                {fieldError('responsable')}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="m-0 text-[13.5px] leading-[1.5] text-[var(--color-muted)]">
+            Quién la gestiona: aún no hay usuarios. Puedes crearlo en Usuarios y asignarle la farmacia después.
+          </p>
+        )}
+        </div>
+
+        {/* Lo raro, al final y sin caja: el identificador se genera del nombre */}
         {/* Identificador: se genera del nombre; cambiarlo es raro → plegado */}
         <details
           open={avanzadas}
           onToggle={(e) => setAvanzadas((e.currentTarget as HTMLDetailsElement).open)}
-          className="group rounded-[8px] border border-[var(--color-hairline)]"
+          className="group"
         >
-          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 text-[14px] font-medium text-[var(--color-ink-2)] [&::-webkit-details-marker]:hidden focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] focus-visible:-outline-offset-2">
-            <NavIcon name="CaretRight" size={12} className="transition-transform group-open:rotate-90" />
+          <summary className="-mx-2 inline-flex min-h-11 sm:min-h-9 cursor-pointer list-none items-center gap-1.5 rounded-[8px] px-2 text-[13.5px] font-medium text-[var(--color-ink-2)] hover:bg-[var(--color-surface-2)] [&::-webkit-details-marker]:hidden focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]">
+            <NavIcon name="CaretRight" size={12} className="transition-transform group-open:rotate-90 motion-reduce:transition-none" />
             Opciones avanzadas
           </summary>
-        <div className="border-t border-[var(--color-hairline)] px-3 py-3">
+        <div className="pt-2">
           <p className="label m-0" id="slug-label">Identificador interno</p>
           <input type="hidden" name="slug" value={slugFinal} />
           {editandoSlug ? (
@@ -269,39 +310,6 @@ function FormularioNuevaFarmacia({
           )}
         </div>
         </details>
-
-        {responsables.length > 0 ? (
-          <div>
-            <Label htmlFor="responsable">Quién la gestiona (opcional)</Label>
-            <Select
-              id="responsable"
-              name="responsable"
-              defaultValue=""
-              aria-describedby={fieldError('responsable') ? 'responsable-ayuda responsable-error' : 'responsable-ayuda'}
-              aria-invalid={Boolean(fieldError('responsable'))}
-              options={[
-                { value: '', label: 'Nadie por ahora' },
-                ...responsables.map((u) => ({
-                  value: u.id,
-                  label: u.nombre,
-                  description: u.farmacias.length > 0 ? `${u.email} · ya lleva ${u.farmacias.join(', ')}` : u.email,
-                })),
-              ]}
-            />
-            <p id="responsable-ayuda" className="mt-1.5 mb-0 text-[13px] text-[var(--color-muted)]">
-              Si ya lleva otras farmacias, esta se le suma a las que tiene.
-            </p>
-            {fieldError('responsable') && (
-              <p id="responsable-error" className="help help-error" role="alert">
-                {fieldError('responsable')}
-              </p>
-            )}
-          </div>
-        ) : (
-          <p className="m-0 rounded-[8px] bg-[var(--color-surface-2)] px-3 py-2.5 text-[13.5px] leading-[1.5] text-[var(--color-ink-2)]">
-            Quién la gestiona: no hay usuarios activos. Puedes crearlo en <strong>Usuarios</strong> y asignarle la farmacia después.
-          </p>
-        )}
 
         {state.status === 'error' && !CAMPOS.some((k) => state.fieldErrors?.[k]) && !state.fieldErrors?.ciudad && (
           <div role="alert" className="px-3 py-2.5 rounded-[6px] bg-[var(--color-red-soft)] text-[var(--color-red-ink)] text-[14px]">

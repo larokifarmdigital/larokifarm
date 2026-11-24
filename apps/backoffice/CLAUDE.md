@@ -197,6 +197,20 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
 - Ajustes → Usuarios: casillas "Módulos que puede usar" en `CuentaDialog`
   (con rol Administrador, solo un texto). El log de `editar` anota los cambios.
 
+### Sin roles que elegir (24-11-2026, decisión de gestión)
+- Hay UNA sola cuenta de administración (SUPER_ADMIN, gestión). El servidor
+  (`UserAccountsService`) rechaza crear otra o cambiar el tipo de una cuenta
+  (`SOLO_UN_ADMIN`). En el modal, la cuenta de administración solo cambia de
+  nombre.
+- El resto es personal de farmacia: farmacias + "Qué puede hacer" =
+  "Editar la web de su farmacia" (se guarda como el rol de siempre: marcada =
+  BUSINESS_ADMIN/manager, sin marcar = USER/viewer; sin migración) + módulos.
+- Todo el personal de una farmacia ve TODAS sus conciliaciones
+  (`scopeFromSession` devuelve `business` también para USER; el tipo
+  `user` queda sin uso).
+- Tabla de Usuarios: columna y filtro "Qué puede hacer" ("Editar web ·
+  Albaranes · Precios", "Administración").
+
 ### Usuarios con varias farmacias (21-11-2026)
 - Tabla `user_businesses` (PK userId+businessId). Mismo rol en todas.
   `users.businessId` sigue siendo la **farmacia principal** (la usa el
@@ -311,9 +325,18 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
   enlace con `asChild` + `Link` cuando navega). Nada de clases propias.
 - **Tablas de gestión**: `thead` como Usuarios (`bg-surface-2`, 12,5 px
   semibold muted, `th scope="col"`, caption sr-only).
-- **Tarjetas de elección** (idiomas, rol): una por fila, control a la
-  izquierda con `shared/components/atoms/IndicadorEleccion` (input real
-  `sr-only` dentro del `<label>`, anillo de foco en la tarjeta).
+- **Filas de elección** (24-11-2026, sustituyen a las "tarjetas de
+  elección" con borde, que hacían ruidosos los modales): en formularios,
+  `shared/components/atoms/OpcionEleccion` — fila plana sin borde ni relleno,
+  solo el indicador (`IndicadorEleccion`) se pone azul; 44 px en móvil, anillo
+  de foco en la fila, segunda línea en gris opcional. Bloques del formulario
+  separados por `border-t border-[var(--color-hairline)] pt-5`. Usuario: rol
+  con 3 radios de una línea y SOLO la descripción del elegido debajo; con rol
+  Administrador no hay casillas de módulos. Nueva farmacia: nombre + ciudad en
+  una fila, idiomas sin el castellano (va siempre), "Opciones avanzadas" al
+  final y sin caja.
+- **Desplegables `<details>`** que el usuario debe ver como pulsables: texto
+  accent, flecha que gira y fondo al pasar (ver `SubirListaDialog`).
 - **Etiquetas de formulario (`.label`)**: frase normal, 13,5 px, peso 500,
   `--color-ink-2` (sin MAYÚSCULAS desde 21-11-2026).
 - **Crear en modal**: formularios cortos (≤ ~6 campos) se crean en un `Modal`
@@ -413,8 +436,8 @@ Diferencias schema vs UI documentadas:
     Tabla (antes lista agrupada por farmacia: mareaba) con buscador y filtros;
     acciones en el menú "⋯" (Editar dentro) y el nombre abre Editar; rol con `ROL_LABEL` (el
     rol USER sigue siendo "Solo consulta", decisión del usuario). Crear y
-    editar en `CuentaDialog` (rol con tarjetas que explican qué puede hacer;
-    el correo solo se escribe al crear). Nunca se borra: se desactiva (FK de
+    editar en `CuentaDialog` (sin roles desde 24-11-2026: ver "Sin roles que
+    elegir"; el correo solo se escribe al crear). Nunca se borra: se desactiva (FK de
     conciliaciones y reportes). Contraseña temporal generada en el servidor
     (`generarContrasenaTemporal`, 3 bloques de 4) y mostrada UNA vez
     (`ContrasenaTemporalDialog` con "Copiar"). "Cambiar mi contraseña" en el
@@ -586,8 +609,17 @@ Diferencias schema vs UI documentadas:
   - `ClienteWeb`: 1 petición NUEVA/s por web y hasta 4 abiertas (antes en
     serie: una web lenta, Farmavázquez, frenaba todo). Piloto de 200: ~32
     productos/min, 0 bloqueos → 2.500 ≈ 1 h 15 min.
-  - Arranque: `lanzarEjecucion` (workflow_dispatch con
-    `GITHUB_DISPATCH_TOKEN`); sin token, queda en cola (local). Workflow
+  - Flujo (rehecho 24-11-2026 tras probarlo el usuario): el modal hace
+    "Subir y comparar" (guarda + lanza) y lleva a la lista, que muestra al
+    momento "Comparando…" con barra (animada sin productos hechos) y se
+    refresca cada 3 s. Todas las acciones van DENTRO de la tarjeta
+    Comparación; la cabecera solo lleva el ⋯.
+  - Arranque (`ponerEnMarcha` en `listasActions.ts`): ≤ 50 productos (o en
+    local sin token) se comparan en el propio servidor con `after()`
+    (`procesarComparacion`, maxDuration 300 en las páginas de listas); las
+    grandes, con `lanzarEjecucion` (workflow_dispatch con
+    `GITHUB_DISPATCH_TOKEN`). Sin token, la lista grande queda "con error"
+    con el motivo en la tarjeta (nunca en cola para siempre). Workflow
     `.github/workflows/precios-lista.yml` (secret `DATABASE_URL`, variable
     `COMPARADOR_FARMACIA_USO`, `concurrency` = una lista detrás de otra).
   - "Interrumpida" = FAILED o RUNNING sin latido > 5 min (`ejecucionParada`)
@@ -693,11 +725,11 @@ Diferencias schema vs UI documentadas:
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-11T10:17:35Z).
+Actualizado automáticamente al hacer commit (2026-11-24T12:05:47Z).
 
-- `1d3849f` 2026-11-11 — Feat(backoffice): aviso al publicar con traducciones pendientes
-- `565c63c` 2026-11-11 — Chore(backoffice): middleware → proxy (Next 16), lint a cero, quitar código muerto
-- `fc26000` 2026-11-11 — Refactor(backoffice): trocear FarmaciasList e ImageGalleryField
-- `f710fc3` 2026-11-11 — Refactor(backoffice): estructura core/ + features/ + shared/
-- `227621a` 2026-11-11 — Feat(backoffice): modal pattern Features+Puntos + FieldPreview live mini-mockup
+- `5c23626` 2026-11-24 — Feat(backoffice): simpler user permissions and calmer modals
+- `8214e0b` 2026-11-24 — Fix(backoffice): simpler list flow, upload and compare in one step
+- `004a350` 2026-11-24 — Chore: remove the old standalone Scout app and its worker
+- `9039329` 2026-11-24 — Feat(backoffice): bulk price comparison from Excel lists
+- `3b5849d` 2026-11-24 — Feat(backoffice): price comparator with verified prices
 <!-- auto:recent-commits:end -->

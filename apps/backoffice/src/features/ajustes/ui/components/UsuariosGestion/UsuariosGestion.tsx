@@ -23,14 +23,23 @@ import {
   eliminarUsuarioAction,
   restablecerContrasenaAction,
 } from '../../../actions/usuariosActions';
-import { ETIQUETA_ROL } from '../../lib/roles';
 import { CuentaDialog, type DatosCuenta } from '../CuentaDialog';
 import { ContrasenaTemporalDialog } from '../ContrasenaTemporalDialog';
 
 const SIN_FARMACIA = '__sin__';
-const ROLES: RolCuenta[] = ['admin', 'manager', 'viewer'];
-// Un color por rol, sin chocar con el verde/gris del estado.
-const CHIP_ROL: Record<RolCuenta, string> = { admin: 'chip-violet', manager: 'chip-blue', viewer: 'chip-neutral' };
+// Ya no hay roles que elegir (24-11-2026): una cuenta de administración y, para
+// el resto, lo que puede hacer (editar la web + módulos). El filtro usa el rol guardado.
+const FILTRO_PUEDE: { value: RolCuenta; label: string }[] = [
+  { value: 'admin', label: 'Administración' },
+  { value: 'manager', label: 'Editan la web' },
+  { value: 'viewer', label: 'Solo ven la web' },
+];
+
+/** "Editar web · Albaranes · Precios" (lo que puede hacer, en corto). */
+function quePuede(c: UserAccount): string {
+  if (c.rol === 'admin') return 'Todo';
+  return [c.rol === 'manager' ? 'Editar web' : 'Ver web', ...(c.modulos.includes('conciliador') ? ['Albaranes'] : []), ...(c.modulos.includes('comparador') ? ['Precios'] : [])].join(' · ');
+}
 
 /** "Gestión Larokifarm" → "GL". */
 const iniciales = (nombre: string) =>
@@ -296,13 +305,13 @@ export function UsuariosGestion({
         </div>
         <div className={etiquetaVisible ? '' : 'md:w-[200px]'}>
           <label htmlFor={rolFiltroId + sufijo} className={etiqueta}>
-            Rol
+            Qué puede hacer
           </label>
           <Select
             id={rolFiltroId + sufijo}
             value={rolFiltro}
             onValueChange={setRolFiltro}
-            options={[{ value: '', label: 'Todos los roles' }, ...ROLES.map((r) => ({ value: r, label: ETIQUETA_ROL[r] }))]}
+            options={[{ value: '', label: 'Todos' }, ...FILTRO_PUEDE]}
           />
         </div>
         <div className={etiquetaVisible ? '' : 'md:w-[180px]'}>
@@ -404,7 +413,7 @@ export function UsuariosGestion({
               </Button>
             </>
           ) : (
-            <p className="m-0 text-[14.5px] text-[var(--color-muted)]">Prueba con otro nombre, otra farmacia u otro rol.</p>
+            <p className="m-0 text-[14.5px] text-[var(--color-muted)]">Prueba con otro nombre, otra farmacia u otro filtro.</p>
           )}
           {hayFiltros && enOtroEstado === 0 && (
             <Button type="button" variant="secondary" onClick={quitarFiltros}>
@@ -422,7 +431,7 @@ export function UsuariosGestion({
                 <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-surface-2)] text-[12.5px] text-[var(--color-muted)]">
                   <th scope="col" className="px-5 py-2.5 font-semibold">Usuario</th>
                   <th scope="col" className="px-3 py-2.5 font-semibold">Farmacias</th>
-                  <th scope="col" className="px-3 py-2.5 font-semibold">Rol</th>
+                  <th scope="col" className="px-3 py-2.5 font-semibold">Qué puede hacer</th>
                   <th scope="col" className="px-3 py-2.5 font-semibold">Estado</th>
                   <th scope="col" className="px-5 py-2.5">
                     <span className="sr-only">Acciones</span>
@@ -447,8 +456,8 @@ export function UsuariosGestion({
                     <td className={cn('px-3 py-3', c.activo ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-muted)]')}>
                       {nombresFarmacias(c) ?? <span className="text-[var(--color-muted)]">Sin farmacia</span>}
                     </td>
-                    <td className="px-3 py-3">
-                      <span className={cn('chip whitespace-nowrap', CHIP_ROL[c.rol])}>{ETIQUETA_ROL[c.rol]}</span>
+                    <td className={cn('px-3 py-3', c.activo ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-muted)]')}>
+                      {c.rol === 'admin' ? <span className="chip chip-violet whitespace-nowrap">Administración</span> : quePuede(c)}
                     </td>
                     <td className="px-3 py-3">
                       {estadoDe(c.activo)}
@@ -470,12 +479,14 @@ export function UsuariosGestion({
                   <Avatar c={c} />
                   {nombreDe(c, cn('text-[15px] font-semibold', c.activo ? 'text-[var(--color-ink)]' : 'text-[var(--color-muted)]'))}
                   {c.id === miId && <span className="chip chip-accent">Tú</span>}
-                  <span className={cn('chip', CHIP_ROL[c.rol])}>{ETIQUETA_ROL[c.rol]}</span>
+                  {c.rol === 'admin' && <span className="chip chip-violet">Administración</span>}
                 </div>
                 <p className="m-0 mt-1 text-[13.5px] text-[var(--color-muted)] break-all">{c.email}</p>
                 <div className="mt-2 flex items-center justify-between gap-3">
                   <div className="min-w-0 text-[13.5px]">
-                    <p className="m-0 mb-1.5 text-[var(--color-ink-2)]">{nombresFarmacias(c) ?? 'Sin farmacia'}</p>
+                    <p className="m-0 mb-1.5 text-[var(--color-ink-2)]">
+                      {c.rol === 'admin' ? 'Todas las farmacias' : `${nombresFarmacias(c) ?? 'Sin farmacia'} · ${quePuede(c)}`}
+                    </p>
                     {estadoDe(c.activo)}
                   </div>
                   {acciones(c)}
@@ -493,7 +504,6 @@ export function UsuariosGestion({
           onOpenChange={(o) => !o && setEditando(undefined)}
           cuenta={editando}
           farmacias={farmacias}
-          esUnoMismo={editando?.id === miId}
           onGuardar={guardar}
         />
       )}

@@ -4,10 +4,9 @@ import { useId, useState, useTransition } from 'react';
 import { Modal, ModalAcciones } from '@/shared/components/molecules/Modal';
 import { Label } from '@/shared/components/atoms/Label';
 import { cn } from '@/shared/lib/cn';
-import { IndicadorEleccion } from '@/shared/components/atoms/IndicadorEleccion';
+import { OpcionEleccion } from '@/shared/components/atoms/OpcionEleccion';
 import type { FarmaciaOpcion, RolCuenta, UserAccount } from '@/core/users/domain';
 import { MODULOS, MODULO_LABEL, type Modulo } from '@/core/shared';
-import { DESCRIPCION_ROL, ETIQUETA_ROL } from '../../lib/roles';
 
 export type DatosCuenta = { nombre: string; email: string; rol: RolCuenta; farmaciaIds: string[]; modulos: Modulo[] };
 
@@ -19,17 +18,17 @@ const DESCRIPCION_MODULO: Record<Modulo, string> = {
 type Resultado = { ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
 /**
- * Crear o editar una cuenta. El correo solo se escribe al crear (es el usuario
- * de acceso). Responsable y Solo consulta necesitan al menos una farmacia (el
- * mismo permiso en todas); el administrador no. Los módulos se marcan uno a
- * uno (un usuario nuevo empieza sin ninguno); el administrador los tiene todos.
+ * Crear o editar una cuenta del personal de farmacia. El correo solo se escribe
+ * al crear. Necesita al menos una farmacia (los mismos permisos en todas) y se
+ * marca qué puede hacer: editar la web (= rol responsable; sin marcar, solo
+ * consulta) y los módulos (un usuario nuevo empieza sin ninguno). La cuenta de
+ * administración (solo hay una) solo cambia de nombre aquí.
  */
 export function CuentaDialog({
   open,
   onOpenChange,
   cuenta,
   farmacias,
-  esUnoMismo,
   onGuardar,
 }: {
   open: boolean;
@@ -37,13 +36,16 @@ export function CuentaDialog({
   /** null = crear. */
   cuenta: UserAccount | null;
   farmacias: FarmaciaOpcion[];
-  esUnoMismo: boolean;
   onGuardar: (datos: DatosCuenta) => Promise<Resultado>;
 }) {
   const id = useId();
   const [nombre, setNombre] = useState(cuenta?.nombre ?? '');
   const [email, setEmail] = useState(cuenta?.email ?? '');
-  const [rol, setRol] = useState<RolCuenta>(cuenta?.rol ?? 'manager');
+  // Ya no se eligen roles: solo hay un administrador (gestión) y, para el resto,
+  // "Editar la web" se guarda como el rol de siempre (marcada = responsable).
+  const esAdmin = cuenta?.rol === 'admin';
+  const [editaWeb, setEditaWeb] = useState(cuenta ? cuenta.rol !== 'viewer' : true);
+  const rol: RolCuenta = esAdmin ? 'admin' : editaWeb ? 'manager' : 'viewer';
   const [farmaciaIds, setFarmaciaIds] = useState<string[]>(cuenta?.farmacias.map((f) => f.id) ?? []);
   const [modulos, setModulos] = useState<Modulo[]>(cuenta?.modulos ?? []);
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -153,155 +155,78 @@ export function CuentaDialog({
           </div>
         )}
 
-        <fieldset className="m-0 min-w-0 border-0 p-0" aria-describedby={describe('rol', esUnoMismo ? `${id}-rol-yo` : undefined)}>
-          <legend className="label mb-2">
-            <span>
-              Qué puede hacer
-              <span aria-hidden className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none align-[-0.05em]">
-                *
-              </span>
-              <span className="sr-only">, obligatorio</span>
-            </span>
-          </legend>
-          <div className="flex flex-col gap-2">
-            {(['manager', 'viewer', 'admin'] as const).map((r) => {
-              const bloqueado = esUnoMismo && r !== 'admin';
-              return (
-                <label
-                  key={r}
-                  className={cn(
-                    'flex items-start gap-3 rounded-[10px] border px-3.5 py-3 min-h-11 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--color-accent)] has-[:focus-visible]:outline-offset-2',
-                    rol === r
-                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
-                      : 'border-[var(--color-control-border)] bg-[var(--color-surface)]',
-                    bloqueado ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
-                  )}
-                >
-                  <input
-                    type="radio"
-                    // Destino del foco si el servidor devuelve un error en el rol
-                    id={rol === r ? `${id}-rol` : undefined}
-                    name={`${id}-rol`}
-                    value={r}
-                    checked={rol === r}
-                    disabled={bloqueado}
-                    onChange={() => setRol(r)}
-                    className="sr-only cursor-pointer"
-                  />
-                  <IndicadorEleccion tipo="radio" marcado={rol === r} desactivado={bloqueado} />
-                  <span className="min-w-0">
-                    <span className="block text-[14.5px] font-semibold text-[var(--color-ink)]">{ETIQUETA_ROL[r]}</span>
-                    <span className="block text-[13.5px] leading-[1.45] text-[var(--color-ink-2)]">{DESCRIPCION_ROL[r]}</span>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-          {esUnoMismo && (
-            <p id={`${id}-rol-yo`} className="m-0 mt-1.5 text-[13px] text-[var(--color-muted)]">
-              Es tu cuenta: no puedes quitarte el rol de administrador.
-            </p>
-          )}
-          {errorCampo('rol')}
-        </fieldset>
-
-        <fieldset
-          className="m-0 min-w-0 border-0 p-0"
-          aria-describedby={describe('farmaciaIds', `${id}-farmacias-ayuda`)}
-          aria-invalid={!!err('farmaciaIds')}
-        >
-          <legend className="label mb-2">
-            <span>
-              Farmacias que lleva
-              {rol !== 'admin' && (
-                <>
+        {esAdmin ? (
+          // Solo hay una cuenta de administración (gestión): no se elige ni se quita aquí.
+          <p className="m-0 border-t border-[var(--color-hairline)] pt-5 text-[14px] leading-[1.5] text-[var(--color-ink-2)]">
+            Es la cuenta de administración: ve todas las farmacias, gestiona los usuarios y puede usarlo todo.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-5 border-t border-[var(--color-hairline)] pt-5">
+            <fieldset
+              className="m-0 min-w-0 border-0 p-0"
+              aria-describedby={describe('farmaciaIds', `${id}-farmacias-ayuda`)}
+              aria-invalid={!!err('farmaciaIds')}
+            >
+              <legend className="label mb-1">
+                <span>
+                  Farmacias que lleva
                   <span aria-hidden className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none align-[-0.05em]">
-                    *
-                  </span>
-                  <span className="sr-only">, obligatorio</span>
-                </>
-              )}
-            </span>
-          </legend>
-          <div className="flex flex-col gap-2">
-            {farmacias.map((f, i) => {
-              const marcada = farmaciaIds.includes(f.id);
-              return (
-                <label
-                  key={f.id}
-                  className={cn(
-                    'flex items-center gap-3 rounded-[10px] border px-3.5 py-2.5 min-h-11 cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--color-accent)] has-[:focus-visible]:outline-offset-2',
-                    marcada
-                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
-                      : 'border-[var(--color-control-border)] bg-[var(--color-surface)]',
-                  )}
-                >
-                  <input
-                    type="checkbox"
+                  *
+                </span>
+                <span className="sr-only">, obligatorio</span>
+                </span>
+              </legend>
+              <div className={cn('flex flex-col', farmacias.length >= 7 && 'sm:grid sm:grid-cols-2 sm:gap-x-4')}>
+                {farmacias.map((f, i) => (
+                  <OpcionEleccion
+                    key={f.id}
+                    tipo="checkbox"
                     // Destino del foco si el servidor devuelve un error en las farmacias
                     id={i === 0 ? `${id}-farmaciaIds` : undefined}
-                    checked={marcada}
+                    marcado={farmaciaIds.includes(f.id)}
                     onChange={() => alternarFarmacia(f.id)}
-                    className="sr-only cursor-pointer"
+                    titulo={f.nombre}
                   />
-                  <IndicadorEleccion tipo="checkbox" marcado={marcada} />
-                  <span className="text-[14.5px] text-[var(--color-ink)]">{f.nombre}</span>
-                </label>
-              );
-            })}
-          </div>
-          <p id={`${id}-farmacias-ayuda`} className="m-0 mt-1.5 text-[13px] text-[var(--color-muted)]">
-            {rol === 'admin'
-              ? 'El administrador ve todas las farmacias aunque no marques ninguna.'
-              : 'Puede llevar varias; tendrá el mismo permiso en todas.'}
-          </p>
-          {errorCampo('farmaciaIds')}
-        </fieldset>
-
-        <fieldset className="m-0 min-w-0 border-0 p-0" aria-describedby={describe('modulos', `${id}-modulos-ayuda`)}>
-          <legend className="label mb-2">Módulos que puede usar</legend>
-          {rol === 'admin' ? (
-            <p id={`${id}-modulos-ayuda`} className="m-0 text-[13.5px] text-[var(--color-ink-2)]">
-              El administrador puede usar todos los módulos.
-            </p>
-          ) : (
-            <>
-              <div className="flex flex-col gap-2">
-                {MODULOS.map((m, i) => {
-                  const marcado = modulos.includes(m);
-                  return (
-                    <label
-                      key={m}
-                      className={cn(
-                        'flex items-start gap-3 rounded-[10px] border px-3.5 py-3 min-h-11 cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--color-accent)] has-[:focus-visible]:outline-offset-2',
-                        marcado
-                          ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
-                          : 'border-[var(--color-control-border)] bg-[var(--color-surface)]',
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        id={i === 0 ? `${id}-modulos` : undefined}
-                        checked={marcado}
-                        onChange={() => alternarModulo(m)}
-                        className="sr-only cursor-pointer"
-                      />
-                      <IndicadorEleccion tipo="checkbox" marcado={marcado} />
-                      <span className="min-w-0">
-                        <span className="block text-[14.5px] font-semibold text-[var(--color-ink)]">{MODULO_LABEL[m]}</span>
-                        <span className="block text-[13.5px] leading-[1.45] text-[var(--color-ink-2)]">{DESCRIPCION_MODULO[m]}</span>
-                      </span>
-                    </label>
-                  );
-                })}
+                ))}
               </div>
-              <p id={`${id}-modulos-ayuda`} className="m-0 mt-1.5 text-[13px] text-[var(--color-muted)]">
-                Sin ninguno marcado, solo verá la web de su farmacia.
+              <p id={`${id}-farmacias-ayuda`} className="m-0 mt-1.5 text-[13px] text-[var(--color-muted)]">
+                Puede llevar varias; tendrá los mismos permisos en todas.
               </p>
-            </>
-          )}
-          {errorCampo('modulos')}
-        </fieldset>
+              {errorCampo('farmaciaIds')}
+            </fieldset>
+
+            <fieldset className="m-0 min-w-0 border-0 p-0" aria-describedby={describe('modulos', `${id}-permisos-ayuda`)}>
+              <legend className="label mb-1">Qué puede hacer</legend>
+              <div className="flex flex-col">
+                <OpcionEleccion
+                  tipo="checkbox"
+                  // Destino del foco si el servidor devuelve un error en el rol
+                  id={`${id}-rol`}
+                  marcado={editaWeb}
+                  onChange={() => setEditaWeb((v) => !v)}
+                  titulo="Editar la web de su farmacia"
+                  descripcion="Horario, servicios, fotos y textos. Sin marcar, solo podrá verla."
+                />
+                {MODULOS.map((m, i) => (
+                  <OpcionEleccion
+                    key={m}
+                    tipo="checkbox"
+                    id={i === 0 ? `${id}-modulos` : undefined}
+                    marcado={modulos.includes(m)}
+                    onChange={() => alternarModulo(m)}
+                    titulo={MODULO_LABEL[m]}
+                    descripcion={DESCRIPCION_MODULO[m]}
+                  />
+                ))}
+              </div>
+              <p id={`${id}-permisos-ayuda`} className="m-0 mt-1.5 text-[13px] text-[var(--color-muted)]">
+                Sin nada marcado, solo podrá ver la web de su farmacia.
+              </p>
+              {errorCampo('rol')}
+              {errorCampo('modulos')}
+            </fieldset>
+          </div>
+        )}
       </form>
     </Modal>
   );

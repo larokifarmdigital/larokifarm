@@ -19,6 +19,7 @@ import {
 } from './passwords';
 
 const SOLO_ADMIN = 'Solo un administrador puede gestionar usuarios.';
+const SOLO_UN_ADMIN = 'Solo hay una cuenta de administración: no se pueden crear más ni cambiarla de tipo.';
 const ERROR_GENERICO = 'No se ha podido guardar. Vuelve a intentarlo.';
 
 /** Registro de operaciones de administración: quién, qué y sobre quién (sin datos personales ni contraseñas). */
@@ -65,7 +66,8 @@ function erroresDe(e: z.ZodError): SaveResult<never> {
 /**
  * Gestión de cuentas (Ajustes → Usuarios). Todas las reglas se comprueban aquí,
  * en el servidor: la UI solo las refleja.
- * - Solo SUPER_ADMIN gestiona usuarios.
+ * - Solo SUPER_ADMIN gestiona usuarios, y solo hay UNA cuenta SUPER_ADMIN
+ *   (decisión de gestión 24-11-2026): no se crean más ni se cambia de tipo.
  * - Nadie se desactiva ni se quita el rol de administrador a sí mismo.
  * - Siempre queda al menos un administrador activo.
  * - Los módulos (conciliador, comparador) los marca el administrador; él los
@@ -109,6 +111,7 @@ export class UserAccountsService {
     const p = crearSchema.safeParse(raw);
     if (!p.success) return erroresDe(p.error);
     const { nombre, email, rol, farmaciaIds, modulos } = p.data;
+    if (rol === 'admin') return { ok: false, error: SOLO_UN_ADMIN, fieldErrors: { rol: SOLO_UN_ADMIN } };
     const errFarmacia = await this.validarFarmacias(rol, farmaciaIds);
     if (errFarmacia) return { ok: false, error: 'Revisa los campos marcados', fieldErrors: errFarmacia };
     if (await this.repo.emailExists(email)) {
@@ -143,6 +146,10 @@ export class UserAccountsService {
     const p = editarSchema.safeParse(raw);
     if (!p.success) return erroresDe(p.error);
     const { nombre, rol, farmaciaIds, modulos } = p.data;
+    // Solo hay una cuenta de administración: nadie pasa a serlo ni deja de serlo desde aquí.
+    if ((rol === 'admin') !== (actual.rol === 'admin')) {
+      return { ok: false, error: SOLO_UN_ADMIN, fieldErrors: { rol: SOLO_UN_ADMIN } };
+    }
     if (actual.id === actor.id && rol !== 'admin') {
       return { ok: false, error: 'No puedes quitarte a ti mismo el rol de administrador.', fieldErrors: { rol: 'No puedes quitarte tu propio rol de administrador' } };
     }
