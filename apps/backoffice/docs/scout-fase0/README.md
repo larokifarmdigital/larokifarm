@@ -30,8 +30,8 @@ ProFaes4 10/30) se distinguen. Gestión revisó 10 enlaces a mano: correctos.
 
 - **Packs**: fichas con `sku` `CN-N` (Hylo x6, NAN x4). No cuentan como el CN.
 - **Precio por cantidad**: en JSON-LD `AggregateOffer`, `lowPrice` es el precio
-  de 3+ unidades. Hay que tomar el de 1 unidad. La estrategia `jsonLd` de
-  `apps/scout` usa `lowPrice`: corregirlo al reaprovecharla.
+  de 3+ unidades. Hay que tomar el de 1 unidad (`precioUnidad` en
+  `core/precios/infrastructure/web/ficha.ts`; el Scout antiguo usaba `lowPrice`).
 - **Precio del buscador desfasado** (Doofinder, Empathy): usar siempre el de la ficha.
 - **Descuentos puntuales** (Black Friday): guardar precio tachado y fecha.
 - **Dos dominios**: Farmavázquez tiene los medicamentos en `farma-vazquez.com`.
@@ -41,8 +41,8 @@ ProFaes4 10/30) se distinguen. Gestión revisó 10 enlaces a mano: correctos.
 
 ## Ejecutar
 
-Los adaptadores importan `cheerio`. Ejecútalos desde una carpeta donde esté
-instalado (hoy `apps/scout`; en la Fase 2 entra en el backoffice):
+Los adaptadores de esta prueba importan `cheerio`, que está instalado en el
+backoffice (los de producción viven en `src/core/precios/infrastructure/farmacias`):
 
 ```bash
 node apps/backoffice/docs/scout-fase0/ejecutar.mjs farmaciabarata

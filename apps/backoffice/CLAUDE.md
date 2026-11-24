@@ -565,8 +565,11 @@ Diferencias schema vs UI documentadas:
   prueba de concepto en `docs/scout-fase0/` (5 farmacias que verifican por CN;
   trampas para la Fase 2 en su README). Fase 1 hecha: módulos por usuario
   (ver "Módulos por usuario"). Fase 2 hecha (24-11-2026): "Comparar precio".
-  Fase 3 hecha (24-11-2026): listas desde Excel (ver abajo). Siguiente:
-  Fase 4 (retirar `apps/scout` y su worker).
+  Fase 3 hecha (24-11-2026): listas desde Excel (ver abajo). Fase 4 hecha
+  (24-11-2026): `apps/scout` y su worker de Cloudflare borrados del repo
+  (el despliegue en Vercel/Cloudflare lo retira el usuario). Quedan en el
+  esquema `scout_batch_jobs`/`scout_batch_queries` (0 filas, sin uso):
+  borrarlas es una migración destructiva, pendiente de decidir.
   - **Listas** (`/scout/listas`, `/scout/listas/[id]`): tablas `price_lists`,
     `price_list_items`, `price_list_runs`, `price_list_run_items` (migración
     `20261124180000_price_lists`, ya ejecutada) + `price_checks.fromList`

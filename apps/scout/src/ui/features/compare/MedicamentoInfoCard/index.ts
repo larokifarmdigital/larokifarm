@@ -1,1 +1,0 @@
-export { MedicamentoInfoCard } from './MedicamentoInfoCard';

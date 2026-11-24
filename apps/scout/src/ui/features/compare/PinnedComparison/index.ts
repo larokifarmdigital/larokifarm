@@ -1,1 +1,0 @@
-export { PinnedComparison } from './PinnedComparison';
