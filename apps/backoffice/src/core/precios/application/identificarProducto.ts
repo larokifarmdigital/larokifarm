@@ -46,6 +46,7 @@ export async function productoPorCn(
   const med = await deps.medicamentos.porCn(cn);
   // Los medicamentos llevan siempre el EAN nacional 847000 + CN.
   if (med) return { cn, ean: eanDeCn(cn), nombre: med.nombre, tipo: med.tipo };
-  const para = await deps.parafarmacia.porCn(cn).catch(() => null);
+  // Si el catálogo no puede responder, se lanza (mejor "inténtalo de nuevo" que "no existe").
+  const para = await deps.parafarmacia.porCn(cn);
   return para ? { cn, ean: null, nombre: para.nombre, tipo: 'parafarmacia' } : null;
 }

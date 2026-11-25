@@ -4,7 +4,7 @@ import { PriceListRepositoryPrisma } from './PriceListRepositoryPrisma';
 
 export { cima } from './cima';
 export { nomenclator } from './nomenclator';
-export { FARMACIAS, farmaciasPara, farmaciaPorClave, catalogoFarmavazquez, sinBusquedaPorNombre } from './farmacias';
+export { FARMACIAS, farmaciasPara, farmaciaPorClave, catalogoFarmavazquez, catalogoParafarmacia, CatalogoNoDisponibleError, sinBusquedaPorNombre } from './farmacias';
 export { registrarUsoComparador } from './usoComparador';
 
 let repo: PriceCheckRepository | null = null;

@@ -665,6 +665,16 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
   - Cada farmacia se consulta con `POST /api/precios/[checkId]/[farmacia]`
     (ruta de API, no server action: las server actions de Next van en cola y
     aquí hacen falta en paralelo). 4–13 s por búsqueda con 10 farmacias.
+  - **Identificar parafarmacia por CN** (25-11-2026,
+    `infrastructure/farmacias/catalogoParafarmacia.ts`): desde Vercel el
+    buscador de Farmavázquez NO responde (comprobado: «physiorelax» 0
+    resultados en producción, 10 en local; el CN 165337 fallaba). Farmavázquez
+    (tope 15 s) y, si falla o no lo tiene, plan B en paralelo (Farmacia
+    Barata, FarmaciasDirect, Farma2go, OKFarma; vale el nombre de la primera
+    ficha con ese CN, tope 20 s). Si Farmavázquez falló y el plan B no lo
+    encuentra → `CatalogoNoDisponibleError` → "no hemos podido comprobar ese
+    código ahora mismo". Motivo en los logs de Vercel. Pendiente: la búsqueda
+    por NOMBRE de parafarmacia sigue dependiendo solo de Farmavázquez.
   - `cnDeCodigo` exige que el 7º dígito sea el de control (= el del EAN
     847000+CN): "165892.1" es un duplo en Farmacia Market, no el CN.
   - "Precio muy distinto al resto" (`esAtipico`, ≥4 precios, >1,5× o <0,6× la

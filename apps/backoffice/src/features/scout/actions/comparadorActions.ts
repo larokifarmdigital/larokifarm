@@ -2,7 +2,8 @@
 
 import { getCurrentUser, puedeUsarModulo } from '@/core/auth';
 import {
-  catalogoFarmavazquez,
+  catalogoParafarmacia,
+  CatalogoNoDisponibleError,
   cima,
   farmaciasPara,
   getPriceCheckRepository,
@@ -15,7 +16,7 @@ import {
 } from '@/core/precios';
 
 const SIN_PERMISO = 'No tienes activado el comparador de precios.';
-const deps = { medicamentos: cima, parafarmacia: catalogoFarmavazquez };
+const deps = { medicamentos: cima, parafarmacia: catalogoParafarmacia };
 
 export type FarmaciaConsulta = { clave: string; nombre: string };
 
@@ -47,6 +48,9 @@ async function abrirConsulta(userId: string, consulta: string, producto: Product
 }
 
 const ERROR_IDENTIFICAR = 'No hemos podido identificar el producto ahora mismo. Inténtalo de nuevo en unos minutos.';
+const ERROR_CATALOGO =
+  'No hemos podido comprobar ese código ahora mismo (las webs de parafarmacia no responden). Inténtalo de nuevo en unos minutos o busca por el nombre.';
+const mensajeError = (e: unknown) => (e instanceof CatalogoNoDisponibleError ? ERROR_CATALOGO : ERROR_IDENTIFICAR);
 
 export async function buscarProductoAction(texto: unknown): Promise<ResultadoBusqueda> {
   const u = await usuarioConModulo();
@@ -75,7 +79,7 @@ export async function buscarProductoAction(texto: unknown): Promise<ResultadoBus
     }
   } catch (e) {
     console.error('[precios] identificar', (e as Error).message);
-    return { estado: 'error', error: ERROR_IDENTIFICAR };
+    return { estado: 'error', error: mensajeError(e) };
   }
 }
 
@@ -90,6 +94,6 @@ export async function consultarCnAction(cn: unknown, consulta: unknown): Promise
     return abrirConsulta(u.id, typeof consulta === 'string' && consulta.trim() ? consulta.trim().slice(0, 120) : cn, p);
   } catch (e) {
     console.error('[precios] identificar', (e as Error).message);
-    return { estado: 'error', error: ERROR_IDENTIFICAR };
+    return { estado: 'error', error: mensajeError(e) };
   }
 }

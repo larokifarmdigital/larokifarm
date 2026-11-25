@@ -41,4 +41,5 @@ export function farmaciaPorClave(clave: string): AdaptadorFarmacia | undefined {
 }
 
 export { catalogoFarmavazquez } from './farmavazquez';
+export { catalogoParafarmacia, CatalogoNoDisponibleError } from './catalogoParafarmacia';
 export { sinBusquedaPorNombre } from './comun';
