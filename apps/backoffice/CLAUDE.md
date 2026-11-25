@@ -439,6 +439,13 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
 17. **Componentes compartidos del conciliador**: `FilePreviewModal` (visor
     PDF/Excel para `File` o URL `/api/files/…`), `ui/lib/botones.ts`
     (`BTN_ACCENT`, `BTN_SECUNDARIO`), `ReconciliationTable` sin `max-h`.
+    Visor (25-11-2026): el PDF pinta todas las páginas seguidas (scroll
+    vertical; el número de página sigue al scroll) y PDF y Excel tienen
+    buscador (`FilePreview/BuscadorVisor`: sin acentos ni mayúsculas, Enter /
+    Mayús+Enter, «n de m»). En el PDF resalta con `customTextRenderer` de
+    react-pdf y espera 250 ms tras teclear. Subida: `useSoltarArchivos`
+    (Dropzone) hace zona de soltar también de «Añadir más archivos» y de los
+    huecos «Falta…»; la página evita que soltar fuera abra el archivo.
 18. **Usuarios** (fase 5, 20-11-2026): `/ajustes/usuarios`, solo SUPER_ADMIN
     (item "Usuarios" del sidebar; `/ajustes` redirige ahí o a `/inicio`).
     Tabla (antes lista agrupada por farmacia: mareaba) con buscador y filtros;
@@ -802,11 +809,11 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-24T12:06:04Z).
+Actualizado automáticamente al hacer commit (2026-11-25T12:01:28Z).
 
-- `ef70a1b` 2026-11-24 — Feat(backoffice): simpler user permissions and calmer modals
-- `7c50572` 2026-11-24 — Fix(backoffice): simpler list flow, upload and compare in one step
-- `004a350` 2026-11-24 — Chore: remove the old standalone Scout app and its worker
-- `9039329` 2026-11-24 — Feat(backoffice): bulk price comparison from Excel lists
-- `3b5849d` 2026-11-24 — Feat(backoffice): price comparator with verified prices
+- `5e59cc0` 2026-11-25 — Fix(conciliador): ignore national codes the AI copies from another line
+- `1768864` 2026-11-25 — Feat(backoffice): screenshots in reconciliation reports and CN column in tables
+- `eb84344` 2026-11-25 — Feat(precios): report a problem with screenshots from price checks and lists
+- `525df84` 2026-11-25 — Feat(precios): Cloudflare Worker bridge for pharmacies that block Vercel
+- `8a36531` 2026-11-25 — Fix(backoffice): name search works when Farmavázquez blocks the server
 <!-- auto:recent-commits:end -->

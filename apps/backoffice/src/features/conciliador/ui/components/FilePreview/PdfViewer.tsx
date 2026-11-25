@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import { BuscadorVisor, buscarEn, normalizarBusqueda } from './BuscadorVisor';
 
 // NOTE: worker de PDF.js desde unpkg — evita configurar Webpack en Next.
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -13,13 +15,41 @@ interface PdfViewerProps {
   file: File | string;
 }
 
+interface Coincidencia {
+  pagina: number;
+  item: number;
+  inicio: number;
+}
+
+const MARCA = 'rounded-[2px] bg-yellow-300/70 text-transparent';
+const MARCA_ACTUAL = 'rounded-[2px] bg-orange-500/70 text-transparent outline outline-2 outline-orange-600';
+
+function escaparHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}
+
+/**
+ * Todas las páginas seguidas con scroll vertical (antes, una a una) y buscador
+ * sobre el texto del PDF: resalta las coincidencias en la capa de texto y salta
+ * entre ellas. Una coincidencia partida entre dos trozos de texto del PDF no se
+ * encuentra (pasa poco: PDF.js suele dar cada celda de la tabla entera).
+ */
 export default function PdfViewer({ file }: PdfViewerProps) {
   const [numPages, setNumPages] = useState(0);
-  const [pageNumber, setPageNumber] = useState(1);
+  const [paginaVisible, setPaginaVisible] = useState(1);
   const [scale, setScale] = useState(1);
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [textos, setTextos] = useState<string[][]>([]);
+  const [busqueda, setBusqueda] = useState('');
+  // Lo que se busca de verdad: espera a que se deje de escribir, porque cada
+  // cambio vuelve a pintar la capa de texto de todas las páginas.
+  const [consulta, setConsulta] = useState('');
+  const esperaRef = useRef<number | undefined>(undefined);
+  const [actual, setActual] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const paginasRef = useRef(new Map<number, HTMLDivElement>());
+  const pendienteRef = useRef(false);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -32,84 +62,173 @@ export default function PdfViewer({ file }: PdfViewerProps) {
     return () => ro.disconnect();
   }, []);
 
-  function onLoadSuccess({ numPages }: { numPages: number }) {
-    setNumPages(numPages);
-    setPageNumber(1);
+  const q = normalizarBusqueda(consulta.trim());
+
+  const { coincidencias, porItem } = useMemo(() => {
+    const lista: Coincidencia[] = [];
+    const mapa = new Map<string, { inicio: number; indice: number }[]>();
+    if (!q) return { coincidencias: lista, porItem: mapa };
+    textos.forEach((items, p) => {
+      items.forEach((str, k) => {
+        for (const inicio of buscarEn(str, q)) {
+          const clave = `${p + 1}-${k}`;
+          const arr = mapa.get(clave) ?? [];
+          arr.push({ inicio, indice: lista.length });
+          mapa.set(clave, arr);
+          lista.push({ pagina: p + 1, item: k, inicio });
+        }
+      });
+    });
+    return { coincidencias: lista, porItem: mapa };
+  }, [textos, q]);
+
+  const marcaQ = encodeURIComponent(q);
+
+  const renderTexto = useCallback(
+    ({ pageNumber, itemIndex, str }: { pageNumber: number; itemIndex: number; str: string }) => {
+      const marcas = porItem.get(`${pageNumber}-${itemIndex}`);
+      if (!marcas) return escaparHtml(str);
+      let html = '';
+      let desde = 0;
+      for (const m of marcas) {
+        html += escaparHtml(str.slice(desde, m.inicio));
+        const clase = m.indice === actual ? MARCA_ACTUAL : MARCA;
+        html += `<mark class="${clase}" data-c="${m.indice}" data-q="${marcaQ}">${escaparHtml(str.slice(m.inicio, m.inicio + q.length))}</mark>`;
+        desde = m.inicio + q.length;
+      }
+      return html + escaparHtml(str.slice(desde));
+    },
+    [porItem, actual, marcaQ, q.length],
+  );
+
+  const irAMarcaActual = useCallback((): boolean => {
+    const marca = containerRef.current?.querySelector<HTMLElement>(`mark[data-c="${actual}"][data-q="${marcaQ}"]`);
+    if (!marca) return false;
+    marca.scrollIntoView({ block: 'center', inline: 'nearest' });
+    return true;
+  }, [actual, marcaQ]);
+
+  // Al cambiar de coincidencia: si su página ya pintó la marca, se centra; si
+  // no, se baja a la página y se reintenta cuando su capa de texto termine.
+  useEffect(() => {
+    const m = coincidencias[actual];
+    if (!m) return;
+    if (irAMarcaActual()) {
+      pendienteRef.current = false;
+      return;
+    }
+    pendienteRef.current = true;
+    paginasRef.current.get(m.pagina)?.scrollIntoView({ block: 'start' });
+  }, [coincidencias, actual, irAMarcaActual]);
+
+  async function onLoadSuccess(pdf: PDFDocumentProxy) {
+    setNumPages(pdf.numPages);
+    setPaginaVisible(1);
     setError(null);
+    const paginas = await Promise.all(
+      Array.from({ length: pdf.numPages }, async (_, i) => {
+        const page = await pdf.getPage(i + 1);
+        const contenido = await page.getTextContent();
+        return contenido.items.map((it) => ('str' in it ? it.str : ''));
+      }),
+    );
+    setTextos(paginas);
   }
 
   function onLoadError(e: Error) {
     setError(e.message || 'No se pudo cargar el PDF.');
   }
 
-  function goto(delta: number) {
-    setPageNumber((p) => Math.max(1, Math.min(numPages, p + delta)));
+  function irAPagina(n: number) {
+    if (Number.isNaN(n) || numPages === 0) return;
+    const p = clamp(Math.round(n), 1, numPages);
+    paginasRef.current.get(p)?.scrollIntoView({ block: 'start' });
   }
 
-  function jumpTo(v: number) {
-    if (Number.isNaN(v)) return;
-    setPageNumber(Math.max(1, Math.min(numPages, v)));
+  // Página visible = la última cuya parte de arriba ya pasó el primer tercio del visor.
+  function alHacerScroll() {
+    const cont = containerRef.current;
+    if (!cont) return;
+    const limite = cont.getBoundingClientRect().top + cont.clientHeight / 3;
+    let visible = 1;
+    for (const [n, el] of paginasRef.current) {
+      if (el.getBoundingClientRect().top <= limite && n > visible) visible = n;
+    }
+    setPaginaVisible(visible);
+  }
+
+  function cambiarBusqueda(v: string) {
+    setBusqueda(v);
+    window.clearTimeout(esperaRef.current);
+    esperaRef.current = window.setTimeout(() => {
+      setConsulta(v);
+      setActual(0);
+    }, 250);
+  }
+
+  useEffect(() => () => window.clearTimeout(esperaRef.current), []);
+
+  function irCoincidencia(delta: 1 | -1) {
+    const total = coincidencias.length;
+    if (total === 0) return;
+    setActual((a) => (a + delta + total) % total);
   }
 
   function zoom(delta: number) {
     setScale((s) => clamp(s + delta, 0.5, 3));
   }
 
+  const anchoPagina = containerWidth ? Math.min(containerWidth - 40, 1200) * scale : undefined;
+
   return (
     <div className="flex h-full flex-col overflow-hidden bg-slate-100">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-slate-200 bg-white px-3 py-2">
         <div className="flex items-center gap-1">
-          <ToolbarButton
-            onClick={() => goto(-1)}
-            disabled={pageNumber <= 1}
-            title="Página anterior"
-          >
+          <ToolbarButton onClick={() => irAPagina(paginaVisible - 1)} disabled={paginaVisible <= 1} title="Página anterior">
             <ChevronLeftIcon />
           </ToolbarButton>
           <div className="flex items-center gap-1 text-xs text-slate-600">
             <input
+              key={paginaVisible}
               type="number"
               min={1}
               max={numPages || 1}
-              value={pageNumber}
+              defaultValue={paginaVisible}
               aria-label="Ir a la página"
-              onChange={(e) => jumpTo(Number(e.target.value))}
-              className="w-14 rounded-md border border-slate-300 px-2 py-1 text-center text-xs"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') irAPagina(Number(e.currentTarget.value));
+              }}
+              onBlur={(e) => {
+                if (Number(e.currentTarget.value) !== paginaVisible) irAPagina(Number(e.currentTarget.value));
+              }}
+              className="h-11 w-14 rounded-md border border-slate-300 px-2 text-center text-xs sm:h-8"
             />
             <span>de {numPages || '—'}</span>
           </div>
-          <ToolbarButton
-            onClick={() => goto(+1)}
-            disabled={pageNumber >= numPages}
-            title="Página siguiente"
-          >
+          <ToolbarButton onClick={() => irAPagina(paginaVisible + 1)} disabled={paginaVisible >= numPages} title="Página siguiente">
             <ChevronRightIcon />
           </ToolbarButton>
         </div>
 
+        <BuscadorVisor
+          valor={busqueda}
+          onCambio={cambiarBusqueda}
+          total={coincidencias.length}
+          actual={actual}
+          onIr={irCoincidencia}
+          etiqueta="Buscar en el PDF"
+          className="order-last w-full sm:order-none sm:w-auto"
+        />
+
         <div className="flex items-center gap-1">
-          <ToolbarButton
-            onClick={() => zoom(-0.2)}
-            disabled={scale <= 0.5}
-            title="Reducir zoom"
-          >
+          <ToolbarButton onClick={() => zoom(-0.2)} disabled={scale <= 0.5} title="Reducir zoom">
             <MinusIcon />
           </ToolbarButton>
-          <span className="w-12 text-center text-xs tabular-nums text-slate-600">
-            {Math.round(scale * 100)}%
-          </span>
-          <ToolbarButton
-            onClick={() => zoom(+0.2)}
-            disabled={scale >= 3}
-            title="Aumentar zoom"
-          >
+          <span className="hidden w-12 text-center text-xs tabular-nums text-slate-600 sm:inline">{Math.round(scale * 100)}%</span>
+          <ToolbarButton onClick={() => zoom(+0.2)} disabled={scale >= 3} title="Aumentar zoom">
             <PlusIcon />
           </ToolbarButton>
-          <ToolbarButton
-            onClick={() => setScale(1)}
-            disabled={scale === 1}
-            title="Ajustar al ancho"
-          >
+          <ToolbarButton onClick={() => setScale(1)} disabled={scale === 1} title="Ajustar al ancho">
             <FitIcon />
           </ToolbarButton>
         </div>
@@ -120,40 +239,54 @@ export default function PdfViewer({ file }: PdfViewerProps) {
         tabIndex={0}
         role="region"
         aria-label="Vista del PDF"
+        onScroll={alHacerScroll}
         className="flex-1 overflow-auto"
       >
         {error ? (
-          <div className="flex h-full items-center justify-center px-6 text-center text-sm text-red-700">
-            {error}
-          </div>
+          <div className="flex h-full items-center justify-center px-6 text-center text-sm text-red-700">{error}</div>
         ) : (
-          <div className="flex justify-center p-4">
-            <Document
-              file={file}
-              onLoadSuccess={onLoadSuccess}
-              onLoadError={onLoadError}
-              loading={<Loader label="Cargando PDF…" />}
-              error={
-                <div className="text-sm text-red-700">
-                  No se pudo cargar el PDF.
-                </div>
-              }
-            >
-              <Page
-                pageNumber={pageNumber}
-                scale={scale}
-                width={
-                  containerWidth
-                    ? Math.min(containerWidth - 40, 1200) * scale
-                    : undefined
-                }
-                renderTextLayer
-                renderAnnotationLayer
-                className="shadow-lg"
-                loading={<Loader label="Cargando página…" />}
-              />
-            </Document>
-          </div>
+          <Document
+            file={file}
+            onLoadSuccess={onLoadSuccess}
+            onLoadError={onLoadError}
+            loading={
+              <div className="flex justify-center p-6">
+                <Loader label="Cargando PDF…" />
+              </div>
+            }
+            error={<div className="p-6 text-center text-sm text-red-700">No se pudo cargar el PDF.</div>}
+            className="flex flex-col items-center gap-4 p-4"
+          >
+            {Array.from({ length: numPages }, (_, i) => i + 1).map((n) => (
+              <div
+                key={n}
+                ref={(el) => {
+                  if (el) paginasRef.current.set(n, el);
+                  else paginasRef.current.delete(n);
+                }}
+                className="scroll-mt-4"
+              >
+                <Page
+                  pageNumber={n}
+                  width={anchoPagina}
+                  renderTextLayer
+                  renderAnnotationLayer
+                  customTextRenderer={renderTexto}
+                  onRenderTextLayerSuccess={() => {
+                    if (pendienteRef.current && coincidencias[actual]?.pagina === n && irAMarcaActual()) {
+                      pendienteRef.current = false;
+                    }
+                  }}
+                  className="shadow-lg"
+                  loading={
+                    <div className="flex min-h-40 items-center justify-center bg-white" style={{ width: anchoPagina }}>
+                      <Loader label={`Cargando página ${n}…`} />
+                    </div>
+                  }
+                />
+              </div>
+            ))}
+          </Document>
         )}
       </div>
     </div>

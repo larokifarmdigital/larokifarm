@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
+import { BuscadorVisor, normalizarBusqueda } from './BuscadorVisor';
 
 interface ExcelViewerProps {
   /** Blob local (subida) o URL remota (historial en R2). */
@@ -27,6 +28,9 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
   const [activeSheet, setActiveSheet] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState('');
+  const [actual, setActual] = useState(0);
+  const tablaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +72,41 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
     return current.rows.reduce((max, r) => Math.max(max, r.length), 0);
   }, [current]);
 
+  const q = normalizarBusqueda(busqueda.trim());
+
+  // Celdas que contienen el texto buscado (en la hoja abierta), en orden de lectura.
+  const coincidencias = useMemo(() => {
+    const lista: string[] = [];
+    if (!current || !q) return lista;
+    current.rows.forEach((row, r) => {
+      for (let c = 0; c < columnCount; c++) {
+        if (normalizarBusqueda(textoCelda(row[c])).includes(q)) lista.push(`${r}-${c}`);
+      }
+    });
+    return lista;
+  }, [current, columnCount, q]);
+
+  const marcadas = useMemo(() => new Set(coincidencias), [coincidencias]);
+  const celdaActual = coincidencias[actual];
+
+  useEffect(() => {
+    if (!celdaActual) return;
+    tablaRef.current
+      ?.querySelector(`[data-celda="${celdaActual}"]`)
+      ?.scrollIntoView({ block: 'center', inline: 'center' });
+  }, [celdaActual]);
+
+  function cambiarBusqueda(v: string) {
+    setBusqueda(v);
+    setActual(0);
+  }
+
+  function irCoincidencia(delta: 1 | -1) {
+    const total = coincidencias.length;
+    if (total === 0) return;
+    setActual((a) => (a + delta + total) % total);
+  }
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center gap-2 text-sm text-slate-600">
@@ -106,7 +145,10 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
               <button
                 key={i}
                 type="button"
-                onClick={() => setActiveSheet(i)}
+                onClick={() => {
+                  setActiveSheet(i);
+                  setActual(0);
+                }}
                 className={`shrink-0 border-b-2 px-3 py-2 text-xs font-medium ${
                   active
                     ? 'border-slate-700 text-slate-900'
@@ -125,7 +167,19 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
         </div>
       )}
 
-      <div tabIndex={0} role="region" aria-label="Vista del Excel" className="flex-1 overflow-auto">
+      <div className="flex shrink-0 items-center border-b border-slate-200 bg-white px-3 py-2">
+        <BuscadorVisor
+          valor={busqueda}
+          onCambio={cambiarBusqueda}
+          total={coincidencias.length}
+          actual={actual}
+          onIr={irCoincidencia}
+          etiqueta="Buscar en el Excel"
+          className="w-full sm:w-auto"
+        />
+      </div>
+
+      <div ref={tablaRef} tabIndex={0} role="region" aria-label="Vista del Excel" className="flex-1 overflow-auto">
         <table className="w-full min-w-max border-separate border-spacing-0 text-xs">
           <thead className="sticky top-0 z-10 bg-slate-100">
             <tr>
@@ -150,16 +204,19 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
                 </td>
                 {Array.from({ length: columnCount }, (_, c) => {
                   const v = row[c];
-                  const display =
-                    v === null || v === undefined
-                      ? ''
-                      : typeof v === 'number'
-                        ? formatNumber(v)
-                        : String(v);
+                  const display = textoCelda(v);
+                  const clave = `${r}-${c}`;
                   return (
                     <td
                       key={c}
-                      className="border-b border-r border-slate-200 px-2 py-1 text-slate-800"
+                      data-celda={clave}
+                      className={`border-b border-r border-slate-200 px-2 py-1 text-slate-800 ${
+                        clave === celdaActual
+                          ? 'bg-orange-200 outline outline-2 -outline-offset-2 outline-orange-600'
+                          : marcadas.has(clave)
+                            ? 'bg-yellow-100'
+                            : ''
+                      }`}
                       style={
                         typeof v === 'number' ? { textAlign: 'right' } : undefined
                       }
@@ -190,6 +247,11 @@ function excelColumnLetter(idx: number): string {
     n = Math.floor(n / 26) - 1;
   }
   return s;
+}
+
+function textoCelda(v: string | number | boolean | null | undefined): string {
+  if (v === null || v === undefined) return '';
+  return typeof v === 'number' ? formatNumber(v) : String(v);
 }
 
 function formatNumber(n: number): string {

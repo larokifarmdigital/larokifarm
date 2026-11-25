@@ -14,6 +14,44 @@ interface DropzoneProps {
 }
 
 /**
+ * Props para convertir cualquier caja en zona donde soltar archivos. El
+ * contador evita el parpadeo de `dragleave` al pasar por encima de los hijos.
+ */
+export function useSoltarArchivos(onArchivos: (files: File[]) => void, disabled = false) {
+  const [arrastrando, setArrastrando] = useState(false);
+  const capas = useRef(0);
+  const conArchivos = (e: React.DragEvent) => Array.from(e.dataTransfer.types).includes('Files');
+  return {
+    arrastrando,
+    props: {
+      onDragEnter: (e: React.DragEvent) => {
+        if (disabled || !conArchivos(e)) return;
+        e.preventDefault();
+        capas.current += 1;
+        setArrastrando(true);
+      },
+      onDragOver: (e: React.DragEvent) => {
+        if (disabled || !conArchivos(e)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+      },
+      onDragLeave: () => {
+        capas.current = Math.max(0, capas.current - 1);
+        if (capas.current === 0) setArrastrando(false);
+      },
+      onDrop: (e: React.DragEvent) => {
+        if (!conArchivos(e)) return;
+        e.preventDefault();
+        capas.current = 0;
+        setArrastrando(false);
+        if (disabled || e.dataTransfer.files.length === 0) return;
+        onArchivos(Array.from(e.dataTransfer.files));
+      },
+    },
+  };
+}
+
+/**
  * Zona de subida: se puede arrastrar (escritorio) o pulsar el botón. El
  * disparador es un <button> de verdad (antes era un div role=button sin
  * nombre accesible y la barra espaciadora hacía scroll).
@@ -21,7 +59,7 @@ interface DropzoneProps {
 export function Dropzone({ onArchivos, compacto = false, disabled = false }: DropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const ayudaId = useId();
-  const [arrastrando, setArrastrando] = useState(false);
+  const { arrastrando, props: soltar } = useSoltarArchivos(onArchivos, disabled);
 
   function manejar(files: FileList | null) {
     if (disabled || !files || files.length === 0) return;
@@ -46,17 +84,28 @@ export function Dropzone({ onArchivos, compacto = false, disabled = false }: Dro
 
   if (compacto) {
     return (
-      <div>
+      <div
+        {...soltar}
+        className={cn(
+          'flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-[10px] border-2 border-dashed px-3 py-3 transition-colors',
+          arrastrando
+            ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
+            : 'border-[var(--color-hairline-strong)]',
+        )}
+      >
         <button
           type="button"
           data-foco="anadir"
           disabled={disabled}
           onClick={() => inputRef.current?.click()}
-          className="inline-flex items-center gap-2 min-h-11 px-4 rounded-[8px] border border-dashed border-[var(--color-hairline-strong)] text-[14.5px] font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center justify-center gap-2 min-h-11 px-4 rounded-[8px] text-[14.5px] font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <NavIcon name="Plus" size={16} />
           Añadir más archivos
         </button>
+        <p className="hidden sm:block m-0 text-[14px] text-[var(--color-muted)]">
+          {arrastrando ? 'Suelta para añadirlos' : 'o arrástralos aquí'}
+        </p>
         {input}
       </div>
     );
@@ -64,16 +113,7 @@ export function Dropzone({ onArchivos, compacto = false, disabled = false }: Dro
 
   return (
     <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        if (!disabled) setArrastrando(true);
-      }}
-      onDragLeave={() => setArrastrando(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setArrastrando(false);
-        manejar(e.dataTransfer.files);
-      }}
+      {...soltar}
       className={cn(
         'flex flex-col items-center justify-center gap-4 rounded-[14px] border-2 border-dashed px-5 py-8 sm:py-12 text-center transition-colors',
         arrastrando

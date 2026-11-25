@@ -36,7 +36,7 @@ import {
   type Envio,
 } from '../../lib/envios';
 import { CLASE_TONO, chipsResumen, resumirLineas } from '../../lib/lineas';
-import { Dropzone } from '../../components/Dropzone';
+import { Dropzone, useSoltarArchivos } from '../../components/Dropzone';
 import { descargarXlsx, descargarZip } from '../../lib/downloads';
 
 /** Lo que tarda de media cada envío (la IA lee el PDF y se compara). */
@@ -89,6 +89,20 @@ export function ReconcilerView({ budgetStatus: budgetUnica, currentUser, farmaci
     window.addEventListener('beforeunload', aviso);
     return () => window.removeEventListener('beforeunload', aviso);
   }, [procesando]);
+
+  // Si se suelta un archivo fuera de las zonas de subida, el navegador lo
+  // abriría en la pestaña y se perderían los envíos cargados.
+  useEffect(() => {
+    const evitar = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes('Files')) e.preventDefault();
+    };
+    window.addEventListener('dragover', evitar);
+    window.addEventListener('drop', evitar);
+    return () => {
+      window.removeEventListener('dragover', evitar);
+      window.removeEventListener('drop', evitar);
+    };
+  }, []);
 
   // Tras quitar/unir/vaciar… el elemento con foco desaparece: lo movemos a uno que exista.
   useEffect(() => {
@@ -463,10 +477,26 @@ function ChipArchivo({ archivo, onQuitar, bloqueado }: { archivo: ArchivoCargado
 
 function HuecoVacio({ kind, onAnadir, bloqueado }: { kind: UploadKind; onAnadir: (files: File[]) => void; bloqueado: boolean }) {
   const ref = useRef<HTMLInputElement>(null);
+  const { arrastrando, props: soltar } = useSoltarArchivos(onAnadir, bloqueado);
   return (
-    <div className="flex flex-wrap items-center gap-2 min-h-11 px-3 py-1.5 rounded-[8px] border border-dashed border-[var(--color-hairline-strong)]">
+    <div
+      {...soltar}
+      className={cn(
+        'flex flex-wrap items-center gap-2 min-h-11 px-3 py-1.5 rounded-[8px] border border-dashed transition-colors',
+        arrastrando
+          ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
+          : 'border-[var(--color-hairline-strong)]',
+      )}
+    >
       <span className="flex-1 min-w-0 text-[14px] text-[var(--color-muted)]">
-        {kind === 'pdf' ? 'Falta el albarán o factura (PDF)' : 'Falta tu pedido (Excel)'}
+        {arrastrando ? (
+          'Suelta aquí el archivo'
+        ) : (
+          <>
+            {kind === 'pdf' ? 'Falta el albarán o factura (PDF)' : 'Falta tu pedido (Excel)'}
+            <span className="hidden sm:inline"> · puedes arrastrarlo aquí</span>
+          </>
+        )}
       </span>
       <button
         type="button"
