@@ -673,8 +673,10 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
     Barata, FarmaciasDirect, Farma2go, OKFarma; vale el nombre de la primera
     ficha con ese CN, tope 20 s). Si Farmavázquez falló y el plan B no lo
     encuentra → `CatalogoNoDisponibleError` → "no hemos podido comprobar ese
-    código ahora mismo". Motivo en los logs de Vercel. Pendiente: la búsqueda
-    por NOMBRE de parafarmacia sigue dependiendo solo de Farmavázquez.
+    código ahora mismo". Motivo en los logs de Vercel. Por nombre: Farmavázquez y, si falla
+    o no encuentra nada, el buscador de OKFarma (`catalogoOkfarma`, Doofinder).
+    Webs pedidas el 25-11-2026 (PromoFarma, Atida, Druni, Sephora, DosFarma,
+    laparafarmaciaencasa): en pausa, motivos en `docs/scout-fase0/README.md`.
   - `cnDeCodigo` exige que el 7º dígito sea el de control (= el del EAN
     847000+CN): "165892.1" es un duplo en Farmacia Market, no el CN.
   - "Precio muy distinto al resto" (`esAtipico`, ≥4 precios, >1,5× o <0,6× la

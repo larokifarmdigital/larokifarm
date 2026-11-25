@@ -4,9 +4,9 @@
 // trae JSON-LD sku = CN y gtin13 = EAN; el precio sin descuento sale del
 // data-product de #product-details. Vende medicamentos sin receta.
 import * as cheerio from 'cheerio';
-import type { Producto } from '../../domain/models';
-import type { AdaptadorFarmacia, ResultadoFarmacia } from '../../domain/ports';
-import { parsePrecio } from '../../domain/codigos';
+import type { Candidato, Producto } from '../../domain/models';
+import type { AdaptadorFarmacia, CatalogoParafarmacia, ResultadoFarmacia } from '../../domain/ports';
+import { cnDeCodigo, parsePrecio } from '../../domain/codigos';
 import { ClienteWeb } from '../web/clienteWeb';
 import { precioUnidad, productoJsonLd, texto } from '../web/ficha';
 import { NO_ENCONTRADO, comprobarFicha, conErrores, conBusquedaPorNombre, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
@@ -17,6 +17,7 @@ const sesion = Math.random().toString(36).slice(2);
 let doofinder: { hashid: string; zona: string } | null = null;
 
 interface HitDoofinder {
+  title?: string;
   reference?: string;
   mpn?: string;
   ean13?: string;
@@ -98,4 +99,23 @@ export const okfarma: AdaptadorFarmacia = {
   clave: 'okfarma',
   nombre: 'OKFarma',
   buscar: (p) => conErrores(() => buscar(p)),
+};
+
+/**
+ * Buscador por nombre de respaldo para "Comparar precio": desde Vercel el de
+ * Farmavázquez da 403 (Cloudflare) y OKFarma sí responde. Doofinder trae el CN
+ * en `reference` (o `mpn`); el tipo real lo decide después CIMA al elegir.
+ */
+export const catalogoOkfarma: Pick<CatalogoParafarmacia, 'porNombre'> = {
+  async porNombre(textoBuscado) {
+    const vistos = new Set<string>();
+    const out: Candidato[] = [];
+    for (const h of await buscarDoofinder(textoBuscado)) {
+      const cn = cnDeCodigo(h.reference) ?? cnDeCodigo(h.mpn);
+      if (!cn || !h.title?.trim() || vistos.has(cn)) continue;
+      vistos.add(cn);
+      out.push({ cn, nombre: h.title.trim(), tipo: 'parafarmacia' });
+    }
+    return out;
+  },
 };

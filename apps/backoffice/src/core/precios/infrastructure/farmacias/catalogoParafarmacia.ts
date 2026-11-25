@@ -9,7 +9,7 @@ import { catalogoFarmavazquez } from './farmavazquez';
 import { farmaciaBarata } from './farmaciaBarata';
 import { farmaciasDirect } from './farmaciasDirect';
 import { farma2go } from './farma2go';
-import { okfarma } from './okfarma';
+import { catalogoOkfarma, okfarma } from './okfarma';
 import { sinBusquedaPorNombre } from './comun';
 
 const RESPALDO = [farmaciaBarata, farmaciasDirect, farma2go, okfarma];
@@ -62,5 +62,14 @@ export const catalogoParafarmacia: CatalogoParafarmacia = {
     if (fallo) throw new CatalogoNoDisponibleError(fallo);
     return null;
   },
-  porNombre: (texto) => catalogoFarmavazquez.porNombre(texto),
+  // Por nombre: Farmavázquez y, si falla o no encuentra nada, el buscador de OKFarma.
+  async porNombre(texto) {
+    try {
+      const r = await conPlazo(catalogoFarmavazquez.porNombre(texto), TIEMPO_FARMAVAZQUEZ_MS);
+      if (r.length) return r;
+    } catch (e) {
+      console.error('[precios] Farmavázquez no responde al buscar por nombre', { motivo: (e as Error).message });
+    }
+    return conPlazo(catalogoOkfarma.porNombre(texto), TIEMPO_RESPALDO_MS);
+  },
 };
