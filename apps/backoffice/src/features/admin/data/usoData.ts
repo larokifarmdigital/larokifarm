@@ -31,7 +31,15 @@ export type UsoIaPersona = {
   gasto: number;
 };
 
-export type UsoIaMes = { clave: string; etiqueta: string; corta: string; gasto: number; usos: number };
+export type UsoIaMes = {
+  clave: string;
+  etiqueta: string;
+  corta: string;
+  gasto: number;
+  usos: number;
+  conciliaciones: number;
+  traducciones: number;
+};
 
 export type UsoIaData = {
   /** "2026-11" */
@@ -114,12 +122,14 @@ export async function getUsoIaData(mesPedido?: string): Promise<UsoIaData> {
     })),
   ];
 
-  const porMes = new Map(claves.map((k) => [k, { gasto: 0, usos: 0 }]));
+  const porMes = new Map(claves.map((k) => [k, { gasto: 0, usos: 0, conciliaciones: 0, traducciones: 0 }]));
   for (const u of usos) {
     const m = porMes.get(claveMes(u.createdAt));
     if (m) {
       m.gasto += u.coste;
       m.usos += 1;
+      if (u.esConciliacion) m.conciliaciones += 1;
+      else m.traducciones += 1;
     }
   }
   const delMes = usos.filter((u) => claveMes(u.createdAt) === mes);
@@ -185,7 +195,7 @@ export async function getUsoIaData(mesPedido?: string): Promise<UsoIaData> {
       const [a, m] = k.split('-').map(Number) as [number, number];
       const d = new Date(Date.UTC(a, m - 1, 1));
       const v = porMes.get(k)!;
-      return { clave: k, etiqueta: fmtLargo.format(d), corta: fmtCorto.format(d).replace('.', ''), gasto: v.gasto, usos: v.usos };
+      return { clave: k, etiqueta: fmtLargo.format(d), corta: fmtCorto.format(d).replace('.', ''), ...v };
     }),
     total: {
       gastoMes: farmacias.reduce((s, f) => s + f.gastoMes, 0),
