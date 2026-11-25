@@ -166,6 +166,7 @@ export async function InicioView() {
 
   const esAdmin = user.rol === 'admin';
   const conConciliador = usuarioTieneModulo(user, 'conciliador');
+  const conComparador = usuarioTieneModulo(user, 'comparador');
   const scope = scopeFromSession(session);
   const [farmacias, conciliaciones, informes] = await Promise.all([
     getFarmaciaRepository().listFarmacias(),
@@ -194,6 +195,7 @@ export async function InicioView() {
           farmacias={farmacias}
           conciliaciones={conciliaciones.items}
           conConciliador={conConciliador}
+          conComparador={conComparador}
           puedeEditar={canEditContent(user)}
         />
       )}
@@ -226,10 +228,12 @@ function ListaFarmacias({ farmacias }: { farmacias: FarmaciaSummary[] }) {
   );
 }
 
-function InicioFarmacia({ farmacias, conciliaciones, conConciliador, puedeEditar }: {
+function InicioFarmacia({ farmacias, conciliaciones, conConciliador, conComparador, puedeEditar }: {
   farmacias: FarmaciaSummary[];
   conciliaciones: ComparisonRow[];
   conConciliador: boolean;
+  conComparador: boolean;
+  /** Sin "Editar la web" la web no aparece en el backoffice (tampoco aquí). */
   puedeEditar: boolean;
 }) {
   // Lleva varias farmacias: lista de sus webs (como el administrador) en vez de la tarjeta de una.
@@ -237,8 +241,14 @@ function InicioFarmacia({ farmacias, conciliaciones, conConciliador, puedeEditar
   const farmacia = varias ? undefined : farmacias[0];
   const web = farmacia ? landingUrl(farmacia.web) : undefined;
   return (
-    <div className={cn('grid grid-cols-1 gap-4 sm:gap-5 items-start', conConciliador && 'lg:grid-cols-[1.15fr_1fr]')}>
-      {varias ? (
+    <div
+      className={cn(
+        'grid grid-cols-1 gap-4 sm:gap-5 items-start',
+        puedeEditar && (conConciliador || conComparador) && 'lg:grid-cols-[1.15fr_1fr]',
+        !puedeEditar && conConciliador && conComparador && 'lg:grid-cols-2',
+      )}
+    >
+      {!puedeEditar ? null : varias ? (
         <Tarjeta titulo="Tus webs" accion={<Link href="/farmacias" className={ENLACE}>Ver todas</Link>}>
           {/* Todas, también las archivadas: son pocas y el estado sale en cada fila. */}
           <ListaFarmacias farmacias={farmacias} />
@@ -308,6 +318,32 @@ function InicioFarmacia({ farmacias, conciliaciones, conConciliador, puedeEditar
             Nueva conciliación
           </Link>
           <ListaConciliaciones items={conciliaciones} conFarmacia={varias} />
+        </Tarjeta>
+      )}
+
+      {conComparador && (
+        <Tarjeta titulo="Precios" accion={<Link href="/scout/historial" className={ENLACE}>Ver historial</Link>}>
+          <p className="m-0 mb-3 text-[14px] leading-[1.5] text-[var(--color-ink-2)]">
+            Busca un producto por su código nacional (CN), EAN o nombre y compara su precio en otras farmacias online.
+          </p>
+          <div className="flex flex-col gap-2.5 sm:flex-row">
+            <Link href="/scout" className={cn(BTN_PRIMARIO, 'sm:flex-1')}>
+              <NavIcon name="MagnifyingGlass" size={16} />
+              Comparar precio
+            </Link>
+            <Link href="/scout/listas" className={cn(BTN_SECUNDARIO, 'sm:flex-1')}>
+              <NavIcon name="ListChecks" size={16} />
+              Comparar una lista
+            </Link>
+          </div>
+        </Tarjeta>
+      )}
+
+      {!puedeEditar && !conConciliador && !conComparador && (
+        <Tarjeta titulo="Todavía no tienes nada activado">
+          <p className="m-0 text-[14px] leading-[1.5] text-[var(--color-ink-2)]">
+            Pide a la administración que te dé acceso a lo que necesites (albaranes, precios o la web de tu farmacia).
+          </p>
         </Tarjeta>
       )}
     </div>

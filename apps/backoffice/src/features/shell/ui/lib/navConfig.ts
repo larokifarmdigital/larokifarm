@@ -50,7 +50,8 @@ export function buildNav({ role, miFarmaciaId, variasFarmacias, modulos }: NavCo
 
   const items: NavItem[] = [
     { href: '/inicio', label: 'Inicio', icon: 'House' },
-    web,
+    // Sin "Editar la web" (viewer) no hay web en el backoffice.
+    ...(role === 'viewer' ? [] : [web]),
     {
       href: '/albaranes',
       label: 'Albaranes',

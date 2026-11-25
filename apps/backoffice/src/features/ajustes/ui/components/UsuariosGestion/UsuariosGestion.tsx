@@ -32,13 +32,14 @@ const SIN_FARMACIA = '__sin__';
 const FILTRO_PUEDE: { value: RolCuenta; label: string }[] = [
   { value: 'admin', label: 'Administración' },
   { value: 'manager', label: 'Editan la web' },
-  { value: 'viewer', label: 'Solo ven la web' },
+  { value: 'viewer', label: 'No editan la web' },
 ];
 
 /** "Editar web · Albaranes · Precios" (lo que puede hacer, en corto). */
 function quePuede(c: UserAccount): string {
   if (c.rol === 'admin') return 'Todo';
-  return [c.rol === 'manager' ? 'Editar web' : 'Ver web', ...(c.modulos.includes('conciliador') ? ['Albaranes'] : []), ...(c.modulos.includes('comparador') ? ['Precios'] : [])].join(' · ');
+  const partes = [...(c.rol === 'manager' ? ['Editar web'] : []), ...(c.modulos.includes('conciliador') ? ['Albaranes'] : []), ...(c.modulos.includes('comparador') ? ['Precios'] : [])];
+  return partes.length ? partes.join(' · ') : 'Nada todavía';
 }
 
 /** "Gestión Larokifarm" → "GL". */

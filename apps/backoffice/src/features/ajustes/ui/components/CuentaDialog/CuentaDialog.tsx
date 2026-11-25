@@ -205,7 +205,7 @@ export function CuentaDialog({
                   marcado={editaWeb}
                   onChange={() => setEditaWeb((v) => !v)}
                   titulo="Editar la web de su farmacia"
-                  descripcion="Horario, servicios, fotos y textos. Sin marcar, solo podrá verla."
+                  descripcion="Horario, servicios, fotos y textos. Sin marcar, la web no le aparece."
                 />
                 {MODULOS.map((m, i) => (
                   <OpcionEleccion
@@ -220,7 +220,7 @@ export function CuentaDialog({
                 ))}
               </div>
               <p id={`${id}-permisos-ayuda`} className="m-0 mt-1.5 text-[13px] text-[var(--color-muted)]">
-                Sin nada marcado, solo podrá ver la web de su farmacia.
+                Solo verá lo que marques aquí.
               </p>
               {errorCampo('rol')}
               {errorCampo('modulos')}

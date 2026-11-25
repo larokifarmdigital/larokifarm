@@ -19,6 +19,14 @@ export function canEditContent(u: Pick<Usuario, 'rol'>): boolean {
   return u.rol !== 'viewer';
 }
 
+/**
+ * La web en el backoffice es "editarla o nada" (24-11-2026): sin "Editar la
+ * web" (rol viewer) no ve ni el menú, ni la tarjeta de Inicio, ni el editor.
+ */
+export function veLaWeb(u: Pick<Usuario, 'rol'>): boolean {
+  return canEditContent(u);
+}
+
 export const READ_ONLY_ERROR = 'Tu usuario es de solo lectura.';
 
 /** ÚNICO punto para decidir si un Usuario puede tocar una farmacia. */

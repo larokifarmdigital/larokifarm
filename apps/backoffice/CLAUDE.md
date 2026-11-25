@@ -205,6 +205,12 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
 - El resto es personal de farmacia: farmacias + "Qué puede hacer" =
   "Editar la web de su farmacia" (se guarda como el rol de siempre: marcada =
   BUSINESS_ADMIN/manager, sin marcar = USER/viewer; sin migración) + módulos.
+- **La web es "editarla o nada"** (25-11-2026): sin "Editar la web" (rol
+  viewer) no hay web en el backoffice: fuera del menú, sin tarjeta en Inicio y
+  `/farmacias` y el editor redirigen a `/inicio` (`veLaWeb` en
+  `core/auth/domain/models/Usuario.ts`). Inicio enseña solo sus módulos
+  (tarjeta «Precios» si tiene el comparador) o "Todavía no tienes nada
+  activado". El modo solo consulta del editor queda sin uso.
 - Todo el personal de una farmacia ve TODAS sus conciliaciones
   (`scopeFromSession` devuelve `business` también para USER; el tipo
   `user` queda sin uso).
