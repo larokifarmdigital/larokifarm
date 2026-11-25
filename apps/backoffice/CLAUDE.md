@@ -683,6 +683,15 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
     PromoFarma también carga (sin CN en la ficha), Druni/Sephora siguen 406/403.
     Webs pedidas el 25-11-2026 (PromoFarma, Atida, Druni, Sephora, DosFarma,
     laparafarmaciaencasa): en pausa, motivos en `docs/scout-fase0/README.md`.
+  - **Reportar un problema** (25-11-2026, `components/ReportarIncidencia`): en
+    "Comparar precio" (al terminar), en el detalle del historial y en el ⋯ de
+    cada lista. Modal con texto + hasta 3 capturas (pegar Ctrl/⌘+V, arrastrar
+    o elegir; se comprimen con `shared/lib/prepareImageUpload`). Las capturas
+    van a `POST /api/incidencias/capturas` (tipo real por bytes, PNG/JPG/WebP,
+    re-codificadas a WebP con sharp → sin EXIF) y se guardan en R2
+    (`incidencias/precios/AAAA/MM/<id>.webp`); `GET …/capturas/[...key]` solo
+    SUPER_ADMIN (sin sesión → login y vuelve). El aviso va por Web3Forms (sin
+    adjuntos en el plan gratuito: enlaces). Sin tabla en la BD (solo correo).
   - `cnDeCodigo` exige que el 7º dígito sea el de control (= el del EAN
     847000+CN): "165892.1" es un duplo en Farmacia Market, no el CN.
   - "Precio muy distinto al resto" (`esAtipico`, ≥4 precios, >1,5× o <0,6× la

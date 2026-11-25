@@ -12,8 +12,14 @@ import { SUPPORT_EMAIL, supportMailto } from '@/shared/lib/support';
 import { WEB3FORMS_KEY, enviarCorreo } from '@/shared/lib/web3forms';
 import type { ShellInfo } from '../../lib/shellInfo';
 
-type Ayuda = { disponible: boolean; abrir: () => void };
-const AyudaContext = createContext<Ayuda>({ disponible: false, abrir: () => {} });
+/** Quién está usando el backoffice (para los avisos por correo). */
+export type UsuarioAviso = { nombre: string; email: string; farmacias: string };
+type Ayuda = { disponible: boolean; abrir: () => void; usuario: UsuarioAviso | null };
+const AyudaContext = createContext<Ayuda>({ disponible: false, abrir: () => {}, usuario: null });
+
+function farmaciasDe(shell: ShellInfo): string {
+  return shell.miFarmacia ? shell.miFarmacia.nombre : shell.misFarmacias?.join(', ') || (shell.rol === 'admin' ? 'Administración' : '—');
+}
 
 /** "Ayuda y soporte" del menú: abre el formulario (o el correo si no hay Web3Forms). */
 export function useAyuda(): Ayuda {
@@ -31,7 +37,14 @@ export function AyudaProvider({ shell, children }: { shell: ShellInfo; children:
   const [abierto, setAbierto] = useState(false);
   // Siempre un modal: con Web3Forms, el formulario; sin él, el correo de soporte.
   const abrir = useCallback(() => setAbierto(true), []);
-  const valor = useMemo(() => ({ disponible: !!(WEB3FORMS_KEY || SUPPORT_EMAIL), abrir }), [abrir]);
+  const valor = useMemo(
+    () => ({
+      disponible: !!(WEB3FORMS_KEY || SUPPORT_EMAIL),
+      abrir,
+      usuario: { nombre: shell.nombre, email: shell.email, farmacias: farmaciasDe(shell) },
+    }),
+    [abrir, shell],
+  );
   return (
     <AyudaContext.Provider value={valor}>
       {children}
@@ -110,7 +123,7 @@ function AyudaDialog({ shell, onClose }: { shell: ShellInfo; onClose: () => void
   const [error, setError] = useState<string | null>(null);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [pendiente, startTransition] = useTransition();
-  const farmacias = shell.miFarmacia ? shell.miFarmacia.nombre : shell.misFarmacias?.join(', ') || (shell.rol === 'admin' ? 'Administración' : '—');
+  const farmacias = farmaciasDe(shell);
 
   function enviar(e: React.FormEvent) {
     e.preventDefault();

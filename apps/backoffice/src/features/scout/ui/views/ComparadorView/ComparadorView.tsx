@@ -14,6 +14,7 @@ import {
 import { ListaCandidatos } from '../../components/ListaCandidatos';
 import { AvisoReceta, TarjetaProducto } from '../../components/TarjetaProducto';
 import { TablaPrecios } from '../../components/TablaPrecios';
+import { ReportarIncidenciaBoton } from '../../components/ReportarIncidencia';
 import { EUR, mejorVerificado } from '../../lib/precios';
 
 type ConsultaAbierta = Extract<ResultadoBusqueda, { estado: 'producto' }>;
@@ -254,11 +255,23 @@ export function ComparadorView({ cnInicial, autoConsultar }: { cnInicial?: strin
                 ) : undefined
               }
               accion={
-                terminado && consulta.producto.tipo !== 'receta' ? (
-                  <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={volverAConsultar} aria-disabled={ocupado || undefined}>
-                    <NavIcon name="ArrowsClockwise" size={16} />
-                    Volver a consultar
-                  </Button>
+                terminado ? (
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <ReportarIncidenciaBoton
+                      className="w-full sm:w-auto"
+                      contexto={{
+                        que: 'Consulta de precio',
+                        titulo: `${consulta.producto.nombre} (CN ${consulta.producto.cn})`,
+                        enlace: `/scout/historial/${consulta.checkId}`,
+                      }}
+                    />
+                    {consulta.producto.tipo !== 'receta' && (
+                      <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={volverAConsultar} aria-disabled={ocupado || undefined}>
+                        <NavIcon name="ArrowsClockwise" size={16} />
+                        Volver a consultar
+                      </Button>
+                    )}
+                  </div>
                 ) : undefined
               }
             />

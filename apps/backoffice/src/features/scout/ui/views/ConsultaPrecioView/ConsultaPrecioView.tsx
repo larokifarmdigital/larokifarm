@@ -8,6 +8,7 @@ import { cuando } from '../../lib/precios';
 import { FARMACIAS, farmaciasPara, getPriceCheckRepository } from '@/core/precios';
 import { AvisoReceta, TarjetaProducto } from '../../components/TarjetaProducto';
 import { TablaPrecios } from '../../components/TablaPrecios';
+import { ReportarIncidenciaBoton } from '../../components/ReportarIncidencia';
 
 /** Una consulta guardada, en solo lectura, con "Volver a consultar". */
 export async function ConsultaPrecioView({ id, volverA }: { id: string; volverA?: { href: string; texto: string } }) {
@@ -47,14 +48,20 @@ export async function ConsultaPrecioView({ id, volverA }: { id: string; volverA?
           nombresFarmacia={nombres}
           esTituloDePagina
           accion={
-            c.producto.tipo === 'receta' ? undefined : (
-            <Button asChild variant="accent" className="w-full sm:w-auto">
-              <Link href={`/scout?cn=${c.producto.cn}&auto=1`}>
-                <NavIcon name="ArrowsClockwise" size={16} />
-                Volver a consultar
-              </Link>
-            </Button>
-            )
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <ReportarIncidenciaBoton
+                className="w-full sm:w-auto"
+                contexto={{ que: 'Consulta de precio', titulo: `${c.producto.nombre} (CN ${c.producto.cn})`, enlace: `/scout/historial/${c.id}` }}
+              />
+              {c.producto.tipo !== 'receta' && (
+                <Button asChild variant="accent" className="w-full sm:w-auto">
+                  <Link href={`/scout?cn=${c.producto.cn}&auto=1`}>
+                    <NavIcon name="ArrowsClockwise" size={16} />
+                    Volver a consultar
+                  </Link>
+                </Button>
+              )}
+            </div>
           }
         />
         {c.producto.tipo === 'receta' ? (

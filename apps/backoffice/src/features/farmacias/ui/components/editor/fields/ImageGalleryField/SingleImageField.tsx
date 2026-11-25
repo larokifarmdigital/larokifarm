@@ -19,7 +19,7 @@ import {
   dropZoneClass,
 } from './ImageFieldParts';
 import { useImageFilePicker } from './useImageFilePicker';
-import { UPLOAD_NETWORK_ERROR, prepareImageUpload } from './prepareImageUpload';
+import { UPLOAD_NETWORK_ERROR, prepareImageUpload } from '@/shared/lib/prepareImageUpload';
 
 /** Imagen legacy (Business.logoUrl) sin fila en content_images. */
 const LEGACY_LOGO_ID = 'legacy-logo';

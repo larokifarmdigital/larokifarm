@@ -25,7 +25,7 @@ import {
   dropZoneClass,
 } from './ImageFieldParts';
 import { useImageFilePicker } from './useImageFilePicker';
-import { UPLOAD_NETWORK_ERROR, prepareImageUpload } from './prepareImageUpload';
+import { UPLOAD_NETWORK_ERROR, prepareImageUpload } from '@/shared/lib/prepareImageUpload';
 
 /** Modo multi — hero, sobre, gallery. Grid de tiles + modal de alt por idioma. */
 export function MultiImageField({

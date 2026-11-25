@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/shared/components/molecules/ConfirmDialog';
 import { Modal, ModalAcciones } from '@/shared/components/molecules/Modal';
 import { Label } from '@/shared/components/atoms/Label';
 import { RowActionsItem, RowActionsMenu, RowActionsNote, RowActionsSeparator } from '@/shared/components/molecules/RowActionsMenu';
+import { ReportarIncidenciaDialog } from '../ReportarIncidencia';
 import { eliminarListaAction, renombrarListaAction } from '../../../actions/listasActions';
 
 /**
@@ -31,6 +32,7 @@ export function AccionesLista({
   const router = useRouter();
   const [renombrar, setRenombrar] = useState(false);
   const [eliminar, setEliminar] = useState(false);
+  const [reportar, setReportar] = useState(false);
   const [nombre, setNombre] = useState(lista.nombre);
   const [error, setError] = useState<string | null>(null);
   const [pendiente, start] = useTransition();
@@ -86,6 +88,9 @@ export function AccionesLista({
         >
           Renombrar
         </RowActionsItem>
+        <RowActionsItem icon="Flag" onSelect={() => setReportar(true)}>
+          Reportar un problema
+        </RowActionsItem>
         <RowActionsSeparator />
         <RowActionsItem icon="Trash" peligro disabled={activa} onSelect={() => setEliminar(true)}>
           Eliminar lista
@@ -123,6 +128,13 @@ export function AccionesLista({
           )}
         </form>
       </Modal>
+
+      {reportar && (
+        <ReportarIncidenciaDialog
+          contexto={{ que: 'Lista de precios', titulo: lista.nombre, enlace: `/scout/listas/${lista.id}` }}
+          onClose={() => setReportar(false)}
+        />
+      )}
 
       <ConfirmDialog
         open={eliminar}
