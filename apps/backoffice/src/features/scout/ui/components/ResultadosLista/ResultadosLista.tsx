@@ -54,7 +54,8 @@ export function ResultadosLista({ filas, listaId, runId }: { filas: FilaResultad
           <caption className="sr-only">Resultados de la comparación</caption>
           <thead>
             <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-surface-2)] text-[12.5px] text-[var(--color-muted)]">
-              <th scope="col" className="px-4 py-2.5 font-semibold">Producto</th>
+              <th scope="col" className="px-4 py-2.5 font-semibold whitespace-nowrap">CN</th>
+              <th scope="col" className="px-3 py-2.5 font-semibold">Producto</th>
               <th scope="col" className="px-3 py-2.5 font-semibold">Tipo</th>
               <th scope="col" className="px-3 py-2.5 font-semibold text-right">Mejor precio</th>
               <th scope="col" className="px-3 py-2.5 font-semibold">Farmacias</th>
@@ -66,7 +67,8 @@ export function ResultadosLista({ filas, listaId, runId }: { filas: FilaResultad
               const href = hrefDetalle(f, listaId, runId);
               return (
                 <tr key={f.cn} className={cn('relative', href && 'transition-colors hover:bg-[var(--color-surface-2)]')}>
-                  <td className="px-4 py-3">
+                  <td className="relative px-4 py-3 whitespace-nowrap tabular-nums text-[var(--color-ink-2)]">{f.cn}</td>
+                  <td className="px-3 py-3">
                     {href ? (
                       <Link
                         href={href}
@@ -81,7 +83,6 @@ export function ResultadosLista({ filas, listaId, runId }: { filas: FilaResultad
                     ) : (
                       <span className="font-semibold text-[var(--color-ink-2)] break-words">{nombre(f)}</span>
                     )}
-                    <span className="block text-[13px] text-[var(--color-muted)] tabular-nums">CN {f.cn}</span>
                   </td>
                   <td className="px-3 py-3"><Estado f={f} /></td>
                   <td className="px-3 py-3 text-right whitespace-nowrap"><Precio f={f} /></td>

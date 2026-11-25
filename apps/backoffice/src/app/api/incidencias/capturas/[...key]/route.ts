@@ -6,7 +6,7 @@ import { getStorage } from '@/core/storage';
 
 export const runtime = 'nodejs';
 
-const KEY = /^incidencias\/precios\/\d{4}\/\d{2}\/[a-z0-9]{20,32}\.webp$/;
+const KEY = /^incidencias\/(precios|albaranes)\/\d{4}\/\d{2}\/[a-z0-9]{20,32}\.webp$/;
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ key: string[] }> }) {
   const session = await auth();

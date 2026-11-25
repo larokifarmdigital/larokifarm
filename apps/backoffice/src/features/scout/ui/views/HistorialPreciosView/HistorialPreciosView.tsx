@@ -105,7 +105,8 @@ export async function HistorialPreciosView({ params }: { params: HistorialPrecio
                 <caption className="sr-only">Consultas de precios, de la más reciente a la más antigua</caption>
                 <thead>
                   <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-surface-2)] text-[12.5px] text-[var(--color-muted)]">
-                    <th scope="col" className="px-5 py-2.5 font-semibold">Producto</th>
+                    <th scope="col" className="px-5 py-2.5 font-semibold whitespace-nowrap">CN</th>
+                    <th scope="col" className="px-3 py-2.5 font-semibold">Producto</th>
                     <th scope="col" className="px-3 py-2.5 font-semibold">Fecha</th>
                     <th scope="col" className="px-3 py-2.5 font-semibold text-right">Mejor precio</th>
                     <th scope="col" className="px-3 py-2.5 font-semibold">Con precio</th>
@@ -118,7 +119,8 @@ export async function HistorialPreciosView({ params }: { params: HistorialPrecio
                     const f = fechaFila(new Date(c.creadaEn));
                     return (
                       <tr key={c.id} className="relative transition-colors hover:bg-[var(--color-surface-2)]">
-                        <td className="px-5 py-3">
+                        <td className="relative px-5 py-3 whitespace-nowrap tabular-nums text-[var(--color-ink-2)]">{c.producto.cn}</td>
+                        <td className="px-3 py-3">
                           <Link
                             href={`${BASE}/${c.id}`}
                             className={cn(
@@ -131,7 +133,6 @@ export async function HistorialPreciosView({ params }: { params: HistorialPrecio
                             <span className="sr-only">, {f.larga}</span>
                           </Link>
                           <span className="mt-0.5 flex items-center gap-2 text-[13px] text-[var(--color-muted)]">
-                            <span className="tabular-nums">CN {c.producto.cn}</span>
                             <Chip tone={TIPO_TONO[c.producto.tipo]}>{TIPO_PRODUCTO_LABEL[c.producto.tipo]}</Chip>
                           </span>
                         </td>

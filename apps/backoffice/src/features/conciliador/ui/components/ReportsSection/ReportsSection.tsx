@@ -4,6 +4,7 @@ import { useId, useState, useTransition } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { toast } from 'sonner';
 import { WEB3FORMS_KEY, enviarCorreo } from '@/shared/lib/web3forms';
+import { CapturasField, subirCapturas, useCapturas, type Captura } from '@/shared/components/molecules/Capturas';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
 import { formatDate } from '@/shared/lib/format';
@@ -57,7 +58,15 @@ export function ReportarError({
           etiqueta="¿Qué está mal?"
           placeholder="Por ejemplo: el Sensibio H2O sí ha llegado, pero sale como que falta."
           textoEnviar="Enviar reporte"
-          enviar={async (nota) => {
+          conCapturas
+          enviar={async (nota, capturas) => {
+            // Primero las capturas: si alguna falla no se guarda el reporte a medias.
+            let urls: string[] = [];
+            try {
+              urls = await subirCapturas(capturas, 'albaranes');
+            } catch (err) {
+              return `${(err as Error).message} Quita esa captura o inténtalo de nuevo.`;
+            }
             const res = await fetch(`/api/comparisons/${comparisonId}/reports`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -70,7 +79,7 @@ export function ReportarError({
             toast.success('Reporte enviado. Te responderemos en esta conciliación.');
             // Aviso por correo al administrador. El reporte ya está guardado:
             // si el correo falla no se molesta a quien reporta.
-            if (data.aviso) void avisarPorCorreo(comparisonId, nota, data.aviso);
+            if (data.aviso) void avisarPorCorreo(comparisonId, nota, data.aviso, urls);
             return null;
           }}
         />
@@ -81,7 +90,7 @@ export function ReportarError({
 
 type Aviso = { farmacia: string; proveedor: string; envio: string; persona: string; email: string };
 
-async function avisarPorCorreo(comparisonId: string, nota: string, a: Aviso) {
+async function avisarPorCorreo(comparisonId: string, nota: string, a: Aviso, capturas: string[]) {
   if (!WEB3FORMS_KEY) {
     // En local se avisa a quien desarrolla; en producción, quien reporta no tiene que ver esto.
     if (process.env.NODE_ENV !== 'production') {
@@ -101,6 +110,7 @@ async function avisarPorCorreo(comparisonId: string, nota: string, a: Aviso) {
       Proveedor: a.envio ? `${a.proveedor} (${a.envio})` : a.proveedor,
       'Lo reporta': a.email ? `${a.persona} <${a.email}>` : a.persona,
       Conciliación: `${window.location.origin}/albaranes/historial/${comparisonId}`,
+      Capturas: capturas.length ? capturas.join('\n') : 'Ninguna',
     },
   });
   if (!ok) console.warn('[reportes] no se pudo enviar el aviso por correo');
@@ -231,6 +241,7 @@ function FormularioNota({
   placeholder,
   textoEnviar,
   enviar,
+  conCapturas = false,
 }: {
   titulo: string;
   descripcion: string;
@@ -238,9 +249,12 @@ function FormularioNota({
   placeholder: string;
   textoEnviar: string;
   /** Devuelve el mensaje de error, o null si ha ido bien. */
-  enviar: (nota: string) => Promise<string | null>;
+  enviar: (nota: string, capturas: Captura[]) => Promise<string | null>;
+  /** Permite añadir capturas (pegar, arrastrar o elegir). */
+  conCapturas?: boolean;
 }) {
   const [nota, setNota] = useState('');
+  const capturas = useCapturas();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const campoId = useId();
@@ -255,7 +269,7 @@ function FormularioNota({
     }
     setError(null);
     startTransition(async () => {
-      const fallo = await enviar(limpia);
+      const fallo = await enviar(limpia, capturas.capturas);
       if (fallo) setError(fallo);
     });
   }
@@ -268,7 +282,7 @@ function FormularioNota({
           e.preventDefault();
           document.getElementById(campoId)?.focus();
         }}
-        className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-24px)] max-w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-[14px] bg-[var(--color-surface)] p-5 sm:p-6 shadow-2xl outline-none">
+        className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-24px)] w-[calc(100%-24px)] max-w-[520px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[14px] bg-[var(--color-surface)] p-5 sm:p-6 shadow-2xl outline-none">
         <div className="flex items-start justify-between gap-3">
           <Dialog.Title className="m-0 text-[18px] font-bold tracking-[-0.01em] text-[var(--color-ink)]">{titulo}</Dialog.Title>
           <Dialog.Close
@@ -280,7 +294,7 @@ function FormularioNota({
         </div>
         <Dialog.Description className="m-0 mt-1 text-[14px] leading-[1.5] text-[var(--color-muted)]">{descripcion}</Dialog.Description>
 
-        <form onSubmit={onSubmit} className="mt-4">
+        <form onSubmit={onSubmit} onPaste={conCapturas ? capturas.alPegar : undefined} className="mt-4">
           <label htmlFor={campoId} className="mb-1.5 block text-[14px] font-medium text-[var(--color-ink)]">
             {etiqueta}
           </label>
@@ -299,6 +313,11 @@ function FormularioNota({
           <p id={contadorId} className="m-0 mt-1 text-right text-[12.5px] tabular-nums text-[var(--color-muted)]">
             {nota.length} / {MAX_NOTE_LEN}
           </p>
+          {conCapturas && (
+            <div className="mt-3">
+              <CapturasField estado={capturas} idBase={campoId} deshabilitado={pending} />
+            </div>
+          )}
           <p role="alert" className="m-0 min-h-0 text-[14px] text-[var(--color-red-ink)] empty:hidden">
             {error ?? ''}
           </p>

@@ -89,7 +89,8 @@ export function ReconciliationTable({ lines }: { lines: ReconciledLine[] }) {
           <caption className="sr-only">Líneas de la conciliación: pedido frente a lo recibido</caption>
           <thead>
             <tr className="bg-[var(--color-surface-2)] text-left text-[12.5px] text-[var(--color-muted)]">
-              <th scope="col" className="px-4 py-2.5 font-semibold">Producto</th>
+              <th scope="col" className="px-4 py-2.5 font-semibold whitespace-nowrap">CN</th>
+              <th scope="col" className="px-3 py-2.5 font-semibold">Producto</th>
               <th scope="col" className="px-3 py-2.5 font-semibold">Qué pasa</th>
               <th scope="col" className="px-3 py-2.5 font-semibold text-right">Uds. pedidas</th>
               <th scope="col" className="px-3 py-2.5 font-semibold text-right">Uds. recibidas</th>
@@ -102,10 +103,8 @@ export function ReconciliationTable({ lines }: { lines: ReconciledLine[] }) {
           <tbody className="divide-y divide-[var(--color-hairline)]">
             {visibles.map((l, i) => (
               <tr key={`${l.nationalCode}-${i}`} className="align-top">
-                <td className="px-4 py-2.5">
-                  <span className="block text-[var(--color-ink)]">{l.description}</span>
-                  <span className="block text-[12.5px] text-[var(--color-muted)] font-mono-tabular">CN {l.nationalCode || '—'}</span>
-                </td>
+                <td className="px-4 py-2.5 whitespace-nowrap tabular-nums text-[var(--color-ink-2)]">{l.nationalCode || '—'}</td>
+                <td className="px-3 py-2.5 text-[var(--color-ink)]">{l.description}</td>
                 <td className="px-3 py-2.5">
                   <span className={cn('inline-block rounded-[6px] px-2 py-0.5 text-[13px] font-medium', CLASE_TONO[tonoLinea(l)])}>
                     {etiquetaLinea(l)}

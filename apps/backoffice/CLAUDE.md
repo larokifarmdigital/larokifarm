@@ -692,6 +692,14 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
     (`incidencias/precios/AAAA/MM/<id>.webp`); `GET …/capturas/[...key]` solo
     SUPER_ADMIN (sin sesión → login y vuelve). El aviso va por Web3Forms (sin
     adjuntos en el plan gratuito: enlaces). Sin tabla en la BD (solo correo).
+    La zona de capturas es compartida (`shared/components/molecules/Capturas`:
+    `useCapturas`, `CapturasField`, `subirCapturas(…, 'precios'|'albaranes')`)
+    y también la usa «Reportar un error» del conciliador (el reporte se guarda
+    como siempre; las capturas, en `incidencias/albaranes/…`, solo van en el
+    correo). La subida exige el módulo del origen.
+  - **Tablas con columna CN** (25-11-2026): historial de precios, resultados de
+    una lista y líneas de una conciliación llevan el CN en su propia columna
+    (la primera), no debajo del nombre. En móvil (tarjetas) sigue debajo.
   - `cnDeCodigo` exige que el 7º dígito sea el de control (= el del EAN
     847000+CN): "165892.1" es un duplo en Farmacia Market, no el CN.
   - "Precio muy distinto al resto" (`esAtipico`, ≥4 precios, >1,5× o <0,6× la

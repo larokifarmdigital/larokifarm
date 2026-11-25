@@ -1,4 +1,5 @@
-// Sube una captura de una incidencia del comparador de precios. Se guarda en
+// Sube una captura de un reporte (comparador de precios o conciliador de
+// albaranes, campo `origen`). Se guarda en
 // el almacenamiento (R2) re-codificada a WebP con sharp: sin metadatos (EXIF,
 // ubicación) y sin nada que no sea una imagen. El enlace solo lo abre la
 // cuenta de administración (ver capturas/[...key]).
@@ -17,10 +18,12 @@ const ADMITIDOS = ['image/png', 'image/jpeg', 'image/webp'];
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-  if (session.user.role !== 'SUPER_ADMIN' && !(await puedeUsarModulo(session.user.id, 'comparador'))) {
-    return NextResponse.json({ error: 'No tienes activado el comparador de precios.' }, { status: 403 });
-  }
   const form = await req.formData().catch(() => null);
+  const origen = form?.get('origen') === 'albaranes' ? 'albaranes' : 'precios';
+  const modulo = origen === 'albaranes' ? 'conciliador' : 'comparador';
+  if (session.user.role !== 'SUPER_ADMIN' && !(await puedeUsarModulo(session.user.id, modulo))) {
+    return NextResponse.json({ error: 'No tienes activado este módulo.' }, { status: 403 });
+  }
   const archivo = form?.get('captura');
   if (!(archivo instanceof File)) return NextResponse.json({ error: 'Falta la captura.' }, { status: 400 });
   if (archivo.size > MAX_BYTES) return NextResponse.json({ error: 'La captura pesa demasiado (máximo 4 MB).' }, { status: 413 });
@@ -38,7 +41,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No se ha podido leer la imagen.' }, { status: 415 });
   }
   const ahora = new Date();
-  const key = `incidencias/precios/${ahora.getUTCFullYear()}/${String(ahora.getUTCMonth() + 1).padStart(2, '0')}/${createId()}.webp`;
+  const key = `incidencias/${origen}/${ahora.getUTCFullYear()}/${String(ahora.getUTCMonth() + 1).padStart(2, '0')}/${createId()}.webp`;
   await getStorage().upload(key, webp, 'image/webp');
   return NextResponse.json({ url: `/api/incidencias/capturas/${key}` }, { status: 201 });
 }
