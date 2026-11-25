@@ -12,7 +12,9 @@ import { texto } from '../web/ficha';
 import { NO_ENCONTRADO, comprobarFicha, conErrores, conBusquedaPorNombre, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
 
 const HOME = 'https://www.farmavazquez.com/';
-const web = new ClienteWeb(['farmavazquez.com', 'farma-vazquez.com', 'doofinder.com']);
+// Tras Cloudflare: desde Vercel da 403, así que su web va por el Worker puente
+// (Doofinder no bloquea y va directo).
+const web = new ClienteWeb(['farmavazquez.com', 'farma-vazquez.com', 'doofinder.com'], ['farmavazquez.com', 'farma-vazquez.com']);
 const sesion = Math.random().toString(36).slice(2);
 let doofinder: { hashid: string; zona: string } | null = null;
 

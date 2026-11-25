@@ -92,6 +92,7 @@ Qué recurso vive en qué cuenta y cómo se redeployan los sitios públicos.
 | `apps/chamarro/` | Vercel | `larokifarm-chamarro` | farmaciachamarro.es |
 | `widgets/cima-chat/` | Cloudflare Pages | **Cuenta empresa** (`larokifarmdigital@gmail.com`, account ID `b541c31a1626d80fb24641caa2ce9d15`) | `larokifarm-cima-chat` |
 | `workers/google-resenas/` | Cloudflare Workers | — | Pendiente: rehacer para escribir en Neon (ver Reseñas Google) |
+| `workers/precios-puente/` | Cloudflare Workers | **Cuenta empresa** | `larokifarm-precios-puente`: el comparador pide por él a Farmavázquez y Senante (403 desde Vercel). Secreto `CLAVE` = `PRECIOS_PUENTE_CLAVE` del backoffice |
 
 ### Flujo de deploy al publicar
 
@@ -143,11 +144,11 @@ Mira `~/.zshrc` para ver si está exportada permanentemente.
 <!-- auto:recent-commits:start -->
 ## Cambios recientes
 
-Actualizado automáticamente al hacer commit (2026-11-24T12:29:09Z).
+Actualizado automáticamente al hacer commit (2026-11-25T10:07:50Z).
 
-- `c5303de` 2026-11-24 — Chore: remove Sanity, content now comes only from the backoffice
-- `ef70a1b` 2026-11-24 — Feat(backoffice): simpler user permissions and calmer modals
-- `7c50572` 2026-11-24 — Fix(backoffice): simpler list flow, upload and compare in one step
-- `004a350` 2026-11-24 — Chore: remove the old standalone Scout app and its worker
-- `9039329` 2026-11-24 — Feat(backoffice): bulk price comparison from Excel lists
+- `8a36531` 2026-11-25 — Fix(backoffice): name search works when Farmavázquez blocks the server
+- `0192461` 2026-11-25 — Fix(backoffice): identify para-pharmacy products when Farmavázquez fails
+- `a1ab352` 2026-11-25 — Fix(backoffice): restore placeholder values in .env.example
+- `383faa4` 2026-11-25 — Fix(backoffice): help always opens a dialog and missing email key is visible
+- `db32c46` 2026-11-25 — Feat(backoffice): support form and error report emails via Web3Forms
 <!-- auto:recent-commits:end -->

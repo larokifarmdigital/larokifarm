@@ -12,7 +12,8 @@ import { precioUnidad, productoJsonLd, texto } from '../web/ficha';
 import { NO_ENCONTRADO, conErrores, conBusquedaPorNombre, nombreParaBuscar, resultadoDeFicha, type DatosFicha } from './comun';
 
 const BASE = 'https://farmaciasenante.com';
-const web = new ClienteWeb(['farmaciasenante.com']);
+// Tras Cloudflare: desde Vercel da 403, así que va por el Worker puente.
+const web = new ClienteWeb(['farmaciasenante.com'], ['farmaciasenante.com']);
 
 interface HitPresta {
   reference?: string | null;

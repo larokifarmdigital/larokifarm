@@ -18,7 +18,8 @@ larokifarm/
 ├── widgets/                           Componentes embebibles en sitios externos
 │   └── cima-chat/                     Widget IIFE Preact + Workers
 ├── workers/                           Cloudflare Workers
-│   └── google-resenas/                Reseñas de Google (pendiente de rehacer; ver docs/plan-resenas-google.md)
+│   ├── google-resenas/                Reseñas de Google (pendiente de rehacer; ver docs/plan-resenas-google.md)
+│   └── precios-puente/                Puente del comparador: pide a las farmacias que bloquean a Vercel
 └── docs/                              Documentación transversal (runbooks, integraciones externas)
 ```
 
@@ -62,6 +63,7 @@ Los scripts canónicos por proyecto son `dev`, `build`, `check` y `preview` (cua
 | `widgets/cima-chat`   | Cloudflare Pages (`larokifarm-cima-chat`) | Workflow `.github/workflows/cima-chat-deploy.yml`. |
 | `apps/inventory-sync` | GitHub Actions    | Cada 6 h (`.github/workflows/inventory-sync.yml`). |
 | Listas del comparador | GitHub Actions    | `.github/workflows/precios-lista.yml`, lo lanza el backoffice. |
+| `workers/precios-puente` | Cloudflare Workers (cuenta empresa) | `larokifarm-precios-puente`; `pnpm deploy` con `CLOUDFLARE_ACCOUNT_ID`. Ver su README. |
 
 ## Cómo crece el monorepo
 

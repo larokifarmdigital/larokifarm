@@ -675,6 +675,12 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
     encuentra → `CatalogoNoDisponibleError` → "no hemos podido comprobar ese
     código ahora mismo". Motivo en los logs de Vercel. Por nombre: Farmavázquez y, si falla
     o no encuentra nada, el buscador de OKFarma (`catalogoOkfarma`, Doofinder).
+    **Worker puente** (25-11-2026, `workers/precios-puente`): `ClienteWeb`
+    recibe `porPuente` (dominios que bloquean a Vercel: Farmavázquez y
+    Senante) y, si existen `PRECIOS_PUENTE_URL` + `PRECIOS_PUENTE_CLAVE`, pide
+    cada salto por el Worker (POST /pedir, Bearer); cookies y redirecciones
+    las sigue el backoffice. Sin las variables, directo. Desde un Worker
+    PromoFarma también carga (sin CN en la ficha), Druni/Sephora siguen 406/403.
     Webs pedidas el 25-11-2026 (PromoFarma, Atida, Druni, Sephora, DosFarma,
     laparafarmaciaencasa): en pausa, motivos en `docs/scout-fase0/README.md`.
   - `cnDeCodigo` exige que el 7º dígito sea el de control (= el del EAN

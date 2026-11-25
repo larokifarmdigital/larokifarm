@@ -1,0 +1,10 @@
+# Puente del comparador de precios (backoffice → farmacias que bloquean a Vercel).
+# Cuenta de Cloudflare de empresa. Secreto: CLAVE (wrangler secret put CLAVE),
+# el mismo valor que PRECIOS_PUENTE_CLAVE en el backoffice.
+name = "larokifarm-precios-puente"
+main = "src/index.ts"
+compatibility_date = "2026-01-15"
+workers_dev = true
+
+[observability]
+enabled = true

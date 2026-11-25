@@ -1,0 +1,17 @@
+{
+  "name": "@larokifarm/precios-puente",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Puente del comparador de precios: pide a farmacias que bloquean a los servidores de Vercel",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240620.0",
+    "typescript": "^5.9.2",
+    "wrangler": "^4.0.0"
+  }
+}

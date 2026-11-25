@@ -40,8 +40,11 @@ que salen de los servidores de Vercel (centro de datos); desde una conexión
 normal responden bien. Las otras 8 farmacias funcionan desde Vercel. Paliado
 en el código: identificar por CN y buscar por nombre ya no dependen solo de
 Farmavázquez (plan B con Farmacia Barata, FarmaciasDirect, Farma2go, OKFarma
-y el buscador de OKFarma). Como farmacias del comparador siguen saliendo
-"Bloquea" en producción.
+y el buscador de OKFarma). **Resuelto con el Worker puente**
+(`workers/precios-puente`): desde un Worker de Cloudflare las dos responden
+200 (portada, buscador y ficha con CN). Desde el Worker, PromoFarma también
+carga sin reto, pero su ficha no muestra CN ni EAN (solo `sku` interno);
+Druni (406) y Sephora (403) siguen bloqueando.
 
 Ningún precio equivocado. Los pares parecidos (Frenadol Complex/Forte,
 Voltadol 50/100 g, Ricola limón/arándano, Grintuss pediátrico/adulto,
