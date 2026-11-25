@@ -1,4 +1,5 @@
 import { descriptionMatches } from './descriptionMatch';
+import { dropBorrowedCodes } from './dropBorrowedCodes';
 import { cleanAlt, cleanNationalCode, cnCandidates, combineDiscounts, parseNumber, rescueNationalCode } from './numbers';
 import type {
   DeliveryNoteData,
@@ -158,7 +159,7 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
   );
 
   const deliveryItems = group(
-    deliveryNote.lines.map((l) => {
+    dropBorrowedCodes(deliveryNote.lines, order.lines).map((l) => {
       // Caso Bayer y similares: la celda "Código de producto" trae 2 códigos
       // apilados por línea (interno del proveedor + C.N. español) y Gemini no
       // siempre elige bien cuál es el C.N. (25-09: dejó el C.N. vacío en todas
