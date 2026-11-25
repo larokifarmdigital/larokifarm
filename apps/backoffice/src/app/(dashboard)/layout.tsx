@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser, usuarioTieneModulo } from '@/core/auth';
 import { MODULOS } from '@/core/shared';
 import { getFarmaciaRepository } from '@/core/farmacias';
-import { AppSidebar, AppTopbar, SidebarProvider } from '@/features/shell';
+import { AppSidebar, AppTopbar, AyudaProvider, SidebarProvider } from '@/features/shell';
 import type { ShellInfo } from '@/features/shell/ui/lib/shellInfo';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -33,6 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <SidebarProvider>
+      <AyudaProvider shell={shell}>
       <div className="flex min-h-[100dvh] bg-[var(--color-bg)]">
         <AppSidebar shell={shell} />
         <div className="flex-1 flex flex-col min-w-0">
@@ -42,6 +43,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </main>
         </div>
       </div>
+      </AyudaProvider>
     </SidebarProvider>
   );
 }

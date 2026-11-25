@@ -57,18 +57,29 @@ export async function POST(
   const body = await req.json().catch(() => null);
   const note = typeof body?.note === 'string' ? body.note : '';
 
-  const useCase = new CreateReportUseCase(
-    getReportRepository(),
-    getComparisonRepository(),
-  );
+  const comparisons = getComparisonRepository();
+  const scope = scopeFromSession(session);
+  const useCase = new CreateReportUseCase(getReportRepository(), comparisons);
   try {
     const report = await useCase.execute({
-      scope: scopeFromSession(session),
+      scope,
       userId: session.user.id,
       comparisonId: id,
       note,
     });
-    return NextResponse.json({ report }, { status: 201 });
+    // Datos para el correo de aviso, que manda el navegador (Web3Forms gratis
+    // solo admite envíos desde el navegador).
+    const c = await comparisons.findById(scope, id);
+    const aviso = c
+      ? {
+          farmacia: c.business.name,
+          proveedor: c.supplier ?? 'Sin proveedor',
+          envio: c.label ?? '',
+          persona: session.user.name ?? '',
+          email: session.user.email ?? '',
+        }
+      : null;
+    return NextResponse.json({ report, aviso }, { status: 201 });
   } catch (err) {
     if (err instanceof ValidationError) {
       return NextResponse.json({ error: err.message }, { status: 400 });

@@ -3,6 +3,7 @@
 import { useId, useState, useTransition } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { toast } from 'sonner';
+import { WEB3FORMS_KEY, enviarCorreo } from '@/shared/lib/web3forms';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
 import { formatDate } from '@/shared/lib/format';
@@ -67,12 +68,33 @@ export function ReportarError({
             onCreado(data.report as ReportView);
             setAbierto(false);
             toast.success('Reporte enviado. Te responderemos en esta conciliación.');
+            // Aviso por correo al administrador. El reporte ya está guardado:
+            // si el correo falla no se molesta a quien reporta.
+            if (data.aviso) void avisarPorCorreo(comparisonId, nota, data.aviso);
             return null;
           }}
         />
       )}
     </Dialog.Root>
   );
+}
+
+type Aviso = { farmacia: string; proveedor: string; envio: string; persona: string; email: string };
+
+async function avisarPorCorreo(comparisonId: string, nota: string, a: Aviso) {
+  const ok = await enviarCorreo({
+    asunto: `[Backoffice] Error reportado — ${a.proveedor} · ${a.farmacia}`,
+    deParte: 'Backoffice Larokifarm',
+    responderA: a.email || undefined,
+    campos: {
+      'Qué está mal': nota.trim(),
+      Farmacia: a.farmacia,
+      Proveedor: a.envio ? `${a.proveedor} (${a.envio})` : a.proveedor,
+      'Lo reporta': a.email ? `${a.persona} <${a.email}>` : a.persona,
+      Conciliación: `${window.location.origin}/albaranes/historial/${comparisonId}`,
+    },
+  });
+  if (!ok && WEB3FORMS_KEY) console.warn('[reportes] no se pudo enviar el aviso por correo');
 }
 
 /* ------------------------------------------------------------------ */

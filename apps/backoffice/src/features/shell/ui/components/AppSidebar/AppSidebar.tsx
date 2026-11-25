@@ -9,14 +9,14 @@ import { NavList } from '@/features/shell/ui/components/NavList';
 import { useSidebar } from '@/features/shell/ui/components/SidebarProvider';
 import { BrandMark } from '@/shared/components/atoms/BrandMark';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
-import { supportMailto } from '@/shared/lib/support';
+import { useAyuda } from '../AyudaProvider';
 import { cn } from '@/shared/lib/cn';
 
 export function AppSidebar({ shell }: { shell: ShellInfo }) {
   const pathname = usePathname();
   const { collapsed } = useSidebar();
   const items = buildNav({ role: shell.rol, miFarmaciaId: shell.miFarmacia?.id, variasFarmacias: (shell.misFarmacias?.length ?? 0) > 1, modulos: shell.modulos });
-  const ayuda = supportMailto('Ayuda con el backoffice');
+  const ayuda = useAyuda();
 
   return (
     <Tooltip.Provider delayDuration={200}>
@@ -52,19 +52,21 @@ export function AppSidebar({ shell }: { shell: ShellInfo }) {
           <NavList items={items} pathname={pathname} collapsed={collapsed} />
         </nav>
 
-        {ayuda && (
+        {ayuda.disponible && (
           <div className={cn('border-t border-[var(--color-hairline)] py-3', collapsed ? 'px-2' : 'px-3')}>
-            <a
-              href={ayuda}
+            <button
+              type="button"
+              onClick={ayuda.abrir}
               aria-label={collapsed ? 'Ayuda y soporte' : undefined}
+              aria-haspopup="dialog"
               className={cn(
-                'flex items-center rounded-[8px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)] transition-colors',
+                'flex w-full items-center rounded-[8px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)] transition-colors',
                 collapsed ? 'h-10 w-10 justify-center mx-auto' : 'min-h-9 px-2.5 gap-2.5 text-[14px]',
               )}
             >
               <NavIcon name="Question" size={collapsed ? 18 : 16} className="text-[var(--color-muted)]" />
               {!collapsed && 'Ayuda y soporte'}
-            </a>
+            </button>
           </div>
         )}
       </aside>

@@ -37,6 +37,10 @@ Después de que estén desplegadas las landings sin Sanity (ya subidas a `main`)
   Redeploy. Sin ellas no funcionan en producción la conciliación, «Sugerir
   traducción» ni las claves propias de «Uso de IA».
 
+- [ ] **Web3Forms** (avisos de "Ayuda y soporte" y de errores reportados):
+  crear la clave en web3forms.com con el correo donde quieres recibirlos y
+  añadir `NEXT_PUBLIC_WEB3FORMS_KEY` en **`larokifarm`** (Production) +
+  Redeploy. En local, en `apps/backoffice/.env.local` y reiniciar `pnpm dev`.
 - [ ] **`larokifarm-torrents`** y **`larokifarm-chamarro`** → Settings →
   Environment Variables: borrar `CONTENT_SOURCE`, `PUBLIC_SANITY_PROJECT_ID` y
   `PUBLIC_SANITY_DATASET` (ya no se leen).

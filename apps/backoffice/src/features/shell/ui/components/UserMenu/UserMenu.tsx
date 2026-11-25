@@ -7,7 +7,7 @@ import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { ROL_LABEL } from '@/features/shell/ui/lib/navConfig';
 import type { ShellInfo } from '@/features/shell/ui/lib/shellInfo';
 import { landingUrl } from '@/shared/lib/landingUrl';
-import { supportMailto } from '@/shared/lib/support';
+import { useAyuda } from '../AyudaProvider';
 import { CambiarContrasenaDialog } from '../CambiarContrasenaDialog';
 
 function initials(name: string) {
@@ -24,7 +24,7 @@ const ITEM =
 
 export function UserMenu({ shell }: { shell: ShellInfo }) {
   const miWeb = shell.miFarmacia ? landingUrl(shell.miFarmacia.web) : undefined;
-  const ayuda = supportMailto('Ayuda con el backoffice');
+  const ayuda = useAyuda();
   const [cambiarClave, setCambiarClave] = useState(false);
 
   return (
@@ -76,12 +76,10 @@ export function UserMenu({ shell }: { shell: ShellInfo }) {
               </a>
             </DropdownMenu.Item>
           )}
-          {ayuda && (
-            <DropdownMenu.Item asChild className={ITEM}>
-              <a href={ayuda}>
-                <NavIcon name="Question" size={15} className="text-[var(--color-muted)]" />
-                Ayuda y soporte
-              </a>
+          {ayuda.disponible && (
+            <DropdownMenu.Item className={ITEM} onSelect={ayuda.abrir}>
+              <NavIcon name="Question" size={15} className="text-[var(--color-muted)]" />
+              Ayuda y soporte
             </DropdownMenu.Item>
           )}
 

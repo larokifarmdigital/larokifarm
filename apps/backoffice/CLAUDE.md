@@ -692,6 +692,19 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
   PDF, traducciones y gasto, de más a menos). `getUsoIaData(mes)` lee 12 meses
   de `comparisons` + `usage_entries` (TRADUCCION) una vez y agrupa en memoria.
   En meses pasados no se pinta la barra del límite (el límite es el actual).
+- **Avisos por correo con Web3Forms 25-11-2026** (`shared/lib/web3forms.ts`,
+  `NEXT_PUBLIC_WEB3FORMS_KEY`; el buzón destino se elige al crear la clave en
+  web3forms.com). El plan gratuito solo admite envíos DESDE EL NAVEGADOR: se
+  llama en componentes cliente, nunca desde el servidor. La clave es pública
+  por diseño (solo envía a ese buzón).
+  - «Ayuda y soporte» (barra lateral, menú móvil y menú del avatar) abre un
+    modal (`features/shell/ui/components/AyudaProvider`, `useAyuda()`): motivo
+    + mensaje; envía nombre, correo (responder a), farmacia y pantalla. Sin
+    clave, abre el `mailto` de `NEXT_PUBLIC_SUPPORT_EMAIL` como antes.
+  - «Reportar un error» del conciliador: el reporte se guarda igual que antes
+    y la API devuelve `aviso` (farmacia, proveedor, envío, quién) para que el
+    navegador mande el correo con el enlace a la conciliación. Si el correo
+    falla, no se avisa a quien reporta (el reporte ya está guardado).
 - **Pendientes**:
   - **Coste de "Sugerir traducción"**: HECHO en código (21-11-2026); el
     `ALTER TYPE "UsageModule" ADD VALUE IF NOT EXISTS 'TRADUCCION';` ya se

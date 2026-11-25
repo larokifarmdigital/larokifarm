@@ -9,7 +9,7 @@ import type { ShellInfo } from '@/features/shell/ui/lib/shellInfo';
 import { NavList } from '@/features/shell/ui/components/NavList';
 import { BrandMark } from '@/shared/components/atoms/BrandMark';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
-import { supportMailto } from '@/shared/lib/support';
+import { useAyuda } from '../AyudaProvider';
 
 export function MobileNavDrawer({
   open,
@@ -25,7 +25,7 @@ export function MobileNavDrawer({
 }) {
   const items = buildNav({ role: shell.rol, miFarmaciaId: shell.miFarmacia?.id, variasFarmacias: (shell.misFarmacias?.length ?? 0) > 1, modulos: shell.modulos });
   const pathname = usePathname();
-  const ayuda = supportMailto('Ayuda con el backoffice');
+  const ayuda = useAyuda();
 
   // NOTE: cierra el drawer al navegar. `onClose` va en un ref porque el padre
   // pasa una arrow inline: como dep cerraría el drawer en el mismo tick.
@@ -61,14 +61,20 @@ export function MobileNavDrawer({
 
           <nav aria-label="Secciones" className="flex-1 overflow-y-auto px-3 py-4">
             <NavList items={items} pathname={pathname} variant="drawer" />
-            {ayuda && (
-              <a
-                href={ayuda}
-                className="mt-2 flex items-center gap-3 min-h-11 px-3 rounded-[8px] text-[15px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface)]"
+            {ayuda.disponible && (
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                onClick={() => {
+                  onClose();
+                  // Tras cerrar el menú (devuelve el foco a su botón), se abre el formulario.
+                  requestAnimationFrame(ayuda.abrir);
+                }}
+                className="mt-2 flex w-full items-center gap-3 min-h-11 px-3 rounded-[8px] text-[15px] text-[var(--color-ink-2)] hover:bg-[var(--color-surface)]"
               >
                 <NavIcon name="Question" size={18} className="text-[var(--color-muted)]" />
                 Ayuda y soporte
-              </a>
+              </button>
             )}
           </nav>
 
