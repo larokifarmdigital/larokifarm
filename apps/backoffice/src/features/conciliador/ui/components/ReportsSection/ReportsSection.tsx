@@ -82,6 +82,15 @@ export function ReportarError({
 type Aviso = { farmacia: string; proveedor: string; envio: string; persona: string; email: string };
 
 async function avisarPorCorreo(comparisonId: string, nota: string, a: Aviso) {
+  if (!WEB3FORMS_KEY) {
+    // En local se avisa a quien desarrolla; en producción, quien reporta no tiene que ver esto.
+    if (process.env.NODE_ENV !== 'production') {
+      toast.warning('El reporte se ha guardado, pero no se ha enviado el correo', {
+        description: 'Falta NEXT_PUBLIC_WEB3FORMS_KEY en apps/backoffice/.env.local (y reiniciar pnpm dev).',
+      });
+    } else console.warn('[reportes] falta NEXT_PUBLIC_WEB3FORMS_KEY: no se envía el aviso por correo');
+    return;
+  }
   const ok = await enviarCorreo({
     asunto: `[Backoffice] Error reportado — ${a.proveedor} · ${a.farmacia}`,
     deParte: 'Backoffice Larokifarm',
@@ -94,7 +103,7 @@ async function avisarPorCorreo(comparisonId: string, nota: string, a: Aviso) {
       Conciliación: `${window.location.origin}/albaranes/historial/${comparisonId}`,
     },
   });
-  if (!ok && WEB3FORMS_KEY) console.warn('[reportes] no se pudo enviar el aviso por correo');
+  if (!ok) console.warn('[reportes] no se pudo enviar el aviso por correo');
 }
 
 /* ------------------------------------------------------------------ */
