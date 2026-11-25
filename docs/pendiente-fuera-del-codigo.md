@@ -15,6 +15,13 @@ sin perder contenido. No se guarda copia de Sanity (decisión del usuario).
   despliegues directamente. Sus secretos se borran con él.
 - [x] Worker `scout-batch-worker` + KV `SCOUT_JOBS_KV` (y `_preview`): borrados
   el 24-11-2026.
+- [ ] **Worker `conciliador-albaranes`** (la app antigua del conciliador, si
+  se llegó a desplegar con `cf:deploy`): borrarlo. El código se borró del repo
+  el 25-11-2026; el conciliador vive en el backoffice.
+- [ ] **Bucket R2 antiguo** (el de antes de pasar a la cuenta empresa): borrarlo
+  cuando confirmes que todo se ve bien desde el bucket nuevo. Sus credenciales
+  están en `~/Documents/proyects/zpj/larokifarm-respaldo-local/conciliador-albaranes.env`
+  (fuera del repo); borra ese archivo después.
 - [ ] Si existe en tu cuenta **personal** de Cloudflare un proyecto Pages de
   Torrents con el dominio `torrentsfarmacia.com` (ya no responde): borrarlo y,
   si el dominio no se usa, no renovarlo.
@@ -44,6 +51,9 @@ Después de que estén desplegadas las landings sin Sanity (ya subidas a `main`)
 - [ ] **`larokifarm-torrents`** y **`larokifarm-chamarro`** → Settings →
   Environment Variables: borrar `CONTENT_SOURCE`, `PUBLIC_SANITY_PROJECT_ID` y
   `PUBLIC_SANITY_DATASET` (ya no se leen).
+- [ ] **`larokifarm-conciliador-albaranes`**: cuando el backoffice tenga ya
+  `GEMINI_API_KEY` y `ENCRYPTION_KEY` (punto de arriba), borrar el proyecto
+  entero (Settings → Delete). Su código ya no está en el repo.
 - [ ] **`larokifarm`** (backoffice): borrar `SCOUT_STANDALONE_URL` y
   `CONCILIADOR_STANDALONE_URL` (ya no se leen).
 - [x] Proyecto `scout` / dominio `scout.larokifarm.com`: nunca existió.
@@ -60,8 +70,8 @@ Después de que estén desplegadas las landings sin Sanity (ya subidas a `main`)
 
 - [ ] `apps/backoffice/CUENTAS.md` (contraseñas de prueba; está en `.gitignore`):
   borrarlo cuando ya no lo necesites.
-- [ ] `test.md` en la raíz del repo (lista de CN sin seguimiento): borrarlo si ya
-  no sirve.
+- [x] `test.md`, archivos de prueba, `_backups/`, guía y tutorial antiguos:
+  borrados el 25-11-2026.
 
 ## Siguiente: reseñas de Google
 

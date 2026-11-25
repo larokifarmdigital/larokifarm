@@ -1,1 +1,0 @@
-export { TopUsersTable } from './TopUsersTable';

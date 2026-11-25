@@ -1,5 +1,11 @@
 # Conciliador de Albaranes — Soporte Multi-PDF
 
+> Escrito para la app antigua `apps/conciliador-albaranes` (borrada el
+> 25-11-2026). Las decisiones siguen vigentes en el motor del backoffice
+> (`src/core/engine/domain/`), con nombres en inglés: `fusionarAlbaranes` →
+> `mergeDeliveryNotes`, `agrupar()` → `group()` de `reconcile.ts`,
+> `comparar.ts` → `reconcile.ts`.
+
 > Mapeo del problema "información de un mismo envío repartida entre varios PDFs".
 > Pendiente de implementar. Complementa a `conciliador-albaranes-CONTEXT.md` y
 > `conciliador-albaranes-PLAN.md`.

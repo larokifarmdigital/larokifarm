@@ -1,1 +1,0 @@
-export { MonthlyChart } from './MonthlyChart';

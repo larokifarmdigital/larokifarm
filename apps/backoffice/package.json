@@ -8,8 +8,6 @@
     "start": "next start --port 3001",
     "lint": "eslint",
     "check": "tsc --noEmit",
-    "sync-schema": "cp ../conciliador-albaranes/prisma/schema.prisma prisma/schema.prisma && prisma generate",
-    "migrate:r2": "../conciliador-albaranes/node_modules/.bin/tsx --env-file=.env.local scripts/migrate-r2-bucket.ts",
     "precios:lista": "tsx --env-file-if-exists=.env.local scripts/procesar-lista.ts",
     "postinstall": "prisma generate"
   },

@@ -10,7 +10,6 @@ larokifarm/
 │   ├── backoffice/                    Next.js: contenido de las webs, albaranes, comparador de precios, usuarios
 │   ├── chamarro/                      Landing Astro de Farmacia Chamarro
 │   ├── torrents/                      Landing Astro de Farmàcia Pediàtrica Torrents
-│   ├── conciliador-albaranes/         Conciliador antiguo (redirige al backoffice; su esquema Prisma es la fuente)
 │   └── inventory-sync/                Script (GitHub Actions): inventario de SharePoint → Cloudflare KV
 ├── packages/                          Código compartido entre apps (sin deploy propio)
 │   ├── contenido/                     Helpers de contenido de las landings (i18n de campos, texto enriquecido, horarios, imágenes)
@@ -94,7 +93,7 @@ Versiones: TypeScript `^5.9.2` y Tailwind `^4.3.0` en todos los proyectos (mante
 
 - **Carpeta**: kebab-case (`apps/nueva-farmacia`, `widgets/buscador-medicamentos`).
 - **`package.json#name`**:
-  - Apps no compartibles: nombre plano (`torrents`, `backoffice`, `conciliador-albaranes`).
+  - Apps no compartibles: nombre plano (`torrents`, `backoffice`, `inventory-sync`).
   - Packages, widgets compartibles y workers reusables: `@larokifarm/<nombre>` (`@larokifarm/contenido`, `@larokifarm/i18n-utils`).
 - **Filtros pnpm**: `pnpm --filter <name>` usa el `name` del `package.json`, no la carpeta.
 

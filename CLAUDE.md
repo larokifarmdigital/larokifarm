@@ -22,8 +22,10 @@ Cada proyecto tiene su package.json, su README y su CLAUDE.md si aplica.
 Backoffice Next.js para gestión de farmacias.
 - Stack: Next 16 + Tailwind v4 + Radix + Prisma
 - Puerto dev: `:3001` — `pnpm --filter backoffice dev`
-- DB Neon compartida con conciliador-albaranes (extiende `Business` a
-  `Farmacia`)
+- DB Neon (`Business` extendido a `Farmacia`). Esquema y migraciones SQL en
+  `apps/backoffice/prisma/` (antes en `apps/conciliador-albaranes`, borrada
+  el 25-11-2026: el conciliador vive en el backoffice). Las migraciones las
+  ejecuta el usuario a mano en Neon; nunca `migrate dev`/`reset`/`db push`.
 - Auth: next-auth v5
 - Contexto completo: `apps/backoffice/CLAUDE.md`
 
@@ -49,12 +51,11 @@ farmacia sale del backoffice.
 Script (GitHub Actions cada 6 h) que lee el inventario de SharePoint y lo deja
 en Cloudflare KV para el «Disponible» del chat.
 
-### `apps/conciliador-albaranes/`
-Herramienta interna. Soporta **N PDFs del proveedor + M Excels del pedido**
-por par: multi-PDF (Fase 2, union-find vía `fusionarAlbaranes.ts`) y
-multi-Excel (Fase 3, 2026-10-05 — concat de líneas + `agrupar()` del engine).
-Casos reales NESTLE/PEROX. Mapeo completo + decisiones en
-`apps/conciliador-albaranes/docs/multi-pdf.md`.
+### Conciliador de albaranes (dentro del backoffice)
+Soporta **N PDFs del proveedor + M Excels del pedido** por envío (multi-PDF
+con `mergeDeliveryNotes`, multi-Excel concatenando líneas). Motor en
+`apps/backoffice/src/core/engine/`; decisiones en
+`apps/backoffice/docs/conciliador/multi-pdf.md`.
 
 ## Convenciones globales
 

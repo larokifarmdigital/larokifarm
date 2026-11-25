@@ -752,8 +752,7 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
     `ALTER TYPE "UsageModule" ADD VALUE IF NOT EXISTS 'TRADUCCION';` ya se
     ejecutó en Neon (22-11-2026)
     (migración aditiva en
-    `apps/conciliador-albaranes/prisma/migrations/20261121090000_usage_traduccion`;
-    el esquema fuente es el del conciliador, `pnpm sync-schema` lo copia aquí;
+    `prisma/migrations/20261121090000_usage_traduccion`;
     NO `migrate dev`/reset contra Neon). Qué hace:
     - `traduccionActions.ts` registra cada traducción en `usage_entries`
       (module TRADUCCION, action 'translate', costUsd, tokens, userId) vía

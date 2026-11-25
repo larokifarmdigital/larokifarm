@@ -1,1 +1,0 @@
-export { BusinessesTable } from './BusinessesTable';
