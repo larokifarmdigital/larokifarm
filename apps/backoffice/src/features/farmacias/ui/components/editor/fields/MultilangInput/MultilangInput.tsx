@@ -10,7 +10,6 @@ import { computeLocaleStatus } from '@/features/farmacias/ui/lib/i18nStatus';
 import { useFieldBinding } from '@/features/farmacias/ui/hooks/useFieldError';
 import { FieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 import { useEditingLocale } from '@/features/farmacias/ui/components/editor/fields/ModalLocaleScope';
-import { SugerirTraduccion } from '@/features/farmacias/ui/components/editor/fields/SugerirTraduccion';
 
 export function MultilangInput({
   label,
@@ -49,14 +48,6 @@ export function MultilangInput({
         {...error?.inputProps}
       />
       {error && <FieldError {...error} />}
-      <SugerirTraduccion
-        origen={value.es}
-        destino={currentLocale}
-        actual={current}
-        campoId={id}
-        etiqueta={label}
-        onUsar={(t) => onChange({ ...value, [currentLocale]: t })}
-      />
       {help && <p className="help">{help}</p>}
     </div>
   );

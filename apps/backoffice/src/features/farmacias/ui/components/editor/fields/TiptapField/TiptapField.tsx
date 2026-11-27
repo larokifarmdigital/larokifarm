@@ -1,7 +1,5 @@
 'use client';
 
-import type { Locale } from '@/core/shared';
-import { SugerirTraduccion } from '@/features/farmacias/ui/components/editor/fields/SugerirTraduccion';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -23,10 +21,6 @@ type Props = {
   field?: string;
   /** Nombre accesible del editor (la etiqueta visible del campo). */
   label: string;
-  /** Texto en castellano: si se edita otro idioma, ofrece "Sugerir traducción". */
-  origen?: string;
-  /** Idioma que se edita. */
-  locale?: Locale;
 };
 
 function ToolbarButton({
@@ -161,7 +155,7 @@ const ATRIBUTOS_BASE = {
   'aria-multiline': 'true',
 };
 
-export function TiptapField({ value, onChange, placeholder, minHeight = 200, field, label, origen, locale }: Props) {
+export function TiptapField({ value, onChange, placeholder, minHeight = 200, field, label }: Props) {
   const { id, error } = useFieldBinding(field, '');
   // Solo consulta: el fieldset no desactiva un contenteditable, así que lo hacemos aquí.
   const { readOnly } = useFarmaciaEditor();
@@ -240,19 +234,6 @@ export function TiptapField({ value, onChange, placeholder, minHeight = 200, fie
       </div>
     </div>
     {error && <FieldError {...error} />}
-    {locale && (
-      <SugerirTraduccion
-        etiqueta={label}
-        html
-        origen={origen}
-        destino={locale}
-        actual={value}
-        onUsar={(t) => {
-          onChangeRef.current(t);
-          editor.commands.focus();
-        }}
-      />
-    )}
     </div>
   );
 }

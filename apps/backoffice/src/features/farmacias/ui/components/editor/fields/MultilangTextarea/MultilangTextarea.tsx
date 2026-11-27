@@ -10,7 +10,6 @@ import type { MultilangText } from '@/core/shared';
 import { useFieldBinding } from '@/features/farmacias/ui/hooks/useFieldError';
 import { FieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 import { useEditingLocale } from '@/features/farmacias/ui/components/editor/fields/ModalLocaleScope';
-import { SugerirTraduccion } from '@/features/farmacias/ui/components/editor/fields/SugerirTraduccion';
 
 export function MultilangTextarea({
   label,
@@ -72,14 +71,6 @@ export function MultilangTextarea({
         className={cn('field resize-y min-h-[80px]', showError && '!border-[var(--color-red-ink)]')}
       />
       {showError && <FieldError {...showError} />}
-      <SugerirTraduccion
-        origen={value.es}
-        destino={currentLocale}
-        actual={current}
-        campoId={id}
-        etiqueta={label}
-        onUsar={(t) => onChange({ ...value, [currentLocale]: t })}
-      />
       <div className="flex justify-between mt-1.5">
         <p className="help">{help ?? ' '}</p>
         {limite && (

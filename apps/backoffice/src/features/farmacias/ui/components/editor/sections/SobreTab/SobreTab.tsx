@@ -197,7 +197,6 @@ export function SobreTab() {
 
   return (
     <div className="space-y-10 max-w-3xl">
-      {/* ============= DESCRIPCIÓN LARGA ============= */}
       <section aria-labelledby="sec-sobre-descripcion">
         <SectionHeader
           id="sec-sobre-descripcion"
@@ -220,8 +219,6 @@ export function SobreTab() {
           field="descripcionLarga.es"
           label="Vuestra historia"
           value={farmacia.descripcionLarga[currentLocale] ?? ''}
-          origen={farmacia.descripcionLarga.es}
-          locale={currentLocale}
           onChange={(html) =>
             patch({
               descripcionLarga: {
@@ -237,7 +234,6 @@ export function SobreTab() {
 
       <div className="hairline" />
 
-      {/* ============= IMÁGENES ============= */}
       <section aria-labelledby="sec-sobre-imagenes">
         <SectionHeader
           id="sec-sobre-imagenes"
@@ -259,7 +255,6 @@ export function SobreTab() {
 
       <div className="hairline" />
 
-      {/* ============= PUNTOS ============= */}
       <section aria-labelledby="sec-sobre-puntos">
         <SectionHeader
           id="sec-sobre-puntos"
@@ -329,7 +324,6 @@ export function SobreTab() {
 
       <div className="hairline" />
 
-      {/* ============= CABECERA (se toca poco: plegada) ============= */}
       <section aria-label="Textos de la cabecera de Quiénes somos">
         <CabeceraColapsable
           abierta={cabeceraConError}
