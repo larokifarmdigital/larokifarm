@@ -22,7 +22,11 @@ import { cn } from '@/shared/lib/cn';
  */
 function enfocarFila(l?: Locale) {
   window.setTimeout(() => {
-    const fila = l ? document.querySelector<HTMLElement>(`[data-idioma="${l}"]`) : null;
+    // La fila está dos veces (tabla y lista móvil): solo vale la visible.
+    const visible = (el: HTMLElement) => el.getClientRects().length > 0;
+    const fila = l
+      ? Array.from(document.querySelectorAll<HTMLElement>(`[data-idioma="${l}"]`)).find(visible)
+      : null;
     (fila ?? document.querySelector<HTMLElement>('[data-anadir-idioma]'))?.focus();
   }, 120);
 }
@@ -70,6 +74,35 @@ export function IdiomasTab() {
     if (await activarIdioma(l)) enfocarFila(l);
   }
 
+  function accionesDe(f: ResumenIdioma) {
+    if (readOnly || f.principal) return null;
+    return (
+      <RowActionsMenu label={`Acciones del ${LOCALE_NOMBRE[f.locale]}`}>
+        {f.activo ? (
+          <>
+            <RowActionsItem icon="PencilSimple" onSelect={() => traducir(f)}>
+              {f.porcentaje < 100 ? 'Traducir lo que falta' : 'Revisar textos'}
+            </RowActionsItem>
+            <RowActionsSeparator />
+            <RowActionsItem icon="EyeSlash" onSelect={() => setDesactivar(f.locale)}>
+              Desactivar en la web
+            </RowActionsItem>
+          </>
+        ) : (
+          <>
+            <RowActionsItem icon="Eye" onSelect={() => void reactivar(f.locale)}>
+              Activar en la web
+            </RowActionsItem>
+            <RowActionsSeparator />
+            <RowActionsItem icon="Trash" peligro onSelect={() => setEliminar(f.locale)}>
+              Eliminar sus textos
+            </RowActionsItem>
+          </>
+        )}
+      </RowActionsMenu>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -96,83 +129,73 @@ export function IdiomasTab() {
         )}
       </div>
 
-      <ul className="card m-0 list-none divide-y divide-[var(--color-hairline)] overflow-hidden p-0" aria-label="Idiomas de la web">
+      {/* Escritorio: tabla, como el resto de listas del backoffice. */}
+      <div className="card hidden overflow-hidden sm:block">
+        <table className="w-full text-left text-[14px]">
+          <caption className="sr-only">Idiomas de la web</caption>
+          <thead>
+            <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-surface-2)] text-[12.5px] text-[var(--color-muted)]">
+              <th scope="col" className="py-2.5 pl-5 pr-3 font-semibold">
+                Idioma
+              </th>
+              <th scope="col" className="px-3 py-2.5 font-semibold">
+                Estado
+              </th>
+              <th scope="col" className="px-3 py-2.5 font-semibold">
+                Traducido
+              </th>
+              <th scope="col" className="w-14 py-2.5 pl-3 pr-5 text-right">
+                <span className="sr-only">Acciones</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {filas.map((f, i) => (
+              <tr
+                key={f.locale}
+                className={cn(
+                  'border-b border-[var(--color-hairline)] last:border-b-0',
+                  i % 2 === 1 && 'bg-[var(--color-surface-2)]',
+                )}
+              >
+                <td className="py-3 pl-5 pr-3">
+                  <NombreIdioma f={f} readOnly={readOnly} onTraducir={traducir} />
+                </td>
+                <td className="px-3 py-3">
+                  <EstadoIdioma f={f} />
+                </td>
+                <td className="px-3 py-3">
+                  {f.principal ? (
+                    <span className="text-[13px] text-[var(--color-muted)]">Idioma original</span>
+                  ) : (
+                    <Progreso f={f} />
+                  )}
+                </td>
+                <td className="py-3 pl-3 pr-4 text-right">
+                  {accionesDe(f)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Móvil: la tabla no cabe; cada idioma en su fila. */}
+      <ul className="card m-0 list-none divide-y divide-[var(--color-hairline)] overflow-hidden p-0 sm:hidden" aria-label="Idiomas de la web">
         {filas.map((f) => (
-          <li key={f.locale} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+          <li key={f.locale} className="flex items-center gap-3 px-4 py-3">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                {f.activo && !f.principal && !readOnly ? (
-                  <button
-                    type="button"
-                    data-idioma={f.locale}
-                    onClick={() => traducir(f)}
-                    className="min-h-11 sm:min-h-8 text-left text-[15px] font-semibold text-[var(--color-ink)] hover:text-[var(--color-accent)] hover:underline underline-offset-2"
-                  >
-                    {nombreIdioma(f.locale)}
-                  </button>
-                ) : (
-                  <span
-                    data-idioma={f.locale}
-                    tabIndex={-1}
-                    className="text-[15px] font-semibold text-[var(--color-ink)] outline-none"
-                  >
-                    {nombreIdioma(f.locale)}
-                  </span>
-                )}
-                {f.locale !== 'es' && (
-                  <span className="text-[13px] text-[var(--color-muted)]" lang={f.locale}>
-                    {LOCALE_LABELS[f.locale]}
-                  </span>
-                )}
+                <NombreIdioma f={f} readOnly={readOnly} onTraducir={traducir} />
                 <EstadoIdioma f={f} />
               </div>
               {!f.principal && (
-                <div className="mt-2 flex items-center gap-3">
-                  <div aria-hidden className="h-1.5 w-full max-w-[220px] overflow-hidden rounded-full bg-[var(--color-surface-sunken)]">
-                    <div
-                      className={cn(
-                        'h-full rounded-full',
-                        f.porcentaje === 100 ? 'bg-[var(--color-green-ink)]' : 'bg-[var(--color-accent)]',
-                      )}
-                      style={{ width: `${f.porcentaje}%` }}
-                    />
-                  </div>
-                  <span className="shrink-0 text-[13px] text-[var(--color-ink-2)]">
-                    {f.total === 0
-                      ? 'Aún no hay textos que traducir'
-                      : f.porcentaje === 100
-                        ? 'Todo traducido'
-                        : `${f.porcentaje} % traducido · faltan ${f.total - f.traducidos}`}
-                  </span>
+                <div className="mt-2">
+                  <Progreso f={f} />
                 </div>
               )}
             </div>
-
-            {!readOnly && !f.principal && (
-              <RowActionsMenu label={`Acciones del ${LOCALE_NOMBRE[f.locale]}`}>
-                {f.activo ? (
-                  <>
-                    <RowActionsItem icon="PencilSimple" onSelect={() => traducir(f)}>
-                      {f.porcentaje < 100 ? 'Traducir lo que falta' : 'Revisar textos'}
-                    </RowActionsItem>
-                    <RowActionsSeparator />
-                    <RowActionsItem icon="EyeSlash" onSelect={() => setDesactivar(f.locale)}>
-                      Desactivar en la web
-                    </RowActionsItem>
-                  </>
-                ) : (
-                  <>
-                    <RowActionsItem icon="Eye" onSelect={() => void reactivar(f.locale)}>
-                      Activar en la web
-                    </RowActionsItem>
-                    <RowActionsSeparator />
-                    <RowActionsItem icon="Trash" peligro onSelect={() => setEliminar(f.locale)}>
-                      Eliminar sus textos
-                    </RowActionsItem>
-                  </>
-                )}
-              </RowActionsMenu>
-            )}
+            {accionesDe(f)}
           </li>
         ))}
       </ul>
@@ -279,4 +302,61 @@ function EstadoIdioma({ f }: { f: ResumenIdioma }) {
       ? ['En la web', 'bg-[var(--color-green-soft)] text-[var(--color-green-ink)]']
       : ['Desactivado · textos guardados', 'bg-[var(--color-surface-sunken)] text-[var(--color-ink-2)]'];
   return <span className={cn('rounded-full px-2.5 py-0.5 text-[12.5px] font-medium', clase)}>{texto}</span>;
+}
+
+function NombreIdioma({
+  f,
+  readOnly,
+  onTraducir,
+}: {
+  f: ResumenIdioma;
+  readOnly: boolean;
+  onTraducir: (f: ResumenIdioma) => void;
+}) {
+  return (
+    <span className="inline-flex flex-wrap items-baseline gap-x-2">
+      {f.activo && !f.principal && !readOnly ? (
+        <button
+          type="button"
+          data-idioma={f.locale}
+          onClick={() => onTraducir(f)}
+          className="min-h-11 text-left text-[15px] font-semibold text-[var(--color-ink)] underline-offset-2 hover:text-[var(--color-accent)] hover:underline sm:min-h-8"
+        >
+          {nombreIdioma(f.locale)}
+        </button>
+      ) : (
+        <span data-idioma={f.locale} tabIndex={-1} className="text-[15px] font-semibold text-[var(--color-ink)] outline-none">
+          {nombreIdioma(f.locale)}
+        </span>
+      )}
+      {f.locale !== 'es' && (
+        <span className="text-[13px] text-[var(--color-muted)]" lang={f.locale}>
+          {LOCALE_LABELS[f.locale]}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function Progreso({ f }: { f: ResumenIdioma }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div aria-hidden className="h-1.5 w-full max-w-[160px] overflow-hidden rounded-full bg-[var(--color-surface-sunken)]">
+        <div
+          className={cn(
+            'h-full rounded-full',
+            f.porcentaje === 100 ? 'bg-[var(--color-green-ink)]' : 'bg-[var(--color-accent)]',
+          )}
+          style={{ width: `${f.porcentaje}%` }}
+        />
+      </div>
+      <span className="shrink-0 text-[13px] text-[var(--color-ink-2)]">
+        {f.total === 0
+          ? 'Aún no hay textos que traducir'
+          : f.porcentaje === 100
+            ? 'Todo traducido'
+            : `${f.porcentaje} % · faltan ${f.total - f.traducidos}`}
+      </span>
+    </div>
+  );
 }

@@ -126,7 +126,8 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
   idioma al catálogo = también `apps/<landing>/src/i18n/<código>.json` y
   `LOCALES_DISPONIBLES` de cada landing (sus textos fijos).
 - Sección **"Idiomas de la web"** (`#idiomas`, grupo Tu farmacia,
-  `sections/IdiomasTab`): lista con Principal / En la web / Desactivado ·
+  `sections/IdiomasTab`): tabla (Idioma · Estado · Traducido · ⋯; en móvil,
+  lista) con Principal / En la web / Desactivado ·
   textos guardados y % traducido (`resumenIdiomas` en `ui/lib/i18nStatus.ts`).
   Menú ⋯: Traducir/Revisar · Desactivar (activos) · Activar · Eliminar sus
   textos (solo desactivados). "Añadir idioma" → Modal con Select del catálogo.
