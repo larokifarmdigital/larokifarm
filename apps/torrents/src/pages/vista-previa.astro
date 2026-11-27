@@ -1,0 +1,176 @@
+---
+/**
+ * Vista previa del editor del backoffice: la página de inicio con lo GUARDADO
+ * (aunque no esté publicado), generada en el servidor en cada petición.
+ *
+ * - Solo con el enlace firmado que pone el editor (`?t=`); lo comprueba el
+ *   backoffice. Caducado o no válido → aviso en castellano (401).
+ * - Solo se puede mostrar en un iframe del backoffice (`frame-ancestors`), sin
+ *   indexar ni guardar en caché.
+ * - `?seccion=<clave del editor>&etiqueta=<nombre>` resalta la sección; el
+ *   editor la cambia sin recargar con postMessage (ver el script de abajo).
+ */
+import PaginaInicio from '@/components/PaginaInicio.astro';
+import { mostrarResenasDe } from '@/lib/ajustes';
+import { obtenerFarmaciaVistaPrevia, obtenerResenasBackoffice, ORIGEN_BACKOFFICE } from '@/lib/backoffice';
+import { SLUG_FARMACIA } from '@/lib/contenido';
+import { esLocaleValido, LOCALE_DEFECTO, type Locale } from '@/lib/i18n';
+
+export const prerender = false;
+
+Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+Astro.response.headers.set('Content-Security-Policy', `frame-ancestors ${ORIGEN_BACKOFFICE}`);
+
+const q = Astro.url.searchParams;
+const token = q.get('t') ?? '';
+const idioma = q.get('lang') ?? '';
+const lang: Locale = esLocaleValido(idioma) ? idioma : LOCALE_DEFECTO;
+
+const farmacia = token ? await obtenerFarmaciaVistaPrevia(SLUG_FARMACIA, token) : null;
+if (!farmacia) Astro.response.status = 401;
+
+// Mismas reglas que la home publicada (10 recientes, 4-5★ con texto), sin caché.
+const resenas = farmacia
+  ? await obtenerResenasBackoffice(SLUG_FARMACIA, 10, 4, true, true)
+  : { total: 0, media: 0, destacadas: [], recientes: [] };
+---
+
+{
+  farmacia ? (
+    <PaginaInicio farmacia={farmacia} lang={lang} resenas={resenas} mostrarResenas={mostrarResenasDe(farmacia)} vistaPrevia>
+      <div data-vista-previa data-origen={ORIGEN_BACKOFFICE} hidden />
+    </PaginaInicio>
+  ) : (
+    <html lang='es'>
+      <head>
+        <meta charset='utf-8' />
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <meta name='robots' content='noindex,nofollow' />
+        <title>Vista previa no disponible</title>
+      </head>
+      <body style='margin:0;font:16px/1.5 system-ui,sans-serif;color:#1f2937;background:#f8fafc;display:grid;place-items:center;min-height:100vh;padding:16px;box-sizing:border-box'>
+        <main style='max-width:36rem;text-align:center'>
+          <h1 style='font-size:20px;margin:0 0 8px'>Esta vista previa ha caducado</h1>
+          <p style='margin:0'>Vuelve a abrirla desde el editor del backoffice.</p>
+        </main>
+      </body>
+    </html>
+  )
+}
+
+<script>
+  /*
+   * Resalta en la página la sección que se está editando. Recibe del editor
+   * (solo de su origen) { tipo: 'larokifarm:seccion', seccion, etiqueta }.
+   */
+  const raiz = document.querySelector<HTMLElement>('[data-vista-previa]');
+  if (raiz) {
+    const origen = raiz.dataset.origen ?? '';
+
+    // Clave de la sección del editor → dónde sale en la página. Vacío = no sale en la página.
+    const DONDE: Record<string, string[]> = {
+      general: ['#contacto', '#contacto-footer'],
+      horario: ['#contacto', '#contacto-footer'],
+      idiomas: ['header'],
+      hero: ['#inicio'],
+      features: ['#puntos-fuertes'],
+      sobre: ['#sobre'],
+      servicios: ['#servicios'],
+      faqs: ['#faqs'],
+      resenas: ['#resenas'],
+      legal: ['#contacto-footer'],
+      seo: [],
+      chat: [],
+    };
+
+    const capa = document.createElement('div');
+    capa.setAttribute('aria-hidden', 'true');
+    capa.lang = 'es';
+    capa.style.cssText = 'position:absolute;inset:0 auto auto 0;width:0;height:0;pointer-events:none;z-index:2147483646';
+    document.body.append(capa);
+
+    const aviso = document.createElement('div');
+    aviso.setAttribute('role', 'status');
+    aviso.lang = 'es';
+    aviso.style.cssText =
+      'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100% - 32px);box-sizing:border-box;' +
+      'padding:10px 16px;border-radius:10px;background:#0f172a;color:#fff;font:600 14px/1.4 system-ui,sans-serif;' +
+      'box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:2147483647;text-align:center';
+    aviso.hidden = true;
+    document.body.append(aviso);
+
+    let objetivos: HTMLElement[] = [];
+    let etiquetaActual = '';
+
+    function dibujar() {
+      capa.replaceChildren();
+      objetivos.forEach((el, i) => {
+        const r = el.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        const caja = document.createElement('div');
+        caja.style.cssText =
+          `position:absolute;left:${r.left + scrollX + 4}px;top:${r.top + scrollY + 4}px;` +
+          `width:${r.width - 8}px;height:${r.height - 8}px;box-sizing:border-box;` +
+          'border:3px solid #1265b5;border-radius:12px;box-shadow:0 0 0 4px rgba(18,101,181,.18)';
+        if (i === 0 && etiquetaActual) {
+          const chip = document.createElement('span');
+          chip.textContent = `Editando: ${etiquetaActual}`;
+          chip.style.cssText =
+            'position:absolute;top:8px;left:8px;padding:4px 10px;border-radius:999px;background:#1265b5;color:#fff;' +
+            'font:700 12px/1.4 system-ui,sans-serif;white-space:nowrap';
+          caja.append(chip);
+        }
+        capa.append(caja);
+      });
+    }
+
+    function avisar(texto: string) {
+      aviso.textContent = texto;
+      aviso.hidden = !texto;
+    }
+
+    function resaltar(seccion: string, etiqueta: string, suave: boolean) {
+      etiquetaActual = etiqueta;
+      const selectores = DONDE[seccion];
+      objetivos = (selectores ?? [])
+        .map((s) => document.querySelector<HTMLElement>(s))
+        .filter((el): el is HTMLElement => !!el && el.getClientRects().length > 0);
+      dibujar();
+      if (!selectores) return avisar('');
+      if (selectores.length === 0) return avisar(`«${etiqueta}» no se ve en la página de inicio.`);
+      if (objetivos.length === 0) return avisar(`«${etiqueta}» no sale ahora en la web: está vacía o desactivada.`);
+      avisar('');
+      const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const top = objetivos[0].getBoundingClientRect().top + scrollY - 80;
+      scrollTo({ top: Math.max(0, top), behavior: suave && !reducido ? 'smooth' : 'instant' });
+    }
+
+    // Las fotos y los textos cambian de alto al cargar: se recoloca el marco.
+    new ResizeObserver(dibujar).observe(document.body);
+    addEventListener('resize', dibujar);
+
+    // Los enlaces llevarían a la web publicada: en la vista previa no se abren.
+    document.addEventListener(
+      'click',
+      (e) => {
+        const a = (e.target as Element | null)?.closest('a[href]');
+        if (!a || (a.getAttribute('href') ?? '').startsWith('#')) return;
+        e.preventDefault();
+        avisar('En la vista previa los enlaces no se abren.');
+        setTimeout(() => avisar(''), 2500);
+      },
+      true,
+    );
+
+    addEventListener('message', (e) => {
+      if (e.origin !== origen || e.data?.tipo !== 'larokifarm:seccion') return;
+      resaltar(String(e.data.seccion ?? ''), String(e.data.etiqueta ?? ''), true);
+    });
+
+    const q = new URLSearchParams(location.search);
+    const inicial = q.get('seccion');
+    if (inicial) resaltar(inicial, q.get('etiqueta') ?? '', false);
+    if (parent !== window) parent.postMessage({ tipo: 'larokifarm:lista' }, origen);
+  }
+</script>

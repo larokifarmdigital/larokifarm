@@ -63,3 +63,24 @@ Contenido en build desde la API pública del backoffice (`BACKOFFICE_URL`;
 - **Textos de la UI**: nada fijo en castellano en componentes (skip link,
   CTAs, puntos del slider); todo por `t()`. Reseñas con `lang` por comentario
   cuando la API trae `comentarioIdioma`.
+
+## Vista previa del editor (27-11-2026)
+
+- `src/pages/vista-previa.astro` (`prerender = false`, adaptador
+  `@astrojs/vercel`; el resto de la web sigue siendo estática): la página de
+  inicio con lo GUARDADO en el backoffice, aunque no esté publicado.
+- Solo con `?t=<enlace firmado>` que pone el editor; lo comprueba el backoffice
+  (`/api/vista-previa/farmacias/:slug`). La landing no guarda ningún secreto.
+- Solo se ve dentro de un iframe del backoffice: `frame-ancestors` con el origen
+  de `BACKOFFICE_URL` (cabecera de la página) y en `vercel.json` la ruta va sin
+  `X-Frame-Options`. `noindex`, `no-store`, fuera del sitemap, sin analítica ni
+  chat. Los enlaces no navegan.
+- `PaginaInicio.astro` es la página de inicio compartida por `[...lang]/index`
+  y la vista previa. Ajustes puros (reseñas sí/no, chat) en `lib/ajustes.ts`:
+  `feature-flags.ts` y `chat.ts` leen lo PUBLICADO al cargarse, la vista
+  previa no los importa.
+- Resaltado: `?seccion=<clave del editor>&etiqueta=<nombre>` o postMessage
+  `{ tipo: 'larokifarm:seccion', seccion, etiqueta }` desde el origen del
+  backoffice; al cargar avisa `{ tipo: 'larokifarm:lista' }`. Mapa clave →
+  sección (`#inicio`, `#puntos-fuertes`, `#servicios`, `#sobre`, `#resenas`,
+  `#faqs`, `#contacto`, pie) en el script de la página.

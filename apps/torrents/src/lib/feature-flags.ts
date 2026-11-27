@@ -12,10 +12,9 @@
  * web" del editor (campo `mostrarResenas`). Si el campo no
  * viene, se usa el valor por defecto de esta landing.
  */
+import { mostrarResenasDe } from './ajustes';
 import { obtenerFarmaciaPorSlug, SLUG_FARMACIA } from './contenido';
-
-const MOSTRAR_RESENAS_POR_DEFECTO = true;
 
 const farmacia = await obtenerFarmaciaPorSlug(SLUG_FARMACIA);
 
-export const MOSTRAR_RESENAS: boolean = farmacia?.mostrarResenas ?? MOSTRAR_RESENAS_POR_DEFECTO;
+export const MOSTRAR_RESENAS: boolean = mostrarResenasDe(farmacia);

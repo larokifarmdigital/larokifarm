@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import vercel from '@astrojs/vercel';
 import tailwindcss from '@tailwindcss/vite';
 import { loadEnv } from 'vite';
 import { redireccionesIdiomas } from './integraciones/redirecciones-idiomas.mjs';
@@ -16,7 +17,10 @@ if (!SITE_URL) {
 
 export default defineConfig({
   site: SITE_URL,
+  // Todo se genera en build salvo /vista-previa (prerender = false), que el
+  // adaptador de Vercel sirve como función.
   output: 'static',
+  adapter: vercel(),
   trailingSlash: 'never',
   build: {
     format: 'directory',
@@ -35,6 +39,8 @@ export default defineConfig({
   integrations: [
     redireccionesIdiomas(),
     sitemap({
+      // La vista previa del editor no es una página de la web.
+      filter: (page) => !page.includes('/vista-previa'),
       changefreq: 'monthly',
       priority: 0.8,
       i18n: {

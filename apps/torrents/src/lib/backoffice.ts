@@ -53,7 +53,12 @@ export async function obtenerFarmaciaBackoffice(slug: string): Promise<Farmacia 
 // Una sola petición por build: home, /resenas y demás páginas comparten lista.
 const cacheResenas = new Map<string, Promise<(ResenaGoogle & { enWeb?: boolean })[]>>();
 
-function todasLasResenas(slug: string) {
+function todasLasResenas(slug: string, fresco = false) {
+  if (fresco) {
+    return getJson<(ResenaGoogle & { enWeb?: boolean })[]>(`/api/public/farmacias/${encodeURIComponent(slug)}/resenas`, 1)
+      .then((r) => r ?? [])
+      .catch(() => []);
+  }
   let p = cacheResenas.get(slug);
   if (!p) {
     p = getJson<(ResenaGoogle & { enWeb?: boolean })[]>(`/api/public/farmacias/${encodeURIComponent(slug)}/resenas`).then((r) => r ?? []);
@@ -82,10 +87,12 @@ export async function obtenerResenasBackoffice(
   limite: number,
   _minRating?: number,
   _soloConComentario?: boolean,
+  /** Vista previa (servidor): sin la caché del build, que duraría lo que la función. */
+  fresco = false,
 ): Promise<ResumenResenas> {
   void _minRating;
   void _soloConComentario;
-  const todas = await todasLasResenas(slug);
+  const todas = await todasLasResenas(slug, fresco);
   const enWeb = todas.filter((r) => r.enWeb !== false);
   const total = todas.length;
   return {
@@ -95,3 +102,22 @@ export async function obtenerResenasBackoffice(
     recientes: enWeb.filter((r) => !r.destacada).slice(0, limite),
   };
 }
+
+/**
+ * Vista previa (página /vista-previa, en el servidor): lo GUARDADO en el
+ * backoffice aunque no esté publicado. `token` es el enlace firmado que pone el
+ * editor; aquí no se comprueba, lo comprueba el backoffice. Enlace caducado o
+ * no válido → null (la página lo explica). No reintenta: la persona espera.
+ */
+export async function obtenerFarmaciaVistaPrevia(slug: string, token: string): Promise<Farmacia | null> {
+  const res = await fetch(
+    `${BACKOFFICE_URL}/api/vista-previa/farmacias/${encodeURIComponent(slug)}?t=${encodeURIComponent(token)}`,
+    { signal: AbortSignal.timeout(15_000), cache: 'no-store' },
+  );
+  if (res.status === 401 || res.status === 404) return null;
+  if (!res.ok) throw new Error(`[backoffice] vista previa: HTTP ${res.status}`);
+  return (await res.json()) as Farmacia;
+}
+
+/** Origen del backoffice: el único que puede mostrar la vista previa en un iframe. */
+export const ORIGEN_BACKOFFICE = new URL(BACKOFFICE_URL).origin;
