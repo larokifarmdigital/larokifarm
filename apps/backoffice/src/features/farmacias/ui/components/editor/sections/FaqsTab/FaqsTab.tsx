@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useState } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { ListFieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
@@ -191,67 +192,69 @@ export function FaqsTab() {
 
   return (
     <div className="section-gap max-w-3xl">
-      <section aria-labelledby="sec-faqs-lista">
-        <SectionHeader
-          id="sec-faqs-lista"
-          required
-          title={count === 0 ? 'Preguntas' : `${count} ${count === 1 ? 'pregunta' : 'preguntas'}`}
-          hint="Salen en tu web en este orden. Lo ideal son entre 4 y 8."
-          actions={
-            count > 0 ? (
-              <Button onClick={openCreate} variant="accent" size="sm">
-                <NavIcon name="Plus" size={14} />
-                Añadir pregunta
-              </Button>
-            ) : null
-          }
-        />
+      <CampoSinPublicar campo="faqs" soloBorde>
+        <section aria-labelledby="sec-faqs-lista">
+          <SectionHeader
+            id="sec-faqs-lista"
+            required
+            title={count === 0 ? 'Preguntas' : `${count} ${count === 1 ? 'pregunta' : 'preguntas'}`}
+            hint="Salen en tu web en este orden. Lo ideal son entre 4 y 8."
+            actions={
+              count > 0 ? (
+                <Button onClick={openCreate} variant="accent" size="sm">
+                  <NavIcon name="Plus" size={14} />
+                  Añadir pregunta
+                </Button>
+              ) : null
+            }
+          />
 
-        {count === 0 ? (
-          <button
-            type="button"
-            onClick={openCreate}
-            className="w-full card p-10 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
-          >
-            <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-4 text-[var(--color-accent)]">
-              <NavIcon name="Plus" size={20} />
-            </div>
-            <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade tu primera pregunta</p>
-            <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
-              Guardias, receta electrónica, entrega a domicilio…
-            </p>
-          </button>
-        ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-            <SortableContext items={farmacia.faqs.map((f) => f.id)} strategy={verticalListSortingStrategy}>
-              <ul className="card p-1.5 space-y-0.5 list-none m-0">
-                {farmacia.faqs.map((f, i) => {
-                  const pregunta = f.pregunta[currentLocale] || f.pregunta.es || f.pregunta.ca || f.pregunta.en || '';
-                  const faltan = activeLocales
-                    .filter((l) => !(f.pregunta[l]?.trim() && f.respuesta[l]?.trim()))
-                    .map((l) => LOCALE_NOMBRE[l]);
-                  return (
-                    <FilaLista
-                      key={f.id}
-                      id={f.id}
-                      indice={i}
-                      total={count}
-                      tipo="pregunta"
-                      titulo={pregunta}
-                      destacar={recienAnadida === f.id}
-                      aviso={<AvisoTraduccion idiomas={faltan} />}
-                      onEdit={() => openEdit(f)}
-                      onRemove={() => setDeleteTarget(f)}
-                      onMove={(d) => moverFaq(i, d)}
-                    />
-                  );
-                })}
-              </ul>
-            </SortableContext>
-          </DndContext>
-        )}
-        <ListFieldError field="faqs" />
-      </section>
+          {count === 0 ? (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="w-full card p-10 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
+            >
+              <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-4 text-[var(--color-accent)]">
+                <NavIcon name="Plus" size={20} />
+              </div>
+              <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade tu primera pregunta</p>
+              <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
+                Guardias, receta electrónica, entrega a domicilio…
+              </p>
+            </button>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+              <SortableContext items={farmacia.faqs.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+                <ul className="card p-1.5 space-y-0.5 list-none m-0">
+                  {farmacia.faqs.map((f, i) => {
+                    const pregunta = f.pregunta[currentLocale] || f.pregunta.es || f.pregunta.ca || f.pregunta.en || '';
+                    const faltan = activeLocales
+                      .filter((l) => !(f.pregunta[l]?.trim() && f.respuesta[l]?.trim()))
+                      .map((l) => LOCALE_NOMBRE[l]);
+                    return (
+                      <FilaLista
+                        key={f.id}
+                        id={f.id}
+                        indice={i}
+                        total={count}
+                        tipo="pregunta"
+                        titulo={pregunta}
+                        destacar={recienAnadida === f.id}
+                        aviso={<AvisoTraduccion idiomas={faltan} />}
+                        onEdit={() => openEdit(f)}
+                        onRemove={() => setDeleteTarget(f)}
+                        onMove={(d) => moverFaq(i, d)}
+                      />
+                    );
+                  })}
+                </ul>
+              </SortableContext>
+            </DndContext>
+          )}
+          <ListFieldError field="faqs" />
+        </section>
+      </CampoSinPublicar>
 
       <section aria-label="Textos de la cabecera de Preguntas frecuentes">
         <CabeceraColapsable abierta={cabeceraConError} resumen={[t.chip?.es, t.titulo?.es].filter(Boolean).join(' · ')}>

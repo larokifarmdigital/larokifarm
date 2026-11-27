@@ -116,6 +116,20 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
   solo lectura).
 - "Publicar cambios" (accent) solo aparece si hay algo que publicar; si no,
   "Ver mi web". Barra inferior móvil: estado + UNA acción de 44 px.
+- **Copia de lo publicado (27-11-2026)**: al publicar se guarda el contenido en
+  `businesses.contenidoPublicado` (JSONB; `domain/publicado.ts`:
+  `contenidoPublicable`, sin ids/fechas/reseñas). La API pública sirve esa copia
+  (`versionPublicada`, reseñas en vivo): guardar o redesplegar ya no publica
+  nada. La vista previa sigue leyendo lo guardado. Sin copia (farmacias
+  publicadas antes de esto) todo funciona como antes hasta su próxima publicación.
+- **Cambios sin publicar**: `cambiosSinPublicar(f)` compara campo a campo (listas
+  por contenido, sin ids: el servidor los recrea al guardar) → `cambios` del
+  contexto. Marcas: punto ámbar en el menú (`useEstadoSecciones` /
+  `MarcasSeccion`), borde ámbar + «Sin publicar» en el campo (`CampoSinPublicar`;
+  `soloBorde` en bloques con botones arriba, `"enLabel"` en Multilang*) y, al
+  pulsar Publicar, `PublishChangesDialog` («Qué vas a publicar», por sección, con
+  Deshacer = patch al valor publicado + aviso «Recuperar mi cambio»; fotos e
+  idiomas no se deshacen desde ahí). El aviso de traducciones va dentro.
 - `EditorHealthChip` = solo traducciones ("Faltan N traducciones"), oculto si la
   web tiene un idioma.
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar, EtiquetaSinPublicar, useCampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useId } from 'react';
 import type { MultilangText } from '@/core/shared';
 import { Input } from '@/shared/components/atoms/Input';
@@ -32,12 +33,13 @@ export function MultilangInput({
   const { farmacia } = useFarmaciaEditor();
   const currentLocale = useEditingLocale();
   const { id, error } = useFieldBinding(field, useId());
+  const sinPublicar = useCampoSinPublicar(field);
   const current = value[currentLocale] ?? '';
   const status = computeLocaleStatus(value, currentLocale, farmacia.idiomasActivos);
 
   return (
-    <div>
-      <Label htmlFor={id} required={required} hint={<LocaleChip locale={currentLocale} status={status} />}>
+    <CampoSinPublicar campo={field} soloBorde="enLabel">
+      <Label htmlFor={id} required={required} hint={<>{sinPublicar && <EtiquetaSinPublicar />}<LocaleChip locale={currentLocale} status={status} /></>}>
         {label}
       </Label>
       <Input
@@ -49,6 +51,6 @@ export function MultilangInput({
       />
       {error && <FieldError {...error} />}
       {help && <p className="help">{help}</p>}
-    </div>
+    </CampoSinPublicar>
   );
 }

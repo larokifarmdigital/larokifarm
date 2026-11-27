@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useState } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { ListFieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
@@ -236,96 +237,98 @@ export function HeroTab() {
 
       <div className="hairline" />
 
-      <section aria-labelledby="sec-hero-tarjetas">
-        <SectionHeader
-          id="sec-hero-tarjetas"
-          required
-          title="Tarjetas sobre la foto"
-          hint="De 1 a 3 tarjetas pequeñas encima de la foto principal. Su posición se elige sola."
-          actions={
-            tarjetas.length > 0 && tarjetas.length < 3 ? (
-              <Button variant="accent" size="sm" onClick={addTarjeta}>
-                <NavIcon name="Plus" size={14} />
-                Añadir tarjeta
-              </Button>
-            ) : null
-          }
-        />
-        {tarjetas.length >= 3 && (
-          <p className="m-0 mb-3 text-[13.5px] text-[var(--color-muted)]">
-            Has llegado al máximo de 3 tarjetas. Elimina una para añadir otra.
-          </p>
-        )}
-
-        {tarjetas.length === 0 ? (
-          <button
-            type="button"
-            onClick={addTarjeta}
-            className="w-full card p-8 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
-          >
-            <div className="mx-auto w-10 h-10 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
-              <NavIcon name="Plus" size={18} />
-            </div>
-            <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade una tarjeta</p>
-            <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
-              Consulta gratuita, entrega a domicilio, guardia 24h…
+      <CampoSinPublicar campo="heroTarjetasFlotantes" soloBorde>
+        <section aria-labelledby="sec-hero-tarjetas">
+          <SectionHeader
+            id="sec-hero-tarjetas"
+            required
+            title="Tarjetas sobre la foto"
+            hint="De 1 a 3 tarjetas pequeñas encima de la foto principal. Su posición se elige sola."
+            actions={
+              tarjetas.length > 0 && tarjetas.length < 3 ? (
+                <Button variant="accent" size="sm" onClick={addTarjeta}>
+                  <NavIcon name="Plus" size={14} />
+                  Añadir tarjeta
+                </Button>
+              ) : null
+            }
+          />
+          {tarjetas.length >= 3 && (
+            <p className="m-0 mb-3 text-[13.5px] text-[var(--color-muted)]">
+              Has llegado al máximo de 3 tarjetas. Elimina una para añadir otra.
             </p>
-          </button>
-        ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-            <SortableContext items={tarjetas.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-              <ul className="card p-1.5 space-y-0.5 list-none m-0">
-                {tarjetas.map((t, i) => (
-                  <FilaLista
-                    key={t.id}
-                    id={t.id}
-                    indice={i}
-                    total={tarjetas.length}
-                    tipo="tarjeta"
-                    titulo={t.titulo[currentLocale] || t.titulo.es || ''}
-                    detalle={t.subtitulo?.[currentLocale] || t.subtitulo?.es || ''}
-                    destacar={recienAnadida === t.id}
-                    icono={
-                      <span
-                        className={cn(
-                          'h-9 w-9 rounded-[var(--radius-sm)] flex items-center justify-center',
-                          t.icono
-                            ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
-                            : 'bg-[var(--color-surface-sunken)] text-[var(--color-muted)]',
-                        )}
-                      >
-                        {t.icono ? <IconoSVG nombre={t.icono} size={18} /> : <NavIcon name="Image" size={14} />}
-                      </span>
-                    }
-                    onEdit={() => editTarjeta(t.id)}
-                    onRemove={() => setBorrar(t)}
-                    onMove={(d) => mover(i, d)}
-                  />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
-        )}
+          )}
 
-        <TarjetaModal
-          open={modalOpen}
-          initial={editingDraft}
-          mode={modalMode}
-          onSave={saveTarjeta}
-          onClose={closeModal}
-        />
-        <ListFieldError field="heroTarjetasFlotantes" />
-        <ConfirmDialog
-          open={borrar !== null}
-          onOpenChange={(o) => !o && setBorrar(null)}
-          title="Eliminar tarjeta"
-          description={`Vas a eliminar «${borrar?.titulo.es || 'esta tarjeta'}». No se puede deshacer.`}
-          onConfirm={() => {
-            if (borrar) removeTarjeta(borrar.id);
-            setBorrar(null);
-          }}
-        />
-      </section>
+          {tarjetas.length === 0 ? (
+            <button
+              type="button"
+              onClick={addTarjeta}
+              className="w-full card p-8 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
+            >
+              <div className="mx-auto w-10 h-10 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
+                <NavIcon name="Plus" size={18} />
+              </div>
+              <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade una tarjeta</p>
+              <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
+                Consulta gratuita, entrega a domicilio, guardia 24h…
+              </p>
+            </button>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+              <SortableContext items={tarjetas.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                <ul className="card p-1.5 space-y-0.5 list-none m-0">
+                  {tarjetas.map((t, i) => (
+                    <FilaLista
+                      key={t.id}
+                      id={t.id}
+                      indice={i}
+                      total={tarjetas.length}
+                      tipo="tarjeta"
+                      titulo={t.titulo[currentLocale] || t.titulo.es || ''}
+                      detalle={t.subtitulo?.[currentLocale] || t.subtitulo?.es || ''}
+                      destacar={recienAnadida === t.id}
+                      icono={
+                        <span
+                          className={cn(
+                            'h-9 w-9 rounded-[var(--radius-sm)] flex items-center justify-center',
+                            t.icono
+                              ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                              : 'bg-[var(--color-surface-sunken)] text-[var(--color-muted)]',
+                          )}
+                        >
+                          {t.icono ? <IconoSVG nombre={t.icono} size={18} /> : <NavIcon name="Image" size={14} />}
+                        </span>
+                      }
+                      onEdit={() => editTarjeta(t.id)}
+                      onRemove={() => setBorrar(t)}
+                      onMove={(d) => mover(i, d)}
+                    />
+                  ))}
+                </ul>
+              </SortableContext>
+            </DndContext>
+          )}
+
+          <TarjetaModal
+            open={modalOpen}
+            initial={editingDraft}
+            mode={modalMode}
+            onSave={saveTarjeta}
+            onClose={closeModal}
+          />
+          <ListFieldError field="heroTarjetasFlotantes" />
+          <ConfirmDialog
+            open={borrar !== null}
+            onOpenChange={(o) => !o && setBorrar(null)}
+            title="Eliminar tarjeta"
+            description={`Vas a eliminar «${borrar?.titulo.es || 'esta tarjeta'}». No se puede deshacer.`}
+            onConfirm={() => {
+              if (borrar) removeTarjeta(borrar.id);
+              setBorrar(null);
+            }}
+          />
+        </section>
+      </CampoSinPublicar>
     </div>
   );
 }

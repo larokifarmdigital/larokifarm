@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useMemo, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import { resenaEnWeb, type Resena, type ResenasReglas } from '@/core/farmacias/domain';
@@ -113,67 +114,69 @@ export function ResenasManager() {
 
   return (
     <>
-      <section aria-labelledby="sec-resenas-reglas">
-        <SectionHeader
-          id="sec-resenas-reglas"
-          title="Qué reseñas salen en la web"
-          hint="Cada regla se puede apagar. La media y el total de la web cuentan siempre todas las reseñas no ocultas, para no inflar la valoración."
-        />
-        <div className="card divide-y divide-[var(--color-hairline)]">
-          <div className="flex items-center justify-between gap-4 p-4">
-            <div className="min-w-0">
-              <label htmlFor="regla-min" className="text-[13.5px] font-medium text-[var(--color-ink)] cursor-pointer">
-                Mínimo de estrellas
-              </label>
-              <p className="m-0 mt-0.5 text-[12px] text-[var(--color-muted-2)]">
-                {reglas.minRating != null
-                  ? reglas.minRating === 5
-                    ? 'Solo salen las de 5 estrellas.'
-                    : reglas.minRating === 1
-                      ? 'Salen las de 1 estrella o más.'
-                      : `Solo salen las de ${reglas.minRating} estrellas o más.`
-                  : 'Salen todas, tengan las estrellas que tengan.'}
-              </p>
+      <CampoSinPublicar campo="resenasReglas" soloBorde>
+        <section aria-labelledby="sec-resenas-reglas">
+          <SectionHeader
+            id="sec-resenas-reglas"
+            title="Qué reseñas salen en la web"
+            hint="Cada regla se puede apagar. La media y el total de la web cuentan siempre todas las reseñas no ocultas, para no inflar la valoración."
+          />
+          <div className="card divide-y divide-[var(--color-hairline)]">
+            <div className="flex items-center justify-between gap-4 p-4">
+              <div className="min-w-0">
+                <label htmlFor="regla-min" className="text-[13.5px] font-medium text-[var(--color-ink)] cursor-pointer">
+                  Mínimo de estrellas
+                </label>
+                <p className="m-0 mt-0.5 text-[12px] text-[var(--color-muted-2)]">
+                  {reglas.minRating != null
+                    ? reglas.minRating === 5
+                      ? 'Solo salen las de 5 estrellas.'
+                      : reglas.minRating === 1
+                        ? 'Salen las de 1 estrella o más.'
+                        : `Solo salen las de ${reglas.minRating} estrellas o más.`
+                    : 'Salen todas, tengan las estrellas que tengan.'}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <Select
+                  aria-label="Mínimo de estrellas"
+                  value={String(reglas.minRating ?? 4)}
+                  disabled={reglas.minRating == null || readOnly}
+                  onValueChange={(v) => setReglas({ minRating: Number(v) })}
+                  className="w-[168px] sm:w-[180px]"
+                  options={[5, 4, 3, 2, 1].map((n) => ({
+                    value: String(n),
+                    label: n === 5 ? 'Solo 5' : `${n} o más`,
+                    leading: <StarsLeading n={n} />,
+                  }))}
+                />
+                <Switch
+                  id="regla-min"
+                  aria-label="Filtrar por estrellas mínimas"
+                  checked={reglas.minRating != null}
+                  onCheckedChange={(v) => setReglas({ minRating: v ? 4 : null })}
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <Select
-                aria-label="Mínimo de estrellas"
-                value={String(reglas.minRating ?? 4)}
-                disabled={reglas.minRating == null || readOnly}
-                onValueChange={(v) => setReglas({ minRating: Number(v) })}
-                className="w-[168px] sm:w-[180px]"
-                options={[5, 4, 3, 2, 1].map((n) => ({
-                  value: String(n),
-                  label: n === 5 ? 'Solo 5' : `${n} o más`,
-                  leading: <StarsLeading n={n} />,
-                }))}
-              />
+            <div className="flex items-center justify-between gap-4 p-4">
+              <div className="min-w-0">
+                <label htmlFor="regla-comentario" className="text-[13.5px] font-medium text-[var(--color-ink)] cursor-pointer">
+                  Solo con comentario
+                </label>
+                <p className="m-0 mt-0.5 text-[12px] text-[var(--color-muted-2)]">
+                  {reglas.soloConComentario ? 'Las valoraciones sin texto no se muestran.' : 'También salen las valoraciones sin texto.'}
+                </p>
+              </div>
               <Switch
-                id="regla-min"
-                aria-label="Filtrar por estrellas mínimas"
-                checked={reglas.minRating != null}
-                onCheckedChange={(v) => setReglas({ minRating: v ? 4 : null })}
+                id="regla-comentario"
+                aria-label="Solo reseñas con comentario"
+                checked={reglas.soloConComentario}
+                onCheckedChange={(v) => setReglas({ soloConComentario: v })}
               />
             </div>
           </div>
-          <div className="flex items-center justify-between gap-4 p-4">
-            <div className="min-w-0">
-              <label htmlFor="regla-comentario" className="text-[13.5px] font-medium text-[var(--color-ink)] cursor-pointer">
-                Solo con comentario
-              </label>
-              <p className="m-0 mt-0.5 text-[12px] text-[var(--color-muted-2)]">
-                {reglas.soloConComentario ? 'Las valoraciones sin texto no se muestran.' : 'También salen las valoraciones sin texto.'}
-              </p>
-            </div>
-            <Switch
-              id="regla-comentario"
-              aria-label="Solo reseñas con comentario"
-              checked={reglas.soloConComentario}
-              onCheckedChange={(v) => setReglas({ soloConComentario: v })}
-            />
-          </div>
-        </div>
-      </section>
+        </section>
+      </CampoSinPublicar>
 
       <section aria-labelledby="sec-resenas-lista">
         <SectionHeader

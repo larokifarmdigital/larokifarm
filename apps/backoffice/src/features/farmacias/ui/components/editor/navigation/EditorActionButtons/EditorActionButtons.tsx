@@ -12,6 +12,7 @@ import { publishToast } from '@/features/farmacias/ui/lib/publishToast';
 import { cn } from '@/shared/lib/cn';
 import { landingUrl } from '@/shared/lib/landingUrl';
 import { useVistaPrevia } from '@/features/farmacias/ui/context/VistaPreviaContext';
+import { PublishChangesDialog } from './PublishChangesDialog';
 import { PublishMissingDialog } from './PublishMissingDialog';
 import { PublishBlockedDialog } from './PublishBlockedDialog';
 import type { FieldIssue } from '@/core/farmacias/domain';
@@ -25,12 +26,13 @@ import type { FieldIssue } from '@/core/farmacias/domain';
  * (confirmar, no bloquear).
  */
 export function EditorActionButtons({ compact = false }: { compact?: boolean }) {
-  const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly, esAdmin, issues, revealErrors, pendientePublicar } = useFarmaciaEditor();
+  const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly, esAdmin, issues, revealErrors, pendientePublicar, cambios } = useFarmaciaEditor();
   const vistaPrevia = useVistaPrevia();
   const [blockedOpen, setBlockedOpen] = useState(false);
   const health = useI18nHealth();
   const [pending, startTx] = useTransition();
   const [warnOpen, setWarnOpen] = useState(false);
+  const [cambiosOpen, setCambiosOpen] = useState(false);
 
   const doPublish = () => {
     // NOTE: se captura antes del await — el contenido no cambia al guardar.
@@ -52,6 +54,7 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
         return;
       }
       setWarnOpen(false);
+      setCambiosOpen(false);
     });
   };
 
@@ -62,7 +65,9 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
       setBlockedOpen(true);
       return;
     }
-    if (health.totalMissing > 0) setWarnOpen(true);
+    // Con copia publicada: «Qué vas a publicar» (incluye el aviso de traducciones).
+    if (cambios) setCambiosOpen(true);
+    else if (health.totalMissing > 0) setWarnOpen(true);
     else doPublish();
   };
 
@@ -81,6 +86,7 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
     const sec =
       health.sectionsWithMissing.find((s) => s.key === sectionKey) ?? health.sectionsWithMissing[0];
     setWarnOpen(false);
+    setCambiosOpen(false);
     if (sec) goToSection(sec.key, localeWithMostMissing(sec));
   };
 
@@ -146,6 +152,15 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
         onOpenChange={setBlockedOpen}
         issues={issues}
         onReview={reviewIssue}
+      />
+
+      <PublishChangesDialog
+        open={cambiosOpen}
+        onOpenChange={setCambiosOpen}
+        publishing={pending}
+        onPublish={doPublish}
+        faltanTraducciones={health.totalMissing}
+        onRevisarTraducciones={() => review()}
       />
 
       <PublishMissingDialog

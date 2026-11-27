@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useState } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { ListFieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
@@ -248,79 +249,81 @@ export function ServiciosTab() {
 
   return (
     <div className="section-gap max-w-3xl">
-      <section aria-labelledby="sec-servicios-lista">
-        <SectionHeader
-          id="sec-servicios-lista"
-          required
-          title={count === 0 ? 'Servicios' : `${count} ${count === 1 ? 'servicio' : 'servicios'}`}
-          hint="Cada servicio sale como una tarjeta en tu web, en este orden."
-          actions={
-            count > 0 ? (
-              <Button variant="accent" size="sm" onClick={openCreate}>
-                <NavIcon name="Plus" size={14} />
-                Añadir servicio
-              </Button>
-            ) : null
-          }
-        />
+      <CampoSinPublicar campo="servicios" soloBorde>
+        <section aria-labelledby="sec-servicios-lista">
+          <SectionHeader
+            id="sec-servicios-lista"
+            required
+            title={count === 0 ? 'Servicios' : `${count} ${count === 1 ? 'servicio' : 'servicios'}`}
+            hint="Cada servicio sale como una tarjeta en tu web, en este orden."
+            actions={
+              count > 0 ? (
+                <Button variant="accent" size="sm" onClick={openCreate}>
+                  <NavIcon name="Plus" size={14} />
+                  Añadir servicio
+                </Button>
+              ) : null
+            }
+          />
 
-        {count === 0 ? (
-          <button
-            type="button"
-            onClick={openCreate}
-            className="w-full card p-10 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
-          >
-            <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-4 text-[var(--color-accent)]">
-              <NavIcon name="Plus" size={20} />
-            </div>
-            <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade tu primer servicio</p>
-            <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
-              Consulta dermofarmacéutica, entrega a domicilio, asesoría nutricional…
-            </p>
-          </button>
-        ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-            <SortableContext items={farmacia.servicios.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-              <ul className="card p-1.5 space-y-0.5 list-none m-0">
-                {farmacia.servicios.map((s, i) => {
-                  const nombre = s.nombre[currentLocale] || s.nombre.es || s.nombre.ca || s.nombre.en || '';
-                  const desc = s.descripcion?.[currentLocale] || s.descripcion?.es || '';
-                  const faltan = activeLocales.filter((l) => !s.nombre[l]?.trim()).map((l) => LOCALE_NOMBRE[l]);
-                  return (
-                    <FilaLista
-                      key={s.id}
-                      id={s.id}
-                      indice={i}
-                      total={count}
-                      tipo="servicio"
-                      titulo={nombre}
-                      detalle={desc}
-                      destacar={recienAnadido === s.id}
-                      icono={
-                        <span
-                          className={cn(
-                            'h-9 w-9 rounded-[var(--radius-sm)] flex items-center justify-center',
-                            s.icono
-                              ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
-                              : 'bg-[var(--color-surface-sunken)] text-[var(--color-muted)]',
-                          )}
-                        >
-                          {s.icono ? <IconoSVG nombre={s.icono} size={18} /> : <NavIcon name="Image" size={14} />}
-                        </span>
-                      }
-                      aviso={<AvisoTraduccion idiomas={faltan} />}
-                      onEdit={() => openEdit(s)}
-                      onRemove={() => setDeleteTarget(s)}
-                      onMove={(d) => moverServicio(i, d)}
-                    />
-                  );
-                })}
-              </ul>
-            </SortableContext>
-          </DndContext>
-        )}
-        <ListFieldError field="servicios" />
-      </section>
+          {count === 0 ? (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="w-full card p-10 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
+            >
+              <div className="mx-auto w-12 h-12 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-4 text-[var(--color-accent)]">
+                <NavIcon name="Plus" size={20} />
+              </div>
+              <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade tu primer servicio</p>
+              <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
+                Consulta dermofarmacéutica, entrega a domicilio, asesoría nutricional…
+              </p>
+            </button>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+              <SortableContext items={farmacia.servicios.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                <ul className="card p-1.5 space-y-0.5 list-none m-0">
+                  {farmacia.servicios.map((s, i) => {
+                    const nombre = s.nombre[currentLocale] || s.nombre.es || s.nombre.ca || s.nombre.en || '';
+                    const desc = s.descripcion?.[currentLocale] || s.descripcion?.es || '';
+                    const faltan = activeLocales.filter((l) => !s.nombre[l]?.trim()).map((l) => LOCALE_NOMBRE[l]);
+                    return (
+                      <FilaLista
+                        key={s.id}
+                        id={s.id}
+                        indice={i}
+                        total={count}
+                        tipo="servicio"
+                        titulo={nombre}
+                        detalle={desc}
+                        destacar={recienAnadido === s.id}
+                        icono={
+                          <span
+                            className={cn(
+                              'h-9 w-9 rounded-[var(--radius-sm)] flex items-center justify-center',
+                              s.icono
+                                ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                                : 'bg-[var(--color-surface-sunken)] text-[var(--color-muted)]',
+                            )}
+                          >
+                            {s.icono ? <IconoSVG nombre={s.icono} size={18} /> : <NavIcon name="Image" size={14} />}
+                          </span>
+                        }
+                        aviso={<AvisoTraduccion idiomas={faltan} />}
+                        onEdit={() => openEdit(s)}
+                        onRemove={() => setDeleteTarget(s)}
+                        onMove={(d) => moverServicio(i, d)}
+                      />
+                    );
+                  })}
+                </ul>
+              </SortableContext>
+            </DndContext>
+          )}
+          <ListFieldError field="servicios" />
+        </section>
+      </CampoSinPublicar>
 
       <section aria-label="Textos de la cabecera de Servicios">
         <CabeceraColapsable

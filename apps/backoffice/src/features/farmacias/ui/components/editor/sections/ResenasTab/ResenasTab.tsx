@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { useFieldErrors } from '@/features/farmacias/ui/hooks/useFieldError';
 import { rules } from '@/core/farmacias/domain';
@@ -149,27 +150,29 @@ export function ResenasVisibilidad() {
   const visible = farmacia.mostrarResenas;
   return (
     <div className="mb-6">
-      <section aria-labelledby="sec-resenas-visibilidad">
-        <div className="card flex items-start justify-between gap-4 p-4">
-          <div className="min-w-0">
-            <h3 id="sec-resenas-visibilidad" className="m-0 text-[14px] font-bold text-[var(--color-ink)]">
-              <label htmlFor="mostrar-resenas" className="cursor-pointer">Mostrar reseñas en la web</label>
-            </h3>
-            <p id="mostrar-resenas-hint" className="m-0 mt-1 text-[12.5px] leading-[1.55] text-[var(--color-muted-2)]">
-              {visible
-                ? 'Tu web muestra las reseñas, el enlace «Reseñas» del menú y tu nota media en Google.'
-                : 'Tu web no muestra las reseñas. El cambio se verá cuando publiques.'}
-            </p>
+      <CampoSinPublicar campo="mostrarResenas" soloBorde>
+        <section aria-labelledby="sec-resenas-visibilidad">
+          <div className="card flex items-start justify-between gap-4 p-4">
+            <div className="min-w-0">
+              <h3 id="sec-resenas-visibilidad" className="m-0 text-[14px] font-bold text-[var(--color-ink)]">
+                <label htmlFor="mostrar-resenas" className="cursor-pointer">Mostrar reseñas en la web</label>
+              </h3>
+              <p id="mostrar-resenas-hint" className="m-0 mt-1 text-[12.5px] leading-[1.55] text-[var(--color-muted-2)]">
+                {visible
+                  ? 'Tu web muestra las reseñas, el enlace «Reseñas» del menú y tu nota media en Google.'
+                  : 'Tu web no muestra las reseñas. El cambio se verá cuando publiques.'}
+              </p>
+            </div>
+            <Switch
+              id="mostrar-resenas"
+              aria-label="Mostrar reseñas en la web"
+              checked={visible}
+              onCheckedChange={(v) => patch({ mostrarResenas: v })}
+              aria-describedby="mostrar-resenas-hint"
+            />
           </div>
-          <Switch
-            id="mostrar-resenas"
-            aria-label="Mostrar reseñas en la web"
-            checked={visible}
-            onCheckedChange={(v) => patch({ mostrarResenas: v })}
-            aria-describedby="mostrar-resenas-hint"
-          />
-        </div>
-      </section>
+        </section>
+      </CampoSinPublicar>
 
     </div>
   );

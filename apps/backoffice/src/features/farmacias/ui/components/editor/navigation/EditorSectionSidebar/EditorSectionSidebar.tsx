@@ -1,7 +1,7 @@
 'use client';
 
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
-import { countBySection, type SectionKey } from '@/features/farmacias/ui/lib/i18nStatus';
+import { MarcasSeccion, useEstadoSecciones } from '@/features/farmacias/ui/hooks/useEstadoSecciones';
 import { gruposVisibles, SECTION_BY_KEY } from '@/features/farmacias/ui/lib/sectionsConfig';
 import { cn } from '@/shared/lib/cn';
 
@@ -12,16 +12,8 @@ export function EditorSectionSidebar({
   activeKey: string;
   onSelect: (key: string) => void;
 }) {
-  const { farmacia, esAdmin } = useFarmaciaEditor();
-  const perSection = countBySection(farmacia);
-  const missingByKey: Record<string, boolean> = perSection.reduce(
-    (acc, s) => {
-      const anyMissing = Object.values(s.byLocale).some((c) => c.missing > 0);
-      acc[s.key] = anyMissing;
-      return acc;
-    },
-    {} as Record<string, boolean>,
-  );
+  const { esAdmin } = useFarmaciaEditor();
+  const estadoDe = useEstadoSecciones();
 
   return (
     <aside
@@ -36,7 +28,6 @@ export function EditorSectionSidebar({
           {group.sectionKeys.map((key) => {
             const s = SECTION_BY_KEY[key];
             const isActive = key === activeKey;
-            const pendiente = s.multilang && missingByKey[key as SectionKey];
             return (
               <button
                 key={key}
@@ -51,12 +42,7 @@ export function EditorSectionSidebar({
                 )}
               >
                 <span className="flex-1 min-w-0 truncate">{s.label}</span>
-                {pendiente && (
-                  <>
-                    <span aria-hidden title="Falta traducir" className="w-[7px] h-[7px] rounded-full shrink-0 ml-auto bg-[var(--color-red-ink)]" />
-                    <span className="sr-only">(falta traducir)</span>
-                  </>
-                )}
+                <MarcasSeccion estado={estadoDe(key)} />
               </button>
             );
           })}

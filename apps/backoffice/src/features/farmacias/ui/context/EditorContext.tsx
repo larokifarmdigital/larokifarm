@@ -10,7 +10,14 @@ import {
   useRef,
   useState,
 } from 'react';
-import { tieneCambiosSinPublicar, validateFarmacia, type Farmacia, type FieldIssue } from '@/core/farmacias/domain';
+import {
+  cambiosSinPublicar,
+  tieneCambiosSinPublicar,
+  validateFarmacia,
+  type CambioSinPublicar,
+  type Farmacia,
+  type FieldIssue,
+} from '@/core/farmacias/domain';
 import { LOCALE_NOMBRE, LOCALE_PRINCIPAL, type Locale } from '@/core/shared';
 import { saveFarmaciaPatchAction } from '@/features/farmacias/actions/saveFarmaciaAction';
 import {
@@ -65,6 +72,8 @@ const NOT_PATCHABLE = new Set<keyof Farmacia>([
   // Idiomas: solo con activarIdioma (acción explícita). Publicación: solo lectura.
   'idiomasActivos',
   'ultimaPublicacion',
+  // Copia de lo publicado: solo la escribe Publicar.
+  'publicado',
 ]);
 
 /**
@@ -150,6 +159,7 @@ function reducer(state: State, action: Action): State {
         updatedAt: f.updatedAt,
         ultimaPublicacion: f.ultimaPublicacion,
         idiomasActivos: f.idiomasActivos,
+        publicado: f.publicado,
       };
       return {
         ...state,
@@ -169,6 +179,13 @@ type EditorContextValue = State & {
   esAdmin: boolean;
   /** Hay cambios (guardados o no) que todavía no están en la web. */
   pendientePublicar: boolean;
+  /**
+   * Qué difiere de lo publicado, campo a campo. `null` si la farmacia aún no
+   * tiene copia publicada (se sabrá a partir de la próxima publicación).
+   */
+  cambios: CambioSinPublicar[] | null;
+  /** Vuelve un campo a lo publicado (se guarda solo, como cualquier edición). */
+  deshacerCambio: (c: CambioSinPublicar) => void;
   /** Añade/reactiva un idioma en la web ("Idiomas de la web"; pulsar una pestaña no escribe). */
   activarIdioma: (l: Locale) => Promise<boolean>;
   /** Deja de mostrarlo en la web (conserva los textos). Nunca el castellano. */
@@ -407,7 +424,18 @@ export function FarmaciaEditorProvider({
     return () => window.removeEventListener('beforeunload', beforeUnload);
   }, [state.dirty, readOnly]);
 
-  const pendientePublicar = state.dirty || tieneCambiosSinPublicar(state.farmacia);
+  const cambios = useMemo(() => cambiosSinPublicar(state.farmacia), [state.farmacia]);
+  // Con copia publicada se sabe exactamente; sin ella, por fechas (como antes).
+  const pendientePublicar =
+    cambios && state.farmacia.status === 'published'
+      ? cambios.length > 0
+      : state.dirty || tieneCambiosSinPublicar(state.farmacia);
+  const deshacerCambio = useCallback(
+    (c: CambioSinPublicar) => {
+      if (c.deshacer) patch(c.deshacer);
+    },
+    [patch],
+  );
 
   const value = useMemo<EditorContextValue>(
     () => ({
@@ -415,6 +443,8 @@ export function FarmaciaEditorProvider({
       readOnly,
       esAdmin,
       pendientePublicar,
+      cambios,
+      deshacerCambio,
       activarIdioma,
       desactivarIdioma,
       eliminarTraducciones,
@@ -428,7 +458,7 @@ export function FarmaciaEditorProvider({
       touch,
       revealErrors,
     }),
-    [state, readOnly, esAdmin, pendientePublicar, activarIdioma, desactivarIdioma, eliminarTraducciones, patch, setLocale, goToSection, saveNow, syncFromServer, issues, isErrorVisible, touch, revealErrors],
+    [state, readOnly, esAdmin, pendientePublicar, cambios, deshacerCambio, activarIdioma, desactivarIdioma, eliminarTraducciones, patch, setLocale, goToSection, saveNow, syncFromServer, issues, isErrorVisible, touch, revealErrors],
   );
 
   return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;

@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useState } from 'react';
 import { Input } from '@/shared/components/atoms/Input';
 import { Label } from '@/shared/components/atoms/Label';
@@ -70,7 +71,7 @@ export function GeneralTab() {
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
+          <CampoSinPublicar campo="nombre" className="sm:col-span-2">
             <Label htmlFor="nombre" required>Nombre de la farmacia</Label>
             <Input
               id="nombre"
@@ -79,8 +80,8 @@ export function GeneralTab() {
               onChange={(e) => patch({ nombre: e.target.value })}
             />
             <FieldError {...fe.nombre} />
-          </div>
-          <div>
+          </CampoSinPublicar>
+          <CampoSinPublicar campo="titular">
             <Label htmlFor="titular">Farmacéutica o farmacéutico titular</Label>
             <Input
               id="titular"
@@ -88,8 +89,8 @@ export function GeneralTab() {
               onChange={(e) => patch({ titular: e.target.value })}
               autoComplete="name"
             />
-          </div>
-          <div>
+          </CampoSinPublicar>
+          <CampoSinPublicar campo="numeroColegiado">
             <Label htmlFor="colegiado">Número de colegiado</Label>
             <Input
               id="colegiado"
@@ -100,7 +101,7 @@ export function GeneralTab() {
               className="sm:max-w-[220px]"
             />
             <FieldError {...fe.colegiado} />
-          </div>
+          </CampoSinPublicar>
 
           <div className="sm:col-span-2">
             <ImageGalleryField
@@ -129,7 +130,7 @@ export function GeneralTab() {
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
+          <CampoSinPublicar campo="telefono">
             <Label htmlFor="telefono" required>Teléfono</Label>
             <IconInput
               id="telefono"
@@ -143,8 +144,8 @@ export function GeneralTab() {
               placeholder="+34 934 12 34 56"
             />
             <FieldError {...fe.telefono} />
-          </div>
-          <div>
+          </CampoSinPublicar>
+          <CampoSinPublicar campo="whatsapp">
             <Label htmlFor="whatsapp">WhatsApp</Label>
             <IconInput
               id="whatsapp"
@@ -157,8 +158,8 @@ export function GeneralTab() {
               placeholder="+34 600 12 34 56"
             />
             <FieldError {...fe.whatsapp} />
-          </div>
-          <div>
+          </CampoSinPublicar>
+          <CampoSinPublicar campo="email">
             <Label htmlFor="email" required>Correo electrónico</Label>
             <IconInput
               id="email"
@@ -171,8 +172,8 @@ export function GeneralTab() {
               onChange={(e) => patch({ email: e.target.value })}
             />
             <FieldError {...fe.email} />
-          </div>
-          <div>
+          </CampoSinPublicar>
+          <CampoSinPublicar campo="web">
             <Label
               htmlFor="web"
               required
@@ -191,7 +192,7 @@ export function GeneralTab() {
               placeholder="https://"
             />
             <FieldError {...fe.web} />
-          </div>
+          </CampoSinPublicar>
         </div>
       </section>
 
@@ -204,7 +205,7 @@ export function GeneralTab() {
           hint="Tu usuario (@mifarmacia) o el enlace a tu perfil. Solo las que rellenes salen en tu web."
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CampoSinPublicar campo="redes" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {redesVisibles.map(({ key, label, icon }) => {
             const value = farmacia.redes?.[key] ?? '';
             const feRed = fieldError(`redes.${key}`);
@@ -224,7 +225,7 @@ export function GeneralTab() {
               </div>
             );
           })}
-        </div>
+        </CampoSinPublicar>
         {redesOcultas.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {redesOcultas.map((r) => (
@@ -255,7 +256,7 @@ export function GeneralTab() {
           hint="Se usa para el mapa y el botón «Cómo llegar» de tu web. Todo es obligatorio para publicar, salvo el número."
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
+        <CampoSinPublicar campo="direccion" className="grid grid-cols-1 sm:grid-cols-6 gap-4">
           <div className="sm:col-span-4">
             <Label htmlFor="calle" required>Calle</Label>
             <Input id="calle" {...fe.calle.inputProps} value={d.calle ?? ''} onChange={(e) => setDir('calle', e.target.value)} autoComplete="address-line1" />
@@ -291,7 +292,7 @@ export function GeneralTab() {
             <FieldError {...fe.pais} />
           </div>
 
-          <div className="sm:col-span-6">
+          <CampoSinPublicar campo="googleMapsUrl" className="sm:col-span-6">
             <Label
               htmlFor="gmaps"
               hint={
@@ -316,8 +317,8 @@ export function GeneralTab() {
             />
             <FieldError {...fe.gmaps} />
             {!fe.gmaps.message && <FieldError {...fe.mapa} />}
-          </div>
-        </div>
+          </CampoSinPublicar>
+        </CampoSinPublicar>
       </section>
 
       {esAdmin && (

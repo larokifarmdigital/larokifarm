@@ -4,7 +4,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
-import { countBySection, type SectionKey } from '@/features/farmacias/ui/lib/i18nStatus';
+import { MarcasSeccion, useEstadoSecciones } from '@/features/farmacias/ui/hooks/useEstadoSecciones';
 import { gruposVisibles, SECTION_BY_KEY } from '@/features/farmacias/ui/lib/sectionsConfig';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
@@ -21,15 +21,8 @@ export function EditorSectionSheet({
   onSelect: (key: string) => void;
 }) {
   const ref = useRef<HTMLDialogElement | null>(null);
-  const { farmacia, esAdmin } = useFarmaciaEditor();
-  const perSection = countBySection(farmacia);
-  const missingByKey: Record<string, boolean> = perSection.reduce(
-    (acc, s) => {
-      acc[s.key] = Object.values(s.byLocale).some((c) => c.missing > 0);
-      return acc;
-    },
-    {} as Record<string, boolean>,
-  );
+  const { esAdmin } = useFarmaciaEditor();
+  const estadoDe = useEstadoSecciones();
 
   useEffect(() => {
     const d = ref.current;
@@ -77,7 +70,6 @@ export function EditorSectionSheet({
             {group.sectionKeys.map((key) => {
               const s = SECTION_BY_KEY[key];
               const isActive = key === activeKey;
-              const pendiente = s.multilang && missingByKey[key as SectionKey];
               return (
                 <button
                   key={key}
@@ -98,12 +90,7 @@ export function EditorSectionSheet({
                   >
                     {s.label}
                   </span>
-                  {pendiente && (
-                    <span className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--color-red-ink)]">
-                      <span aria-hidden className="w-[7px] h-[7px] rounded-full bg-[var(--color-red-ink)]" />
-                      Falta traducir
-                    </span>
-                  )}
+                  <MarcasSeccion estado={estadoDe(key)} conTexto />
                 </button>
               );
             })}

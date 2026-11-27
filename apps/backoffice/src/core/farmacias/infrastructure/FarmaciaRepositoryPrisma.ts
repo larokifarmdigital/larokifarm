@@ -12,6 +12,7 @@ import type {
   FarmaciaSummary,
   ResponsableDisponible,
 } from '@/core/farmacias/domain';
+import { contenidoPublicable, versionPublicada } from '@/core/farmacias/domain';
 import type { SaveResult } from '@/core/shared';
 import {
   asStatus,
@@ -148,7 +149,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
       where: { slug, publishedStatus: 'published' },
       include: CONTENT_INCLUDE,
     });
-    return row ? mapBusinessToFarmacia(row as BusinessWithContent) : null;
+    return row ? versionPublicada(mapBusinessToFarmacia(row as BusinessWithContent)) : null;
   },
 
   async getFarmaciaBySlugSinSesion(slug): Promise<Farmacia | null> {
@@ -341,7 +342,17 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
   },
 
   async publishFarmacia(id, status) {
-    return this.saveFarmacia(id, { status });
+    const res = await this.saveFarmacia(id, { status });
+    if (!res.ok || status !== 'published') return res;
+    // Copia de lo que se publica: es lo que servirá la API pública hasta la próxima vez.
+    const publicado = contenidoPublicable(res.data);
+    const row = await prisma.business.update({
+      where: { id },
+      data: { contenidoPublicado: publicado as Prisma.InputJsonValue },
+      select: { updatedAt: true },
+    });
+    // updatedAt nuevo: con el de antes, el siguiente autoguardado daría un falso conflicto.
+    return { ok: true, data: { ...res.data, publicado, updatedAt: row.updatedAt.toISOString() } };
   },
 
   async deleteFarmacia(id) {

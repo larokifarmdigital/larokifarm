@@ -9,7 +9,7 @@ import type {
   Resena as PrismaResena,
   Servicio as PrismaServicio,
 } from '@prisma/client';
-import type { ChatConfig, Direccion, Farmacia, FeatureTarjeta, Horario, HeroTarjetaFlotante, ImagenAsset, Redes, Resena, ResenasReglas, Servicio, SobreNosotros, TextosCabecera, Faq, SeoConfig, FarmaciaStatus } from '@/core/farmacias/domain';
+import type { ChatConfig, ContenidoPublicado, Direccion, Farmacia, FeatureTarjeta, Horario, HeroTarjetaFlotante, ImagenAsset, Redes, Resena, ResenasReglas, Servicio, SobreNosotros, TextosCabecera, Faq, SeoConfig, FarmaciaStatus } from '@/core/farmacias/domain';
 import { CHAT_POR_DEFECTO, COLOR_HEX_RE, RESENAS_REGLAS_POR_DEFECTO } from '@/core/farmacias/domain';
 import type { Locale, MultilangText } from '@/core/shared';
 import { LOCALES } from '@/core/shared';
@@ -328,6 +328,7 @@ export function mapBusinessToFarmacia(b: BusinessWithContent): Farmacia {
     updatedAt: b.updatedAt.toISOString(),
     ultimaPublicacion: b.lastPublishedAt?.toISOString(),
     lastEditedBy: b.lastEditedByUserId ?? undefined,
+    publicado: asContenidoPublicado(b.contenidoPublicado),
   };
 }
 
@@ -430,4 +431,8 @@ export function splitFarmaciaPatch(patch: Partial<Farmacia>): {
   // resenas NO se tocan desde el editor (solo lectura).
 
   return { scalar, children };
+}
+
+function asContenidoPublicado(v: unknown): ContenidoPublicado | undefined {
+  return v && typeof v === 'object' && !Array.isArray(v) ? (v as ContenidoPublicado) : undefined;
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useState } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { MultilangInput } from '@/features/farmacias/ui/components/editor/fields/MultilangInput';
@@ -197,40 +198,42 @@ export function SobreTab() {
 
   return (
     <div className="space-y-10 max-w-3xl">
-      <section aria-labelledby="sec-sobre-descripcion">
-        <SectionHeader
-          id="sec-sobre-descripcion"
-          title="Vuestra historia"
-          hint="El texto principal de «Quiénes somos»: historia, especialidad y valores."
-        />
-        <Label
-          hint={
-            <LocaleChip
-              locale={currentLocale}
-              status={computeLocaleStatus(farmacia.descripcionLarga, currentLocale, farmacia.idiomasActivos)}
-            />
-          }
-          className="mb-3"
-          required
-        >
-          Texto
-        </Label>
-        <TiptapField
-          field="descripcionLarga.es"
-          label="Vuestra historia"
-          value={farmacia.descripcionLarga[currentLocale] ?? ''}
-          onChange={(html) =>
-            patch({
-              descripcionLarga: {
-                ...farmacia.descripcionLarga,
-                [currentLocale]: html,
-              },
-            })
-          }
-          placeholder="Escribe la descripción larga de la farmacia…"
-          minHeight={220}
-        />
-      </section>
+      <CampoSinPublicar campo="descripcionLarga" soloBorde>
+        <section aria-labelledby="sec-sobre-descripcion">
+          <SectionHeader
+            id="sec-sobre-descripcion"
+            title="Vuestra historia"
+            hint="El texto principal de «Quiénes somos»: historia, especialidad y valores."
+          />
+          <Label
+            hint={
+              <LocaleChip
+                locale={currentLocale}
+                status={computeLocaleStatus(farmacia.descripcionLarga, currentLocale, farmacia.idiomasActivos)}
+              />
+            }
+            className="mb-3"
+            required
+          >
+            Texto
+          </Label>
+          <TiptapField
+            field="descripcionLarga.es"
+            label="Vuestra historia"
+            value={farmacia.descripcionLarga[currentLocale] ?? ''}
+            onChange={(html) =>
+              patch({
+                descripcionLarga: {
+                  ...farmacia.descripcionLarga,
+                  [currentLocale]: html,
+                },
+              })
+            }
+            placeholder="Escribe la descripción larga de la farmacia…"
+            minHeight={220}
+          />
+        </section>
+      </CampoSinPublicar>
 
       <div className="hairline" />
 
@@ -255,70 +258,72 @@ export function SobreTab() {
 
       <div className="hairline" />
 
-      <section aria-labelledby="sec-sobre-puntos">
-        <SectionHeader
-          id="sec-sobre-puntos"
-          title={count === 0 ? 'Puntos destacados' : `${count} ${count === 1 ? 'punto destacado' : 'puntos destacados'}`}
-          hint={`Frases cortas con lo que os hace especiales. ${puntosCountHint}`}
-          actions={
-            count > 0 && !lleno ? (
-              <Button variant="accent" size="sm" onClick={openCreate}>
-                <NavIcon name="Plus" size={14} />
-                Añadir punto
-              </Button>
-            ) : null
-          }
-        />
-        {lleno && (
-          <p className="m-0 mb-3 text-[13.5px] text-[var(--color-muted)]">
-            Has llegado al máximo de {MAX_PUNTOS} puntos. Elimina uno para añadir otro.
-          </p>
-        )}
-
-        {count === 0 ? (
-          <button
-            type="button"
-            onClick={openCreate}
-            className="w-full card p-8 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
-          >
-            <div className="mx-auto w-10 h-10 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
-              <NavIcon name="Plus" size={18} />
-            </div>
-            <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade tu primer punto destacado</p>
-            <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
-              «Atención personalizada», «Servicio a domicilio», «Dermofarmacia especializada»…
+      <CampoSinPublicar campo="sobreNosotros" soloBorde>
+        <section aria-labelledby="sec-sobre-puntos">
+          <SectionHeader
+            id="sec-sobre-puntos"
+            title={count === 0 ? 'Puntos destacados' : `${count} ${count === 1 ? 'punto destacado' : 'puntos destacados'}`}
+            hint={`Frases cortas con lo que os hace especiales. ${puntosCountHint}`}
+            actions={
+              count > 0 && !lleno ? (
+                <Button variant="accent" size="sm" onClick={openCreate}>
+                  <NavIcon name="Plus" size={14} />
+                  Añadir punto
+                </Button>
+              ) : null
+            }
+          />
+          {lleno && (
+            <p className="m-0 mb-3 text-[13.5px] text-[var(--color-muted)]">
+              Has llegado al máximo de {MAX_PUNTOS} puntos. Elimina uno para añadir otro.
             </p>
-          </button>
-        ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-            <SortableContext
-              items={puntos.map((_, i) => `p-${i}`)}
-              strategy={verticalListSortingStrategy}
+          )}
+
+          {count === 0 ? (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="w-full card p-8 text-center border-dashed cursor-pointer hover:border-[var(--color-accent)] transition-colors"
             >
-              <ul className="card p-1.5 space-y-0.5 list-none m-0">
-                {puntos.map((p, i) => (
-                  <FilaLista
-                    key={`p-${i}`}
-                    id={`p-${i}`}
-                    indice={i}
-                    total={count}
-                    tipo="punto"
-                    titulo={p[currentLocale] || p.es || p.ca || p.en || ''}
-                    aviso={
-                      <AvisoTraduccion
-                        idiomas={farmacia.idiomasActivos.filter((l) => !p[l]?.trim()).map((l) => LOCALE_NOMBRE[l])}
-                      />
-                    }
-                    onEdit={() => openEdit(i)}
-                    onRemove={() => setDeleteIndex(i)}
-                    onMove={(d) => mover(i, d)}
-                  />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
-        )}
-      </section>
+              <div className="mx-auto w-10 h-10 rounded-full bg-[var(--color-accent-soft)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
+                <NavIcon name="Plus" size={18} />
+              </div>
+              <p className="text-[15px] font-medium text-[var(--color-ink)] m-0">Añade tu primer punto destacado</p>
+              <p className="mt-1 text-[13px] text-[var(--color-muted)] m-0">
+                «Atención personalizada», «Servicio a domicilio», «Dermofarmacia especializada»…
+              </p>
+            </button>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+              <SortableContext
+                items={puntos.map((_, i) => `p-${i}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                <ul className="card p-1.5 space-y-0.5 list-none m-0">
+                  {puntos.map((p, i) => (
+                    <FilaLista
+                      key={`p-${i}`}
+                      id={`p-${i}`}
+                      indice={i}
+                      total={count}
+                      tipo="punto"
+                      titulo={p[currentLocale] || p.es || p.ca || p.en || ''}
+                      aviso={
+                        <AvisoTraduccion
+                          idiomas={farmacia.idiomasActivos.filter((l) => !p[l]?.trim()).map((l) => LOCALE_NOMBRE[l])}
+                        />
+                      }
+                      onEdit={() => openEdit(i)}
+                      onRemove={() => setDeleteIndex(i)}
+                      onMove={(d) => mover(i, d)}
+                    />
+                  ))}
+                </ul>
+              </SortableContext>
+            </DndContext>
+          )}
+        </section>
+      </CampoSinPublicar>
 
       <div className="hairline" />
 

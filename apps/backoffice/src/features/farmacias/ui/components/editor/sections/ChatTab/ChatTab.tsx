@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useId, useState } from 'react';
 import { contrasteConBlanco, COLOR_HEX_RE, type ChatConfig, type ChatPosicion } from '@/core/farmacias/domain';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
@@ -30,7 +31,7 @@ export function ChatTab() {
   const set = (next: Partial<ChatConfig>) => patch({ chat: { ...chat, ...next } });
 
   return (
-    <div className="space-y-6">
+    <CampoSinPublicar campo="chat" soloBorde className="space-y-6">
       <section aria-labelledby="sec-chat-activo" className="card flex items-start justify-between gap-4 p-4">
         <div className="min-w-0">
           <h3 id="sec-chat-activo" className="m-0 text-[14px] font-bold text-[var(--color-ink)]">
@@ -120,7 +121,7 @@ export function ChatTab() {
           <VistaPrevia chat={chat} nombre={chat.nombre?.trim() || farmacia.nombre} logoUrl={chat.mostrarLogo ? farmacia.logo?.url : undefined} />
         </div>
       )}
-    </div>
+    </CampoSinPublicar>
   );
 }
 

@@ -77,6 +77,7 @@ model Business {
   googleLocationName    String? // ficha GBP para el worker de sync de reseñas
   lastEditedByUserId    String? // quién tocó la farmacia por última vez (no FK por simplicidad)
   lastPublishedAt       DateTime? // timestamp del último publish, para "publicada y al día"
+  contenidoPublicado    Json? // copia del contenido al publicar: la sirve la API pública y es la base de «cambios sin publicar»
 
   // ── Publicación y SEO ──────────────────────────────────────────
   publishedStatus String @default("draft") // draft | published | archived

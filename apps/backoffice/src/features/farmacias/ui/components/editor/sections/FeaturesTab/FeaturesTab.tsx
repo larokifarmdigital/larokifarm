@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useState } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { fieldDomId } from '@/core/farmacias/domain';
@@ -264,45 +265,47 @@ export function FeaturesTab() {
           </p>
         </button>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext items={features.map((f) => f.id)} strategy={verticalListSortingStrategy}>
-            <ul className="card p-1.5 space-y-0.5 list-none m-0">
-              {features.map((f, i) => {
-                const titulo = f.titulo[currentLocale] || f.titulo.es || f.titulo.ca || f.titulo.en || '';
-                const desc = f.descripcion?.[currentLocale] || f.descripcion?.es || '';
-                const faltan = farmacia.idiomasActivos.filter((l) => !f.titulo[l]?.trim()).map((l) => LOCALE_NOMBRE[l]);
-                return (
-                  <FilaLista
-                    key={f.id}
-                    id={f.id}
-                    indice={i}
-                    total={count}
-                    tipo="tarjeta"
-                    titulo={titulo}
-                    detalle={f.icono === 'clock' && !desc ? 'Muestra el horario de la farmacia' : desc}
-                    destacar={recienAnadida === f.id}
-                    icono={
-                      <span
-                        className={cn(
-                          'h-9 w-9 rounded-[var(--radius-sm)] flex items-center justify-center',
-                          f.icono
-                            ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
-                            : 'bg-[var(--color-surface-sunken)] text-[var(--color-muted)]',
-                        )}
-                      >
-                        {f.icono ? <IconoSVG nombre={f.icono} size={18} /> : <NavIcon name="Image" size={14} />}
-                      </span>
-                    }
-                    aviso={<AvisoTraduccion idiomas={faltan} />}
-                    onEdit={() => openEdit(f)}
-                    onRemove={() => setDeleteTarget(f)}
-                    onMove={(d) => mover(i, d)}
-                  />
-                );
-              })}
-            </ul>
-          </SortableContext>
-        </DndContext>
+        <CampoSinPublicar campo="featuresLista" soloBorde>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={features.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+              <ul className="card p-1.5 space-y-0.5 list-none m-0">
+                {features.map((f, i) => {
+                  const titulo = f.titulo[currentLocale] || f.titulo.es || f.titulo.ca || f.titulo.en || '';
+                  const desc = f.descripcion?.[currentLocale] || f.descripcion?.es || '';
+                  const faltan = farmacia.idiomasActivos.filter((l) => !f.titulo[l]?.trim()).map((l) => LOCALE_NOMBRE[l]);
+                  return (
+                    <FilaLista
+                      key={f.id}
+                      id={f.id}
+                      indice={i}
+                      total={count}
+                      tipo="tarjeta"
+                      titulo={titulo}
+                      detalle={f.icono === 'clock' && !desc ? 'Muestra el horario de la farmacia' : desc}
+                      destacar={recienAnadida === f.id}
+                      icono={
+                        <span
+                          className={cn(
+                            'h-9 w-9 rounded-[var(--radius-sm)] flex items-center justify-center',
+                            f.icono
+                              ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                              : 'bg-[var(--color-surface-sunken)] text-[var(--color-muted)]',
+                          )}
+                        >
+                          {f.icono ? <IconoSVG nombre={f.icono} size={18} /> : <NavIcon name="Image" size={14} />}
+                        </span>
+                      }
+                      aviso={<AvisoTraduccion idiomas={faltan} />}
+                      onEdit={() => openEdit(f)}
+                      onRemove={() => setDeleteTarget(f)}
+                      onMove={(d) => mover(i, d)}
+                    />
+                  );
+                })}
+              </ul>
+            </SortableContext>
+          </DndContext>
+        </CampoSinPublicar>
       )}
 
       <FeatureModal

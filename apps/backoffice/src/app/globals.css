@@ -720,3 +720,12 @@ dialog.editor-section-sheet::backdrop {
     left: 33%;
   }
 }
+
+/* Campo con cambios sin publicar (CampoSinPublicar): el borde va en el margen
+   izquierdo (margen negativo + padding) para que el contenido no se mueva. */
+.campo-sin-publicar {
+  margin-left: -12px;
+  padding-left: 9px;
+  border-left: 3px solid var(--color-yellow-ink);
+  border-radius: 2px;
+}

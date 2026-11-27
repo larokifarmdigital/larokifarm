@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/shared/components/atoms/Button';
@@ -45,35 +46,37 @@ export function HorarioTab() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <section aria-labelledby="sec-horarios">
-        <SectionHeader
-          id="sec-horarios"
-          title="Horario semanal"
-          hint="Activa los días que abre la farmacia y ajusta las horas. Puedes poner un horario de mañana y otro de tarde."
-          actions={
-            readOnly ? undefined : vacio ? (
-              <Button type="button" variant="secondary" size="sm" onClick={() => patch({ horarios: HORARIO_TIPICO })}>
-                <NavIcon name="Lightning" size={13} />
-                Empezar con un horario típico
-              </Button>
-            ) : lunesAbierto ? (
-              <Button type="button" variant="secondary" size="sm" onClick={() => setConfirmCopia(true)}>
-                <NavIcon name="Copy" size={13} />
-                Copiar el lunes a martes–viernes
-              </Button>
-            ) : null
-          }
-        />
+      <CampoSinPublicar campo="horarios" soloBorde>
+        <section aria-labelledby="sec-horarios">
+          <SectionHeader
+            id="sec-horarios"
+            title="Horario semanal"
+            hint="Activa los días que abre la farmacia y ajusta las horas. Puedes poner un horario de mañana y otro de tarde."
+            actions={
+              readOnly ? undefined : vacio ? (
+                <Button type="button" variant="secondary" size="sm" onClick={() => patch({ horarios: HORARIO_TIPICO })}>
+                  <NavIcon name="Lightning" size={13} />
+                  Empezar con un horario típico
+                </Button>
+              ) : lunesAbierto ? (
+                <Button type="button" variant="secondary" size="sm" onClick={() => setConfirmCopia(true)}>
+                  <NavIcon name="Copy" size={13} />
+                  Copiar el lunes a martes–viernes
+                </Button>
+              ) : null
+            }
+          />
 
-        <HorarioSemanal
-          horarios={farmacia.horarios}
-          onChange={(next) => {
-            patch({ horarios: next });
-            feHorarios.inputProps.onBlur();
-          }}
-        />
-        <FieldError {...feHorarios} />
-      </section>
+          <HorarioSemanal
+            horarios={farmacia.horarios}
+            onChange={(next) => {
+              patch({ horarios: next });
+              feHorarios.inputProps.onBlur();
+            }}
+          />
+          <FieldError {...feHorarios} />
+        </section>
+      </CampoSinPublicar>
 
       <ConfirmDialog
         open={confirmCopia}

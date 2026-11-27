@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar, EtiquetaSinPublicar, useCampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useId } from 'react';
 import { Label } from '@/shared/components/atoms/Label';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
@@ -42,6 +43,7 @@ export function MultilangTextarea({
   const { farmacia } = useFarmaciaEditor();
   const currentLocale = useEditingLocale();
   const { id, error } = useFieldBinding(field, useId());
+  const sinPublicar = useCampoSinPublicar(field);
   const showError = error?.message ? error : undefined;
   const current = value[currentLocale] ?? '';
   const status = computeLocaleStatus(value, currentLocale, farmacia.idiomasActivos);
@@ -54,8 +56,8 @@ export function MultilangTextarea({
   const describedBy = [showError?.errorId, limite ? contadorId : undefined].filter(Boolean).join(' ') || undefined;
 
   return (
-    <div>
-      <Label htmlFor={id} required={required} hint={<LocaleChip locale={currentLocale} status={status} />}>
+    <CampoSinPublicar campo={field} soloBorde="enLabel">
+      <Label htmlFor={id} required={required} hint={<>{sinPublicar && <EtiquetaSinPublicar />}<LocaleChip locale={currentLocale} status={status} /></>}>
         {label}
       </Label>
       <textarea
@@ -89,6 +91,6 @@ export function MultilangTextarea({
       <p role="status" className="sr-only">
         {aviso}
       </p>
-    </div>
+    </CampoSinPublicar>
   );
 }

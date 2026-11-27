@@ -1,6 +1,6 @@
 // Adapter en memoria: se usa mientras USE_NEON_CONTENT no sea true.
 import type { Farmacia, FarmaciaRepository, FarmaciaSummary } from '@/core/farmacias/domain';
-import { CHAT_POR_DEFECTO } from '@/core/farmacias/domain';
+import { CHAT_POR_DEFECTO, contenidoPublicable, versionPublicada } from '@/core/farmacias/domain';
 import { MOCK_FARMACIAS } from './farmaciasMock';
 import { sleep } from '@/shared/lib/sleep';
 
@@ -48,7 +48,7 @@ export const farmaciaRepositoryMock: FarmaciaRepository = {
 
   async getPublishedFarmaciaBySlug(slug) {
     const f = [...store.values()].find((x) => x.slug === slug && x.status === 'published');
-    return f ? structuredClone(f) : null;
+    return f ? versionPublicada(structuredClone(f)) : null;
   },
 
   async getFarmaciaBySlugSinSesion(slug) {
@@ -127,7 +127,11 @@ export const farmaciaRepositoryMock: FarmaciaRepository = {
   },
 
   async publishFarmacia(id, status) {
-    return this.saveFarmacia(id, { status });
+    const res = await this.saveFarmacia(id, { status });
+    if (!res.ok || status !== 'published') return res;
+    const f = { ...res.data, publicado: contenidoPublicable(res.data) };
+    store.set(id, f);
+    return { ok: true, data: structuredClone(f) };
   },
 
   async duplicateFarmacia(id) {

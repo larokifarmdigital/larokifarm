@@ -1,5 +1,6 @@
 'use client';
 
+import { CampoSinPublicar } from '@/features/farmacias/ui/components/editor/fields/CampoSinPublicar';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { TiptapField } from '@/features/farmacias/ui/components/editor/fields/TiptapField';
 import { LocaleChip } from '@/features/farmacias/ui/components/editor/status/LocaleChip';
@@ -45,55 +46,59 @@ export function LegalTab() {
   return (
     <div className="space-y-10 max-w-3xl">
       {/* data-pagina-vista-previa: la vista previa enseña la página del texto que se edita */}
-      <section aria-labelledby="sec-legal-aviso" data-pagina-vista-previa="aviso-legal">
-        <SectionHeader
-          id="sec-legal-aviso"
-          title="Aviso legal"
-          hint="Texto completo del aviso legal de esta farmacia. Obligatorio en castellano para publicar; en otros idiomas, si está vacío, la web muestra el texto por defecto."
-        />
-        <Label
-          hint={<LocaleChip locale={currentLocale} status={avisoStatus} />}
-          className="mb-3"
-          required
-        >
-          Cuerpo del aviso legal
-        </Label>
-        <TiptapField
-          field="avisoLegal.es"
-          label="Cuerpo del aviso legal"
-          value={farmacia.avisoLegal?.[currentLocale] ?? ''}
-          onChange={setAviso}
-          placeholder="Datos identificativos, política de cookies, propietario del sitio, licencia…"
-          minHeight={260}
-        />
-        <FallbackNote empty={avisoEmpty && currentLocale !== 'es'} />
-      </section>
+      <CampoSinPublicar campo="avisoLegal" soloBorde>
+        <section aria-labelledby="sec-legal-aviso" data-pagina-vista-previa="aviso-legal">
+          <SectionHeader
+            id="sec-legal-aviso"
+            title="Aviso legal"
+            hint="Texto completo del aviso legal de esta farmacia. Obligatorio en castellano para publicar; en otros idiomas, si está vacío, la web muestra el texto por defecto."
+          />
+          <Label
+            hint={<LocaleChip locale={currentLocale} status={avisoStatus} />}
+            className="mb-3"
+            required
+          >
+            Cuerpo del aviso legal
+          </Label>
+          <TiptapField
+            field="avisoLegal.es"
+            label="Cuerpo del aviso legal"
+            value={farmacia.avisoLegal?.[currentLocale] ?? ''}
+            onChange={setAviso}
+            placeholder="Datos identificativos, política de cookies, propietario del sitio, licencia…"
+            minHeight={260}
+          />
+          <FallbackNote empty={avisoEmpty && currentLocale !== 'es'} />
+        </section>
+      </CampoSinPublicar>
 
       <div className="hairline" />
 
-      <section aria-labelledby="sec-legal-privacidad" data-pagina-vista-previa="politica-privacidad">
-        <SectionHeader
-          id="sec-legal-privacidad"
-          title="Política de privacidad"
-          hint="Texto completo de la política de privacidad. Obligatoria en castellano para publicar; en otros idiomas, si está vacía, la web muestra el texto por defecto."
-        />
-        <Label
-          hint={<LocaleChip locale={currentLocale} status={politicaStatus} />}
-          className="mb-3"
-          required
-        >
-          Cuerpo de la política
-        </Label>
-        <TiptapField
-          field="politicaPrivacidad.es"
-          label="Cuerpo de la política de privacidad"
-          value={farmacia.politicaPrivacidad?.[currentLocale] ?? ''}
-          onChange={setPolitica}
-          placeholder="Datos que se recogen, finalidad, derechos ARCO, responsable del tratamiento…"
-          minHeight={260}
-        />
-        <FallbackNote empty={politicaEmpty && currentLocale !== 'es'} />
-      </section>
+      <CampoSinPublicar campo="politicaPrivacidad" soloBorde>
+        <section aria-labelledby="sec-legal-privacidad" data-pagina-vista-previa="politica-privacidad">
+          <SectionHeader
+            id="sec-legal-privacidad"
+            title="Política de privacidad"
+            hint="Texto completo de la política de privacidad. Obligatoria en castellano para publicar; en otros idiomas, si está vacía, la web muestra el texto por defecto."
+          />
+          <Label
+            hint={<LocaleChip locale={currentLocale} status={politicaStatus} />}
+            className="mb-3"
+            required
+          >
+            Cuerpo de la política
+          </Label>
+          <TiptapField
+            field="politicaPrivacidad.es"
+            label="Cuerpo de la política de privacidad"
+            value={farmacia.politicaPrivacidad?.[currentLocale] ?? ''}
+            onChange={setPolitica}
+            placeholder="Datos que se recogen, finalidad, derechos ARCO, responsable del tratamiento…"
+            minHeight={260}
+          />
+          <FallbackNote empty={politicaEmpty && currentLocale !== 'es'} />
+        </section>
+      </CampoSinPublicar>
     </div>
   );
 }

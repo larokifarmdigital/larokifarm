@@ -1,3 +1,4 @@
+import type { ContenidoPublicado } from '../publicado';
 import type { Locale, MultilangText } from '@/core/shared';
 
 export type FarmaciaStatus = 'draft' | 'published' | 'archived';
@@ -267,6 +268,8 @@ export type Farmacia = {
   /** ISO de la última publicación (solo lectura). Con `updatedAt` posterior = cambios sin publicar. */
   ultimaPublicacion?: string;
   lastEditedBy?: string;
+  /** Contenido tal y como se publicó por última vez (ver domain/publicado.ts). */
+  publicado?: ContenidoPublicado;
 };
 
 /** Usuario que se puede poner de responsable de una farmacia nueva; `farmacias` = las que ya lleva. */
