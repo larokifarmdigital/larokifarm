@@ -1,15 +1,6 @@
 'use client';
 
-/**
- * Layout del editor de farmacia.
- *   - Escritorio (≥ lg): columna izquierda con las secciones agrupadas
- *     (Tu farmacia · Portada · Contenido · Avanzado).
- *   - Móvil: selector de sección + hoja con todas las secciones; barra de
- *     acciones fija abajo (estado de la web + Publicar / Ver mi web).
- *   - Pestañas de idioma por sección (solo en las secciones con textos).
- * Secciones: `ui/lib/sectionsConfig.ts` (metadata sin componentes, para que la
- * navegación no arrastre el bundle de Tiptap).
- */
+/** Secciones en `ui/lib/sectionsConfig.ts`, sin componentes, para que la navegación no arrastre el bundle de Tiptap. */
 
 import { useEffect, useState } from 'react';
 import type { Farmacia } from '@/core/farmacias/domain';
@@ -26,6 +17,9 @@ import { EditorSectionTitle } from '@/features/farmacias/ui/components/editor/na
 import { EditorSectionSwitcher } from '@/features/farmacias/ui/components/editor/navigation/EditorSectionSwitcher';
 import { EditorMobileActionBar } from '@/features/farmacias/ui/components/editor/navigation/EditorMobileActionBar';
 import { EstadoAnunciado } from '@/features/farmacias/ui/components/editor/status/EstadoAnunciado';
+import { VistaPreviaMovil, VistaPreviaPanel } from '@/features/farmacias/ui/components/editor/preview/VistaPreviaPanel';
+import { VistaPreviaProvider, useVistaPrevia } from '@/features/farmacias/ui/context/VistaPreviaContext';
+import { cn } from '@/shared/lib/cn';
 import { DEFAULT_SECTION_KEY, SECTION_BY_KEY, puedeVerSeccion } from '@/features/farmacias/ui/lib/sectionsConfig';
 import { HorarioTab } from '@/features/farmacias/ui/components/editor/sections/HorarioTab';
 import { GeneralTab } from '@/features/farmacias/ui/components/editor/sections/GeneralTab';
@@ -69,16 +63,18 @@ export function FarmaciaEditor({
 }) {
   return (
     <FarmaciaEditorProvider initial={initial} readOnly={readOnly} esAdmin={esAdmin}>
-      <FarmaciaEditorLayout volverA={volverA} />
+      <VistaPreviaProvider>
+        <FarmaciaEditorLayout volverA={volverA} />
+      </VistaPreviaProvider>
     </FarmaciaEditorProvider>
   );
 }
 
-/** La sección activa vive en el contexto: el aviso de publicar y el chip de
- *  salud también navegan a una sección. */
 function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
   const { activeSectionKey, goToSection, readOnly, esAdmin } = useFarmaciaEditor();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const vistaPrevia = useVistaPrevia();
+  const panelAbierto = vistaPrevia.abierta && vistaPrevia.escritorio;
 
   const activeSection = puedeVerSeccion(activeSectionKey, esAdmin)
     ? SECTION_BY_KEY[activeSectionKey]
@@ -113,16 +109,23 @@ function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
     <>
       <EditorTopBar volverA={volverA} />
 
-      <div className="max-w-[1200px] mx-auto px-3 sm:px-6 pt-6 sm:pt-8 pb-40 sm:pb-24">
-        <div className="grid gap-5 sm:gap-7 grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)]">
-          {/* Sidebar desktop (oculta < lg vía hidden) */}
-          <div className="hidden lg:block">
+      <div className={cn('mx-auto px-3 sm:px-6 pt-6 sm:pt-8 pb-40 sm:pb-24', panelAbierto ? 'max-w-[1760px]' : 'max-w-[1200px]')}>
+        <div
+          className={cn(
+            'grid gap-5 sm:gap-7 grid-cols-1',
+            panelAbierto
+              ? // Con la vista previa abierta, por debajo de xl el menú de secciones pasa a
+                // ser el desplegable de móvil: formulario y web a medias (~440 px cada uno a 1024).
+                'lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_minmax(360px,1fr)]'
+              : 'lg:grid-cols-[220px_minmax(0,1fr)]',
+          )}
+        >
+          <div className={cn('hidden', panelAbierto ? 'xl:block' : 'lg:block')}>
             <EditorSectionSidebar activeKey={activeSectionKey} onSelect={goToSection} />
           </div>
 
           <div className="min-w-0">
-            {/* Picker móvil (oculto en lg+) */}
-            <div className="lg:hidden">
+            <div className={panelAbierto ? 'xl:hidden' : 'lg:hidden'}>
               <EditorSectionPicker
                 activeKey={activeSectionKey}
                 isOpen={sheetOpen}
@@ -150,10 +153,19 @@ function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
               </fieldset>
             </EditorSectionSwitcher>
           </div>
+
+          {panelAbierto && (
+            <div className="sticky top-[8.5rem] h-[calc(100vh-10rem)] min-h-[420px]">
+              <VistaPreviaPanel onCerrar={vistaPrevia.cerrar} />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Sheet móvil: renderizado en cualquier viewport (el picker solo aparece en móvil) */}
+      {!vistaPrevia.escritorio && (
+        <VistaPreviaMovil open={vistaPrevia.abierta} onOpenChange={(v) => (v ? vistaPrevia.abrir() : vistaPrevia.cerrar())} />
+      )}
+
       <EditorSectionSheet
         open={sheetOpen}
         activeKey={activeSectionKey}
@@ -166,3 +178,4 @@ function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
     </>
   );
 }
+

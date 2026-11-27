@@ -119,6 +119,30 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
 - `EditorHealthChip` = solo traducciones ("Faltan N traducciones"), oculto si la
   web tiene un idioma.
 
+### Vista previa de la web (27-11-2026)
+- Botón "Vista previa" (ojo) en la cabecera y ojo de 44 px en la barra móvil,
+  solo si la landing tiene `/vista-previa` (`ui/lib/vistaPrevia.ts`,
+  `LANDINGS_CON_VISTA_PREVIA`; hoy `torrents`). Escritorio (≥ lg): columna fija
+  junto al formulario, recordada en `localStorage`; entre lg y xl el menú de
+  secciones pasa al desplegable de móvil (formulario y web a medias). Por debajo
+  de lg, pantalla completa (`VistaPreviaMovil`, Radix Dialog). Panel de menos de
+  480 px: empieza en vista Móvil (en Ordenador la web quedaría al ~30 %). Estado en
+  `ui/context/VistaPreviaContext` (`useSyncExternalStore`, sin setState en efectos).
+- `VistaPreviaPanel`: iframe de `<web>/vista-previa` con lo GUARDADO (sin
+  publicar), escalado desde 1280 px (Ordenador) o 390 px (Móvil). Cambiar de
+  sección no recarga: postMessage `larokifarm:seccion` y la página la resalta.
+  Se recarga sola al cambiar `farmacia.updatedAt` (guardado) y al cambiar de
+  idioma (`?lang=`). Al cerrar, el foco vuelve al botón (`data-abrir-vista-previa`).
+- Textos legales: la vista previa enseña su página (`?pagina=aviso-legal` /
+  `politica-privacidad`), la del bloque donde está el foco
+  (`data-pagina-vista-previa` en `LegalTab`). Portada ya no lleva mini-mockups
+  (`FieldPreview` solo queda para la tarjeta de Puntos fuertes).
+- Enlace firmado por `enlaceVistaPreviaAction` (`firmarVistaPrevia`, 2 h, con
+  `AUTH_SECRET`); la landing lo reenvía a `GET /api/vista-previa/farmacias/:slug`.
+  En local, `VISTA_PREVIA_URL_<SLUG>` apunta a la landing en marcha.
+- Para otra landing: copiar `vista-previa.astro` + `PaginaInicio` + `lib/ajustes`
+  de `apps/torrents` y añadir el slug a `LANDINGS_CON_VISTA_PREVIA`.
+
 ### Idiomas (catálogo cerrado, 21-11-2026)
 - Catálogo en `core/shared/domain/i18n.ts` (`LOCALES`): es, en, ca, fr, de,
   it, pt, eu, gl (orden = el de la API pública; es/en/ca primero). Castellano
@@ -142,16 +166,9 @@ ciudad`) y `ciudad` (lista y buscador del backoffice).
   Pulsar una pestaña nunca escribe. Con solo castellano: frase "Tu web está
   solo en castellano · Añadir otro idioma". Punto rojo = a ESTA sección le
   falta traducir. Chips/contadores con código (`LOCALE_CODIGO`), sin banderas.
-- **Sugerir traducción (IA)**: `fields/SugerirTraduccion` bajo
-  `MultilangInput`/`MultilangTextarea`/`TiptapField` (props `origen` +
-  `locale`) cuando se edita un idioma ≠ castellano y hay texto en castellano.
-  Borrador con "Usar esta traducción" / "Descartar"; nunca guarda sola.
-  Servidor: `sugerirTraduccionAction` (`actions/traduccionActions.ts`) →
-  `traducirTexto` (`core/farmacias/application/traducir.ts`, gemini-2.5-flash
-  por fetch). Respeta el presupuesto mensual del conciliador (bloqueado =
-  mensaje), clave Gemini del negocio o `GEMINI_API_KEY`, límite 40 por usuario
-  cada 10 min (en memoria), HTML saneado. El coste va al log
-  (`{evento:'traduccion', costeUsd…}`).
+- **Sin «Sugerir traducción» (IA)**: quitado el 27-11-2026 a petición del
+  usuario. Las traducciones se escriben a mano; en /admin/uso siguen las
+  traducciones de meses anteriores (módulo `TRADUCCION` en `usage_entries`).
 - Cambiar de idioma también funciona en solo consulta: `BotonIdioma` se pinta
   como `div role=button` cuando el editor está dentro del `fieldset disabled`.
 

@@ -5,7 +5,6 @@ import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext
 import { ListFieldError } from '@/features/farmacias/ui/components/editor/fields/FieldError';
 import { MultilangInput } from '@/features/farmacias/ui/components/editor/fields/MultilangInput';
 import { MultilangTextarea } from '@/features/farmacias/ui/components/editor/fields/MultilangTextarea';
-import { FieldPreview } from '@/features/farmacias/ui/components/editor/fields/FieldPreview';
 import { ImageGalleryField } from '@/features/farmacias/ui/components/editor/fields/ImageGalleryField';
 import { Button } from '@/shared/components/atoms/Button';
 import { Modal } from '@/shared/components/molecules/Modal';
@@ -174,7 +173,6 @@ export function HeroTab() {
 
   return (
     <div className="space-y-10 max-w-3xl">
-      {/* ============= TEXTOS ============= */}
       <section aria-labelledby="sec-hero-textos">
         <SectionHeader
           id="sec-hero-textos"
@@ -183,36 +181,24 @@ export function HeroTab() {
         />
 
         <div className="space-y-5">
-          <div className="grid gap-3 md:grid-cols-[1fr_200px] md:items-start">
-            <MultilangInput
-              label="Etiqueta pequeña sobre el título"
-              required
-              field="heroChip.es"
-              value={farmacia.heroChip ?? {}}
-              onChange={(v) => patch({ heroChip: v })}
-              placeholder="Farmacia en Barcelona"
-              help="Por ejemplo: Farmacia en Barcelona."
-            />
-            <FieldPreview
-              kind="heroChip"
-              value={farmacia.heroChip?.[currentLocale] ?? ''}
-            />
-          </div>
-          <div className="grid gap-3 md:grid-cols-[1fr_200px] md:items-start">
-            <MultilangInput
-              label="Frase principal"
-              required
-              field="heroSubtitulo.es"
-              value={farmacia.heroSubtitulo ?? {}}
-              onChange={(v) => patch({ heroSubtitulo: v })}
-              placeholder="Tu farmacia familiar en el Eixample"
-              help="La frase grande bajo el nombre de la farmacia."
-            />
-            <FieldPreview
-              kind="heroTitulo"
-              value={farmacia.heroSubtitulo?.[currentLocale] ?? ''}
-            />
-          </div>
+          <MultilangInput
+            label="Etiqueta pequeña sobre el título"
+            required
+            field="heroChip.es"
+            value={farmacia.heroChip ?? {}}
+            onChange={(v) => patch({ heroChip: v })}
+            placeholder="Farmacia en Barcelona"
+            help="Por ejemplo: Farmacia en Barcelona."
+          />
+          <MultilangInput
+            label="Frase principal"
+            required
+            field="heroSubtitulo.es"
+            value={farmacia.heroSubtitulo ?? {}}
+            onChange={(v) => patch({ heroSubtitulo: v })}
+            placeholder="Tu farmacia familiar en el Eixample"
+            help="La frase grande bajo el nombre de la farmacia."
+          />
           <MultilangTextarea
             label="Frase de apoyo"
             required
@@ -229,7 +215,6 @@ export function HeroTab() {
 
       <div className="hairline" />
 
-      {/* ============= IMÁGENES ============= */}
       <section aria-labelledby="sec-hero-imagenes">
         <SectionHeader
           id="sec-hero-imagenes"
@@ -251,7 +236,6 @@ export function HeroTab() {
 
       <div className="hairline" />
 
-      {/* ============= TARJETAS FLOTANTES ============= */}
       <section aria-labelledby="sec-hero-tarjetas">
         <SectionHeader
           id="sec-hero-tarjetas"

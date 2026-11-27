@@ -11,6 +11,7 @@ import { localeWithMostMissing } from '@/features/farmacias/ui/lib/i18nStatus';
 import { publishToast } from '@/features/farmacias/ui/lib/publishToast';
 import { cn } from '@/shared/lib/cn';
 import { landingUrl } from '@/shared/lib/landingUrl';
+import { useVistaPrevia } from '@/features/farmacias/ui/context/VistaPreviaContext';
 import { PublishMissingDialog } from './PublishMissingDialog';
 import { PublishBlockedDialog } from './PublishBlockedDialog';
 import type { FieldIssue } from '@/core/farmacias/domain';
@@ -25,6 +26,7 @@ import type { FieldIssue } from '@/core/farmacias/domain';
  */
 export function EditorActionButtons({ compact = false }: { compact?: boolean }) {
   const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly, esAdmin, issues, revealErrors, pendientePublicar } = useFarmaciaEditor();
+  const vistaPrevia = useVistaPrevia();
   const [blockedOpen, setBlockedOpen] = useState(false);
   const health = useI18nHealth();
   const [pending, startTx] = useTransition();
@@ -88,6 +90,20 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
   // Una farmacia archivada solo la saca del archivo el administrador.
   const puedePublicar = !readOnly && pendientePublicar && (farmacia.status !== 'archived' || esAdmin);
 
+  const botonVistaPrevia = vistaPrevia.disponible && !compact && (
+    <Button
+      variant="secondary"
+      size="sm"
+      aria-pressed={vistaPrevia.abierta}
+      data-abrir-vista-previa=""
+      onClick={vistaPrevia.alternar}
+      className={cn(vistaPrevia.abierta && 'border-[var(--color-accent)] text-[var(--color-accent-ink)] bg-[var(--color-accent-soft)]')}
+    >
+      <NavIcon name="Eye" size={14} />
+      Vista previa
+    </Button>
+  );
+
   const verWeb = (
     <Button
       variant="secondary"
@@ -105,6 +121,7 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
 
   return (
     <div className={cn('flex items-center gap-2 shrink-0', compact && 'w-full')}>
+      {botonVistaPrevia}
       {compact ? (
         puedePublicar ? null : verWeb
       ) : (

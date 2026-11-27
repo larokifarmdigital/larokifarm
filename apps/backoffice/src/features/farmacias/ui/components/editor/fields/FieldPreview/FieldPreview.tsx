@@ -4,13 +4,7 @@ import { IconoSVG } from '@/shared/components/atoms/IconoSVG';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 import { cn } from '@/shared/lib/cn';
 
-/**
- * Mini-mockup "live preview" al lado del input que está editando el user.
- * Objetivo: atacar el miedo real "no sé si se verá en la web".
- *
- * NO es pixel-perfect de la landing: es un recordatorio visual de case/weight/shape
- * para que la farmacéutica confirme que está rellenando lo correcto antes de guardar.
- */
+/** Mini-mockup junto al input: recordatorio de case/weight/shape, no un render fiel de la landing. */
 
 type FeatureValue = {
   titulo: string;
@@ -18,10 +12,7 @@ type FeatureValue = {
   icono?: string;
 };
 
-type Props =
-  | { kind: 'heroChip'; value: string }
-  | { kind: 'heroTitulo'; value: string }
-  | { kind: 'featureCard'; value: FeatureValue };
+type Props = { kind: 'featureCard'; value: FeatureValue };
 
 const CONTAINER_BASE =
   'rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-sunken)] p-3 h-full';
@@ -41,45 +32,6 @@ export function FieldPreview(props: Props) {
 }
 
 function renderPreview(props: Props) {
-  if (props.kind === 'heroChip') {
-    const text = props.value?.trim();
-    if (!text) {
-      return (
-        <span className="italic text-[12px] text-[var(--color-muted-2)]">
-          El chip aparecerá aquí
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-accent)]/25 bg-[var(--color-accent-soft)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-accent-ink)]">
-        <NavIcon name="MapPin" size={10} weight="bold" />
-        <span className="truncate max-w-[200px]">{text}</span>
-      </span>
-    );
-  }
-
-  if (props.kind === 'heroTitulo') {
-    const text = props.value?.trim();
-    if (!text) {
-      return (
-        <span className="italic text-[12px] text-[var(--color-muted-2)]">
-          Tu título aparecerá aquí
-        </span>
-      );
-    }
-    return (
-      <span
-        className={cn(
-          'block text-center text-[18px] font-extrabold tracking-[-0.02em] leading-[1.1] text-[var(--color-accent-ink)]',
-          text.length > 24 && 'text-[16px]',
-          text.length > 40 && 'text-[14px]',
-        )}
-      >
-        {text}
-      </span>
-    );
-  }
-
   // featureCard
   const { titulo, descripcion, icono } = props.value;
   const hasTitle = !!titulo?.trim();

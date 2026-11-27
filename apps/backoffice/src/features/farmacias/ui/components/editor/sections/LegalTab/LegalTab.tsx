@@ -44,8 +44,8 @@ export function LegalTab() {
 
   return (
     <div className="space-y-10 max-w-3xl">
-      {/* ============= AVISO LEGAL ============= */}
-      <section aria-labelledby="sec-legal-aviso">
+      {/* data-pagina-vista-previa: la vista previa enseña la página del texto que se edita */}
+      <section aria-labelledby="sec-legal-aviso" data-pagina-vista-previa="aviso-legal">
         <SectionHeader
           id="sec-legal-aviso"
           title="Aviso legal"
@@ -63,8 +63,6 @@ export function LegalTab() {
           label="Cuerpo del aviso legal"
           value={farmacia.avisoLegal?.[currentLocale] ?? ''}
           onChange={setAviso}
-          origen={farmacia.avisoLegal?.es}
-          locale={currentLocale}
           placeholder="Datos identificativos, política de cookies, propietario del sitio, licencia…"
           minHeight={260}
         />
@@ -73,8 +71,7 @@ export function LegalTab() {
 
       <div className="hairline" />
 
-      {/* ============= POLÍTICA DE PRIVACIDAD ============= */}
-      <section aria-labelledby="sec-legal-privacidad">
+      <section aria-labelledby="sec-legal-privacidad" data-pagina-vista-previa="politica-privacidad">
         <SectionHeader
           id="sec-legal-privacidad"
           title="Política de privacidad"
@@ -92,8 +89,6 @@ export function LegalTab() {
           label="Cuerpo de la política de privacidad"
           value={farmacia.politicaPrivacidad?.[currentLocale] ?? ''}
           onChange={setPolitica}
-          origen={farmacia.politicaPrivacidad?.es}
-          locale={currentLocale}
           placeholder="Datos que se recogen, finalidad, derechos ARCO, responsable del tratamiento…"
           minHeight={260}
         />
