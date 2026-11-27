@@ -41,8 +41,7 @@ export function CuentaDialog({
   const id = useId();
   const [nombre, setNombre] = useState(cuenta?.nombre ?? '');
   const [email, setEmail] = useState(cuenta?.email ?? '');
-  // Ya no se eligen roles: solo hay un administrador (gestión) y, para el resto,
-  // "Editar la web" se guarda como el rol de siempre (marcada = responsable).
+  // "Editar la web" se guarda como rol: marcada = responsable.
   const esAdmin = cuenta?.rol === 'admin';
   const [editaWeb, setEditaWeb] = useState(cuenta ? cuenta.rol !== 'viewer' : true);
   const rol: RolCuenta = esAdmin ? 'admin' : editaWeb ? 'manager' : 'viewer';

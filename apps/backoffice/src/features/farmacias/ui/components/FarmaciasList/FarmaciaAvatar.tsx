@@ -9,7 +9,6 @@ function miniatura(url: string, size: number): string {
   return `${url}${url.includes('?') ? '&' : '?'}w=${size * 2}&auto=format`;
 }
 
-/** Logo de la farmacia o su inicial si no tiene. */
 export function FarmaciaAvatar({
   farmacia,
   size,

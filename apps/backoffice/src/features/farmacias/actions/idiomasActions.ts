@@ -41,7 +41,6 @@ function revalidar(id: string) {
   revalidatePath(`/farmacias/${id}`);
 }
 
-/** Añade o reactiva un idioma del catálogo en la web de la farmacia. */
 export async function activarIdiomaAction(id: string, locale: string): Promise<SaveResult<Farmacia>> {
   const ctx = await preparar(id, locale);
   if (!ctx.ok) return ctx;
@@ -53,7 +52,6 @@ export async function activarIdiomaAction(id: string, locale: string): Promise<S
   return res;
 }
 
-/** Deja de mostrar un idioma en la web. Los textos se conservan. */
 export async function desactivarIdiomaAction(id: string, locale: string): Promise<SaveResult<Farmacia>> {
   const ctx = await preparar(id, locale);
   if (!ctx.ok) return ctx;

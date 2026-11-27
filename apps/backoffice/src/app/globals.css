@@ -1,27 +1,19 @@
 @import 'tailwindcss';
 
-/* ============================================================
- * Design tokens · larokifarm DNA
- * Base: blanco + azul Torrents + ink slate.
- * Alineado con --primary de apps/torrents (color representativo del
- * grupo). Sustituye la paleta Humblytics (cream/chocolate/naranja) por
- * una farmacia-clean: fondo casi blanco frío, ink slate, accent azul.
- * Type: Inter Tight + Geist Mono.
- * A11y: contraste ≥ 7:1, focus visible, prefers-reduced-motion, 200%.
- * ============================================================ */
+/* Design tokens */
 
 @theme {
-  /* Grounds — blanco con tinte azulado cálido, consistente con la landing Torrents */
+  /* Grounds */
   --color-bg: #F4F7FB;              /* ambiente bg (ligeramente más azul) */
   --color-surface: #FFFFFF;          /* cards, inputs */
   --color-surface-2: #EEF3F9;        /* paneles secundarios, hovers */
   --color-surface-sunken: #E4ECF4;   /* sunken (dropzones, chip bg) */
 
-  /* Ink — slate azulado, más profundo que Tailwind slate-900 para contraste WCAG AAA */
+  /* Ink — contraste WCAG AAA */
   --color-ink: #0B1829;
   --color-ink-2: #1B2A44;
   --color-muted: #5B6B82;
-  --color-muted-2: #5F6E85;          /* ≥4,5:1 sobre bg y surface-2 (antes #8A98AE, 2,6:1) */
+  --color-muted-2: #5F6E85;          /* ≥4,5:1 sobre bg y surface-2 */
   --color-hairline: #DAE3EE;         /* bordes 1px (más azulado, menos gris plano) */
   --color-hairline-strong: #BFCDDD;  /* bordes énfasis, hover */
   --color-control-border: #8294AB;   /* borde de campos y chips: 3,1:1 sobre blanco (WCAG 1.4.11) */
@@ -29,7 +21,7 @@
   /* Accent — azul Torrents (--primary del sitio del cliente) */
   --color-accent: #1265b5;
   --color-accent-hover: #0d5397;
-  --color-accent-soft: #E3EEFA;      /* un pelo más saturado que antes */
+  --color-accent-soft: #E3EEFA;
   --color-accent-ink: #0a4576;
   --color-accent-tint: rgba(18, 101, 181, 0.1);
   --color-accent-glow: rgba(18, 101, 181, 0.25);
@@ -38,7 +30,7 @@
   --color-brand-light: #36a0da;
   --color-brand-soft: #5bc2eb;
 
-  /* Semantic pastels — recalibrados a la nueva paleta fría */
+  /* Semantic pastels */
   --color-red-soft: #fee2e2;
   --color-red-ink: #b91c1c;
   --color-yellow-soft: #fef3c7;
@@ -75,7 +67,7 @@
   --shadow-accent: 0 8px 24px -10px var(--color-accent-glow);
   --shadow-focus: 0 0 0 3px var(--color-accent-tint);
 
-  /* Movimiento — Humblytics spring */
+  /* Movimiento */
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -83,10 +75,6 @@
   --dur-base: 200ms;
   --dur-slow: 400ms;
 }
-
-/* ============================================================
- * Reset y base
- * ============================================================ */
 
 *,
 *::before,
@@ -124,9 +112,6 @@ body {
   line-height: 1.5;
   letter-spacing: -0.003em;
   color: var(--color-ink);
-  /* Fondo con un toque de gradiente radial azulado muy sutil — igual que la
-     landing Torrents respira con un halo de luz, el backoffice gana profundidad
-     sin sacrificar legibilidad. */
   background-color: var(--color-bg);
   background-image:
     radial-gradient(1200px 600px at 100% -10%, rgba(18, 101, 181, 0.035), transparent 60%),
@@ -202,17 +187,13 @@ h1, h2, h3, h4, h5, h6 {
    Fuera de capa, estas reglas pisaban cualquier utilidad (la lupa del buscador
    tapaba el texto, la contraseña larga quedaba bajo el botón del ojo). */
 @layer components {
-/* ============================================================
- * Utilidades semánticas
- * ============================================================ */
-
 .font-mono-tabular {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
 
-/* Displays — tracking agresivo (Humblytics DNA) */
+/* Displays */
 .h-display {
   font-family: var(--font-sans);
   font-size: clamp(2rem, 4vw, 2.75rem);
@@ -409,9 +390,7 @@ kbd {
   background: var(--color-surface-sunken);
 }
 
-/* Label en frase normal (20-11-2026): las mayúsculas de 11,5 px grises eran
-   lo que peor se leía del backoffice y no casaban con filtros, tablas ni
-   modales de Usuarios. */
+/* Label en frase normal: las mayúsculas de 11,5 px grises se leían mal. */
 .label {
   display: flex;
   align-items: center;
@@ -436,10 +415,6 @@ kbd {
 }
 .help strong { color: var(--color-ink-2); font-weight: 600; }
 
-/* ============================================================
- * Section separator — espacio en blanco en lugar de línea.
- * Reemplaza progresivamente el .hairline entre bloques de formulario.
- * ============================================================ */
 .section-gap > * + * {
   margin-top: 48px;
 }
@@ -447,9 +422,6 @@ kbd {
   .section-gap > * + * { margin-top: 36px; }
 }
 
-/* ============================================================
- * Form grid — inputs agrupados en grid denso en vez de stack vertical.
- * ============================================================ */
 .form-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -470,9 +442,6 @@ kbd {
   .form-row-3 { grid-template-columns: 1fr; }
 }
 
-/* ============================================================
- * Scrollbar fino para listas verticales (TimePicker, popovers)
- * ============================================================ */
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: var(--color-hairline-strong) transparent;
@@ -561,9 +530,6 @@ kbd {
   height: 0;
 }
 
-/* ============================================================
- * Editor section sheet (bottom sheet móvil con las 9 secciones)
- * ============================================================ */
 dialog.editor-section-sheet {
   width: calc(100% - 16px);
   max-width: 420px;
@@ -603,8 +569,7 @@ dialog.editor-section-sheet::backdrop {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Conciliador (copiado de apps/conciliador-albaranes): sus componentes usan   */
-/* --brand-*; aquí apuntan a los tokens del backoffice.                        */
+/* El conciliador usa --brand-*; aquí apuntan a los tokens del backoffice.     */
 /* -------------------------------------------------------------------------- */
 :root {
   --brand-primary: var(--color-accent);

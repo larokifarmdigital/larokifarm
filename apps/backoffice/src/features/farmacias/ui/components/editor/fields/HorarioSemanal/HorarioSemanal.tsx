@@ -144,7 +144,6 @@ export function HorarioSemanal({
                 </span>
               )}
             </button>
-            {/* Abierto/Cerrado visible sin desplegar */}
             <label className="flex shrink-0 items-center gap-2 text-[13px] text-[var(--color-ink-2)]">
               <span className="hidden sm:inline w-[58px] text-right" aria-hidden>{h.cerrado ? 'Cerrado' : 'Abierto'}</span>
               <Switch
@@ -174,7 +173,6 @@ export function HorarioSemanal({
                       />
                     </div>
 
-                    {/* Tramos */}
                     {!h.cerrado && (
                       <div className="flex flex-col gap-2">
                         {h.tramos.length === 0 && (

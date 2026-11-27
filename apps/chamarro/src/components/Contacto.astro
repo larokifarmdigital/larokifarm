@@ -32,8 +32,7 @@ const partesDireccion = [
   direccion?.provincia,
 ].filter((p): p is string => Boolean(p));
 
-/* Fallback: si no hay urlGoogleMaps definido en el backoffice, generamos uno a partir
-   de la dirección textual, para que el botón "Cómo llegar" siempre funcione. */
+/* Sin urlGoogleMaps en el backoffice se busca por la dirección textual. */
 const googleMapsQuery = urlGoogleMaps
   || (partesDireccion.length > 0
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -54,9 +53,7 @@ const googleMapsQuery = urlGoogleMaps
     </header>
 
     <div class='grid grid-cols-1 min-[900px]:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] gap-6 min-[900px]:gap-8 items-stretch'>
-      {/* -------- CARD DE INFORMACIÓN -------- */}
       <div class='card flex flex-col gap-0 bg-[color:var(--card)] overflow-hidden !p-0 !rounded-[var(--radius-xl)]'>
-        {/* Dirección */}
         <div class='flex gap-4 p-6 items-start'>
           <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--primary-soft)] text-[color:var(--primary)] shrink-0'>
             <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
@@ -80,7 +77,6 @@ const googleMapsQuery = urlGoogleMaps
 
         <div class='h-px bg-[color:var(--border)] mx-6'></div>
 
-        {/* Horario */}
         <div class='flex gap-4 p-6 items-start'>
           <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--primary-soft)] text-[color:var(--primary)] shrink-0'>
             <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
@@ -109,7 +105,6 @@ const googleMapsQuery = urlGoogleMaps
 
         <div class='h-px bg-[color:var(--border)] mx-6'></div>
 
-        {/* Contacto */}
         <div class='flex gap-4 p-6 items-start'>
           <span class='inline-flex items-center justify-center w-11 h-11 rounded-[var(--radius)] bg-[color:var(--primary-soft)] text-[color:var(--primary)] shrink-0'>
             <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
@@ -145,7 +140,6 @@ const googleMapsQuery = urlGoogleMaps
           </div>
         </div>
 
-        {/* Botones CTA */}
         {(telefono || whatsapp) && (
           <div class='mt-auto flex flex-wrap gap-2 p-6 pt-4 bg-[color:var(--primary-soft)] border-t border-[color:var(--border)]'>
             {telefono && (
@@ -172,12 +166,10 @@ const googleMapsQuery = urlGoogleMaps
         )}
       </div>
 
-      {/* -------- MAPA -------- */}
       <div
         class='mapa-wrap relative w-full min-h-[420px] min-[900px]:min-h-full bg-[color:var(--primary-soft)] border border-[color:var(--border)] rounded-[var(--radius-xl)] overflow-hidden'
         data-mapa-wrap
       >
-        {/* Botón flotante "Cómo llegar" — visible siempre, incluso tras cargar el mapa */}
         {googleMapsQuery && (
           <a
             href={googleMapsQuery}
@@ -202,10 +194,8 @@ const googleMapsQuery = urlGoogleMaps
             data-aria={t('cta.ariaMapa', lang, { nombre })}
           >
             <span class='mapa-placeholder absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 text-center transition-colors duration-300'>
-              {/* Pattern de fondo decorativo */}
               <span class='mapa-pattern absolute inset-0 opacity-40' aria-hidden='true'></span>
 
-              {/* Contenido en primer plano */}
               <span class='relative inline-flex items-center justify-center w-16 h-16 rounded-full bg-[color:var(--accent)] text-white shadow-[0_12px_28px_-8px_rgb(51_65_85_/_0.45)] transition-transform duration-300 group-hover:scale-110'>
                 <svg width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
                   <path d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' />
@@ -225,8 +215,6 @@ const googleMapsQuery = urlGoogleMaps
 </section>
 
 <style>
-  /* Pattern decorativo del placeholder del mapa — gradiente radial suave + grid sutil,
-     evoca la textura de un mapa sin coste de red. */
   .mapa-pattern {
     background-image:
       radial-gradient(circle at 20% 30%, rgb(15 107 60 / 0.08), transparent 40%),
@@ -236,18 +224,13 @@ const googleMapsQuery = urlGoogleMaps
     background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
   }
 
-  /* Hover del botón-mapa: el fondo se tinta ligeramente en accent-soft para
-     reforzar la sensación de "clic aquí". */
   .mapa-btn:hover .mapa-placeholder {
     background: color-mix(in oklab, var(--accent-soft) 45%, transparent);
   }
 </style>
 
 <script>
-  /* Al pulsar el placeholder: retiramos el <button> (los iframes dentro de <button>
-     no cargan bien en algunos navegadores) e insertamos el <iframe> directamente
-     en el wrapper con overflow hidden y stretch full. El botón flotante "Cómo llegar"
-     permanece porque vive fuera del <button>. */
+  /* Se retira el <button> antes de insertar el iframe: dentro de un <button> los iframes no cargan bien en algunos navegadores. El botón «Cómo llegar» vive fuera y se queda. */
   const boton = document.querySelector<HTMLElement>('[data-mapa-cargar]');
   const wrap = document.querySelector<HTMLElement>('[data-mapa-wrap]');
   if (boton && wrap) {

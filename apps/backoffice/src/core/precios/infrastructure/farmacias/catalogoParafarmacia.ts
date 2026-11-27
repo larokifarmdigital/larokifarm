@@ -1,6 +1,6 @@
 // Catálogo de parafarmacia para "Comparar precio". Farmavázquez es la fuente
 // principal (su buscador devuelve el CN), pero desde los servidores de Vercel
-// no responde (comprobado 25-11-2026: «physiorelax» da 0 resultados en
+// no responde («physiorelax» da 0 resultados en
 // producción y 10 desde una conexión normal). Plan B: preguntar el CN a otras
 // farmacias a la vez y tomar el nombre de la primera cuya ficha muestre ese
 // mismo CN (la regla de siempre: `comprobarFicha`).

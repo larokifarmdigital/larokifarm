@@ -42,7 +42,6 @@ export function ResenasTab() {
         </p>
       )}
       <div className="space-y-10">
-      {/* ============= CONEXIÓN GOOGLE ============= */}
       <section aria-labelledby="sec-resenas-google">
         <SectionHeader
           id="sec-resenas-google"
@@ -107,7 +106,6 @@ export function ResenasTab() {
 
       <div className="hairline" />
 
-      {/* ============= QUÉ RESEÑAS SALEN ============= */}
       <ResenasManager />
 
       <div className="hairline" />

@@ -17,11 +17,7 @@ function parse(v: string): { h: number; m: number } {
   return { h, m };
 }
 
-/**
- * Input de hora tipo iOS: un botón compacto muestra `HH:MM` en mono; al click abre
- * un popover con dos columnas scrollables (Hora / Minuto). El valor se emite en
- * formato `HH:MM` (24h). Sin librería externa, apoyado en Radix Popover.
- */
+/** Emite `HH:MM` (24h). Sin librería externa, sobre Radix Popover. */
 export function TimePicker({
   value,
   onChange,
@@ -138,7 +134,6 @@ function ScrollColumn({
   }
 
   useEffect(() => {
-    // Al abrir el popover o cambiar el valor activo, centrar la selección.
     if (openTick) {
       // Delay hasta el próximo frame para que el popover haya montado
       requestAnimationFrame(() => {

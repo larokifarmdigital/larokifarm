@@ -23,11 +23,9 @@ export interface UsageStats {
   monthly: MonthlyBucket[];
   /** Same evolution but split by business (SUPER_ADMIN sin filtro; vacío en el resto). */
   monthlyByBusiness: MonthlyBusinessBucket[];
-  /** Top N users this month by tokens consumed. */
   topUsers: UserBucket[];
   /** Breakdown by business for the current month (SUPER_ADMIN only; empty otherwise). */
   byBusiness: BusinessBucket[];
-  /** Used by the view header. */
   context: {
     role: Session['user']['role'];
     currentMonthLabel: string;

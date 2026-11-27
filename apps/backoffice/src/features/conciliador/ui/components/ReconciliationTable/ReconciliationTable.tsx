@@ -53,7 +53,6 @@ export function ReconciliationTable({ lines }: { lines: ReconciledLine[] }) {
         )}
       </div>
 
-      {/* Móvil: tarjetas */}
       <ul className="md:hidden divide-y divide-[var(--color-hairline)]">
         {visibles.map((l, i) => (
           <li key={`${l.nationalCode}-${i}`} className="px-4 py-3.5">
@@ -83,7 +82,6 @@ export function ReconciliationTable({ lines }: { lines: ReconciledLine[] }) {
         ))}
       </ul>
 
-      {/* Escritorio: tabla */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-[14px]">
           <caption className="sr-only">Líneas de la conciliación: pedido frente a lo recibido</caption>

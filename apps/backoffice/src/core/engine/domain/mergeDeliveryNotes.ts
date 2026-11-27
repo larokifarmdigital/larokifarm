@@ -164,11 +164,8 @@ function mergeLines(group: Source[]): DeliveryNoteLine[] {
       description: pickStr(deliveryNoteOrder, (l) => l.description) ?? '',
       quantity: pickNum(deliveryNoteOrder, (l) => l.quantity) ?? 0,
       unitPrice: pickNum(invoiceOrder, (l) => l.unitPrice) ?? 0,
-      // Prioridad: cualquier descuento no-cero de cualquier fuente > 0
-      // explícito. Antes se aceptaba el 0 de la factura aunque el pedido/
-      // albarán trajera un descuento real (caso Zambon: la factura totaliza
-      // el descuento al pie del documento, no lo desglosa por línea, y Gemini
-      // devuelve 0 → se comía el 20 % del pedido).
+      // Cualquier descuento no-cero de cualquier fuente gana al 0 explícito: la factura de
+      // Zambon totaliza el descuento al pie y Gemini devuelve 0 por línea (se comía el 20 % del pedido).
       discount:
         pickNum(anyOrder, (l) => l.discount) ??
         pickNumIncl0(invoiceOrder, (l) => l.discount),

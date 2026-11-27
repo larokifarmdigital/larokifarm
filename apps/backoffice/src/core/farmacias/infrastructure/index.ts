@@ -1,4 +1,3 @@
-// Factories de adapters de core/farmacias.
 import type {
   ContentImageRepository,
   FarmaciaRepository,
@@ -11,11 +10,7 @@ import { farmaciaRepositoryPrisma } from './FarmaciaRepositoryPrisma';
 import { landingDeployerHttp } from './LandingDeployerHttp';
 import { resenaRepositoryPrisma } from './ResenaRepositoryPrisma';
 
-/**
- * Flag: USE_NEON_CONTENT=true activa el repo real (Prisma → Neon).
- * Por defecto se queda en mock para no romper nada hasta que todo esté
- * validado. Para probar en dev: añadir `USE_NEON_CONTENT=true` al .env.local.
- */
+// USE_NEON_CONTENT=true activa el repo Prisma; sin él, mock en memoria.
 export function getFarmaciaRepository(): FarmaciaRepository {
   return process.env.USE_NEON_CONTENT === 'true' ? farmaciaRepositoryPrisma : farmaciaRepositoryMock;
 }
@@ -25,12 +20,11 @@ export function getContentImageRepository(): ContentImageRepository {
   return contentImageRepositoryPrisma;
 }
 
-/** Las reseñas solo existen en Neon (migradas desde Sanity). */
+/** Las reseñas solo existen en Neon (no hay mock). */
 export function getResenaRepository(): ResenaRepository {
   return resenaRepositoryPrisma;
 }
 
-/** Deploy hooks de las landings (`DEPLOY_HOOKS_<SLUG>`). */
 export function getLandingDeployer(): LandingDeployer {
   return landingDeployerHttp;
 }

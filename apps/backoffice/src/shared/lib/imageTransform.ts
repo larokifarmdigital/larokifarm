@@ -1,11 +1,8 @@
 import sharp from 'sharp';
 
 /**
- * Redimensionado on-the-fly con los MISMOS query params que el CDN de Sanity
- * (`?w=&h=&q=&fit=crop|max&auto=format`), para que el helper `imagenSanity()`
- * de las landings siga funcionando igual con imágenes servidas desde R2.
- *
- * Sin params → devuelve el original intacto.
+ * Redimensionado on-the-fly con los query params que entiende el helper de imágenes de las
+ * landings (`?w=&h=&q=&fit=crop|max&auto=format`). Sin params devuelve el original.
  */
 const MAX_SIDE = 2560;
 

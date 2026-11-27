@@ -1,16 +1,5 @@
 ---
-/**
- * Footer con la misma distribución que el de Torrents, en la identidad de
- * Chamarro (fondo `--ink`, texto blanco / `--on-green-muted`, lima de acento,
- * títulos de columna en mono pequeño):
- * 1. 4 columnas: Marca (logo, nombre, descripción, redes) · Horario (estado
- *    "Abierto ahora" + días ↔ horas) · Dónde estamos (dirección + Cómo
- *    llegar) · Contacto (teléfono, WhatsApp, email).
- * 2. Línea de enlaces de la web.
- * 3. Barra inferior: ©, titular · nº col. y textos legales.
- * Columnas sin datos no se pintan. Sin mención "sin cookies": Chamarro usa
- * Vercel Analytics y el chat. Estado del horario con `estadoHorario.ts`.
- */
+/** Sin mención «sin cookies»: Chamarro usa Vercel Analytics y el chat. */
 import { CERRADO_POR_IDIOMA, DIAS_POR_IDIOMA, rutaConLocale, t, type Locale } from '@/lib/i18n';
 import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
 import { agruparHorarios, localizar, type DiasI18n, type Farmacia } from '@/lib/contenido';
@@ -33,7 +22,6 @@ const home = rutaConLocale('/', lang);
 const nuevaPestana = t('footer.nuevaPestana', lang);
 const descripcion = localizar(farmacia.descripcionCorta, lang)?.trim();
 
-/* Dirección sin duplicados: la provincia solo si no coincide con la ciudad. */
 const mismo = (a?: string, b?: string) =>
   Boolean(a && b && a.trim().toLowerCase() === b.trim().toLowerCase());
 const lineasDireccion = [
@@ -42,7 +30,6 @@ const lineasDireccion = [
   mismo(direccion?.provincia, direccion?.ciudad) ? undefined : direccion?.provincia,
 ].filter((s): s is string => Boolean(s?.trim()));
 
-/* Mismo criterio que Contacto: enlace de Google Maps o búsqueda por dirección. */
 const comoLlegar = farmacia.googleMapsUrl
   || (lineasDireccion.length > 0
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${nombre}, ${lineasDireccion.join(', ')}`)}`
@@ -75,7 +62,6 @@ const enlaces: Enlace[] = [
   <div class='container-app pt-14 pb-10 min-[768px]:pt-16'>
     <div class='grid gap-10 min-[768px]:grid-cols-2 min-[1024px]:grid-cols-[1.1fr_1.3fr_1fr_1fr] min-[1024px]:gap-12'>
 
-      {/* Marca */}
       <div class='flex flex-col gap-5' data-reveal>
         <a href={home} class='inline-flex items-center gap-3 no-underline text-white self-start' aria-label={nombre}>
           <img src={logoUrl} alt='' width='44' height='44' class='block w-11 h-11 object-contain rounded-[var(--radius)] bg-white p-1.5' loading='lazy' />
@@ -119,7 +105,6 @@ const enlaces: Enlace[] = [
         )}
       </div>
 
-      {/* Horario */}
       {grupos.length > 0 && (
         <div style='--reveal-delay:80ms' data-reveal>
           <h2 class='footer-titulo'>{t('footer.horario', lang)}</h2>
@@ -138,7 +123,6 @@ const enlaces: Enlace[] = [
         </div>
       )}
 
-      {/* Dónde estamos */}
       {lineasDireccion.length > 0 && (
         <div style='--reveal-delay:160ms' data-reveal>
           <h2 class='footer-titulo'>{t('footer.visitanos', lang)}</h2>
@@ -157,7 +141,6 @@ const enlaces: Enlace[] = [
         </div>
       )}
 
-      {/* Contacto */}
       {hayContacto && (
         <div style='--reveal-delay:240ms' data-reveal>
           <h2 class='footer-titulo'>{t('footer.contacto', lang)}</h2>
@@ -206,7 +189,6 @@ const enlaces: Enlace[] = [
       )}
     </div>
 
-    {/* Enlaces de la web */}
     <nav aria-label={t('footer.explora', lang)} class='mt-12 border-t border-[color:var(--green-line)] pt-6'>
       <ul class='m-0 flex list-none flex-wrap gap-x-6 gap-y-1 p-0 text-[0.9rem]'>
         {enlaces.map((l) => (
@@ -216,7 +198,6 @@ const enlaces: Enlace[] = [
     </nav>
   </div>
 
-  {/* Barra inferior */}
   <div class='border-t border-[color:var(--green-line)] bg-[rgba(255,255,255,0.03)]'>
     <div class='container-app flex flex-col gap-3 py-5 text-[0.85rem] text-[color:var(--on-green-muted)] min-[768px]:flex-row min-[768px]:items-center min-[768px]:justify-between'>
       <div class='flex flex-col gap-1 min-[768px]:flex-row min-[768px]:flex-wrap min-[768px]:items-center min-[768px]:gap-x-3'>

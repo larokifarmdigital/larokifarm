@@ -1,11 +1,7 @@
 /**
- * Use cases de imágenes de contenido (hero, sobre, logo…).
- *
- * Multi-tenant: cada operación valida que la farmacia pertenece al
- * businessId del usuario en sesión, excepto SUPER_ADMIN (ve todos).
- *
- * Las imágenes se sirven vía /api/content-images/<id> (proxy al storage).
- * Son PÚBLICAS por diseño: las landings las cargan sin sesión del backoffice.
+ * Multi-tenant: cada operación valida que la farmacia pertenece al businessId
+ * del usuario en sesión (SUPER_ADMIN ve todas).
+ * Las imágenes son PÚBLICAS por diseño: las landings las cargan sin sesión.
  */
 
 import { createId as cuid } from '@paralleldrive/cuid2';
@@ -74,7 +70,6 @@ export class UploadContentImageUseCase {
       const storageKey = buildContentImageKey({ businessSlug: slug, role, cuid: id, filename: file.name });
       await this.storage.upload(storageKey, file.bytes, contentType);
 
-      // NOTE: sin dimensiones (haría falta sharp/image-size) — fuera de scope.
       const row = await this.images.create({
         id,
         businessId,

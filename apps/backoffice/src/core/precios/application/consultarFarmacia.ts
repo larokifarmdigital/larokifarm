@@ -6,7 +6,6 @@ export const VENTANA_CONSULTA_MS = 10 * 60 * 1000;
 
 export type ResultadoConsultaFarmacia = { ok: true; oferta: Oferta } | { ok: false; error: string; status: number };
 
-/** Consulta UNA farmacia para una consulta abierta y guarda el resultado. */
 export async function consultarFarmacia(
   checkId: string,
   clave: string,

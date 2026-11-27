@@ -41,8 +41,7 @@ const tarjetasDefault = [
 ];
 const tarjetas = tarjetasBackoffice.length > 0 ? tarjetasBackoffice : tarjetasDefault;
 
-/* Estado "abierto/cerrado" real: se calcula en el navegador con la hora de
-   Madrid (la web es estática). Sin horarios la tarjeta no se muestra. */
+/* La web es estática: el estado abierto/cerrado se calcula en el navegador. Sin horarios no hay tarjeta. */
 const horariosLimpios = horariosParaEstado(horarios);
 const textosEstadoJson = JSON.stringify(textosEstado(lang));
 ---
@@ -51,7 +50,6 @@ const textosEstadoJson = JSON.stringify(textosEstado(lang));
   <div class='container-app pt-[clamp(1rem,2.5vw,1.75rem)] pb-[clamp(2.5rem,5vw,4rem)]'>
     <div class='hero-grid'>
 
-      <!-- Bloque verde con el titular -->
       <div class='tile tile-green hero-main'>
         <div class='hero-main-glow' aria-hidden='true'></div>
         <div class='relative flex flex-col gap-[clamp(1.25rem,2.2vw,1.75rem)] h-full'>
@@ -104,7 +102,6 @@ const textosEstadoJson = JSON.stringify(textosEstado(lang));
         </div>
       </div>
 
-      <!-- Foto -->
       <div class='tile hero-foto !p-0' data-hero-slider={tieneCarrusel ? 'true' : undefined} style='--reveal-delay:160ms' data-reveal>
         {listaImagenes.length > 0 ? (
           listaImagenes.map((img, i) => (
@@ -136,7 +133,6 @@ const textosEstadoJson = JSON.stringify(textosEstado(lang));
         )}
       </div>
 
-      <!-- Estado de apertura en tiempo real -->
       {horariosLimpios.length > 0 && (
         <a href='#contacto' class='tile tile-soft hero-estado' data-hero-estado data-horarios={JSON.stringify(horariosLimpios)} data-textos={textosEstadoJson}
            style='--reveal-delay:240ms' data-reveal>
@@ -323,7 +319,6 @@ const textosEstadoJson = JSON.stringify(textosEstado(lang));
 
 <script>
   import { calcularEstado } from '@/lib/estadoHorario';
-  /* Carrusel de la foto. */
   const slider = document.querySelector<HTMLElement>('[data-hero-slider]');
   if (slider) {
     const slides = Array.from(slider.querySelectorAll<HTMLElement>('.hero-slide'));
@@ -369,11 +364,9 @@ const textosEstadoJson = JSON.stringify(textosEstado(lang));
     }
   }
 
-  /* Reveal palabra a palabra del titular. */
   const palabras = document.querySelectorAll<HTMLElement>('[data-reveal-word]');
   requestAnimationFrame(() => palabras.forEach((p) => p.classList.add('in-view')));
 
-  /* Abierto / cerrado con la hora de Madrid. */
   const estado = document.querySelector<HTMLElement>('[data-hero-estado]');
   if (estado) {
     try {

@@ -1,9 +1,7 @@
-/** Datos para `calcularEstado` (estadoHorario.ts), preparados en el build. */
 import type { HorarioDia } from '@/lib/contenido';
 import { t, type Locale } from '@/lib/i18n';
 import type { DiaEstado, TextosEstado } from './estadoHorario';
 
-/** Normaliza los horarios: tramos reales si los hay; si no, la jornada completa. */
 export function horariosParaEstado(horarios: HorarioDia[] | undefined): DiaEstado[] {
   return (horarios ?? []).map((h) => ({
     dia: h.dia,

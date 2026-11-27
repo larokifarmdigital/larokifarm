@@ -8,10 +8,6 @@ import { AutosaveIndicator } from '@/features/farmacias/ui/components/editor/sta
 import { PublicacionEstado } from '@/features/farmacias/ui/components/editor/status/PublicacionEstado';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 
-/**
- * Cabecera del editor: nombre + los dos ejes del estado en lenguaje llano
- * (¿guardado? · ¿en la web?) + traducciones + acciones.
- */
 export function EditorTopBar({ volverA }: { volverA: string }) {
   const { farmacia } = useFarmaciaEditor();
 

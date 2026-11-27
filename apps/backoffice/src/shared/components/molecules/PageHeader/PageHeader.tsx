@@ -3,10 +3,6 @@ import type { ReactNode } from 'react';
 /** Ancho único de las pantallas de lista (Inicio, Farmacias, Historial, Usuarios). */
 export const ANCHO_PAGINA = 'mx-auto w-full max-w-6xl px-4 sm:px-6';
 
-/**
- * Cabecera estándar de pantalla: título + descripción en lenguaje llano y,
- * opcionalmente, la acción principal (botón accent) a la derecha.
- */
 export function PageHeader({
   titulo,
   descripcion,

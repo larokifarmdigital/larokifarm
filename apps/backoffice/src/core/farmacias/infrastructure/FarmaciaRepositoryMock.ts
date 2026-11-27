@@ -1,5 +1,4 @@
-// Adapter en memoria (seed: farmaciasMock). Por defecto en dev hasta activar
-// USE_NEON_CONTENT=true — ver infrastructure/index.ts.
+// Adapter en memoria: se usa mientras USE_NEON_CONTENT no sea true.
 import type { Farmacia, FarmaciaRepository, FarmaciaSummary } from '@/core/farmacias/domain';
 import { CHAT_POR_DEFECTO } from '@/core/farmacias/domain';
 import { MOCK_FARMACIAS } from './farmaciasMock';

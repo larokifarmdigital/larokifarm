@@ -51,11 +51,7 @@ export function useSoltarArchivos(onArchivos: (files: File[]) => void, disabled 
   };
 }
 
-/**
- * Zona de subida: se puede arrastrar (escritorio) o pulsar el botón. El
- * disparador es un <button> de verdad (antes era un div role=button sin
- * nombre accesible y la barra espaciadora hacía scroll).
- */
+/** Zona de subida: arrastrar (escritorio) o pulsar el botón. El disparador es un <button> real: un div role=button no tiene nombre accesible y la barra espaciadora hacía scroll. */
 export function Dropzone({ onArchivos, compacto = false, disabled = false }: DropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const ayudaId = useId();

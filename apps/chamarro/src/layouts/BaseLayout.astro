@@ -12,7 +12,6 @@ export interface Props {
   imagenOg?: string;
   jsonLd?: unknown;
   lang: Locale;
-  /** Idiomas con web (los activos de la farmacia): hreflang y og:locale. */
   idiomas?: Locale[];
   rutaActual?: string;
   nombreFarmacia?: string;
@@ -134,7 +133,6 @@ const hrefDefault =
     </script>
 
     <script>
-      /* Motion global · IntersectionObserver único para [data-reveal]. */
       const observed = document.querySelectorAll<HTMLElement>('[data-reveal]');
       if (observed.length > 0 && 'IntersectionObserver' in window) {
         const io = new IntersectionObserver(
@@ -153,7 +151,7 @@ const hrefDefault =
         observed.forEach(el => el.classList.add('in-view'));
       }
 
-      /* Spotlight cursor tracking — solo en pointer:fine. */
+      /* Solo con puntero fino: en táctil no hay cursor que seguir. */
       const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
       if (finePointer) {
         document.querySelectorAll<HTMLElement>('[data-spotlight]').forEach(el => {
@@ -168,9 +166,7 @@ const hrefDefault =
         });
       }
 
-      /* Count-up animation · anima el número interior de 0 → N cuando el elemento
-         entra en viewport. Usar data-count-up="N" en el elemento cuyo textContent
-         se va a animar. Duración configurable con data-count-duration (ms). */
+      /* data-count-up="N" anima el textContent de 0 a N; duración en ms con data-count-duration. */
       const counters = document.querySelectorAll<HTMLElement>('[data-count-up]');
       if (counters.length > 0 && 'IntersectionObserver' in window) {
         const preferSinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -190,7 +186,6 @@ const hrefDefault =
               const start = performance.now();
               function tick(now: number) {
                 const t = Math.min(1, (now - start) / duration);
-                // ease-out-cubic
                 const eased = 1 - Math.pow(1 - t, 3);
                 const current = Math.round(target * eased);
                 el.textContent = `${current}${suffix}`;

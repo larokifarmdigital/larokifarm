@@ -1,10 +1,6 @@
 'use client';
 
-/**
- * Bottom sheet compacto que se abre desde EditorSectionPicker (móvil).
- * Altura auto hasta ~540px, sin cabecera voluminosa, items densos sin texto redundante
- * (el estado se comunica con un dot de color).
- */
+/** Hoja inferior con todas las secciones (móvil). */
 
 import { useEffect, useRef } from 'react';
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
@@ -56,7 +52,6 @@ export function EditorSectionSheet({
       aria-label="Lista de secciones"
       className="editor-section-sheet"
       onClick={(e) => {
-        // tap fuera del contenido cierra
         if (e.target === ref.current) ref.current?.close();
       }}
     >
@@ -82,7 +77,6 @@ export function EditorSectionSheet({
             {group.sectionKeys.map((key) => {
               const s = SECTION_BY_KEY[key];
               const isActive = key === activeKey;
-              // Punto solo si hay algo pendiente (traducción): "todo verde" era ruido.
               const pendiente = s.multilang && missingByKey[key as SectionKey];
               return (
                 <button

@@ -44,10 +44,9 @@ interface NormLine {
   freeUnits: number;
 }
 
-// Una línea es regalo si el proveedor no cobra por ella: precio a 0 o
-// descuento del 100 %. `discount === 0` es la venta normal (sin descuento),
-// no un regalo — antes lo confundíamos y comíamos líneas de venta cuando el
-// mismo producto venía en dos lotes distintos sin descuento.
+// Regalo = el proveedor no cobra la línea: precio 0 o descuento del 100 %.
+// `discount === 0` es venta normal: confundirlo comía líneas de venta cuando el mismo
+// producto venía en dos lotes sin descuento.
 function looksLikeFreebie(l: NormLine): boolean {
   return l.price === 0 || l.discount === 100;
 }
@@ -69,9 +68,8 @@ function group(rows: RawRow[], detectFreebies: boolean): Item[] {
     const cnAlts = (f.cnAltsRaw ?? []).map((c) => cleanNationalCode(c)).filter((c) => c && c !== cn);
     const alt = cleanAlt(f.altRaw);
     const cod = cleanAlt(f.codRaw);
-    // Sin identificadores: sintético único por fila. Sigue existiendo como
-    // Item propio (para poder cruzarse por descripción en findMatch). Antes
-    // se descartaba aquí y las líneas de pedidos-PDF sin código se perdían.
+    // Sin identificadores: sintético único por fila. Sigue siendo un Item propio para poder
+    // cruzarse por descripción en findMatch.
     const key = cn || cnAlts[0] || alt || cod || `noid:${idx}`;
     let g = groups.get(key);
     if (!g) {
@@ -160,12 +158,9 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
 
   const deliveryItems = group(
     dropBorrowedCodes(deliveryNote.lines, order.lines).map((l) => {
-      // Caso Bayer y similares: la celda "Código de producto" trae 2 códigos
-      // apilados por línea (interno del proveedor + C.N. español) y Gemini no
-      // siempre elige bien cuál es el C.N. (25-09: dejó el C.N. vacío en todas
-      // las líneas). Todos los códigos de la línea (code, ean y la lista
-      // `codes` de la celda) pasan a cnAlts como candidatos: findMatch los
-      // prueba contra el pedido tras el cn principal y gana el que cruce.
+      // Caso Bayer y similares: la celda "Código de producto" trae 2 códigos apilados
+      // (interno + C.N.) y Gemini no siempre elige bien el C.N. Todos los códigos de la línea
+      // (code, ean y la lista `codes`) pasan a cnAlts: findMatch los prueba tras el cn principal.
       const cnAlts = cnCandidates([l.nationalCode, ...(l.codes ?? []), l.code, l.ean]);
       return {
         cnRaw: rescueCn(l.nationalCode, l.code),
@@ -192,8 +187,6 @@ export function reconcile(deliveryNote: DeliveryNoteData, order: OrderData): Rec
       const i = orderItems.findIndex((p, idx) => !orderUsed[idx] && p.cn !== '' && p.cn === a.cn);
       if (i >= 0) return i;
     }
-    // Resto de candidatos a C.N. (layouts Bayer con 2 códigos apilados en la
-    // celda: si Gemini eligió mal, el bueno está entre los cnAlts).
     for (const cand of a.cnAlts) {
       const i = orderItems.findIndex((p, idx) => !orderUsed[idx] && p.cn !== '' && p.cn === cand);
       if (i >= 0) return i;

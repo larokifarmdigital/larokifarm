@@ -33,13 +33,7 @@ export type NavContext = {
   modulos: readonly Modulo[];
 };
 
-/**
- * Menú del backoffice. Sin títulos de sección mientras haya pocos items.
- * - Admin: "Farmacias" (listado de todas).
- * - Personal de farmacia: "Mi web" (directo al editor de su farmacia).
- * - "Albaranes" (antes "Conciliador": es la palabra del mostrador).
- * - "Precios": comparador de precios (módulo `comparador`).
- */
+/** Sin títulos de sección mientras haya pocos items. */
 export function buildNav({ role, miFarmaciaId, variasFarmacias, modulos }: NavContext): NavItem[] {
   const web: NavItem =
     role !== 'admin' && miFarmaciaId
@@ -87,7 +81,6 @@ export function buildNav({ role, miFarmaciaId, variasFarmacias, modulos }: NavCo
   );
 }
 
-/** Todas las rutas del menú (items + sub-apartados) para resolver el activo. */
 function todasLasRutas(items: NavItem[]): string[] {
   return items.flatMap((i) => [i.href, ...(i.children ?? []).map((c) => c.href)]);
 }
@@ -102,7 +95,6 @@ export function isNavHrefActive(href: string, pathname: string, items: NavItem[]
   return !todasLasRutas(items).some((h) => h !== href && h.startsWith(`${href}/`) && matches(h));
 }
 
-/** Un item padre se marca activo si lo está él o cualquiera de sus hijos. */
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
   const matches = (h: string) => pathname === h || pathname.startsWith(`${h}/`);
   return matches(item.href) || (item.children ?? []).some((c) => matches(c.href));

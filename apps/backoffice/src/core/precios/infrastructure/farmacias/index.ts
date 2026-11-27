@@ -12,10 +12,8 @@ import { okfarma } from './okfarma';
 import { tedin } from './tedin';
 
 /**
- * Lista fija elegida por gestión: las que muestran el CN/EAN en la ficha y no
- * bloquean. Fase 0 (24-11-2026) + ampliación del mismo día (Farma2go, Farmacia
- * Market, Farmacia Senante, OKFarma, Tedin). Descartadas: PromoFarma, Atida,
- * DosFarma, Arenal, Farmaconfianza, Druni, Farmacia Ribera, Pharmacius, F+.
+ * Lista fija elegida por gestión: las que muestran el CN/EAN en la ficha y no bloquean.
+ * Descartadas: PromoFarma, Atida, DosFarma, Arenal, Farmaconfianza, Druni, Farmacia Ribera, Pharmacius, F+.
  */
 export const FARMACIAS: readonly AdaptadorFarmacia[] = [
   farma2go,

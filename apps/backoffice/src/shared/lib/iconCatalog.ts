@@ -1,8 +1,4 @@
-/**
- * Catálogo de iconos para servicios y features (portado del antiguo Sanity Studio).
- * Las paths SVG son las mismas que renderiza la landing pública — lo que ves en el editor
- * es exactamente lo que se ve en la web.
- */
+/** Catálogo de iconos para servicios y features. Los paths SVG son los mismos que pinta la landing. */
 
 export type IconoNombre =
   | 'heart'

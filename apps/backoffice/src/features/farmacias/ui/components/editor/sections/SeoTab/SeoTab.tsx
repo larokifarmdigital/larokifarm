@@ -18,7 +18,6 @@ export function SeoTab() {
 
   return (
     <div className="space-y-10 max-w-3xl">
-      {/* ============= TÍTULO Y DESCRIPCIÓN ============= */}
       <section aria-labelledby="sec-seo-textos">
         <SectionHeader
           id="sec-seo-textos"
@@ -52,7 +51,6 @@ export function SeoTab() {
 
       <div className="hairline" />
 
-      {/* ============= PREVIEW GOOGLE ============= */}
       <section aria-labelledby="sec-seo-preview">
         <SectionHeader
           id="sec-seo-preview"
@@ -75,7 +73,6 @@ export function SeoTab() {
       </section>
       <div className="hairline" />
 
-      {/* ============= IMAGEN OG ============= */}
       <section aria-labelledby="sec-seo-og">
         <SectionHeader
           id="sec-seo-og"

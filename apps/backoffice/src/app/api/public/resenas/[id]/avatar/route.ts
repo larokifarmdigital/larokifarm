@@ -1,7 +1,7 @@
 /**
  * GET /api/public/resenas/:id/avatar — foto del autor re-alojada en R2.
  *
- * Así la landing no carga imágenes de Google ni de Sanity ("cero cookies").
+ * Así la landing no carga imágenes de Google ("cero cookies").
  * Reseñas ocultas o eliminadas → 404. Caché larga: la foto de un id no cambia.
  */
 import { NextResponse } from 'next/server';

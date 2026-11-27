@@ -14,10 +14,7 @@ export function esModulo(v: unknown): v is Modulo {
   return typeof v === 'string' && (MODULOS as readonly string[]).includes(v);
 }
 
-/**
- * ÚNICO punto para decidir si alguien puede usar un módulo. El administrador
- * los tiene todos, sin casillas (decisión de gestión 24-11-2026).
- */
+/** ÚNICO punto para decidir si alguien puede usar un módulo. El administrador los tiene todos, sin casillas. */
 export function tieneModulo(u: { esAdmin: boolean; modulos: readonly Modulo[] }, m: Modulo): boolean {
   return u.esAdmin || u.modulos.includes(m);
 }

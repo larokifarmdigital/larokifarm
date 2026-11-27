@@ -45,8 +45,7 @@ export const IconInput = forwardRef<HTMLInputElement, IconInputProps>(
             ref={ref}
             aria-label={label}
             aria-invalid={invalid || undefined}
-            // Anillo de foco en el propio input (hacia dentro): antes se anulaba con
-            // outline:none y solo cambiaba el borde del contenedor (no se veía al tabular).
+            // Anillo de foco en el propio input (hacia dentro): con outline:none solo cambiaba el borde del contenedor y no se veía al tabular.
             className={cn(
               'focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] focus-visible:-outline-offset-2 rounded-r-[var(--radius-sm)]',
               'flex-1 min-w-0 min-h-11 sm:min-h-0 bg-transparent border-0 text-[16px] sm:text-[13.5px] py-2 pl-0 pr-3 text-[var(--color-ink)] placeholder:text-[var(--color-muted-2)]',

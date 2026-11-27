@@ -3,15 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 
-/**
- * Envoltorio que anima la transición entre secciones del editor.
- * Al cambiar `keyId`, la vista actual sale con un fade + slide hacia arriba
- * y la nueva entra desde abajo con el mismo desplazamiento. AnimatePresence
- * en modo "wait" garantiza que no se solapen durante el swap, así el usuario
- * ve un único bloque de contenido en pantalla en todo momento.
- *
- * Respeta prefers-reduced-motion: sin desplazamiento y con transición mínima.
- */
+/** Anima el cambio de sección; `AnimatePresence` en "wait" evita que se solapen las dos vistas. Respeta prefers-reduced-motion. */
 export function EditorSectionSwitcher({
   keyId,
   children,

@@ -26,9 +26,6 @@ if (lista.length === 0) return null;
       {subtitulo && <p class='mt-2 text-[color:var(--muted-foreground)] leading-relaxed max-w-[36ch]'>{subtitulo}</p>}
     </header>
 
-    {/* Acordeón: <details> nativo (funciona sin JS) mejorado con JS para
-        animar también el cierre y reservar la altura de la respuesta más
-        larga, así abrir/cerrar no desplaza el resto de la página. */}
     <div class='faq-lista' data-faqs>
       {lista.map((f, i) => (
         <details class='faq-item' name='faqs' open={i === 0} data-expanded={i === 0 ? 'true' : 'false'}>
@@ -69,7 +66,6 @@ if (lista.length === 0) return null;
       box-shadow 300ms var(--ease-out);
   }
   .faq-item::before {
-    /* barra verde a la izquierda cuando está abierta */
     content: '';
     position: absolute;
     left: -1px;
@@ -120,7 +116,6 @@ if (lista.length === 0) return null;
       color 300ms var(--ease-out),
       transform 400ms var(--ease-spring);
   }
-  /* El "+" se convierte en "−": la barra vertical se pliega */
   .faq-signo-v {
     transform-origin: 12px 12px;
     transition: transform 350ms var(--ease-out), opacity 250ms var(--ease-out);
@@ -199,8 +194,6 @@ if (lista.length === 0) return null;
     const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const DURACION = sinMovimiento ? 0 : 430;
 
-    /* Cierra con animación: primero colapsa (data-expanded=false) y, al
-       terminar, quita el [open] nativo. */
     const cerrar = (item: HTMLDetailsElement) => {
       if (item.dataset.expanded !== 'true') return;
       item.dataset.expanded = 'false';
@@ -226,8 +219,6 @@ if (lista.length === 0) return null;
       });
     });
 
-    /* Reserva la altura de la respuesta más larga: así la sección no crece ni
-       encoge al abrir/cerrar y no empuja el resto de la página. */
     const reservarAltura = () => {
       lista.style.minHeight = '';
       // Los <details> cerrados no pintan su contenido: los abrimos un instante

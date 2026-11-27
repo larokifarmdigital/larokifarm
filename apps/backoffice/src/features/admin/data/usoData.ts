@@ -135,7 +135,6 @@ export async function getUsoIaData(mesPedido?: string): Promise<UsoIaData> {
   const delMes = usos.filter((u) => claveMes(u.createdAt) === mes);
   const nombreNegocio = new Map(negocios.map((b) => [b.id, b.name]));
 
-  // Por farmacia
   const farmacias = await Promise.all(
     negocios.map(async (b): Promise<UsoIaFarmacia> => {
       const suyos = delMes.filter((u) => u.businessId === b.id);
@@ -155,7 +154,6 @@ export async function getUsoIaData(mesPedido?: string): Promise<UsoIaData> {
     }),
   );
 
-  // Por persona
   const grupos = new Map<string, Omit<UsoIaPersona, 'nombre' | 'email' | 'farmacias'> & { negocios: Set<string> }>();
   for (const u of delMes) {
     const k = u.userId ?? '';

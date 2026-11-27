@@ -12,13 +12,13 @@ export function normalizeSupplier(name: string | null | undefined): string {
 
   s = s
     .replace(/\bSOCIEDAD\s+(LIMITADA|ANONIMA)(\s+UNIPERSONAL)?\b/g, ' ')
-    .replace(/\bS\s?L\s?U\b/g, ' ') // S.L.U.
-    .replace(/\bS\s?L\s?L\b/g, ' ') // S.L.L.
-    .replace(/\bS\s?A\s?U\b/g, ' ') // S.A.U.
-    .replace(/\bS\s?L\b/g, ' ') // S.L.
-    .replace(/\bS\s?A\b/g, ' ') // S.A.
-    .replace(/\bS\s?C\s?P\b/g, ' ') // S.C.P.
-    .replace(/\bC\s?B\b/g, ' ') // C.B.
+    .replace(/\bS\s?L\s?U\b/g, ' ')
+    .replace(/\bS\s?L\s?L\b/g, ' ')
+    .replace(/\bS\s?A\s?U\b/g, ' ')
+    .replace(/\bS\s?L\b/g, ' ')
+    .replace(/\bS\s?A\b/g, ' ')
+    .replace(/\bS\s?C\s?P\b/g, ' ')
+    .replace(/\bC\s?B\b/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 

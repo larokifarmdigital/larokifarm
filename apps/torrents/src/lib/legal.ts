@@ -1,16 +1,6 @@
 import type { Locale } from '@/lib/i18n';
 
-/**
- * Textos legales por defecto (aviso legal y política de privacidad).
- *
- * Se usan cuando el campo correspondiente del backoffice está vacío para ese idioma.
- * El contenido ya incluye el título (h1), porque la página no pinta título propio:
- * todo lo visible procede de aquí o del backoffice.
- *
- * Versión corregida y ajustada a la web real (sin analítica ni publicidad; el mapa
- * de Google se carga solo bajo clic). Traducciones CA/EN pendientes de revisión
- * jurídica; el texto base validado es el español.
- */
+/** Textos legales por defecto. Incluyen el h1 (la página no pinta título propio). Traducciones CA/EN pendientes de revisión jurídica; el texto validado es el español. */
 
 const EMAIL = 'farmaciatorrentsbcn@gmail.com';
 const MAIL = `<a href="mailto:${EMAIL}">${EMAIL}</a>`;
@@ -22,10 +12,7 @@ const GOOGLE_PRIV_EN = '<a href="https://policies.google.com/privacy" target="_b
 
 export type LegalTextos = { avisoLegal: string; politicaPrivacidad: string };
 
-/**
- * Textos legales por defecto (si la farmacia no escribe los suyos). Solo existen
- * en algunos idiomas: para el resto se usa el castellano (`legalPorDefecto`).
- */
+/** Solo existen en algunos idiomas; el resto usa el castellano (`legalPorDefecto`). */
 export const LEGAL: Partial<Record<Locale, LegalTextos>> & { es: LegalTextos } = {
   es: {
     avisoLegal: `

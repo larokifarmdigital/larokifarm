@@ -8,7 +8,6 @@ export type CreateFarmaciaInput = {
   slug?: string;
   /** Códigos de idioma marcados; se ignoran los desconocidos. */
   idiomas: string[];
-  /** Usuario que gestionará la farmacia (opcional). */
   responsableId?: string;
 };
 

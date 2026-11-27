@@ -1,14 +1,11 @@
 /**
  * Proxy GET para servir imágenes de contenido desde R2 (o storage local en dev).
  *
- * Imágenes PÚBLICAS por diseño: las webs de las farmacias (apps/torrents,
- * apps/chamarro) van a cargar estas URLs desde el navegador del visitante,
- * sin cookie de sesión del backoffice. No se filtra por tenant en el GET —
- * si conoces el id de la imagen, la ves. (Equivalente a Sanity CDN que ya
- * exponía las imágenes públicamente.)
+ * PÚBLICAS por diseño: las landings las cargan desde el navegador del visitante, sin sesión.
+ * No se filtra por tenant en el GET: si conoces el id de la imagen, la ves.
  *
- * Cachéo largo: inmutable + 1 año. Los ids son cuids irrepetibles y las
- * imágenes NO se reescriben in-place (delete + re-upload → id nuevo).
+ * Caché inmutable de 1 año: los ids son cuids irrepetibles y las imágenes NO se reescriben
+ * in-place (delete + re-upload → id nuevo).
  */
 
 import { NextResponse } from 'next/server';
@@ -26,7 +23,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       : NextResponse.json({ error: 'Storage read failed' }, { status: 502 });
   }
 
-  // Mismos params que el CDN de Sanity (?w=&h=&fit=&auto=format) → ver imageTransform.
+  // Parámetros ?w=&h=&fit=&auto=format: ver imageTransform.
   const out = await transformImage(res.data, res.contentType, new URL(req.url).searchParams);
   return new NextResponse(new Uint8Array(out.data), {
     status: 200,

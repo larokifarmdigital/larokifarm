@@ -43,13 +43,7 @@ type SelectProps = {
   className?: string;
 };
 
-/**
- * Select del backoffice (Radix). Sustituye SIEMPRE al `<select>` nativo, cuyas
- * opciones no se pueden estilar y cuya flecha cambia según el navegador.
- * - Disparador con el aspecto de `.field` (44 px en móvil) y flecha centrada.
- * - Opciones con hover, check azul en la elegida, segunda línea opcional.
- * - Teclado y lector de pantalla de Radix (flechas, type-ahead, Escape).
- */
+/** Sustituye SIEMPRE al `<select>` nativo: sus opciones no se pueden estilar y la flecha cambia según el navegador. */
 export function Select({
   options,
   value,

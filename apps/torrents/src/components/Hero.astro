@@ -62,10 +62,8 @@ const subtituloHero =
 
 const altInterior = t('hero.altInterior', lang, { nombre });
 
-/* Palabras del nombre para word-by-word reveal. */
 const palabrasNombre = nombre.split(/\s+/).filter(Boolean);
 
-// Tarjetas flotantes: localiza y descarta las que no tengan título.
 type TarjetaRender = {
   icono?: TarjetaFlotante['icono'];
   titulo: string;
@@ -85,7 +83,6 @@ const tarjetasLocalizadas = (tarjetas ?? [])
   .filter((t): t is TarjetaRender => t !== null)
   .slice(0, 3);
 
-// Posiciones fijas por slot: superior-derecha, inferior-izquierda, media-izquierda.
 const POSICIONES = [
   { wrap: 'absolute z-10 -top-4 -right-4', accent: 'var(--kids-green)' },
   { wrap: 'absolute z-10 -bottom-4 -left-4', accent: 'var(--accent)' },

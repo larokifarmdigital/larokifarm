@@ -23,10 +23,6 @@ export interface ReportView {
 
 const MAX_NOTE_LEN = 2000;
 
-/* ------------------------------------------------------------------ */
-/* Botón + diálogo "Reportar un error"                                 */
-/* ------------------------------------------------------------------ */
-
 /**
  * Lo pone cada tarjeta de resultado (nueva conciliación e historial) junto a
  * sus acciones. El formulario va en un diálogo: Radix devuelve el foco al
@@ -115,10 +111,6 @@ async function avisarPorCorreo(comparisonId: string, nota: string, a: Aviso, cap
   });
   if (!ok) console.warn('[reportes] no se pudo enviar el aviso por correo');
 }
-
-/* ------------------------------------------------------------------ */
-/* Lista de reportes (no se pinta si no hay ninguno)                   */
-/* ------------------------------------------------------------------ */
 
 export function ReportsList({
   reports,
@@ -229,10 +221,6 @@ function ReportItem({
     </li>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* Diálogo con una nota de texto                                       */
-/* ------------------------------------------------------------------ */
 
 function FormularioNota({
   titulo,

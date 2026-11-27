@@ -1,6 +1,6 @@
 // Registro de uso del comparador en usage_entries (módulo SCOUT, coste 0: no
 // usa servicios de pago). La farmacia a la que se apunta es fija y
-// configurable (decisión de gestión 24-11-2026): en local, Laguna.
+// configurable: en local, Laguna.
 import { prisma } from '@/shared/lib/prisma';
 
 const SLUG = process.env.COMPARADOR_FARMACIA_USO || 'larokifarm';

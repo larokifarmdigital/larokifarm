@@ -4,12 +4,7 @@ import { useState, type ReactNode } from 'react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 
-/**
- * Icono ⓘ discreto para colocar dentro del `hint` de un `Label`.
- * Al hover/focus muestra un tooltip con la ayuda extendida — reemplaza al
- * `<p className="help">…</p>` que suele ir debajo del input y ocupar espacio
- * vertical fijo. En móvil (sin hover) se abre al tocarlo.
- */
+/** Icono ⓘ para el `hint` de un `Label`: tooltip al hover/foco y, en móvil, al tocar. */
 export function LabelHelpIcon({
   children,
   ariaLabel = 'Más información',

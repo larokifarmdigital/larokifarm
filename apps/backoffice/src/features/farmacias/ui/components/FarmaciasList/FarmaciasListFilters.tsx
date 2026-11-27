@@ -7,12 +7,7 @@ import { STATUS_FILTERS, type StatusFilter } from './statusMeta';
 
 export const BUSCADOR_FARMACIAS_ID = 'buscador-farmacias';
 
-/**
- * Barra de filtros estándar (igual que Usuarios e Historial): buscador + Select
- * "Estado" con opciones fijas (no aparecen ni desaparecen según los datos).
- * Con un solo Select no hace falta el botón "Filtros" en móvil: buscador y
- * Estado caben en una fila (44 px).
- */
+/** Con un solo Select no hace falta el botón "Filtros" en móvil: buscador y Estado caben en una fila (44 px). */
 export function FarmaciasListFilters({
   query,
   onQueryChange,

@@ -1,12 +1,5 @@
 ---
-/**
- * Página legal común (aviso legal y política de privacidad).
- * - El h1 es siempre el nombre de la página (el `<h1>` del texto del CMS se
- *   quita para no duplicarlo; suele venir en mayúsculas).
- * - Los h2 del texto reciben un id y forman el índice "En esta página"
- *   (fijo a la izquierda en escritorio; plegable con <details> en móvil).
- * - Todo funciona sin JS.
- */
+/** El `<h1>` del texto del CMS se quita (el h1 es el nombre de la página; suele venir en mayúsculas). */
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
@@ -42,7 +35,6 @@ const mostrarFaqs = (farmacia.faqs ?? []).some(
   (f) => localizar(f.pregunta, lang) && localizar(f.respuesta, lang),
 );
 
-/* ---------- Texto del CMS: quitar el h1 y numerar los h2 ---------- */
 const sinEtiquetas = (s: string) =>
   s
     .replace(/<[^>]+>/g, '')
@@ -109,7 +101,6 @@ const email = farmacia.contacto?.email;
   />
 
   <main id='contenido' class='legal'>
-    {/* ---------- Cabecera ---------- */}
     <header id='legal-inicio' class='legal-cabecera'>
       <div class='container-app'>
         <nav aria-label={t('legal.migaAria', lang)} class='legal-miga'>
@@ -128,12 +119,10 @@ const email = farmacia.contacto?.email;
       </div>
     </header>
 
-    {/* ---------- Cuerpo ---------- */}
     <div class='container-app legal-cuerpo'>
       <div class:list={['legal-grid', { 'legal-grid--indice': conIndice }]}>
         {conIndice && (
           <>
-            {/* Escritorio: índice fijo */}
             <nav aria-label={t('legal.indice', lang)} class='legal-indice'>
               <p class='legal-indice__titulo'>{t('legal.indice', lang)}</p>
               <ol>
@@ -143,7 +132,6 @@ const email = farmacia.contacto?.email;
               </ol>
             </nav>
 
-            {/* Móvil: índice plegable */}
             <details class='legal-indice-movil'>
               <summary>
                 {t('legal.indice', lang)}
@@ -161,7 +149,6 @@ const email = farmacia.contacto?.email;
         <div class='legal-columna'>
           <article class='legal-texto' set:html={cuerpo} />
 
-          {/* Al final: el otro texto legal y volver */}
           <section class='legal-final' aria-labelledby='legal-otros'>
             <h2 id='legal-otros' class='legal-final__titulo'>{t('legal.otros', lang)}</h2>
             <a href={rutaConLocale(otra.ruta, lang)} class='legal-final__enlace'>
@@ -194,7 +181,6 @@ const email = farmacia.contacto?.email;
 </BaseLayout>
 
 <style>
-  /* ---------- Cabecera ---------- */
   .legal-cabecera {
     background: var(--canvas-alt);
     border-bottom: 1px solid var(--border);
@@ -238,7 +224,6 @@ const email = farmacia.contacto?.email;
     color: var(--muted-foreground);
   }
 
-  /* ---------- Cuerpo ---------- */
   .legal-cuerpo { padding-block: clamp(2rem, 4vw, 3.5rem) clamp(4rem, 7vw, 6rem); }
   .legal-grid { display: grid; gap: 1.5rem; max-width: 760px; }
   .legal-grid--indice { max-width: none; }
@@ -251,7 +236,6 @@ const email = farmacia.contacto?.email;
   }
   .legal-columna { min-width: 0; display: flex; flex-direction: column; gap: 1.5rem; }
 
-  /* Índice escritorio */
   .legal-indice { display: none; }
   @media (min-width: 960px) {
     .legal-indice {
@@ -298,7 +282,6 @@ const email = farmacia.contacto?.email;
     border-left-color: var(--primary);
   }
 
-  /* Índice móvil */
   .legal-indice-movil {
     background: var(--card);
     border: 1px solid var(--border);
@@ -320,7 +303,6 @@ const email = farmacia.contacto?.email;
   .legal-indice-movil[open] summary svg { transform: rotate(180deg); }
   .legal-indice-movil[open] ol { margin-bottom: 1rem; }
 
-  /* Texto */
   .legal-texto {
     background: var(--card);
     border: 1px solid var(--border);
@@ -372,7 +354,6 @@ const email = farmacia.contacto?.email;
   .legal-texto :global(a:hover) { color: var(--accent-hover); }
   .legal-texto :global(strong) { color: var(--foreground); font-weight: 700; }
 
-  /* Final */
   .legal-final {
     background: var(--canvas-alt);
     border-radius: var(--radius-xl);

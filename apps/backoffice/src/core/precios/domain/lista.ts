@@ -104,7 +104,6 @@ export function validarLista(matriz: unknown[][]): ListaValidada {
   };
 }
 
-// ── Listas guardadas y sus ejecuciones ────────────────────────────────────
 
 export type EstadoEjecucion = 'en_cola' | 'comparando' | 'terminada' | 'con_error' | 'cancelada';
 

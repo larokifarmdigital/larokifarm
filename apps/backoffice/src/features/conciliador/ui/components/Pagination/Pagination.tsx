@@ -5,7 +5,6 @@ import { cn } from '@/shared/lib/cn';
 const BTN =
   'inline-flex items-center justify-center gap-1.5 min-h-11 px-4 rounded-[8px] border border-[var(--color-hairline-strong)] bg-[var(--color-surface)] text-[14.5px] font-medium';
 
-/** "Anterior · Página X de Y · Siguiente". No se pinta si hay una sola página. */
 export function Pagination({
   page,
   totalPages,

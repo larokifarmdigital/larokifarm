@@ -17,11 +17,7 @@ const ALT_STATUS_COPY: Record<AltStatus, string> = {
   empty: 'Falta descripción',
 };
 
-/**
- * Estado de la descripción (texto alternativo) de una foto, en texto: antes
- * era un punto de color con aria-label en un <span> sin rol (axe lo marcaba).
- * Solo se muestra si falta algo.
- */
+/** Estado del texto alternativo de una foto, en texto (un punto con aria-label en un <span> sin rol lo marca axe). Solo se muestra si falta algo. */
 export function AltStatusDot({ status }: { status: AltStatus }) {
   if (status === 'complete') return <span className="sr-only">{ALT_STATUS_COPY.complete}</span>;
   return (

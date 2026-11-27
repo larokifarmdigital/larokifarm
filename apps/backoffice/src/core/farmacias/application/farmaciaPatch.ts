@@ -1,19 +1,10 @@
 /**
- * Validación del patch que manda el autoguardado del editor.
+ * Validación del patch del autoguardado. La server action acepta el body que
+ * mande cualquier cliente con sesión, así que aquí se decide qué se puede escribir:
+ * `status` solo vía publicar/archivar; imágenes y reseñas tienen sus propias actions.
  *
- * La server action es un endpoint público (cualquiera con sesión puede
- * llamarla con el body que quiera), así que aquí se decide qué se puede
- * escribir y con qué forma:
- *   - whitelist de campos: `status` NO (solo vía publicar/archivar), ni
- *     imágenes ni reseñas (tienen sus propias actions)
- *   - tipos y longitudes; slug con formato de URL
- *   - enlaces sin `javascript:` & co.
- *   - HTML de texto enriquecido saneado
- *   - tarjetas sin título descartadas (borradores vacíos)
- *
- * Lo que es "formato a medias" mientras se teclea (email incompleto, tramo
- * con cierre < apertura) NO se rechaza: rompería el autoguardado a mitad de
- * escribir. Eso se avisa en la UI y se filtra al publicar (publicContent).
+ * El formato "a medias" mientras se teclea (email incompleto, tramo con cierre < apertura)
+ * NO se rechaza: rompería el autoguardado. Se avisa en la UI y se filtra al publicar (publicContent).
  */
 
 import { z } from 'zod';

@@ -34,7 +34,7 @@ export default function ExcelViewer({ file }: ExcelViewerProps) {
 
   useEffect(() => {
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- copiado tal cual del conciliador
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
 

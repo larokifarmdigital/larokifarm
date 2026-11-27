@@ -37,10 +37,7 @@ function ProgressBar({
   );
 }
 
-/**
- * Estado de las traducciones (solo si la web tiene más de un idioma). Ya no
- * mezcla "guardado" con "traducido": el guardado lo dice AutosaveIndicator.
- */
+/** Estado de las traducciones (solo si la web tiene más de un idioma). */
 export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'center' | 'end' }) {
   const { farmacia, currentLocale, setLocale, goToSection } = useFarmaciaEditor();
   const [open, setOpen] = useState(false);
@@ -78,7 +75,6 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
           sideOffset={8}
           className="z-40 w-[300px] max-w-[calc(100vw-24px)] rounded-[10px] bg-[var(--color-surface)] border border-[var(--color-hairline)] shadow-[var(--shadow-elevated)] p-3.5 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
         >
-          {/* Idiomas */}
           <div>
             <p className="text-[12.5px] font-semibold text-[var(--color-muted)] m-0 mb-2">
               Textos traducidos por idioma
@@ -122,7 +118,6 @@ export function EditorHealthChip({ align = 'start' }: { align?: 'start' | 'cente
             </ul>
           </div>
 
-          {/* Por sección */}
           {sectionsWithMissing.length > 0 && (
             <div className="pt-3 mt-3 border-t border-[var(--color-hairline)]">
               <p className="text-[12.5px] font-semibold text-[var(--color-muted)] m-0 mb-2">

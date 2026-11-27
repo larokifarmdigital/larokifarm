@@ -57,7 +57,6 @@ export function HistoryResultCard({
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
-      {/* 1. Cabecera: qué es, cómo salió y qué puedes hacer */}
       <article className="card p-4 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1">
@@ -112,10 +111,8 @@ export function HistoryResultCard({
         )}
       </article>
 
-      {/* 2. Las líneas, en su propia tarjeta */}
       {!errorProceso && <TarjetaLineas lineas={lineas} />}
 
-      {/* 3. Reportes de error (solo si hay) */}
       <ReportsList
         reports={reportes}
         isSuperAdmin={currentUser.role === 'SUPER_ADMIN'}

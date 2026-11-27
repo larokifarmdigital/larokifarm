@@ -2,7 +2,6 @@ export interface DeliveryNoteLine {
   code?: string;
   /** Spanish "Código Nacional" — 6-digit pharma product code. */
   nationalCode?: string;
-  /** Barcode / EAN / alternative product code, if present. */
   ean?: string;
   /**
    * TODOS los códigos impresos en la celda del código del artículo, tal cual y
@@ -70,8 +69,8 @@ export type DiscrepancyKind = 'units' | 'price' | 'discount';
 export type ReconciliationStatus =
   | 'OK'
   | 'DISCREPANCY'
-  | 'MISSING_IN_DELIVERY_NOTE' // ordered but not shipped
-  | 'EXTRA_IN_DELIVERY_NOTE' // shipped but not ordered
+  | 'MISSING_IN_DELIVERY_NOTE'
+  | 'EXTRA_IN_DELIVERY_NOTE'
   | 'GIFT'; // regalo/muestra no pedido: 0 uds facturadas o precio 0 (no es discrepancia)
 
 export interface ReconciledLine {

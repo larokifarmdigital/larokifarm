@@ -8,7 +8,6 @@ import { FarmaciaAvatar } from './FarmaciaAvatar';
 import { FarmaciaRowActions, type RowActionRunner } from './FarmaciaRowActions';
 import { estadoFila } from './statusMeta';
 
-/** Listado desktop: tabla. */
 export function FarmaciasTable({
   farmacias,
   resaltada,

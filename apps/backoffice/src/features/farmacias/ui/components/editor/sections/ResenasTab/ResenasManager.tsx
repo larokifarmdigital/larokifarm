@@ -53,13 +53,7 @@ function motivoFuera(r: Resena, reglas: ResenasReglas): string | null {
   return null;
 }
 
-/**
- * Gestión de reseñas en el editor:
- *   1. Reglas de la web (cada una con su switch): mínimo de estrellas y solo
- *      con comentario. Se guardan con el autoguardado y se aplican al publicar.
- *   2. Filtros para revisar la lista (no afectan a la web).
- *   3. Switch por reseña: mostrarla u ocultarla. Se guarda al momento.
- */
+/** Reglas de la web (autoguardado, se aplican al publicar), filtros solo para revisar la lista y un switch por reseña (se guarda al momento). */
 export function ResenasManager() {
   const { farmacia, patch, readOnly } = useFarmaciaEditor();
   const reglas = farmacia.resenasReglas;
@@ -119,7 +113,6 @@ export function ResenasManager() {
 
   return (
     <>
-      {/* ============= REGLAS DE LA WEB ============= */}
       <section aria-labelledby="sec-resenas-reglas">
         <SectionHeader
           id="sec-resenas-reglas"
@@ -182,7 +175,6 @@ export function ResenasManager() {
         </div>
       </section>
 
-      {/* ============= LISTA ============= */}
       <section aria-labelledby="sec-resenas-lista">
         <SectionHeader
           id="sec-resenas-lista"

@@ -67,7 +67,7 @@ function erroresDe(e: z.ZodError): SaveResult<never> {
  * Gestión de cuentas (Ajustes → Usuarios). Todas las reglas se comprueban aquí,
  * en el servidor: la UI solo las refleja.
  * - Solo SUPER_ADMIN gestiona usuarios, y solo hay UNA cuenta SUPER_ADMIN
- *   (decisión de gestión 24-11-2026): no se crean más ni se cambia de tipo.
+ *   (decisión de gestión): no se crean más ni se cambia de tipo.
  * - Nadie se desactiva ni se quita el rol de administrador a sí mismo.
  * - Siempre queda al menos un administrador activo.
  * - Los módulos (conciliador, comparador) los marca el administrador; él los

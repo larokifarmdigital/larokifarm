@@ -26,11 +26,10 @@ const {
   idiomasActivos,
 } = Astro.props;
 
-// El backoffice trae logo si el cliente lo subió; si no, cae al logo local /logo.png que el equipo puso en public/.
+// Logo del backoffice o, si no hay, /logo.png de public/.
 const logoUrl = logo || '/logo.png';
 
 const home = rutaConLocale('/', lang);
-// Solo los idiomas activos de la farmacia (los demás no tienen web)
 const idiomasVisibles: Locale[] = localesActivos(idiomasActivos);
 const idiomaLabel = NOMBRE_IDIOMA;
 
@@ -154,16 +153,12 @@ const enlaces = [
 </header>
 
 <style>
-  /* Fondo con color-mix (transparencia adaptativa según tema) — no expresable en utility inline. */
   .corp-header {
     background: rgba(255, 255, 255, 0.9);
   }
 
-  /* Hover del link de nav — token custom, más simple mantenerlo global. */
   .header-link:hover { color: var(--foreground); }
 
-  /* Estados de <details open> — variante `open:` en Tailwind 4 aún no cubre todos los
-     casos (chevron rotado, cambio de fondo del trigger). Se mantiene lo mínimo aquí. */
   .lang-trigger:hover { border-color: var(--border-strong); color: var(--foreground); }
   .lang-trigger::-webkit-details-marker,
   .lang-trigger::marker { display: none; content: ''; }
@@ -186,7 +181,6 @@ const enlaces = [
   .lang-item.is-active { background: var(--accent-soft); color: var(--accent); }
   .lang-item.is-active .lang-code { color: var(--accent); }
 
-  /* Burger animado según aria-expanded — no expresable con clases inline sin JS extra. */
   .burger span {
     display: block;
     height: 1.5px;
@@ -197,7 +191,6 @@ const enlaces = [
   .burger[aria-expanded='true'] span:nth-child(2) { opacity: 0; }
   .burger[aria-expanded='true'] span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
 
-  /* Menú móvil */
   .mobile-menu { animation: menuIn 200ms ease-out; }
   @keyframes menuIn {
     from { opacity: 0; transform: translateY(-6px); }
@@ -224,7 +217,6 @@ const enlaces = [
         menu.setAttribute('hidden', '');
       }),
     );
-    // Escape cierra el menú móvil y devuelve el foco al botón
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape' || toggle.getAttribute('aria-expanded') !== 'true') return;
       toggle.setAttribute('aria-expanded', 'false');
@@ -233,7 +225,6 @@ const enlaces = [
     });
   }
 
-  // Cerrar dropdown de idiomas al hacer clic fuera o presionar Escape
   if (langDetails) {
     document.addEventListener('click', (e) => {
       if (!langDetails.contains(e.target as Node)) {

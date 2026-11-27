@@ -194,7 +194,6 @@ export class PriceListRepositoryPrisma {
     );
   }
 
-  /** No se pudo poner en marcha: queda "con error" con el motivo (se ve en la tarjeta). */
   async fallar(runId: string, motivo: string): Promise<void> {
     await prisma.priceListRun.update({ where: { id: runId }, data: { status: 'FAILED', errorReason: motivo.slice(0, 300), finishedAt: new Date() } });
   }
@@ -207,7 +206,6 @@ export class PriceListRepositoryPrisma {
     return r.count > 0;
   }
 
-  /** Vuelve a poner en cola una ejecución detenida (sigue con lo pendiente). */
   async reanudar(runId: string): Promise<boolean> {
     const r = await prisma.priceListRun.updateMany({
       where: { id: runId, status: { in: ['RUNNING', 'FAILED', 'CANCELLED'] } },
@@ -232,7 +230,6 @@ export class PriceListRepositoryPrisma {
     return { items: filas.map((f) => fila(f, false)), total };
   }
 
-  /** Todo, con el precio de cada farmacia, para el Excel. */
   async todosResultados(runId: string): Promise<FilaResultado[]> {
     const filas = await prisma.priceListRunItem.findMany({ where: { runId }, select: SELECT_RESULTADO, orderBy: { item: { position: 'asc' } } });
     return filas.map((f) => fila(f, true));
@@ -252,8 +249,6 @@ export class PriceListRepositoryPrisma {
   async cnsDeLista(listId: string): Promise<string[]> {
     return (await prisma.priceListItem.findMany({ where: { listId }, select: { cn: true } })).map((i) => i.cn);
   }
-
-  // ── Para el proceso de fondo ──────────────────────────────────────────
 
   async empezar(runId: string): Promise<{ estado: EstadoEjecucion; userId: string } | null> {
     const r = await prisma.priceListRun.findUnique({ where: { id: runId }, select: { status: true, userId: true } });
@@ -291,7 +286,6 @@ export class PriceListRepositoryPrisma {
     ]);
   }
 
-  /** Recalcula los contadores a partir de los productos (se llama al empezar y al terminar). */
   async recontar(runId: string) {
     const [done, verified] = await Promise.all([
       prisma.priceListRunItem.count({ where: { runId, status: { in: ['DONE', 'ERROR'] } } }),

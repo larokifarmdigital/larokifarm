@@ -3,7 +3,6 @@
 import * as SwitchPrimitive from '@radix-ui/react-switch';
 import { cn } from '@/shared/lib/cn';
 
-/** Interruptor on/off (Radix). Accesible: role="switch" + aria-checked. */
 export function Switch({
   checked,
   onCheckedChange,

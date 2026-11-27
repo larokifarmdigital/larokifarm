@@ -1,10 +1,5 @@
 ---
-/**
- * Pie de página: marca, horario (con "Abierto ahora" calculado en el
- * navegador con la hora de Madrid), cómo llegar, contacto, enlaces y textos
- * legales. Columnas sin datos no se pintan. Sin mapas ni nada que ponga
- * cookies: "Cómo llegar" es un enlace externo.
- */
+/** "Abierto ahora" se calcula en el navegador con la hora de Madrid. Sin mapas ni cookies: "Cómo llegar" es un enlace externo. */
 import { urlImagen, agruparHorarios, localizar } from '@/lib/contenido';
 import type {
   Contacto,
@@ -32,7 +27,6 @@ export interface Props {
   horariosAgrupados?: GrupoHorario[];
   descripcionCorta?: LocalizedText;
   mostrarFaqs?: boolean;
-  /** Si false, omite el enlace "Reseñas". */
   mostrarResenas?: boolean;
   lang: Locale;
   rutaActual?: string;
@@ -110,7 +104,6 @@ const nuevaPestana = t('footer.nuevaPestana', lang);
 
   <div class='container-app relative pt-14 pb-10 md:pt-16'>
     <div class='grid gap-10 md:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1fr_1fr] lg:gap-12'>
-      {/* Marca */}
       <div class='space-y-5' data-reveal>
         <a href={home} class='inline-flex items-center gap-2.5'>
           {logoOpt && <img src={logoOpt} alt='' width='40' height='40' class='h-10 w-10 object-contain' />}
@@ -156,7 +149,6 @@ const nuevaPestana = t('footer.nuevaPestana', lang);
         </p>
       </div>
 
-      {/* Horario */}
       {grupos.length > 0 && (
         <div style='--reveal-delay:80ms' data-reveal>
           <h2 class='footer-titulo'>{t('footer.horario', lang)}</h2>
@@ -181,7 +173,6 @@ const nuevaPestana = t('footer.nuevaPestana', lang);
         </div>
       )}
 
-      {/* Cómo llegar */}
       {lineasDireccion.length > 0 && (
         <div style='--reveal-delay:160ms' data-reveal>
           <h2 class='footer-titulo'>{t('footer.visitanos', lang)}</h2>
@@ -200,7 +191,6 @@ const nuevaPestana = t('footer.nuevaPestana', lang);
         </div>
       )}
 
-      {/* Contacto */}
       {hayContacto && (
         <div style='--reveal-delay:240ms' data-reveal>
           <h2 class='footer-titulo'>{t('footer.contactanos', lang)}</h2>
@@ -248,7 +238,6 @@ const nuevaPestana = t('footer.nuevaPestana', lang);
       )}
     </div>
 
-    {/* Enlaces de la web */}
     <nav aria-label={t('footer.explora', lang)} class='mt-12 border-t border-[var(--border)] pt-6'>
       <ul class='m-0 flex list-none flex-wrap gap-x-6 gap-y-1 p-0 text-sm'>
         {enlaces.map((l) => (
@@ -260,7 +249,6 @@ const nuevaPestana = t('footer.nuevaPestana', lang);
     </nav>
   </div>
 
-  {/* Barra inferior */}
   <div class='relative border-t border-[var(--border)] bg-[color-mix(in_oklch,var(--secondary),var(--card)_40%)]'>
     <div class='container-app flex flex-col gap-3 py-5 text-sm text-[var(--muted-foreground)] md:flex-row md:items-center md:justify-between'>
       <div class='flex flex-col gap-1 md:flex-row md:flex-wrap md:items-center md:gap-x-3'>
@@ -405,7 +393,6 @@ const nuevaPestana = t('footer.nuevaPestana', lang);
 </style>
 
 <script>
-  /* "Abierto ahora / Cerrado" con la hora de Madrid (la web es estática). */
   const estado = document.querySelector<HTMLElement>('[data-footer-estado]');
   if (estado) {
     type Tramo = { apertura: string; cierre: string };

@@ -28,11 +28,7 @@ const REDES: { key: RedKey; label: string; icon: IconName }[] = [
 /** Se ven siempre; X y YouTube, solo si tienen algo o tras «Añadir otra red». */
 const REDES_HABITUALES: RedKey[] = ['instagram', 'facebook', 'tiktok'];
 
-/**
- * "Contacto y dirección" (antes "General"; el horario tiene sección propia).
- * Los campos técnicos (identificador, mapa insertado) solo los ve el
- * administrador: si cambian, la web deja de encontrar su contenido.
- */
+/** Los campos técnicos (identificador, mapa insertado) solo los ve el administrador: si cambian, la web deja de encontrar su contenido. */
 export function GeneralTab() {
   const { farmacia, patch, esAdmin } = useFarmaciaEditor();
   const fieldError = useFieldErrors();
@@ -66,7 +62,6 @@ export function GeneralTab() {
 
   return (
     <div className="space-y-10 max-w-3xl">
-      {/* ============= DATOS DE LA FARMACIA ============= */}
       <section aria-labelledby="sec-identidad">
         <SectionHeader
           id="sec-identidad"
@@ -126,7 +121,6 @@ export function GeneralTab() {
 
       <div className="hairline" />
 
-      {/* ============= CONTACTO ============= */}
       <section aria-labelledby="sec-contacto">
         <SectionHeader
           id="sec-contacto"
@@ -203,7 +197,6 @@ export function GeneralTab() {
 
       <div className="hairline" />
 
-      {/* ============= REDES ============= */}
       <section aria-labelledby="sec-redes">
         <SectionHeader
           id="sec-redes"
@@ -255,7 +248,6 @@ export function GeneralTab() {
 
       <div className="hairline" />
 
-      {/* ============= DIRECCIÓN ============= */}
       <section aria-labelledby="sec-direccion">
         <SectionHeader
           id="sec-direccion"

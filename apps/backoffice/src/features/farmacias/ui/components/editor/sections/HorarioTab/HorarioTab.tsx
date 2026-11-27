@@ -24,10 +24,7 @@ const HORARIO_TIPICO: Horario[] = [
   { dia: 'dom', tramos: [], cerrado: true },
 ];
 
-/**
- * Sección propia (antes al final de "General"): es la tarea más frecuente
- * del personal y la sección de entrada del editor.
- */
+/** Sección de entrada del editor: es la tarea más frecuente del personal. */
 export function HorarioTab() {
   const { farmacia, patch, readOnly } = useFarmaciaEditor();
   const fieldError = useFieldErrors();

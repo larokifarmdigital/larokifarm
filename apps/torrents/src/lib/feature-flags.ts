@@ -1,17 +1,4 @@
-/**
- * Banderas de funcionalidad de Torrents.
- *
- * MOSTRAR_RESENAS controla la visibilidad de la sección "Reseñas Google" en
- * toda la landing. Cuando es false oculta:
- *  - la sección dentro del index
- *  - los enlaces "Reseñas" del Header (nav desktop + hamburguesa) y del Footer
- *  - aggregateRating + review del JSON-LD de SEO
- *  - la ruta /resenas devuelve 404
- *
- * Lo decide el switch "Mostrar reseñas en la
- * web" del editor (campo `mostrarResenas`). Si el campo no
- * viene, se usa el valor por defecto de esta landing.
- */
+/** MOSTRAR_RESENAS (campo `mostrarResenas` del editor; si no viene, este valor) oculta la sección, los enlaces, el aggregateRating/review del JSON-LD y la ruta /resenas (404). */
 import { mostrarResenasDe } from './ajustes';
 import { obtenerFarmaciaPorSlug, SLUG_FARMACIA } from './contenido';
 

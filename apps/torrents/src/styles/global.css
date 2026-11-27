@@ -22,7 +22,6 @@
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.25 0.03 230);
 
-  /* Marca corporativa Farmacia Torrents */
   --primary: #1265b5;
   --primary-foreground: oklch(1 0 0);
   --accent: #36a0da;
@@ -37,7 +36,6 @@
   --border: oklch(0.90 0.02 230);
   --ring: var(--primary);
 
-  /* Acentos decorativos (variedad cromática en cards de servicios y badges). */
   --kids-yellow: oklch(0.85 0.18 90);
   --kids-green: oklch(0.70 0.18 145);
   --kids-purple: oklch(0.70 0.18 300);
@@ -48,7 +46,6 @@
 
   --radius: 1rem;
 
-  /* Motion tokens · custom easings tienen más punch que los built-in. */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-magnetic: cubic-bezier(0.2, 0.9, 0.3, 1.1);
@@ -61,7 +58,6 @@
   --dur-cinematic: 700ms;
   --dur-editorial: 900ms;
 
-  /* Sombras suaves — ambientales. */
   --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
   --shadow-hover: 0 2px 8px rgb(15 23 42 / 0.06);
   --shadow-soft: 0 8px 24px -8px rgb(18 101 181 / 0.15);
@@ -198,8 +194,7 @@
   }
 }
 
-/* Reveal on-scroll · fade + translate + blur editorial.
- * Solo con JS: sin JS el contenido se ve tal cual (el observer no llegaría a mostrarlo). */
+/* Solo con JS: sin JS el contenido se ve tal cual (el observer no llegaría a mostrarlo). */
 @media (scripting: enabled) {
 [data-reveal] {
   --reveal-delay: 0ms;
@@ -219,7 +214,6 @@
 }
 }
 
-/* Reveal word · para word-by-word stagger en el hero (solo con JS). */
 @media (scripting: enabled) {
 [data-reveal-word] {
   --reveal-delay: 0ms;
@@ -241,7 +235,6 @@
 }
 }
 
-/* Float sutil permanente — imagen protagonista. */
 .motion-float {
   animation: motion-float 9s var(--ease-in-out) infinite;
 }
@@ -250,7 +243,6 @@
   50% { transform: translateY(-6px); }
 }
 
-/* Pulse ambient · dots de status. */
 .motion-pulse {
   animation: motion-pulse 2.5s var(--ease-in-out) infinite;
 }
@@ -259,8 +251,7 @@
   50% { opacity: 0.4; transform: scale(0.85); }
 }
 
-/* Spotlight border · cursor-tracked highlight. Usa var(--primary) para
-   respetar el color de marca de cada farmacia. */
+/* Usa var(--primary) para respetar el color de marca de cada farmacia. */
 .spotlight {
   position: relative;
   isolation: isolate;
@@ -286,7 +277,6 @@
 }
 .spotlight:hover::before { opacity: 0.5; }
 
-/* Magnetic lift · para cards al hover. */
 .motion-magnetic {
   transition:
     transform var(--dur) var(--ease-magnetic),
@@ -300,7 +290,6 @@
   }
 }
 
-/* Underline animated · para links del footer y menús. */
 .link-anim {
   position: relative;
   text-decoration: none;
@@ -335,13 +324,7 @@
   .motion-magnetic:hover { transform: none !important; }
 }
 
-/* ============================================================
- * Transición entre páginas (View Transitions entre documentos, sin JS).
- * El contenido se funde y sube un poco; la cabecera no se mueve.
- * El pie NO lleva nombre propio: entre páginas cambia de posición y,
- * con nombre, "volaría" por la pantalla en vez de fundirse.
- * Navegadores sin soporte: navegación normal.
- * ============================================================ */
+/* El pie NO lleva nombre propio: entre páginas cambia de posición y, con nombre, "volaría" por la pantalla en vez de fundirse. */
 @media (prefers-reduced-motion: no-preference) {
   @view-transition {
     navigation: auto;

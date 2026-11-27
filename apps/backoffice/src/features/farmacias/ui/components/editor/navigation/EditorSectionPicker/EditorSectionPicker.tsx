@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Selector de sección en móvil (< lg). Muestra "Grupo · Sección" (sin
- * numeración, decisión 2) y abre la hoja con todas las secciones.
- */
-
 import { SECTION_BY_KEY, SECTION_META, GROUP_OF_SECTION } from '@/features/farmacias/ui/lib/sectionsConfig';
 import { NavIcon } from '@/shared/components/atoms/NavIcon';
 

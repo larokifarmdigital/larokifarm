@@ -109,7 +109,6 @@ export function TablaPrecios({ filas, terminado }: { filas: FilaPrecio[]; termin
 
   return (
     <div aria-busy={!terminado}>
-      {/* Escritorio */}
       <table className="hidden md:table w-full text-[14px] border-collapse">
         <caption className="sr-only">
           Precio en {filas.length} farmacias online: primero las verificadas, de más barata a más cara
@@ -143,7 +142,6 @@ export function TablaPrecios({ filas, terminado }: { filas: FilaPrecio[]; termin
         </tbody>
       </table>
 
-      {/* Móvil: una tarjeta por farmacia */}
       <ul className="md:hidden m-0 p-0 list-none flex flex-col gap-2.5" aria-label={`Precio en ${filas.length} farmacias online`}>
         {ordenadas.map((f) => {
           const barata = terminado && !!f.oferta && esMasBarata(f.oferta, mejor);

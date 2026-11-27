@@ -7,7 +7,6 @@ import { FarmaciaAvatar } from './FarmaciaAvatar';
 import { FarmaciaRowActions, type RowActionRunner } from './FarmaciaRowActions';
 import { estadoFila } from './statusMeta';
 
-/** Listado móvil: cards apiladas. */
 export function FarmaciasCardList({
   farmacias,
   resaltada,

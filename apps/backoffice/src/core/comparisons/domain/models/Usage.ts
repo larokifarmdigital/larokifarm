@@ -58,7 +58,6 @@ export interface AggregateOptions {
   /** If provided, restricts the aggregation to this range (UTC). */
   from?: Date;
   to?: Date;
-  /** Optional filter: only include comparisons of the business with this slug. */
   businessSlug?: string;
 }
 

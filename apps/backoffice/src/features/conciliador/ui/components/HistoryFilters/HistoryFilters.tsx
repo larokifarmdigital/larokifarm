@@ -38,12 +38,8 @@ const OPCIONES_RESULTADO = [
 ];
 
 /**
- * Barra de filtros estándar (misma que /ajustes/usuarios): buscador + Selects.
- * Cada control cambia SOLO su parámetro de la URL (se combinan) y se aplica al
- * momento; el buscador, a los 300 ms de dejar de escribir. "Quitar filtros" y
- * el recuento viven en la fila de resultados (HistoryListView).
- * Móvil: apilado compacto en 2 columnas, sin panel escondido: con 2-4 Selects
- * cabe en dos filas y el usuario ve siempre qué filtros tiene puestos.
+ * Cada control cambia SOLO su parámetro de la URL; el buscador, a los 300 ms.
+ * Móvil: 2 columnas sin panel escondido, para ver siempre qué filtros hay puestos.
  */
 export function HistoryFilters({
   esAdmin,

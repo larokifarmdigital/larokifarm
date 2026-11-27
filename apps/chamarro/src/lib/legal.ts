@@ -1,6 +1,6 @@
 import type { Locale } from '@/lib/i18n';
 
-// NOTE: Fallback usado solo cuando el campo correspondiente del backoffice está vacío para el idioma. Rellenar avisoLegal/politicaPrivacidad en Sanity cuando el cliente pase el texto definitivo. Placeholder neutro hasta entonces.
+// Fallback solo si el backoffice no trae el texto de ese idioma. Placeholder neutro hasta tener el definitivo del cliente.
 
 export type LegalTextos = { avisoLegal: string; politicaPrivacidad: string };
 
@@ -34,10 +34,7 @@ const PLACEHOLDER_PRIV_EN = `
 <p>This website is informational only. The full privacy policy will be published soon.</p>
 `;
 
-/**
- * Textos legales por defecto (si la farmacia no escribe los suyos). Solo existen
- * en algunos idiomas: para el resto se usa el castellano (`legalPorDefecto`).
- */
+/** Solo hay textos en algunos idiomas; para el resto se usa el castellano (`legalPorDefecto`). */
 export const LEGAL: Partial<Record<Locale, LegalTextos>> & { es: LegalTextos } = {
   es: { avisoLegal: PLACEHOLDER_ES, politicaPrivacidad: PLACEHOLDER_PRIV_ES },
   ca: { avisoLegal: PLACEHOLDER_CA, politicaPrivacidad: PLACEHOLDER_PRIV_CA },

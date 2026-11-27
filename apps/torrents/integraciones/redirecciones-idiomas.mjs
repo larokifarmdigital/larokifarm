@@ -1,14 +1,8 @@
-// Redirecciones de los idiomas del catálogo que la farmacia NO tiene activos.
-//
-// Si una farmacia desactiva un idioma (p. ej. el inglés), sus URLs antiguas
-// (/en/, /en/resenas…) no deben dar 404: llevan a la misma página en castellano.
-// Se generan al terminar el build, mirando qué idiomas tienen carpeta en dist/
-// (las rutas [...lang] solo se generan para los idiomas activos):
-//   1. `_redirects` con 301 reales → Cloudflare Pages (se aplica antes que los
-//      archivos estáticos).
-//   2. Una página HTML por ruta con meta refresh + canonical + noindex → Vercel
-//      y cualquier hosting estático que ignore `_redirects`.
-// Se hace aquí (y no como página de Astro) para que no entren en el sitemap.
+// Redirecciones de los idiomas del catálogo que la farmacia NO tiene activos: /en/… no da 404, lleva a la misma página en castellano.
+// Se generan al acabar el build según las carpetas de dist/ (las rutas [...lang] solo existen para idiomas activos):
+//   1. `_redirects` con 301 reales (Cloudflare Pages).
+//   2. Una página HTML por ruta con meta refresh + canonical + noindex (Vercel y hostings que ignoran `_redirects`).
+// Se hace aquí y no como página de Astro para que no entren en el sitemap.
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -16,10 +10,8 @@ import { fileURLToPath } from 'node:url';
 
 /** Mismo catálogo que src/lib/i18n.ts (sin el castellano, que es la raíz). */
 const CATALOGO = ['en', 'ca', 'fr', 'de', 'it', 'pt', 'eu', 'gl'];
-/** Páginas que existen en cada idioma (ruta sin prefijo). */
 const SUBRUTAS = ['', 'resenas', 'aviso-legal', 'politica-privacidad'];
 
-/** Escapa para atributos y texto HTML. */
 const esc = (v) =>
   String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 

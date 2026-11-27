@@ -5,8 +5,6 @@ import { Toaster } from 'sonner';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import './globals.css';
 
-// Gilroy — misma fuente que la landing de Farmàcia Torrents, para
-// coherencia visual entre backoffice y sitio público del cliente.
 const gilroy = localFont({
   src: [
     { path: '../assets/fonts/Gilroy-Regular.ttf', weight: '100 600', style: 'normal' },

@@ -36,7 +36,6 @@ export function LoginView({ from }: { from?: string }) {
       <PanelMarca />
 
       <div className="relative isolate flex flex-1 flex-col">
-        {/* Degradado suave de fondo (solo decorativo). */}
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute -top-40 left-1/2 h-[520px] w-[760px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,var(--color-accent-tint),transparent)]" />
         </div>
@@ -76,7 +75,6 @@ function PanelMarca() {
     <div
       className="relative isolate hidden w-[46%] max-w-[640px] flex-col justify-between overflow-hidden bg-[linear-gradient(155deg,#1265b5_0%,#0d5397_55%,#0a4576_100%)] px-12 py-10 text-white lg:flex xl:px-16"
     >
-      {/* Círculos decorativos. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/[0.06]" />
         <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-[#36a0da]/20 blur-2xl" />
@@ -110,7 +108,6 @@ function PanelMarca() {
         </ul>
       </div>
 
-      {/* Muestra decorativa de una conciliación terminada. */}
       <div aria-hidden className="w-full max-w-[360px] rounded-[12px] bg-white p-4 text-[var(--color-ink)] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.45)]">
         <div className="flex items-center justify-between gap-3">
           <span className="text-[13.5px] font-semibold">Conciliación terminada</span>

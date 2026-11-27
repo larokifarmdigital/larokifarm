@@ -49,10 +49,7 @@ export function computeLocaleStatus(
   return anyOther ? 'missing' : 'empty';
 }
 
-/**
- * Recorre todos los campos i18n de una Farmacia y cuenta los estados desde
- * un idioma concreto. Usado por LangTabs para dibujar el contador de la pestaña.
- */
+/** Cuenta los estados de todos los campos i18n de una farmacia, vistos desde un idioma concreto. */
 export function countLocaleStatus(
   farmacia: Farmacia,
   locale: Locale,
@@ -141,12 +138,7 @@ function newCount(): LocaleFieldCount {
   return { total: 0, filled: 0, missing: 0, empty: 0 };
 }
 
-/**
- * Devuelve el desglose de campos i18n agrupado por sección del editor.
- * Para cada sección, cuenta el estado (filled/missing/empty) por cada idioma activo.
- * El popover del EditorHealthChip lo usa para listar qué sección tiene traducciones
- * pendientes y a qué idioma saltar.
- */
+/** Desglose de campos i18n por sección del editor; por cada idioma activo cuenta filled/missing/empty. */
 export function countBySection(farmacia: Farmacia, locales?: readonly Locale[]): SectionI18nStatus[] {
   // `active` = contra qué idiomas se mide "missing"; `medir` = de qué idiomas se cuenta
   const active = farmacia.idiomasActivos;
@@ -183,7 +175,6 @@ export function countBySection(farmacia: Farmacia, locales?: readonly Locale[]):
     }
   };
 
-  // Hero
   trackIn('hero', farmacia.heroChip);
   trackIn('hero', farmacia.heroSubtitulo);
   trackIn('hero', farmacia.descripcionCorta);
@@ -192,13 +183,11 @@ export function countBySection(farmacia: Farmacia, locales?: readonly Locale[]):
     trackIn('hero', t.subtitulo);
   }
 
-  // Features
   for (const f of farmacia.featuresLista ?? []) {
     trackIn('features', f.titulo);
     if (f.descripcion) trackIn('features', f.descripcion);
   }
 
-  // Sobre
   const sobre = farmacia.sobreNosotros;
   if (sobre) {
     if (sobre.chip !== undefined) trackIn('sobre', sobre.chip);
@@ -207,7 +196,6 @@ export function countBySection(farmacia: Farmacia, locales?: readonly Locale[]):
   }
   trackIn('sobre', farmacia.descripcionLarga);
 
-  // Servicios
   for (const s of farmacia.servicios) {
     trackIn('servicios', s.nombre);
     if (s.descripcion) trackIn('servicios', s.descripcion);
@@ -218,7 +206,6 @@ export function countBySection(farmacia: Farmacia, locales?: readonly Locale[]):
     if (farmacia.textosServicios.subtitulo) trackIn('servicios', farmacia.textosServicios.subtitulo);
   }
 
-  // FAQs
   for (const q of farmacia.faqs) {
     trackIn('faqs', q.pregunta);
     trackIn('faqs', q.respuesta);
@@ -236,11 +223,9 @@ export function countBySection(farmacia: Farmacia, locales?: readonly Locale[]):
     if (farmacia.textosResenas.subtitulo) trackIn('resenas', farmacia.textosResenas.subtitulo);
   }
 
-  // Legal
   if (farmacia.avisoLegal) trackIn('legal', farmacia.avisoLegal);
   if (farmacia.politicaPrivacidad) trackIn('legal', farmacia.politicaPrivacidad);
 
-  // SEO
   if (farmacia.seo?.title) trackIn('seo', farmacia.seo.title);
   if (farmacia.seo?.description) trackIn('seo', farmacia.seo.description);
 
@@ -257,10 +242,7 @@ export type MissingSummary = {
   })[];
 };
 
-/**
- * Resumen de traducciones pendientes de una farmacia. Fuente única para el
- * EditorHealthChip y para el aviso previo a publicar.
- */
+/** Resumen de traducciones pendientes de una farmacia. */
 export function summarizeMissing(farmacia: Farmacia): MissingSummary {
   const active = farmacia.idiomasActivos;
 

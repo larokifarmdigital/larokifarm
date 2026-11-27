@@ -13,10 +13,6 @@ import { formatRelativeDate } from '@/shared/lib/format';
 import { landingUrl } from '@/shared/lib/landingUrl';
 import { cn } from '@/shared/lib/cn';
 
-/* ------------------------------------------------------------------ */
-/* Estado de la web en lenguaje llano                                  */
-/* ------------------------------------------------------------------ */
-
 type EstadoWeb = { texto: string; detalle?: string; tono: 'ok' | 'aviso' | 'neutro' };
 
 /** Margen para no confundir el propio guardado de "publicar" con un cambio. */
@@ -58,10 +54,6 @@ function EstadoBadge({ estado }: { estado: EstadoWeb }) {
     </span>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* Conciliaciones                                                      */
-/* ------------------------------------------------------------------ */
 
 function resultado(c: ComparisonRow): { texto: string; clase: string } {
   // Mismas palabras que el historial y el resultado de la conciliación.
@@ -116,10 +108,6 @@ function ListaConciliaciones({ items, conFarmacia }: { items: ComparisonRow[]; c
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Piezas comunes                                                      */
-/* ------------------------------------------------------------------ */
-
 function Tarjeta({ titulo, accion, children, className }: {
   titulo: string;
   accion?: React.ReactNode;
@@ -155,10 +143,6 @@ const ATAJOS: { hash: string; label: string; icon: IconName }[] = [
   { hash: '#faqs', label: 'Preguntas frecuentes', icon: 'QuestionMark' },
   { hash: '#sobre', label: 'Quiénes somos', icon: 'UsersThree' },
 ];
-
-/* ------------------------------------------------------------------ */
-/* Vista                                                               */
-/* ------------------------------------------------------------------ */
 
 export async function InicioView() {
   const [session, user] = await Promise.all([auth(), getCurrentUser()]);

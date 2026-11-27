@@ -248,7 +248,6 @@ export function ServiciosTab() {
 
   return (
     <div className="section-gap max-w-3xl">
-      {/* ============= LISTA (lo que más se toca, primero) ============= */}
       <section aria-labelledby="sec-servicios-lista">
         <SectionHeader
           id="sec-servicios-lista"
@@ -323,7 +322,6 @@ export function ServiciosTab() {
         <ListFieldError field="servicios" />
       </section>
 
-      {/* ============= TEXTOS DE CABECERA (se tocan poco: plegados) ============= */}
       <section aria-label="Textos de la cabecera de Servicios">
         <CabeceraColapsable
           abierta={cabeceraConError}

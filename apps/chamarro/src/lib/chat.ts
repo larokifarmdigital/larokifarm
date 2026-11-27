@@ -1,10 +1,4 @@
-/**
- * Chat de medicamentos (widget cima-chat): si sale y cómo se ve.
- *
- * Lo decide la sección «Chat de medicamentos»
- * del editor (solo administrador; campo `chat`). Si el campo
- * no viene, se usa lo que esta web tenía fijo (CHAT_POR_DEFECTO).
- */
+/** Chat de medicamentos: lo decide el campo `chat` del editor (solo administrador); sin valor, CHAT_POR_DEFECTO. */
 import { obtenerFarmaciaPorSlug, SLUG_FARMACIA } from './contenido';
 
 export type ChatWeb = {

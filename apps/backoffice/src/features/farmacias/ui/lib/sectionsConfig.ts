@@ -1,10 +1,5 @@
-// Metadata de las secciones del editor. Sin Components (eso sigue en FarmaciaEditor
-// para evitar que los tabs se importen aquí y el sidebar/picker/sheet acaben
-// arrastrando todo el bundle de Tiptap y demás).
-//
-// Nombres en lenguaje llano (los mismos que usa Inicio). Las claves NO cambian
-// (son el hash de la URL: #hero, #faqs, #seo… siguen funcionando); "horario"
-// es nueva y es la sección de entrada.
+// Metadata de las secciones sin componentes: así sidebar/picker/sheet no arrastran el bundle de Tiptap.
+// Las claves son el hash de la URL (#hero, #faqs, #seo…): no cambiarlas.
 
 import type { IconName } from '@/shared/components/atoms/NavIcon';
 

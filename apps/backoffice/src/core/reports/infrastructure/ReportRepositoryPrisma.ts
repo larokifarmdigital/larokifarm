@@ -8,8 +8,6 @@ import type {
   ResolveReportInput,
 } from '../domain';
 
-/* Prisma include shared by every read: brings author + resolver so the domain
-   Report entity can be built in one query. */
 const REPORT_INCLUDE = {
   user: { select: { id: true, name: true, email: true } },
   resolvedBy: { select: { id: true, name: true, email: true } },

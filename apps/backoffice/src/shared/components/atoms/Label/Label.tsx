@@ -20,7 +20,7 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(
         {children}
         {required && (
           <>
-            {/* El * es visual; el lector oye ", obligatorio" (antes leía "Correo electrónicoobligatorio") */}
+            {/* El * es visual; el lector oye ", obligatorio" */}
             <span
               aria-hidden
               className="ml-1 text-[var(--color-red-ink)] text-[1.3em] font-bold leading-none align-[-0.05em]"

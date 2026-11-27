@@ -27,8 +27,8 @@ import { CuentaDialog, type DatosCuenta } from '../CuentaDialog';
 import { ContrasenaTemporalDialog } from '../ContrasenaTemporalDialog';
 
 const SIN_FARMACIA = '__sin__';
-// Ya no hay roles que elegir (24-11-2026): una cuenta de administración y, para
-// el resto, lo que puede hacer (editar la web + módulos). El filtro usa el rol guardado.
+// Sin selector de roles: una cuenta de administración y, para el resto, lo que puede hacer
+// (editar la web + módulos). El filtro usa el rol guardado.
 const FILTRO_PUEDE: { value: RolCuenta; label: string }[] = [
   { value: 'admin', label: 'Administración' },
   { value: 'manager', label: 'Editan la web' },
@@ -424,7 +424,6 @@ export function UsuariosGestion({
         </div>
       ) : (
         <>
-          {/* Escritorio: tabla */}
           <div className="card hidden overflow-hidden p-0 md:block">
             <table className="w-full text-left text-[14px]">
               <caption className="sr-only">Usuarios del backoffice</caption>
@@ -472,7 +471,6 @@ export function UsuariosGestion({
             </table>
           </div>
 
-          {/* Móvil: tarjetas */}
           <ul className="m-0 flex list-none flex-col gap-2 p-0 md:hidden">
             {filtradas.map((c) => (
               <li key={c.id} className="card p-4">

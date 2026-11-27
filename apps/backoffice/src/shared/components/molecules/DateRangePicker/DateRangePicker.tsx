@@ -35,12 +35,7 @@ interface DateRangePickerProps {
   className?: string;
 }
 
-/**
- * Selector de rango de fechas (react-day-picker en español, semana desde el
- * lunes). Botón con el resumen "12 nov 2026 – 20 nov 2026" + calendario en un
- * Popover de Radix (foco gestionado, Escape devuelve el foco al botón). El
- * calendario es una cuadrícula navegable con flechas.
- */
+/** Rango de fechas (react-day-picker, semana desde el lunes) en un Popover de Radix: Escape devuelve el foco al botón. */
 export function DateRangePicker({
   from,
   to,

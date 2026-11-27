@@ -6,8 +6,7 @@ import { IndicadorEleccion } from '../IndicadorEleccion';
  * Fila de elección (checkbox o radio) para formularios: sin borde ni relleno;
  * solo el indicador se pone azul al marcarla. Toda la fila es la zona de clic
  * (44 px en móvil) y el anillo de foco se pinta en la fila. El input real va
- * `sr-only` dentro del <label>. Sustituye a las "tarjetas de elección" en los
- * modales (24-11-2026: con 9 tarjetas con borde los modales eran ruidosos).
+ * `sr-only` dentro del <label>.
  */
 export function OpcionEleccion({
   tipo,

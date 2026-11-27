@@ -22,12 +22,9 @@ import { LanguagePicker } from './LanguagePicker';
 const CAMPOS = ['nombre', 'slug', 'idiomas', 'responsable'] as const;
 
 /**
- * "Nueva farmacia": botón accent de la cabecera de /farmacias que abre un
- * MODAL (son 5 campos: una página propia o un wizard era ceremonia).
- * - `?nueva=1` en la URL también lo abre (enlaces antiguos a /farmacias/nueva).
- * - Al crear: se cierra, la fila nueva queda resaltada (`?creada=<id>`) y un
- *   toast ofrece "Abrir editor". Nos quedamos en la lista: el admin a menudo
- *   crea la farmacia y asigna/rellena después.
+ * Modal (son 5 campos: una página propia era ceremonia). `?nueva=1` también lo abre.
+ * Al crear no navega: el admin suele asignar/rellenar después, así que se resalta la fila
+ * (`?creada=<id>`) y el toast ofrece "Abrir editor".
  */
 export function NuevaFarmaciaBoton({ responsables }: { responsables: ResponsableDisponible[] }) {
   const router = useRouter();
@@ -171,7 +168,6 @@ function FormularioNuevaFarmacia({
           }
         }}
       >
-        {/* Bloque 1: datos (en una fila desde sm) */}
         <div className="grid gap-4 sm:grid-cols-[3fr_2fr]">
         <div>
           <Label htmlFor="nombre" required>
@@ -252,7 +248,6 @@ function FormularioNuevaFarmacia({
         )}
         </div>
 
-        {/* Lo raro, al final y sin caja: el identificador se genera del nombre */}
         {/* Identificador: se genera del nombre; cambiarlo es raro → plegado */}
         <details
           open={avanzadas}

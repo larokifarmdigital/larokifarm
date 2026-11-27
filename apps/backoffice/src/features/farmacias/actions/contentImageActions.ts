@@ -1,14 +1,6 @@
 'use server';
 
-/**
- * Server actions de imágenes de contenido. Solo parsean FormData, delegan en
- * los use cases de core/farmacias y revalidan la ruta del editor.
- *
- * Flujo desde el editor:
- *   1. uploadContentImage(businessId, 'hero', fd) → ImagenAsset con id + url
- *   2. (opcional) reorderContentImages(businessId, 'hero', [id1, id2, …])
- *   3. deleteContentImage(businessId, id)
- */
+/** Solo parsean FormData, delegan en los use cases de core/farmacias y revalidan la ruta del editor. */
 
 import { revalidatePath } from 'next/cache';
 import {

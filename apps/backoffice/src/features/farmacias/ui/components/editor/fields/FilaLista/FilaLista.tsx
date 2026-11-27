@@ -143,7 +143,6 @@ export function FilaLista({
         <span className="sr-only">. Editar</span>
       </button>
 
-      {/* Escritorio */}
       <button
         type="button"
         onClick={onEdit}
@@ -161,7 +160,6 @@ export function FilaLista({
         <NavIcon name="Trash" size={14} />
       </button>
 
-      {/* Móvil */}
       <DropdownMenu.Root>
         <DropdownMenu.Trigger
           aria-label={`Opciones de «${nombre}»`}

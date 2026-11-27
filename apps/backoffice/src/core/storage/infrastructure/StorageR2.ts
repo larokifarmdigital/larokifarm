@@ -1,4 +1,4 @@
-// Adapter R2 (S3-compatible). Adaptado del conciliador-albaranes.
+// Adapter R2 (S3-compatible).
 import {
   DeleteObjectCommand,
   GetObjectCommand,

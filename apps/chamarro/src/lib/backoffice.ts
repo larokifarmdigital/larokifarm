@@ -1,13 +1,6 @@
 /**
- * Fuente de contenido: API pública del backoffice (Neon + R2).
- *
- * Única fuente de contenido de la web (Sanity se retiró el 24-11-2026). El
- * backoffice devuelve el mismo formato que usaba Sanity, así que los
- * componentes no cambian. Contrato:
- * apps/backoffice/src/core/farmacias/application/publicContent.ts
- *
- * Se lee en build (SSG): el backoffice tiene que estar levantado
- * (`pnpm --filter backoffice dev` → http://localhost:3001 en local).
+ * Contenido de la web: API pública del backoffice (Neon + R2), leída en build (SSG).
+ * Contrato: apps/backoffice/src/core/farmacias/application/publicContent.ts
  */
 import type { Farmacia, ResenaGoogle, ResumenResenas } from './contenido';
 
@@ -35,11 +28,7 @@ async function getJson<T>(path: string, intentos = 3): Promise<T | null> {
   }
 }
 
-/**
- * Esta landing es de UNA farmacia: si la API responde 404 (pasada a
- * borrador, archivada o con el slug cambiado) el build falla en vez de
- * publicar la web vacía. El hosting conserva el deploy anterior.
- */
+/** Esta landing es de UNA farmacia: un 404 también rompe el build. */
 export async function obtenerFarmaciaBackoffice(slug: string): Promise<Farmacia | null> {
   const f = await getJson<Farmacia>(`/api/public/farmacias/${encodeURIComponent(slug)}`);
   if (!f) {
@@ -62,11 +51,6 @@ function todasLasResenas(slug: string) {
   return p;
 }
 
-/**
- * Reseñas que se pintan en la web: las que cumplen las reglas del editor
- * (switch por reseña, mínimo de estrellas, solo con comentario). Más
- * recientes primero.
- */
 export async function listarResenasBackoffice(slug: string): Promise<ResenaGoogle[]> {
   return (await todasLasResenas(slug)).filter((r) => r.enWeb !== false);
 }

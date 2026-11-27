@@ -1,8 +1,5 @@
-// Mappers bidireccionales Business (Prisma) ↔ Farmacia (tipo UI).
-// Los JSON blobs de Business se deserializan como objetos del tipo UI.
-// Se asume que la BD guarda formatos "correctos" — para datos venidos de
-// Sanity la migración (Fase D) hará la limpieza. Si una lectura trae algo
-// malformado, los campos opcionales caen a undefined / arrays vacíos.
+// Mappers Business (Prisma) ↔ Farmacia (tipo UI). Los JSON blobs se deserializan sin lanzar:
+// si algo viene malformado, los campos opcionales caen a undefined / arrays vacíos.
 
 import type {
   Business,
@@ -16,10 +13,6 @@ import type { ChatConfig, Direccion, Farmacia, FeatureTarjeta, Horario, HeroTarj
 import { CHAT_POR_DEFECTO, COLOR_HEX_RE, RESENAS_REGLAS_POR_DEFECTO } from '@/core/farmacias/domain';
 import type { Locale, MultilangText } from '@/core/shared';
 import { LOCALES } from '@/core/shared';
-
-// ───────────────────────────────────────────────────────────────────
-// Helpers de deserialización segura (nunca lanzan)
-// ───────────────────────────────────────────────────────────────────
 
 function asMultilang(v: unknown): MultilangText {
   if (!v || typeof v !== 'object') return {};
@@ -178,10 +171,6 @@ function asSeoConfig(v: unknown): SeoConfig | undefined {
   };
 }
 
-// ───────────────────────────────────────────────────────────────────
-// Children mappers (filas de content_* → tipos UI)
-// ───────────────────────────────────────────────────────────────────
-
 function mapServicio(row: PrismaServicio): Servicio {
   const enlace = row.enlace && typeof row.enlace === 'object'
     ? (row.enlace as { url?: unknown; nuevaPestana?: unknown })
@@ -254,10 +243,6 @@ function mapImagen(row: ContentImage): ImagenAsset {
     peso: row.sizeBytes ?? undefined,
   };
 }
-
-// ───────────────────────────────────────────────────────────────────
-// Business + hijos → Farmacia (lectura completa)
-// ───────────────────────────────────────────────────────────────────
 
 export type BusinessWithContent = Business & {
   servicios: PrismaServicio[];
@@ -346,14 +331,7 @@ export function mapBusinessToFarmacia(b: BusinessWithContent): Farmacia {
   };
 }
 
-// ───────────────────────────────────────────────────────────────────
-// Farmacia patch → Prisma Business update
-// Separa campos escalares/JSON de las children collections (que van
-// con replace-all strategy en la tx del repo, no aquí).
-// ───────────────────────────────────────────────────────────────────
-
 export type BusinessScalarPatch = {
-  // Escalares directos
   name?: string;
   slug?: string;
   ciudad?: string | null;
@@ -372,7 +350,6 @@ export type BusinessScalarPatch = {
   publishedStatus?: string;
   lastEditedByUserId?: string | null;
   lastPublishedAt?: Date | null;
-  // JSON blobs
   idiomasActivos?: unknown;
   descripcionCorta?: unknown;
   descripcionLarga?: unknown;
@@ -447,11 +424,10 @@ export function splitFarmaciaPatch(patch: Partial<Farmacia>): {
     scalar.seoConfig = seoSinOg;
   }
 
-  // Children (replace-all strategy en la tx del repo)
   if (patch.servicios !== undefined) children.servicios = patch.servicios;
   if (patch.featuresLista !== undefined) children.features = patch.featuresLista;
   if (patch.faqs !== undefined) children.faqs = patch.faqs;
-  // Nota: resenas NO se tocan desde el editor (son read-only, worker Google las escribe).
+  // resenas NO se tocan desde el editor (solo lectura).
 
   return { scalar, children };
 }

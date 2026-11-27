@@ -216,7 +216,7 @@ export async function POST(req: Request) {
 
   const summary = await Promise.all(tasks);
   // La lectura en bruto de la IA (rawLines) es una herramienta de depuración:
-  // solo viaja al navegador del SUPER_ADMIN (antes llegaba a todos los roles).
+  // solo viaja al navegador del SUPER_ADMIN.
   const respuesta = ctx.esAdmin
     ? summary
     : summary.map((r) => (r.detail ? { ...r, detail: { ...r.detail, rawLines: undefined } } : r));

@@ -1,17 +1,4 @@
-/**
- * Banderas de funcionalidad de Chamarro.
- *
- * MOSTRAR_RESENAS controla la visibilidad de la sección "Reseñas Google" en
- * toda la landing. Cuando es false oculta:
- *  - la sección dentro del index
- *  - los enlaces "Reseñas" del Header (nav desktop + hamburguesa) y del Footer
- *  - aggregateRating + review del JSON-LD de SEO
- *  - la ruta /resenas devuelve 404
- *
- * Lo decide el switch "Mostrar reseñas en la
- * web" del editor (campo `mostrarResenas`). Si el campo no
- * viene, se usa el valor por defecto de esta landing.
- */
+/** Visibilidad de las reseñas en toda la web (sección, enlaces, JSON-LD y ruta /resenas). Lo decide `mostrarResenas` del editor; sin valor, el de esta landing. */
 import { obtenerFarmaciaPorSlug, SLUG_FARMACIA } from './contenido';
 
 const MOSTRAR_RESENAS_POR_DEFECTO = false;

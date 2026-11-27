@@ -157,16 +157,13 @@ export type Farmacia = {
   textosServicios?: TextosCabecera;
   textosFaqs?: TextosCabecera;
   textosResenas?: TextosCabecera;
-  /** Solo backoffice: switch del editor. Sin valor → MOSTRAR_RESENAS_POR_DEFECTO. */
   mostrarResenas?: boolean;
-  /** Solo backoffice: ajustes del chat de medicamentos (ver lib/chat.ts). */
   chat?: Partial<import('./chat').ChatWeb>;
   avisoLegal?: LegalTexto;
   politicaPrivacidad?: LegalTexto;
 };
 
 
-/** Farmacia de la web (API pública del backoffice: Neon + R2). */
 export function obtenerFarmaciaPorSlug(slug: string): Promise<Farmacia | null> {
   return obtenerFarmaciaBackoffice(slug);
 }
@@ -196,7 +193,6 @@ export type ResumenResenas = {
   destacadas: ResenaGoogle[];
   recientes: ResenaGoogle[];
 };
-/** Lista TODAS las reseñas visibles de una farmacia, ordenadas por fecha desc. */
 export function listarResenasGoogle(farmaciaSlug: string): Promise<ResenaGoogle[]> {
   return listarResenasBackoffice(farmaciaSlug);
 }

@@ -5,7 +5,7 @@ export type Usuario = {
   email: string;
   nombre: string;
   rol: 'admin' | 'manager' | 'viewer';
-  /** Farmacia principal (la que usa el conciliador antiguo). */
+  /** Farmacia principal. */
   farmaciaId?: string;
   /** Todas las farmacias que lleva, la principal incluida. */
   farmaciaIds: string[];
@@ -20,8 +20,8 @@ export function canEditContent(u: Pick<Usuario, 'rol'>): boolean {
 }
 
 /**
- * La web en el backoffice es "editarla o nada" (24-11-2026): sin "Editar la
- * web" (rol viewer) no ve ni el menú, ni la tarjeta de Inicio, ni el editor.
+ * La web en el backoffice es "editarla o nada": sin "Editar la web" (rol viewer)
+ * no ve ni el menú, ni la tarjeta de Inicio, ni el editor.
  */
 export function veLaWeb(u: Pick<Usuario, 'rol'>): boolean {
   return canEditContent(u);

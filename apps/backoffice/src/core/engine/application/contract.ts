@@ -1,4 +1,3 @@
-// NOTE: shape compartida entre ProcessAndPersistPairUseCase, `POST /api/conciliar` y el fetch client de `features/reconciler`.
 import type { DeliveryNoteLine, ReconciledLine } from '../domain/types';
 
 export interface ReconciliationDetail {

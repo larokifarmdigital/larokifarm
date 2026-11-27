@@ -1,14 +1,6 @@
 @import 'tailwindcss';
 
-/* ==========================================================================
-   Chamarro · Manrope + paleta verde de marca sobre blanco.
-   Blancos limpios, verdes del logo (#c8e845 → #6dc261 → #44a460), motion
-   refinada: reveal-blur, word-stagger, spotlight cursor, motion-float,
-   count-up, marquee, magnetic hover, underline animations.
-   ========================================================================== */
-
 :root {
-  /* Moderna y clínica · blanco limpio, gris frío, verde intenso del logo */
   --background: #FFFFFF;
   --canvas-alt: #F2F6F3;
   --surface: #F6F8F7;
@@ -26,15 +18,14 @@
   --brand-mid: #6DC261;
   --brand-deep: #44A460;
 
-  /* Bloques de color */
-  --green: #0F6B3C;          /* verde intenso para bloques grandes */
+  --green: #0F6B3C;
   --green-2: #0B5631;
-  --ink: #0B1510;            /* casi negro verdoso (footer) */
+  --ink: #0B1510;
   --on-green: #FFFFFF;
   --on-green-muted: rgba(255, 255, 255, 0.88);
   --green-line: rgba(255, 255, 255, 0.16);
 
-  --primary: #12804A;        /* CTA (AA sobre blanco) */
+  --primary: #12804A;        /* CTA: AA sobre blanco */
   --primary-hover: #0F6B3C;
   --primary-foreground: #FFFFFF;
   --primary-soft: #E6F4EB;
@@ -211,9 +202,7 @@ body {
   }
   /* Sin efecto hover: el antetítulo no es clicable (falsa señal de clic). */
 
-  /* Foto enmarcada sin recorte: la imagen se ve ENTERA (contain) y el hueco
-     se rellena con la misma foto desenfocada. Sirve para fotos de cualquier
-     proporción subidas desde el backoffice. */
+  /* Foto sin recorte: se ve entera (contain) y el hueco se rellena con la misma foto desenfocada. */
   .foto-marco { position: absolute; inset: 0; overflow: hidden; background: var(--surface-strong); }
   .foto-marco-fondo {
     position: absolute;
@@ -227,7 +216,6 @@ body {
   }
   .foto-marco-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 
-  /* Bloques bento */
   .tile {
     position: relative;
     background: var(--card);
@@ -278,7 +266,6 @@ body {
     margin: 0;
   }
 
-  /* -------- BUTTONS · cuadrados minimal, sin rounded-full. -------- */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -315,7 +302,6 @@ body {
     font-variant-numeric: tabular-nums;
   }
 
-  /* Button-in-Button trailing icon. */
   .btn-icon-nested {
     display: inline-flex;
     align-items: center;
@@ -414,11 +400,6 @@ body {
   }
 }
 
-/* ============================================================
-   MOTION UTILITY SYSTEM · abundante pero refinada.
-   ============================================================ */
-
-/* Reveal on-scroll · fade + translate + BLUR (más expresivo que solo 12px). */
 [data-reveal] {
   --reveal-delay: 0ms;
   opacity: 0;
@@ -433,7 +414,6 @@ body {
   transform: translateY(0);
 }
 
-/* Reveal word · para word-by-word stagger en el hero. Más punchy. */
 [data-reveal-word] {
   --reveal-delay: 0ms;
   display: inline-block;
@@ -450,7 +430,6 @@ body {
   transform: translateY(0);
 }
 
-/* Float sutil permanente — imagen protagonista. */
 .motion-float {
   animation: motion-float 9s var(--ease-in-out) infinite;
 }
@@ -459,7 +438,6 @@ body {
   50% { transform: translateY(-6px); }
 }
 
-/* Pulse ambient · dots de status. */
 .motion-pulse {
   animation: motion-pulse 2.5s var(--ease-in-out) infinite;
 }
@@ -468,7 +446,6 @@ body {
   50% { opacity: 0.4; transform: scale(0.85); }
 }
 
-/* Ambient background · dos radial gradients drift muy lentos. */
 .motion-ambient {
   position: fixed;
   inset: 0;
@@ -486,7 +463,6 @@ body {
   100% { transform: translate(-3%, 2%); }
 }
 
-/* Spotlight border · cursor-tracked highlight. Sutil, opacity baja. */
 .spotlight {
   position: relative;
   isolation: isolate;
@@ -512,7 +488,6 @@ body {
 }
 .spotlight:hover::before { opacity: 0.5; }
 
-/* Marquee horizontal · loop infinito de trust indicators. */
 .motion-marquee {
   display: flex;
   gap: 3rem;
@@ -529,7 +504,6 @@ body {
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
 }
 
-/* Magnetic lift · para cards y elementos flotantes al hover. */
 .motion-magnetic {
   transition:
     transform var(--dur) var(--ease-magnetic),
@@ -543,10 +517,7 @@ body {
   }
 }
 
-/* Underline animated (para links no-btn) */
-/* Dentro de la capa de componentes: así las utilidades (text-white…) mandan
-   sobre el color heredado. Fuera de capa pisaba el color y en el footer los
-   enlaces salían oscuros sobre fondo oscuro. */
+/* En la capa de componentes para que las utilidades (text-white…) manden; fuera de capa los enlaces del footer salían oscuros. */
 @layer components {
 .link-anim {
   position: relative;
@@ -596,13 +567,7 @@ body {
   .btn:active { transform: none !important; }
 }
 
-/* ============================================================
- * Transición entre páginas (View Transitions entre documentos).
- * Sin JS: el navegador funde la página saliente y la nueva entra
- * con un desplazamiento corto. La cabecera lleva nombre propio para
- * quedarse quieta y no "parpadear". Navegadores sin soporte navegan
- * como siempre. Con movimiento reducido no hay transición.
- * ============================================================ */
+/* View Transitions entre documentos. La cabecera lleva nombre propio para no parpadear. */
 @view-transition { navigation: auto; }
 
 .corp-header { view-transition-name: cabecera; }

@@ -2,7 +2,7 @@ import type { ReconciliationResponse } from '@/core/engine';
 
 export interface PairToSend {
   label: string;
-  /** 1 or N PDFs from the SAME shipment (delivery note + invoice + …). Merged server-side. */
+  /** 1..N PDFs del MISMO envío (albarán + factura…). Se juntan en el servidor. */
   pdfs: File[];
   /** 1 or N Excels del mismo pedido. Se concatenan server-side antes de conciliar. */
   xlsxs: File[];
@@ -14,7 +14,7 @@ export interface BudgetBlockedDetail {
   budgetUsd: number | null;
 }
 
-/** API error that preserves the HTTP status (to distinguish 401 unauthorized). */
+/** Error de API que conserva el status HTTP (para distinguir 401). */
 export class ReconcileError extends Error {
   /** Solo definido cuando el status es 402 (budget alcanzado). */
   readonly budgetBlocked?: BudgetBlockedDetail;
@@ -30,7 +30,6 @@ export class ReconcileError extends Error {
   }
 }
 
-/** Calls `POST /api/conciliar` with the completed pairs. */
 export async function reconcilePairs(
   pairs: PairToSend[],
   /** Obligatoria si el usuario lleva varias farmacias (el servidor la valida). */

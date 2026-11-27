@@ -76,10 +76,6 @@ export type Resena = {
 };
 
 /**
- * Datos estructurados de la sección "Sobre nosotros" en la landing.
- * Coincide con el objeto `sobreNosotros` del schema Sanity.
- */
-/**
  * Reglas de publicación de reseñas, cada una con su switch en el editor.
  * `minRating: null` = regla apagada (salen todas las estrellas).
  */
@@ -88,16 +84,16 @@ export type ResenasReglas = {
   soloConComentario: boolean;
 };
 
-/** Lo que tenía fijo la portada de las landings antes de ser configurable. */
+/** Reglas por defecto de las reseñas. */
 export const RESENAS_REGLAS_POR_DEFECTO: ResenasReglas = { minRating: 4, soloConComentario: true };
+
+export type ChatPosicion = 'derecha' | 'izquierda';
 
 /**
  * Chat de medicamentos (widget cima-chat) en la web. Solo lo cambia el
  * administrador. Los valores por defecto = lo que cada web tenía fijo: sin
  * `color` ni `nombre`, la landing usa los suyos.
  */
-export type ChatPosicion = 'derecha' | 'izquierda';
-
 export type ChatConfig = {
   activo: boolean;
   posicion: ChatPosicion;
@@ -139,11 +135,10 @@ export function resenaEnWeb(r: Pick<Resena, 'oculta' | 'eliminadaEnGoogle' | 'pu
 }
 
 export type SobreNosotros = {
-  /** Etiqueta pequeña sobre el título. Por defecto: "Sobre nosotros". */
+  /** Por defecto: "Sobre nosotros". */
   chip?: MultilangText;
   /** Título de la sección. Ej: "Una farmacia para familias". Las dos últimas palabras se resaltan. */
   titulo?: MultilangText;
-  /** Badge "+X años". Convertido a número. */
   anyosExperiencia?: number;
   /**
    * Lista de 4-6 frases cortas destacadas. Cada punto tiene el mismo texto en cada idioma activo.
@@ -152,10 +147,7 @@ export type SobreNosotros = {
   puntos?: MultilangText[];
 };
 
-/**
- * Tarjeta flotante sobre la imagen del Hero (0-3 por farmacia).
- * Coincide con `heroTarjetasFlotantes` del schema Sanity.
- */
+/** Tarjeta flotante sobre la imagen del Hero (0-3 por farmacia). */
 export type HeroTarjetaFlotante = {
   id: string;
   icono?: string;
@@ -167,7 +159,6 @@ export type HeroTarjetaFlotante = {
 /**
  * Tarjeta de la sección Features (hasta 6).
  * Si el icono es "reloj" y la descripción está vacía, la landing muestra el horario.
- * Coincide con `featuresLista` del schema Sanity.
  */
 export type FeatureTarjeta = {
   id: string;
@@ -185,9 +176,8 @@ export type SeoConfig = {
 };
 
 /**
- * Textos de cabecera i18n para las secciones Servicios/FAQs/Reseñas de la landing.
- * Coincide con el objeto textosServicios/textosFaqs/textosResenas del schema Sanity.
- * Si todos los campos están vacíos, la landing usa los textos por defecto.
+ * Textos de cabecera i18n de las secciones Servicios/FAQs/Reseñas.
+ * Con todos los campos vacíos, la landing usa los textos por defecto.
  */
 export type TextosCabecera = {
   chip?: MultilangText;
@@ -217,9 +207,7 @@ export type Farmacia = {
   logo?: ImagenAsset;
   heroImages: ImagenAsset[];
 
-  /** Etiqueta pequeña sobre el título del hero. */
   heroChip?: MultilangText;
-  /** Subtítulo bajo el título del hero. */
   heroSubtitulo?: MultilangText;
   /** 0-3 tarjetas flotantes sobre la imagen del hero. */
   heroTarjetasFlotantes?: HeroTarjetaFlotante[];
@@ -227,9 +215,8 @@ export type Farmacia = {
   /** Franja de tarjetas bajo el hero (hasta 6). */
   featuresLista?: FeatureTarjeta[];
 
-  /** Sección "Sobre nosotros" estructurada (chip, titulo, anyos, puntos). */
   sobreNosotros?: SobreNosotros;
-  /** 1-6 imágenes para la sección "Sobre nosotros". */
+  /** 1-6 imágenes. */
   imagenesSobre?: ImagenAsset[];
 
   /**
@@ -261,10 +248,7 @@ export type Farmacia = {
   faqs: Faq[];
   textosFaqs?: TextosCabecera;
 
-  /**
-   * Reseñas importadas desde Google Business Profile.
-   * Read-only en el backoffice: se sincronizan vía Worker cuando la API está conectada.
-   */
+  /** Reseñas de Google. Solo lectura en el backoffice. */
   resenas: Resena[];
   textosResenas?: TextosCabecera;
   /** Switch del editor: si es false la landing no muestra la sección Reseñas. */
@@ -285,7 +269,6 @@ export type Farmacia = {
   lastEditedBy?: string;
 };
 
-/** Usuario sin farmacia asignada que se puede poner de responsable al crear una. */
 /** Usuario que se puede poner de responsable de una farmacia nueva; `farmacias` = las que ya lleva. */
 export type ResponsableDisponible = { id: string; nombre: string; email: string; farmacias: string[] };
 

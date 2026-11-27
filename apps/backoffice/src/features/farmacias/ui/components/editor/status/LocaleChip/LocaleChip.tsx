@@ -15,8 +15,6 @@ const STATUS_CLASS: Record<LocaleStatus, string> = {
  * - `filled`  → naranja soft: el campo tiene contenido.
  * - `missing` → rojo: falta en este idioma pero está lleno en otro activo (inconsistente).
  * - `empty`   → gris: vacío en todos los idiomas activos (opcional aún).
- *
- * Acepta `filled` como fallback legacy: `filled=true` → 'filled', `false` → 'empty'.
  */
 export function LocaleChip({
   locale,
@@ -25,7 +23,7 @@ export function LocaleChip({
 }: {
   locale: Locale;
   status?: LocaleStatus;
-  /** Compat con el uso antiguo. Ignorado si se pasa `status`. */
+  /** `true` = filled, `false` = empty. Ignorado si se pasa `status`. */
   filled?: boolean;
 }) {
   const s: LocaleStatus = status ?? (filled ? 'filled' : 'empty');

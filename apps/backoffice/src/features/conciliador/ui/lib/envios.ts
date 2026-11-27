@@ -48,8 +48,7 @@ function nuevoEnvio(pdfs: ArchivoCargado[], excels: ArchivoCargado[], juntado = 
  *    - Si hay UN único Excel suelto, todos los PDFs sueltos van con él
  *      (si son varios PDFs se marca "juntado por nosotros" para revisarlo).
  *    - Si no, cada archivo suelto queda en su propio envío incompleto y la
- *      persona elige a mano "¿Qué pedido es?". Antes se juntaba todo y podía
- *      mezclar albaranes de proveedores distintos con un mismo pedido.
+ *      persona elige a mano "¿Qué pedido es?" (juntarlos a ciegas mezclaría proveedores).
  */
 export function repartir(envios: Envio[], nuevos: ArchivoCargado[]): Envio[] {
   const completos = envios.filter(estaCompleto);

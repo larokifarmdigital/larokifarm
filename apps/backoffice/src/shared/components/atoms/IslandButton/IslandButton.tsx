@@ -3,14 +3,7 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@/shared/lib/cn';
 
-/**
- * Island Button · patrón Humblytics.
- * Pill oscuro con icono circular. Al hover:
- *  - fondo migra al accent naranja
- *  - icono se desplaza (translateX + translateY)
- *  - icono cambia colores (swap)
- * Motion sin JS: puramente CSS transitions con spring easing.
- */
+/** Pill oscuro con icono circular; el hover es solo CSS (spring easing). */
 
 type Variant = 'dark' | 'light';
 

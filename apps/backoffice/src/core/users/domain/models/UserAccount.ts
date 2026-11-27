@@ -11,7 +11,7 @@ export interface UserAccount {
   nombre: string;
   email: string;
   rol: RolCuenta;
-  /** Farmacia principal (la del conciliador antiguo); siempre está en `farmacias` si no es null. */
+  /** Farmacia principal; siempre está en `farmacias` si no es null. */
   farmaciaId: string | null;
   /** Todas las farmacias que lleva, ordenadas por nombre. Mismo rol en todas. */
   farmacias: FarmaciaOpcion[];

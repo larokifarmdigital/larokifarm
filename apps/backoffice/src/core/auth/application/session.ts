@@ -5,8 +5,7 @@ import { puedeUsarModulo } from '../infrastructure/farmacias';
 import type { Usuario } from '@/core/auth/domain';
 import { farmaciasDeSesion, modulosDeDb, type Modulo } from '@/core/shared';
 
-// NOTE: adapter fino next-auth → Usuario (el tipo local de la UI). Así los
-// componentes que ya consumen `Usuario` no se tocan.
+// Adapter fino next-auth → Usuario (tipo local de la UI).
 function mapRole(role: Role): Usuario['rol'] {
   switch (role) {
     case 'SUPER_ADMIN':

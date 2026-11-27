@@ -5,13 +5,7 @@ import { Modal } from '@/shared/components/molecules/Modal';
 import { Button } from '@/shared/components/atoms/Button';
 import type { ReactNode } from 'react';
 
-/**
- * Confirmación destructiva reutilizable. Wrapper fino sobre `Modal`.
- *
- * Patrón: cualquier acción irreversible (eliminar FAQ, servicio, tarjeta, feature)
- * debe pasar por aquí. Nunca un `confirm()` nativo, nunca un botón que borra en el
- * acto. Regla de diseño: "Confirm before destruction".
- */
+/** Toda acción irreversible pasa por aquí: nunca `confirm()` nativo ni borrado directo. */
 export function ConfirmDialog({
   open,
   onOpenChange,

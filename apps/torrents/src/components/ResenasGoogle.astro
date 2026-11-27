@@ -14,7 +14,6 @@ export interface Props {
 
 const { resumen, logo, lang, urlGoogleMaps, textos } = Astro.props;
 
-// Hasta 12 reseñas en el marquee: primero destacadas, luego recientes, deduplicado.
 const vistos = new Set<string>();
 const tarjetas: ResenaGoogle[] = [];
 for (const r of [...resumen.destacadas, ...resumen.recientes]) {
@@ -27,7 +26,6 @@ for (const r of [...resumen.destacadas, ...resumen.recientes]) {
 const mostrar = tarjetas.length > 0;
 const mediaFormateada = resumen.media > 0 ? resumen.media.toFixed(1) : '—';
 
-// Partimos en dos filas alternando para distribuir destacadas y largos.
 const fila1: ResenaGoogle[] = [];
 const fila2: ResenaGoogle[] = [];
 tarjetas.forEach((r, i) => (i % 2 === 0 ? fila1.push(r) : fila2.push(r)));
@@ -92,7 +90,6 @@ const verTodasHref = rutaConLocale('/resenas', lang);
         </div>
       </div>
 
-      {/* ── Versión móvil: scroll horizontal con snap, sin animación ─────── */}
       <div class='resenas-mobile' aria-label={t('resenas.ariaSlider', lang)}>
         <ul class='resenas-mobile__pista' tabindex='0' aria-label={t('resenas.ariaSlider', lang)}>
           {tarjetas.map((r) => {
@@ -128,7 +125,6 @@ const verTodasHref = rutaConLocale('/resenas', lang);
         </ul>
       </div>
 
-      {/* ── Versión desktop: marquee infinito 2 filas ────────────────────── */}
       <div class='resenas-marquee' data-marquee>
         {fila1.length > 0 && (
           <div class='resenas-marquee__fila' data-fila='1' role='region' tabindex='0' aria-label={t('resenas.ariaFila', lang, { n: 1 })}>
@@ -250,10 +246,8 @@ const verTodasHref = rutaConLocale('/resenas', lang);
 }
 
 <style>
-  /* ── Mobile: snap-scroll horizontal, sin animación ───────────────────── */
   .resenas-mobile {
     display: block;
-    /* Padding lateral mantiene el "peek" de la siguiente card al borde */
     padding-inline: 1rem;
   }
   .resenas-mobile__pista {
@@ -265,9 +259,7 @@ const verTodasHref = rutaConLocale('/resenas', lang);
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-padding-inline: 1rem;
-    /* Padding interno para que la primera y última card respiren */
     padding-inline: 0.25rem;
-    /* Ocultar scrollbar visual (mantiene scroll funcional) */
     scrollbar-width: none;
     -ms-overflow-style: none;
     -webkit-overflow-scrolling: touch;
@@ -288,7 +280,6 @@ const verTodasHref = rutaConLocale('/resenas', lang);
     .resenas-mobile { display: none; }
   }
 
-  /* ── Desktop: marquee infinito 2 filas ───────────────────────────────── */
   .resenas-marquee {
     --duracion-1: 60s;
     --duracion-2: 75s;
@@ -296,7 +287,6 @@ const verTodasHref = rutaConLocale('/resenas', lang);
     display: none;
     flex-direction: column;
     gap: var(--gap);
-    /* Fade en los bordes laterales para que las cards "aparezcan" suavemente */
     -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
             mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
   }
@@ -318,7 +308,6 @@ const verTodasHref = rutaConLocale('/resenas', lang);
     will-change: transform;
   }
 
-  /* Dirección y velocidad distintas por fila */
   .resenas-marquee__fila[data-fila='1'] .resenas-marquee__pista {
     animation: marquee-izq var(--duracion-1) linear infinite;
   }
@@ -335,7 +324,6 @@ const verTodasHref = rutaConLocale('/resenas', lang);
     to   { transform: translateX(0); }
   }
 
-  /* Pausa al hover/focus dentro del marquee o con el botón de pausa */
   .resenas-marquee:hover .resenas-marquee__pista,
   .resenas-marquee:focus-within .resenas-marquee__pista,
   .resenas-marquee[data-pausado] .resenas-marquee__pista {
@@ -351,7 +339,6 @@ const verTodasHref = rutaConLocale('/resenas', lang);
     .resenas-pausa { display: inline-flex; }
   }
 
-  /* Respeta prefers-reduced-motion */
   @media (prefers-reduced-motion: reduce) {
     .resenas-marquee__pista {
       animation: none !important;
@@ -378,7 +365,6 @@ const verTodasHref = rutaConLocale('/resenas', lang);
     }
   }
 
-  /* Card */
   .resena {
     background: var(--card, #fff);
     border: 1px solid var(--border, #e5e7eb);
@@ -441,7 +427,6 @@ const verTodasHref = rutaConLocale('/resenas', lang);
     color: #334155;
     font-size: 0.92rem;
     line-height: 1.55;
-    /* Limita a 6 líneas para que las cards mantengan altura razonable en el marquee */
     display: -webkit-box;
     -webkit-line-clamp: 6;
     -webkit-box-orient: vertical;

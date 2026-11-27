@@ -69,10 +69,8 @@ export class ProcessAndPersistPairUseCase {
 
       const mergedDeliveryNote = mergeDeliveryNotes(extractions.map((r) => r.data));
 
-      // NOTE: multi-Excel — leemos cada Excel por separado y concatenamos sus líneas en un
-      // único OrderData. `reconcile()` ya agrupa por C.N./EAN/código interno vía `agrupar()`,
-      // así que productos repetidos entre Excels suman cantidades por diseño. Los metadatos
-      // de proveedor se toman del primer Excel que los traiga.
+      // Multi-Excel: se concatenan las líneas en un único OrderData; `reconcile()` agrupa y suma
+      // cantidades repetidas. Los metadatos de proveedor son los del primer Excel que los traiga.
       const partialOrders = pair.xlsxs.map((x) => readOrder(x.bytes));
       const order = {
         lines: partialOrders.flatMap((o) => o.lines),

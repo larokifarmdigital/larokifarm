@@ -29,10 +29,8 @@ function escaparHtml(s: string): string {
 }
 
 /**
- * Todas las páginas seguidas con scroll vertical (antes, una a una) y buscador
- * sobre el texto del PDF: resalta las coincidencias en la capa de texto y salta
- * entre ellas. Una coincidencia partida entre dos trozos de texto del PDF no se
- * encuentra (pasa poco: PDF.js suele dar cada celda de la tabla entera).
+ * Todas las páginas seguidas con scroll vertical y buscador sobre el texto del PDF. Una coincidencia
+ * partida entre dos trozos de texto no se encuentra (pasa poco: PDF.js suele dar cada celda entera).
  */
 export default function PdfViewer({ file }: PdfViewerProps) {
   const [numPages, setNumPages] = useState(0);

@@ -129,7 +129,6 @@ export function IdiomasTab() {
         )}
       </div>
 
-      {/* Escritorio: tabla, como el resto de listas del backoffice. */}
       <div className="card hidden overflow-hidden sm:block">
         <table className="w-full text-left text-[14px]">
           <caption className="sr-only">Idiomas de la web</caption>
@@ -180,7 +179,6 @@ export function IdiomasTab() {
         </table>
       </div>
 
-      {/* Móvil: la tabla no cabe; cada idioma en su fila. */}
       <ul className="card m-0 list-none divide-y divide-[var(--color-hairline)] overflow-hidden p-0 sm:hidden" aria-label="Idiomas de la web">
         {filas.map((f) => (
           <li key={f.locale} className="flex items-center gap-3 px-4 py-3">
@@ -206,7 +204,6 @@ export function IdiomasTab() {
         </p>
       )}
 
-      {/* Añadir idioma */}
       <Modal
         open={anadirAbierto}
         onOpenChange={setAnadirAbierto}

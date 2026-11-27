@@ -79,7 +79,6 @@ const waUrl = whatsapp ? `https://wa.me/${limpiarTel(whatsapp)?.replace(/^\+/, '
 const ciudad = direccion?.ciudad;
 const tituloCiudad = ciudad ? t('cta.tituloConCiudad', lang, { ciudad }) : '';
 const tituloSinCiudadParts = t('cta.tituloSinCiudad', lang);
-// Para resaltar la última palabra
 function partirParaResaltar(texto: string): { inicio: string; fin: string } {
   const palabras = texto.split(' ');
   if (palabras.length < 2) return { inicio: '', fin: texto };

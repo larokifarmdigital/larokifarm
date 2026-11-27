@@ -129,7 +129,6 @@ export function UsoIaGestion({
       <h2 id="farmacias-titulo" className="m-0 mb-3 text-[18px] font-bold text-[var(--color-ink)]">
         Por farmacia
       </h2>
-      {/* Escritorio: tabla */}
       <div className="card hidden overflow-hidden p-0 md:block">
         <table className="w-full text-left text-[14px]">
           <caption className="sr-only">Uso de IA por farmacia en {mesEtiqueta}</caption>
@@ -158,7 +157,6 @@ export function UsoIaGestion({
         </table>
       </div>
 
-      {/* Móvil: tarjetas */}
       <ul className="m-0 flex list-none flex-col gap-2 p-0 md:hidden">
         {farmacias.map((f) => (
           <li key={f.id} className="card p-4">

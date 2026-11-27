@@ -15,13 +15,7 @@ export interface Props {
   horarioTexto?: string;
   logo?: string;
   lang: Locale;
-  /**
-   * Lista editable desde el backoffice. Si está vacía, se renderizan las 4 features
-   * de fábrica (atención, calidad, equipo, horario) traducidas con i18n.
-   *
-   * Caso especial: una feature con `icono === 'clock'` y descripción vacía cae
-   * al horario auto-calculado (`horarioTexto`).
-   */
+  /** Una feature con `icono === 'clock'` y descripción vacía usa el horario auto-calculado (`horarioTexto`). */
   lista?: FeatureItem[];
 }
 

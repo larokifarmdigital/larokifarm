@@ -1,16 +1,9 @@
 /**
  * Contenido PÚBLICO de farmacias para las landings (apps/torrents, apps/chamarro).
- *
- * Contrato: el JSON calca la forma de la proyección GROQ que usaban las
- * landings con Sanity (`FARMACIA_PROJECTION` en `src/lib/sanity.ts`), para
- * que sus componentes no cambien al pasar de Sanity a backoffice:
  *   - textos i18n → `[{ language, value }]` (lo que entiende `localizar()`)
- *   - texto enriquecido → mismo array pero con HTML como `value`
+ *   - texto enriquecido → mismo array con HTML como `value`
  *   - horarios → `{ dia: 'Mo', apertura, cierre, cerrado, tramos }`
  *   - imágenes → URL absoluta servida por el backoffice
- *
- * Extensiones respecto a Sanity (campos extra, la landing los puede ignorar):
- * `tramos` en horarios (2 tramos/día), `x`/`youtube` en redes.
  */
 
 import { LOCALES, type MultilangText } from '@/core/shared';
@@ -27,10 +20,6 @@ import type {
   ResenasReglas,
 } from '../domain';
 import { resenaEnWeb, socialUrl } from '../domain';
-
-// ───────────────────────────────────────────────────────────────────
-// Contrato
-// ───────────────────────────────────────────────────────────────────
 
 type I18n = { language: string; value: string }[];
 
@@ -65,7 +54,6 @@ const DIA_LANDING: Record<Horario['dia'], LandingHorarioDia['dia']> = {
   lun: 'Mo', mar: 'Tu', mie: 'We', jue: 'Th', vie: 'Fr', sab: 'Sa', dom: 'Su',
 };
 
-/** Nombres tal cual los tenía el documento `idioma` de Sanity. */
 const IDIOMA_NOMBRE: Record<string, string> = {
   es: 'Español',
   en: 'English',
@@ -243,10 +231,6 @@ export function toLandingResenas(resenas: Resena[], baseUrl: string, reglas: Res
       enWeb: resenaEnWeb(r, reglas),
     }));
 }
-
-// ───────────────────────────────────────────────────────────────────
-// Use cases
-// ───────────────────────────────────────────────────────────────────
 
 /** Solo farmacias publicadas: un borrador o archivada no existe para la web. */
 export class GetPublishedFarmaciaUseCase {

@@ -1,11 +1,5 @@
 'use client';
 
-/**
- * Columna izquierda (escritorio) con todas las secciones agrupadas.
- *
- * Punto rojo a la derecha solo si a la sección le falta traducir algo.
- */
-
 import { useFarmaciaEditor } from '@/features/farmacias/ui/context/EditorContext';
 import { countBySection, type SectionKey } from '@/features/farmacias/ui/lib/i18nStatus';
 import { gruposVisibles, SECTION_BY_KEY } from '@/features/farmacias/ui/lib/sectionsConfig';
@@ -57,7 +51,6 @@ export function EditorSectionSidebar({
                 )}
               >
                 <span className="flex-1 min-w-0 truncate">{s.label}</span>
-                {/* Punto solo si falta traducir algo: "todo verde" no informaba */}
                 {pendiente && (
                   <>
                     <span aria-hidden title="Falta traducir" className="w-[7px] h-[7px] rounded-full shrink-0 ml-auto bg-[var(--color-red-ink)]" />

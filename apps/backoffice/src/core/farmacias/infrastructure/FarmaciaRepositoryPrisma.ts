@@ -1,11 +1,7 @@
-// Implementación real de FarmaciaRepository contra Neon via Prisma.
-// Multi-tenant: filtra por `businessId` del usuario en sesión salvo
-// SUPER_ADMIN (pool mode — ve todos los negocios).
+// Multi-tenant: filtra por `businessId` del usuario en sesión salvo SUPER_ADMIN (ve todos).
 //
-// Children (servicios/features/faqs) usan estrategia replace-all:
-// cuando el patch incluye una lista, se borran todas las filas del negocio
-// y se recrean. Es seguro porque el editor manda siempre la lista completa
-// (no diffs). Simple, correcto y transaccional.
+// Children (servicios/features/faqs): replace-all. Si el patch trae una lista, se borran y
+// recrean todas las filas del negocio; es seguro porque el editor manda siempre la lista completa (no diffs).
 
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/shared/lib/prisma';
@@ -26,16 +22,12 @@ import {
 
 class SaveConflictError extends Error {}
 
-// ───────────────────────────────────────────────────────────────────
-// Guards de tenant
-// ───────────────────────────────────────────────────────────────────
-
 /** Si el usuario NO es SUPER_ADMIN, devuelve sus farmacias (al menos una).
  *  Si es SUPER_ADMIN, devuelve `null` (ver todas). */
 async function tenantFilter(): Promise<string[] | null> {
   const user = await getCurrentUser();
   if (!user) throw new Error('Sesión requerida');
-  if (user.rol === 'admin') return null; // SUPER_ADMIN pool mode
+  if (user.rol === 'admin') return null;
   if (user.farmaciaIds.length === 0) throw new Error('Usuario sin negocio asignado');
   return user.farmaciaIds;
 }
@@ -53,10 +45,6 @@ async function ensureCanWriteBusiness(id: string): Promise<void> {
   if (!user || !canEditContent(user)) throw new Error(READ_ONLY_ERROR);
 }
 
-// ───────────────────────────────────────────────────────────────────
-// Includes compartidos
-// ───────────────────────────────────────────────────────────────────
-
 const CONTENT_INCLUDE = {
   servicios: true,
   features: true,
@@ -64,10 +52,6 @@ const CONTENT_INCLUDE = {
   resenas: true,
   imagenes: true,
 } as const;
-
-// ───────────────────────────────────────────────────────────────────
-// Repo
-// ───────────────────────────────────────────────────────────────────
 
 /** Único error de la transacción de alta cuyo texto se puede enseñar al usuario. */
 class ResponsableNoDisponibleError extends Error {}
@@ -179,7 +163,6 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
       return { ok: false, error: e instanceof Error ? e.message : 'Acceso denegado' };
     }
 
-    // Conflicto de slug (único)
     if (patch.slug) {
       const existing = await prisma.business.findUnique({ where: { slug: patch.slug }, select: { id: true } });
       if (existing && existing.id !== id) {
@@ -489,7 +472,7 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
             })),
           });
         }
-        // Imágenes: NO se duplican en Fase B (hay que copiar también en R2 → Fase C).
+        // Imágenes: NO se duplican (habría que copiar también los objetos en R2).
 
         return tx.business.findUnique({
           where: { id: created.id },

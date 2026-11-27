@@ -49,7 +49,6 @@ const href = (f: FilaHistorial) => `/albaranes/historial/${f.id}`;
 export function HistoryList({ filas, conFarmacia }: { filas: FilaHistorial[]; conFarmacia: boolean }) {
   return (
     <>
-      {/* Escritorio: tabla */}
       <div className="card hidden overflow-hidden p-0 xl:block">
         {/* Red de seguridad: si la tabla no cabe (menú lateral abierto, zoom), se desplaza dentro de la tarjeta */}
         <div className="overflow-x-auto" role="region" aria-label="Historial de conciliaciones" tabIndex={0}>
@@ -108,7 +107,6 @@ export function HistoryList({ filas, conFarmacia }: { filas: FilaHistorial[]; co
         </div>
       </div>
 
-      {/* Móvil y pantallas medianas: tarjetas */}
       <ul className="card divide-y divide-[var(--color-hairline)] overflow-hidden p-0 xl:hidden">
         {filas.map((f) => {
           const e = estado(f);

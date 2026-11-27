@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { SetResenaVisibleUseCase, getResenaRepository } from '@/core/farmacias';
 
-/** Switch por reseña: visible en la web o no. */
 export async function setResenaVisibleAction(
   businessId: string,
   resenaId: string,

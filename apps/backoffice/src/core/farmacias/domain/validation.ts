@@ -1,15 +1,6 @@
 /**
- * Reglas de validación de la ficha de una farmacia — FUENTE ÚNICA.
- *
- * Las usan:
- *   - el editor (error en rojo bajo cada campo, al salir de él)
- *   - el botón Publicar (lista de errores que bloquea)
- *   - el servidor al publicar (PublishFarmaciaUseCase), para que no se pueda
- *     publicar con datos inválidos aunque se salte la UI
- *
- * El autoguardado NO bloquea por formato: un borrador a medias se guarda
- * siempre (no se pierde nada). Lo que se exige es para PUBLICAR.
- *
+ * Reglas de validación de la ficha de una farmacia — FUENTE ÚNICA (editor, botón Publicar y servidor).
+ * El autoguardado NO bloquea por formato: un borrador a medias se guarda siempre; esto se exige solo para PUBLICAR.
  * Puro y sin dependencias de servidor: se importa también desde el cliente.
  */
 
@@ -30,10 +21,6 @@ export type FieldIssue = {
   locale?: Locale;
   kind: 'required' | 'format';
 };
-
-// ───────────────────────────────────────────────────────────────────
-// Reglas de formato (devuelven el mensaje de error o null)
-// ───────────────────────────────────────────────────────────────────
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -91,9 +78,7 @@ export const rules = {
     Number.isInteger(v) && v >= 0 && v <= 150 ? null : 'Un número entero entre 0 y 150.',
 };
 
-// ───────────────────────────────────────────────────────────────────
-// Redes sociales: se acepta usuario (@farmacia) o URL de esa red
-// ───────────────────────────────────────────────────────────────────
+// Redes: se acepta usuario (@farmacia) o URL de esa red.
 
 const SOCIAL: Record<keyof Redes, { label: string; hosts: RegExp; base: string }> = {
   instagram: { label: 'Instagram', hosts: /(^|\.)instagram\.com$/i, base: 'https://www.instagram.com/' },
@@ -120,10 +105,6 @@ export function socialUrl(network: keyof Redes, v?: string): string | undefined 
   return SOCIAL[network].base + value.replace(/^@/, '');
 }
 
-// ───────────────────────────────────────────────────────────────────
-// Horario
-// ───────────────────────────────────────────────────────────────────
-
 const toMin = (t: string) => {
   const [h, m] = t.split(':').map((n) => parseInt(n, 10) || 0);
   return h * 60 + m;
@@ -142,10 +123,6 @@ export function tramoError(t: { abre: string; cierra: string }, prev?: { abre: s
 const DIA_LABEL: Record<Horario['dia'], string> = {
   lun: 'lunes', mar: 'martes', mie: 'miércoles', jue: 'jueves', vie: 'viernes', sab: 'sábado', dom: 'domingo',
 };
-
-// ───────────────────────────────────────────────────────────────────
-// Validación completa
-// ───────────────────────────────────────────────────────────────────
 
 /** id del DOM de un campo validado (los componentes de campo lo usan con la prop `field`). */
 export function fieldDomId(field: string): string {
@@ -176,13 +153,11 @@ export function validateFarmacia(f: Farmacia): FieldIssue[] {
   };
   const d = f.direccion ?? {};
 
-  // ── General · identidad
   req('nombre', 'general', 'Nombre comercial', trimmed(f.nombre).length > 0, 'nombre');
   req('slug', 'general', 'URL pública', trimmed(f.slug).length > 0, 'slug');
   req('logo', 'general', 'Logotipo', Boolean(f.logo?.url), fieldDomId('logo'), 'Sube el logotipo para publicar.');
   fmt('numeroColegiado', 'general', 'Nº colegiado', f.numeroColegiado, rules.colegiado, 'colegiado');
 
-  // ── General · contacto
   req('telefono', 'general', 'Teléfono', trimmed(f.telefono).length > 0, 'telefono');
   fmt('telefono', 'general', 'Teléfono', f.telefono, rules.phone, 'telefono');
   fmt('whatsapp', 'general', 'WhatsApp', f.whatsapp, rules.phone, 'whatsapp');
@@ -191,12 +166,10 @@ export function validateFarmacia(f: Farmacia): FieldIssue[] {
   req('web', 'general', 'Dirección de tu web', trimmed(f.web).length > 0, 'web');
   fmt('web', 'general', 'Dirección de tu web', f.web, rules.url, 'web');
 
-  // ── General · redes (opcionales)
   for (const network of Object.keys(SOCIAL) as (keyof Redes)[]) {
     fmt(`redes.${network}`, 'general', SOCIAL[network].label, f.redes?.[network], (v) => socialIssue(network, v), `red-${network}`);
   }
 
-  // ── General · dirección (todos los campos) + mapa
   req('direccion.calle', 'general', 'Calle', trimmed(d.calle).length > 0, 'calle');
   req('direccion.cp', 'general', 'Código postal', trimmed(d.cp).length > 0, 'cp');
   fmt('direccion.cp', 'general', 'Código postal', d.cp, (v) => rules.cp(v, d.pais), 'cp');
@@ -208,7 +181,6 @@ export function validateFarmacia(f: Farmacia): FieldIssue[] {
   fmt('googleMapsUrl', 'general', 'Enlace de Google Maps', f.googleMapsUrl, rules.googleMapsLink, 'gmaps');
   fmt('mapaUrl', 'general', 'Mapa insertado', f.mapaUrl, rules.mapaEmbed, 'mapa-embed');
 
-  // ── General · horario
   const abiertos = f.horarios.filter((h) => !h.cerrado && h.tramos.length > 0);
   req('horarios', 'horario', 'Horario', abiertos.length > 0, 'sec-horarios', 'Abre al menos un día para poder publicar.');
   for (const h of f.horarios) {
@@ -221,14 +193,12 @@ export function validateFarmacia(f: Farmacia): FieldIssue[] {
     });
   }
 
-  // ── Hero (todo)
   reqEs('heroChip.es', 'hero', 'Chip del hero', textEs(f.heroChip));
   reqEs('heroSubtitulo.es', 'hero', 'Subtítulo del hero', textEs(f.heroSubtitulo));
   reqEs('descripcionCorta.es', 'hero', 'Claim / descripción corta', textEs(f.descripcionCorta));
   req('heroImages', 'hero', 'Imágenes del hero', f.heroImages.length > 0, fieldDomId('heroImages'), 'Sube al menos 1 imagen.');
   req('heroTarjetasFlotantes', 'hero', 'Tarjetas flotantes', (f.heroTarjetasFlotantes ?? []).length > 0, fieldDomId('heroTarjetasFlotantes'), 'Añade al menos 1 tarjeta.');
 
-  // ── Features
   req('featuresLista', 'features', 'Features', (f.featuresLista ?? []).length > 0, fieldDomId('featuresLista'), 'Añade al menos 1 feature.');
 
   // ── Sobre (todo salvo años de experiencia y puntos destacados)
@@ -263,14 +233,11 @@ export function validateFarmacia(f: Farmacia): FieldIssue[] {
     }
   });
 
-  // ── Legal
   reqEs('avisoLegal.es', 'legal', 'Aviso legal', htmlEs(f.avisoLegal));
   reqEs('politicaPrivacidad.es', 'legal', 'Política de privacidad', htmlEs(f.politicaPrivacidad));
 
-  // ── Reseñas (opcional: switch «Mostrar reseñas»)
   fmt('googleLocationName', 'resenas', 'Google Business Profile', f.googleLocationName, rules.googleLocationName, 'google-location');
 
-  // ── SEO (todo)
   reqEs('seo.title.es', 'seo', 'Título SEO', textEs(f.seo?.title));
   reqEs('seo.description.es', 'seo', 'Descripción SEO', textEs(f.seo?.description));
   req('seo.ogImage', 'seo', 'Imagen para redes sociales (OG)', Boolean(f.seo?.ogImage?.url), fieldDomId('seo.ogImage'), 'Sube la imagen que se ve al compartir la web.');

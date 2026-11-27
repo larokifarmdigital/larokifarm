@@ -229,7 +229,6 @@ export function ReconcilerView({ budgetStatus: budgetUnica, currentUser, farmaci
 
       {isBudgetWarning && budgetStatus && fase === 'editando' && <BudgetWarningBanner status={budgetStatus} />}
 
-      {/* ---------- EDITANDO / PROCESANDO ---------- */}
       {fase !== 'resultado' && (
         <>
           {procesando && <PanelProcesando total={listos.length} />}
@@ -344,7 +343,6 @@ export function ReconcilerView({ budgetStatus: budgetUnica, currentUser, farmaci
         </>
       )}
 
-      {/* ---------- RESULTADO ---------- */}
       {fase === 'resultado' && results && (
         <section aria-labelledby="titulo-resultado" className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -415,10 +413,6 @@ export function ReconcilerView({ budgetStatus: budgetUnica, currentUser, farmaci
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Procesando                                                          */
-/* ------------------------------------------------------------------ */
-
 function PanelProcesando({ total }: { total: number }) {
   const [segundos, setSegundos] = useState(0);
   useEffect(() => {
@@ -448,10 +442,6 @@ function PanelProcesando({ total }: { total: number }) {
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* Tarjeta de un envío (antes de comprobar)                            */
-/* ------------------------------------------------------------------ */
 
 function ChipArchivo({ archivo, onQuitar, bloqueado }: { archivo: ArchivoCargado; onQuitar: () => void; bloqueado: boolean }) {
   return (
@@ -669,10 +659,6 @@ function EnvioCard({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Resultado de un envío                                               */
-/* ------------------------------------------------------------------ */
-
 function ResultCard({
   r,
   envio,
@@ -706,7 +692,6 @@ function ResultCard({
 
   return (
     <li className="flex flex-col gap-4">
-      {/* 1. Cabecera del envío */}
       <article className="card p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-start gap-3">
           <div className="flex-1 min-w-0">
@@ -765,7 +750,6 @@ function ResultCard({
         )}
       </article>
 
-      {/* 2. Las líneas, en su propia tarjeta (igual que en el historial) */}
       {r.detail && <TarjetaLineas lineas={r.detail.lines} nivel={3} />}
       {verDepuracion && r.detail?.rawLines && r.detail.rawLines.length > 0 && (
         <div className="card overflow-hidden p-0">
@@ -773,7 +757,6 @@ function ResultCard({
         </div>
       )}
 
-      {/* 3. Reportes de error (solo si hay) */}
       <ReportsList
         reports={reportes}
         isSuperAdmin={currentUser?.role === 'SUPER_ADMIN'}

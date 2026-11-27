@@ -338,7 +338,6 @@ const deliveryNoteSchema = z.object({
 
 export interface ExtractionOptions {
   apiKey: string;
-  /** Allows injecting a fetch implementation (tests / runtime). Defaults to the global. */
   fetchImpl?: typeof fetch;
 }
 
