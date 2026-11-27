@@ -16,6 +16,7 @@ export function PublishChangesDialog({
   open,
   onOpenChange,
   publishing,
+  guardando,
   onPublish,
   faltanTraducciones,
   onRevisarTraducciones,
@@ -23,6 +24,8 @@ export function PublishChangesDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   publishing: boolean;
+  /** Guardándose (p. ej. tras «Deshacer»): no se puede publicar hasta que acabe. */
+  guardando: boolean;
   onPublish: () => void;
   faltanTraducciones: number;
   onRevisarTraducciones: () => void;
@@ -59,8 +62,8 @@ export function PublishChangesDialog({
         <ModalAcciones
           onCancelar={() => onOpenChange(false)}
           textoPrincipal={farmacia.status === 'published' ? 'Publicar cambios' : 'Publicar'}
-          textoEnviando="Publicando…"
-          enviando={publishing}
+          textoEnviando={publishing ? 'Publicando…' : 'Guardando…'}
+          enviando={publishing || guardando}
           onPrincipal={onPublish}
         />
       }

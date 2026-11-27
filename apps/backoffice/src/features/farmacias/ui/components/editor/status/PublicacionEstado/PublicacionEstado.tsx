@@ -8,7 +8,7 @@ import { cn } from '@/shared/lib/cn';
  * (El editor guarda solo; publicar es lo que lo lleva a la web.)
  */
 export function usePublicacionEstado() {
-  const { farmacia, pendientePublicar } = useFarmaciaEditor();
+  const { farmacia, pendientePublicar, cambios } = useFarmaciaEditor();
   if (farmacia.status === 'archived') {
     return { tono: 'neutral' as const, corto: 'Archivada', largo: 'Archivada: no está en la web.' };
   }
@@ -19,7 +19,10 @@ export function usePublicacionEstado() {
     return {
       tono: 'amarillo' as const,
       corto: 'Cambios sin publicar',
-      largo: 'Cambios sin publicar: se verán en la web cuando pulses Publicar.',
+      // Sin copia de lo publicado no se pueden marcar los campos: la crea la próxima publicación.
+      largo: cambios
+        ? 'Cambios sin publicar: se verán en la web cuando pulses Publicar.'
+        : 'Cambios sin publicar. Publica una vez para ver marcado qué campos cambian.',
     };
   }
   return { tono: 'verde' as const, corto: 'Publicada y al día', largo: 'Publicada y al día: tu web muestra lo último.' };

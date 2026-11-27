@@ -26,13 +26,16 @@ import type { FieldIssue } from '@/core/farmacias/domain';
  * (confirmar, no bloquear).
  */
 export function EditorActionButtons({ compact = false }: { compact?: boolean }) {
-  const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly, esAdmin, issues, revealErrors, pendientePublicar, cambios } = useFarmaciaEditor();
+  const { farmacia, saveNow, dirty, goToSection, syncFromServer, readOnly, esAdmin, issues, revealErrors, pendientePublicar, cambios, saveStatus } = useFarmaciaEditor();
   const vistaPrevia = useVistaPrevia();
   const [blockedOpen, setBlockedOpen] = useState(false);
   const health = useI18nHealth();
   const [pending, startTx] = useTransition();
   const [warnOpen, setWarnOpen] = useState(false);
   const [cambiosOpen, setCambiosOpen] = useState(false);
+  // Publicar a mitad de un guardado leería la versión anterior y fallaría por conflicto.
+  const guardando = saveStatus === 'saving';
+  const bloqueado = guardando || saveStatus === 'conflict';
 
   const doPublish = () => {
     // NOTE: se captura antes del await — el contenido no cambia al guardar.
@@ -139,11 +142,12 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
           variant="accent"
           size={compact ? 'lg' : 'sm'}
           onClick={publish}
-          disabled={pending}
+          disabled={pending || bloqueado}
+          title={saveStatus === 'conflict' ? 'Recarga la página antes de publicar' : undefined}
           className={cn(compact && 'flex-1 justify-center text-[15px]')}
         >
           <NavIcon name="Check" size={14} />
-          {pending ? 'Publicando…' : publishLabel}
+          {pending ? 'Publicando…' : guardando ? 'Guardando…' : publishLabel}
         </Button>
       )}
 
@@ -158,6 +162,7 @@ export function EditorActionButtons({ compact = false }: { compact?: boolean }) 
         open={cambiosOpen}
         onOpenChange={setCambiosOpen}
         publishing={pending}
+        guardando={bloqueado}
         onPublish={doPublish}
         faltanTraducciones={health.totalMissing}
         onRevisarTraducciones={() => review()}
