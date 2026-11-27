@@ -10,3 +10,4 @@ export * from './resenas';
 export * from './deleteFarmacia';
 export * from './idiomas';
 export * from './traducir';
+export * from './vistaPrevia';

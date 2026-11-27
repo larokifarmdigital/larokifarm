@@ -167,6 +167,11 @@ export const farmaciaRepositoryPrisma: FarmaciaRepository = {
     return row ? mapBusinessToFarmacia(row as BusinessWithContent) : null;
   },
 
+  async getFarmaciaBySlugSinSesion(slug): Promise<Farmacia | null> {
+    const row = await prisma.business.findUnique({ where: { slug }, include: CONTENT_INCLUDE });
+    return row ? mapBusinessToFarmacia(row as BusinessWithContent) : null;
+  },
+
   async saveFarmacia(id, patch, opts): Promise<SaveResult<Farmacia>> {
     try {
       await ensureCanWriteBusiness(id);

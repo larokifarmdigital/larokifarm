@@ -13,6 +13,11 @@ export type FarmaciaRepository = {
    */
   getPublishedFarmaciaBySlug(slug: string): Promise<Farmacia | null>;
   /**
+   * Sin sesión y en cualquier estado. SOLO para la vista previa: quien llama
+   * tiene que haber comprobado antes el enlace firmado (`verificarVistaPrevia`).
+   */
+  getFarmaciaBySlugSinSesion(slug: string): Promise<Farmacia | null>;
+  /**
    * `expectedUpdatedAt`: control optimista. Si la farmacia cambió desde esa
    * fecha (otra pestaña/persona), no guarda y devuelve `code: 'conflict'`.
    */

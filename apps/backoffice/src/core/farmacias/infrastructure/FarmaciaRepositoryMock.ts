@@ -52,6 +52,11 @@ export const farmaciaRepositoryMock: FarmaciaRepository = {
     return f ? structuredClone(f) : null;
   },
 
+  async getFarmaciaBySlugSinSesion(slug) {
+    const f = [...store.values()].find((x) => x.slug === slug);
+    return f ? structuredClone(f) : null;
+  },
+
   async saveFarmacia(id, patch, opts) {
     await sleep(NETWORK_DELAY_MS);
     const current = store.get(id);
