@@ -1,15 +1,10 @@
 ---
 /**
- * Vista previa del editor del backoffice: la página de inicio con lo GUARDADO
- * (aunque no esté publicado), generada en el servidor en cada petición.
- *
- * - Solo con el enlace firmado que pone el editor (`?t=`); lo comprueba el
- *   backoffice. Caducado o no válido → aviso en castellano (401).
- * - Solo se puede mostrar en un iframe del backoffice (`frame-ancestors`), sin
- *   indexar ni guardar en caché.
- * - `?seccion=<clave del editor>&etiqueta=<nombre>` resalta la sección; el
- *   editor la cambia sin recargar con postMessage (ver el script de abajo).
+ * Vista previa del editor: la home con lo GUARDADO, renderizada en servidor por petición.
+ * Solo con enlace firmado (`?t=`, lo valida el backoffice) y solo en iframe del backoffice; sin indexar ni caché.
+ * `?seccion=&etiqueta=` resalta una sección (cambia por postMessage); `?pagina=aviso-legal|politica-privacidad` muestra esa página legal.
  */
+import LegalPage from '@/components/LegalPage.astro';
 import PaginaInicio from '@/components/PaginaInicio.astro';
 import { mostrarResenasDe } from '@/lib/ajustes';
 import { obtenerFarmaciaVistaPrevia, obtenerResenasBackoffice, ORIGEN_BACKOFFICE } from '@/lib/backoffice';
@@ -26,18 +21,24 @@ const q = Astro.url.searchParams;
 const token = q.get('t') ?? '';
 const idioma = q.get('lang') ?? '';
 const lang: Locale = esLocaleValido(idioma) ? idioma : LOCALE_DEFECTO;
+const LEGALES = { 'aviso-legal': 'aviso', 'politica-privacidad': 'privacidad' } as const;
+const legal = LEGALES[(q.get('pagina') ?? '') as keyof typeof LEGALES];
 
 const farmacia = token ? await obtenerFarmaciaVistaPrevia(SLUG_FARMACIA, token) : null;
 if (!farmacia) Astro.response.status = 401;
 
 // Mismas reglas que la home publicada (10 recientes, 4-5★ con texto), sin caché.
-const resenas = farmacia
+const resenas = farmacia && !legal
   ? await obtenerResenasBackoffice(SLUG_FARMACIA, 10, 4, true, true)
   : { total: 0, media: 0, destacadas: [], recientes: [] };
 ---
 
 {
-  farmacia ? (
+  farmacia && legal ? (
+    <LegalPage farmacia={farmacia} lang={lang} tipo={legal} mostrarResenas={mostrarResenasDe(farmacia)} vistaPrevia>
+      <div data-vista-previa data-origen={ORIGEN_BACKOFFICE} hidden />
+    </LegalPage>
+  ) : farmacia ? (
     <PaginaInicio farmacia={farmacia} lang={lang} resenas={resenas} mostrarResenas={mostrarResenasDe(farmacia)} vistaPrevia>
       <div data-vista-previa data-origen={ORIGEN_BACKOFFICE} hidden />
     </PaginaInicio>
@@ -60,10 +61,6 @@ const resenas = farmacia
 }
 
 <script>
-  /*
-   * Resalta en la página la sección que se está editando. Recibe del editor
-   * (solo de su origen) { tipo: 'larokifarm:seccion', seccion, etiqueta }.
-   */
   const raiz = document.querySelector<HTMLElement>('[data-vista-previa]');
   if (raiz) {
     const origen = raiz.dataset.origen ?? '';
@@ -79,7 +76,7 @@ const resenas = farmacia
       servicios: ['#servicios'],
       faqs: ['#faqs'],
       resenas: ['#resenas'],
-      legal: ['#contacto-footer'],
+      legal: ['main.legal'],
       seo: [],
       chat: [],
     };
@@ -89,6 +86,12 @@ const resenas = farmacia
     capa.lang = 'es';
     capa.style.cssText = 'position:absolute;inset:0 auto auto 0;width:0;height:0;pointer-events:none;z-index:2147483646';
     document.body.append(capa);
+    // Lo fijo en pantalla (la cabecera) no se mueve al hacer scroll: su marco va en
+    // una capa también fija, con coordenadas de la ventana.
+    const capaFija = document.createElement('div');
+    capaFija.setAttribute('aria-hidden', 'true');
+    capaFija.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147483646';
+    document.body.append(capaFija);
 
     const aviso = document.createElement('div');
     aviso.setAttribute('role', 'status');
@@ -103,14 +106,25 @@ const resenas = farmacia
     let objetivos: HTMLElement[] = [];
     let etiquetaActual = '';
 
+    /** Fijo en pantalla: él o un antepasado con position fixed o sticky. */
+    function esFijo(el: HTMLElement): boolean {
+      for (let n: HTMLElement | null = el; n && n !== document.body; n = n.parentElement) {
+        const p = getComputedStyle(n).position;
+        if (p === 'fixed' || p === 'sticky') return true;
+      }
+      return false;
+    }
+
     function dibujar() {
       capa.replaceChildren();
+      capaFija.replaceChildren();
       objetivos.forEach((el, i) => {
         const r = el.getBoundingClientRect();
         if (!r.width || !r.height) return;
+        const fijo = esFijo(el);
         const caja = document.createElement('div');
         caja.style.cssText =
-          `position:absolute;left:${r.left + scrollX + 4}px;top:${r.top + scrollY + 4}px;` +
+          `position:absolute;left:${r.left + (fijo ? 0 : scrollX) + 4}px;top:${r.top + (fijo ? 0 : scrollY) + 4}px;` +
           `width:${r.width - 8}px;height:${r.height - 8}px;box-sizing:border-box;` +
           'border:3px solid #1265b5;border-radius:12px;box-shadow:0 0 0 4px rgba(18,101,181,.18)';
         if (i === 0 && etiquetaActual) {
@@ -121,7 +135,7 @@ const resenas = farmacia
             'font:700 12px/1.4 system-ui,sans-serif;white-space:nowrap';
           caja.append(chip);
         }
-        capa.append(caja);
+        (fijo ? capaFija : capa).append(caja);
       });
     }
 
@@ -141,6 +155,8 @@ const resenas = farmacia
       if (selectores.length === 0) return avisar(`«${etiqueta}» no se ve en la página de inicio.`);
       if (objetivos.length === 0) return avisar(`«${etiqueta}» no sale ahora en la web: está vacía o desactivada.`);
       avisar('');
+      // Lo fijo (la cabecera) siempre está a la vista: no hace falta moverse.
+      if (esFijo(objetivos[0])) return;
       const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
       const top = objetivos[0].getBoundingClientRect().top + scrollY - 80;
       scrollTo({ top: Math.max(0, top), behavior: suave && !reducido ? 'smooth' : 'instant' });
@@ -149,6 +165,8 @@ const resenas = farmacia
     // Las fotos y los textos cambian de alto al cargar: se recoloca el marco.
     new ResizeObserver(dibujar).observe(document.body);
     addEventListener('resize', dibujar);
+    // Un sticky cambia de sitio al hacer scroll; los demás marcos no se mueven.
+    addEventListener('scroll', () => objetivos.some(esFijo) && dibujar(), { passive: true });
 
     // Los enlaces llevarían a la web publicada: en la vista previa no se abren.
     document.addEventListener(

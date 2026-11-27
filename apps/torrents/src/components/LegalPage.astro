@@ -1,9 +1,4 @@
 ---
-/**
- * Página legal común (aviso legal / política de privacidad): cabecera con miga
- * de pan, índice de secciones (de los h2 del texto), contenido legible y, al
- * final, enlace al otro texto legal. Todo funciona sin JavaScript.
- */
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
@@ -16,15 +11,18 @@ import {
 } from '@/lib/contenido';
 import { rutaConLocale, t, type Locale, localesActivos, DIAS_POR_IDIOMA, CERRADO_POR_IDIOMA } from '@/lib/i18n';
 import { legalPorDefecto, prepararTextoLegal } from '@/lib/legal';
-import { MOSTRAR_RESENAS } from '@/lib/feature-flags';
 
 interface Props {
   farmacia: Farmacia;
   lang: Locale;
   tipo: 'aviso' | 'privacidad';
+  mostrarResenas?: boolean;
+  vistaPrevia?: boolean;
 }
 
-const { farmacia, lang, tipo } = Astro.props;
+const { farmacia, lang, tipo, mostrarResenas, vistaPrevia = false } = Astro.props;
+// Import dinámico: feature-flags lee lo PUBLICADO al cargarse y la vista previa no lo necesita.
+const MOSTRAR_RESENAS = mostrarResenas ?? (await import('@/lib/feature-flags')).MOSTRAR_RESENAS;
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
 const RUTAS = { aviso: '/aviso-legal', privacidad: '/politica-privacidad' } as const;
@@ -36,7 +34,6 @@ const intro = t(tipo === 'aviso' ? 'legal.avisoIntro' : 'legal.privacidadIntro',
 const otroTitulo = t(otro === 'aviso' ? 'legal.avisoTitulo' : 'legal.privacidadTitulo', lang);
 const otroIntro = t(otro === 'aviso' ? 'legal.avisoIntro' : 'legal.privacidadIntro', lang);
 
-// Contenido del CMS; si está vacío, el texto por defecto (lib/legal.ts).
 const porDefecto = legalPorDefecto(lang);
 const htmlOriginal =
   tipo === 'aviso'
@@ -61,6 +58,7 @@ const home = rutaConLocale('/', lang);
   rutaActual={ruta}
   nombreFarmacia={farmacia.nombre}
   logoFarmacia={farmacia.logo}
+  vistaPrevia={vistaPrevia}
 >
   <Header
     nombre={farmacia.nombre}
@@ -75,7 +73,6 @@ const home = rutaConLocale('/', lang);
   />
 
   <main id='contenido' class='legal'>
-    {/* Cabecera de la página */}
     <section id='arriba' class='legal-hero border-b border-[var(--border)]'>
       <div class='container-app py-10 md:py-14'>
         <nav aria-label={t('header.breadcrumb.aria', lang)}>
@@ -105,7 +102,6 @@ const home = rutaConLocale('/', lang);
       <div class={`legal-grid ${secciones.length > 0 ? 'con-indice' : ''}`}>
         {secciones.length > 0 && (
           <>
-            {/* Móvil: índice plegable (details funciona sin JS) */}
             <details class='legal-indice-movil lg:hidden'>
               <summary>
                 <span>{t('legal.indice', lang)}</span>
@@ -120,7 +116,6 @@ const home = rutaConLocale('/', lang);
               </nav>
             </details>
 
-            {/* Escritorio: índice fijo al hacer scroll */}
             <aside class='legal-indice hidden lg:block'>
               <nav aria-label={t('legal.indice', lang)}>
                 <p class='legal-indice__titulo'>{t('legal.indice', lang)}</p>
@@ -186,6 +181,7 @@ const home = rutaConLocale('/', lang);
     lang={lang}
     rutaActual={ruta}
   />
+  <slot />
 </BaseLayout>
 
 <style>
@@ -220,7 +216,6 @@ const home = rutaConLocale('/', lang);
     }
   }
 
-  /* Índice escritorio */
   .legal-indice {
     position: sticky;
     top: 6rem;
@@ -258,7 +253,6 @@ const home = rutaConLocale('/', lang);
     border-left-color: var(--primary);
   }
 
-  /* Índice móvil */
   .legal-indice-movil {
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -346,7 +340,6 @@ const home = rutaConLocale('/', lang);
     color: var(--foreground);
   }
 
-  /* Enlace al otro texto legal */
   .legal-otro {
     display: flex;
     align-items: center;

@@ -84,3 +84,6 @@ Contenido en build desde la API pública del backoffice (`BACKOFFICE_URL`;
   backoffice; al cargar avisa `{ tipo: 'larokifarm:lista' }`. Mapa clave →
   sección (`#inicio`, `#puntos-fuertes`, `#servicios`, `#sobre`, `#resenas`,
   `#faqs`, `#contacto`, pie) en el script de la página.
+- `?pagina=aviso-legal|politica-privacidad` pinta `LegalPage` (props
+  `mostrarResenas` y `vistaPrevia`) en vez del inicio; la sección `legal`
+  resalta `main.legal`.
