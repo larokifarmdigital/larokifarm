@@ -72,11 +72,3 @@ export const SECTION_BY_KEY: Record<string, SectionMeta> = SECTION_META.reduce(
   (acc, s) => { acc[s.key] = s; return acc; },
   {} as Record<string, SectionMeta>,
 );
-
-export const GROUP_OF_SECTION: Record<string, GroupMeta> = SECTION_META.reduce(
-  (acc, s) => {
-    acc[s.key] = GROUPS.find((g) => g.sectionKeys.includes(s.key)) ?? GROUPS[0];
-    return acc;
-  },
-  {} as Record<string, GroupMeta>,
-);

@@ -2,7 +2,7 @@
 
 /** Secciones en `ui/lib/sectionsConfig.ts`, sin componentes, para que la navegación no arrastre el bundle de Tiptap. */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { Farmacia } from '@/core/farmacias/domain';
 import {
   FarmaciaEditorProvider,
@@ -12,7 +12,6 @@ import { EditorTopBar } from '@/features/farmacias/ui/components/editor/navigati
 import { LangTabs } from '@/features/farmacias/ui/components/editor/fields/LangTabs';
 import { EditorSectionSidebar } from '@/features/farmacias/ui/components/editor/navigation/EditorSectionSidebar';
 import { EditorSectionPicker } from '@/features/farmacias/ui/components/editor/navigation/EditorSectionPicker';
-import { EditorSectionSheet } from '@/features/farmacias/ui/components/editor/navigation/EditorSectionSheet';
 import { EditorSectionTitle } from '@/features/farmacias/ui/components/editor/navigation/EditorSectionTitle';
 import { EditorSectionSwitcher } from '@/features/farmacias/ui/components/editor/navigation/EditorSectionSwitcher';
 import { EditorMobileActionBar } from '@/features/farmacias/ui/components/editor/navigation/EditorMobileActionBar';
@@ -72,7 +71,6 @@ export function FarmaciaEditor({
 
 function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
   const { activeSectionKey, goToSection, readOnly, esAdmin } = useFarmaciaEditor();
-  const [sheetOpen, setSheetOpen] = useState(false);
   const vistaPrevia = useVistaPrevia();
   const panelAbierto = vistaPrevia.abierta && vistaPrevia.escritorio;
 
@@ -100,11 +98,6 @@ function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
     }
   }, [activeSectionKey]);
 
-  const selectSection = (key: string) => {
-    goToSection(key);
-    setSheetOpen(false);
-  };
-
   return (
     <>
       <EditorTopBar volverA={volverA} />
@@ -126,11 +119,7 @@ function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
 
           <div className="min-w-0">
             <div className={panelAbierto ? 'xl:hidden' : 'lg:hidden'}>
-              <EditorSectionPicker
-                activeKey={activeSectionKey}
-                isOpen={sheetOpen}
-                onToggle={() => setSheetOpen((v) => !v)}
-              />
+              <EditorSectionPicker activeKey={activeSectionKey} onSelect={goToSection} />
             </div>
 
             <EditorSectionSwitcher keyId={activeSection.key}>
@@ -165,13 +154,6 @@ function FarmaciaEditorLayout({ volverA }: { volverA: string }) {
       {!vistaPrevia.escritorio && (
         <VistaPreviaMovil open={vistaPrevia.abierta} onOpenChange={(v) => (v ? vistaPrevia.abrir() : vistaPrevia.cerrar())} />
       )}
-
-      <EditorSectionSheet
-        open={sheetOpen}
-        activeKey={activeSectionKey}
-        onClose={() => setSheetOpen(false)}
-        onSelect={selectSection}
-      />
 
       <EditorMobileActionBar />
       <EstadoAnunciado />

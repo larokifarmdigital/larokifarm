@@ -417,8 +417,12 @@ Diferencias con el antiguo schema de Sanity (por si se consulta el histórico):
    principal por zona.
 2. **Section title sin numeración** (`01 · General` fue quitado 22-09-2026).
 3. **Navegación del editor** (fase 4): grupos Tu farmacia · Portada ·
-   Contenido · Avanzado; columna izquierda en escritorio, selector + hoja en
-   móvil, sin numeración y con punto rojo solo si falta traducir. **Shell de la app** (fase 1, 20-11-2026): sidebar
+   Contenido · Avanzado; columna izquierda en escritorio y, donde no cabe
+   (móvil, o lg–xl con la vista previa abierta), desplegable compacto
+   `EditorSectionPicker` (Radix DropdownMenu no modal y sin portal, lista
+   agrupada con iconos; la hoja a pantalla se quitó el 27-11-2026). Sin
+   numeración; punto rojo = falta traducir, ámbar = sin publicar
+   (`MarcasSeccion`). **Shell de la app** (fase 1, 20-11-2026): sidebar
    sin títulos de sección — Inicio · Farmacias (admin) / Mi web (personal, va
    directo al editor de SU farmacia) · Albaranes (Nueva conciliación,
    Historial). Config en `features/shell/ui/lib/navConfig.ts` (`buildNav`),
